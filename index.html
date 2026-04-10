@@ -2320,10 +2320,28 @@ self.onmessage = function(e) {
   if(searchMode === 'direct') {
     TT = new Map();
     const moves = vcfDFS(b, h0, attacker, defender, maxAtk, new Set());
-    const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
     if(moves && moves !== 'cancelled') {
-      self.postMessage({type:'result', moves, limit: Math.ceil(moves.filter(m=>m.type==='atk'||m.type==='forbid-block').length), mode:'direct', elapsed});
+      let bestMoves = moves;
+      let bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
+      const originalLimit = bestLimit;
+      // 找到解後，逐步嘗試 N-1 手，直到縮無可縮
+      while(!_cancelFlag && bestLimit > 1) {
+        self.postMessage({
+          type: 'progress-retry',
+          found: bestLimit,
+          retrying: bestLimit - 1,
+          elapsed: ((Date.now()-startTime)/1000).toFixed(1)
+        });
+        TT = new Map();
+        const shorter = vcfDFS(b, h0, attacker, defender, bestLimit - 1, new Set());
+        if(!shorter || shorter === 'cancelled') break;
+        bestMoves = shorter;
+        bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
+      }
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+      self.postMessage({type:'result', moves: bestMoves, limit: bestLimit, mode:'direct', shortened: bestLimit < originalLimit, originalLimit, elapsed});
     } else {
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
       self.postMessage({type:'notfound', elapsed});
     }
     return;
@@ -2424,7 +2442,9 @@ function runVCF(attacker) {
     html += `<span>攻擊 <b style="color:var(--text)">${result.limit}</b> 手</span>`;
     html += `<span>總計 <b style="color:var(--text)">${result.moves.length}</b> 步</span>`;
     html += `<span>耗時 <b style="color:var(--text)">${elapsed}s</b></span>`;
-    const modeLabel = result.mode === 'direct' ? '直接' : 'IDDFS';
+    const modeLabel = result.mode === 'direct'
+      ? (result.shortened ? `直接（${result.originalLimit}→${result.limit} 手）` : '直接')
+      : 'IDDFS';
     html += `<span style="color:var(--text-dim);">${modeLabel}</span>`;
     if (forbidCount > 0) html += `<span style="color:var(--accent-forbid);">禁手 ${forbidCount} 處</span>`;
     html += `</div><div class="move-list" id="vcf-move-list">`;
@@ -2458,6 +2478,10 @@ function runVCF(attacker) {
     } else if (msg.type === 'cancelled') {
       searching = false;
       document.getElementById('btn-cancel').style.display = 'none';
+    } else if (msg.type === 'progress-retry') {
+      document.getElementById('result-area').innerHTML =
+        `<span class="spinner"></span> 找到 <b>${msg.found}</b> 手，嘗試縮短至 <b>${msg.retrying}</b> 手…<br>
+         <span style="font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">已耗時 ${msg.elapsed}s</span>`;
     } else if (msg.type === 'progress') {
       const pct = msg.maxAtk < 999999 ? Math.round(msg.limit / msg.maxAtk * 100) : 0;
       const depthLabel = msg.maxAtk >= 999999 ? `深度 <b>${msg.limit}</b>（無上限）` : `深度 <b>${msg.limit}</b> / ${msg.maxAtk} 手`;
