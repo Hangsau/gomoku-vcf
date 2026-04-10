@@ -1,0 +1,3212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五子棋 VCF 分析器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  :root {
+    --wood: #c8a96e;
+    --wood-dark: #a07840;
+    --wood-light: #e8cfa0;
+    --line: #7a5c2e;
+    --bg: #1a1208;
+    --panel: #221a0e;
+    --panel2: #2e2210;
+    --black-stone: #1a1a1a;
+    --white-stone: #f5f0e8;
+    --accent-black: #ff6b35;
+    --accent-white: #4ecdc4;
+    --accent-forbid: #ff3366;
+    --text: #e8d5b0;
+    --text-dim: #8a7a60;
+    --vcf-dot: rgba(255, 107, 53, 0.7);
+    --vcf-line-color: rgba(255, 107, 53, 0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--wood-light);
+    text-align: center;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 12px rgba(200,169,110,0.4);
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    margin-bottom: 18px;
+  }
+
+  .main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ★ 修正 1：棋盤 responsive，手機自適應寬度 */
+  .board-wrap {
+    position: relative;
+    max-width: calc(100vw - 40px);
+  }
+
+  canvas#board {
+    display: block;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 3px var(--wood-dark);
+    max-width: calc(100vw - 40px);
+    height: auto;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid #3a2e1a;
+    border-radius: 8px;
+    padding: 16px;
+    width: 230px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .panel-title {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #3a2e1a;
+    padding-bottom: 8px;
+  }
+
+  .tool-row { display: flex; gap: 6px; }
+
+  .tool-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid #4a3a20;
+    border-radius: 5px;
+    background: var(--panel2);
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .tool-btn:hover { background: #3a2e18; border-color: var(--wood); }
+  .tool-btn.active-black { background: #2a1a0a; border-color: var(--accent-black); color: var(--accent-black); box-shadow: 0 0 8px rgba(255,107,53,0.3); }
+  .tool-btn.active-white { background: #0a2020; border-color: var(--accent-white); color: var(--accent-white); box-shadow: 0 0 8px rgba(78,205,196,0.3); }
+  .tool-btn.active-erase { background: #1a1a2a; border-color: #8888cc; color: #aaaaee; }
+
+  .stone-dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+  .stone-dot.black { background: radial-gradient(circle at 35% 35%, #555, #111); border: 1px solid #444; }
+  .stone-dot.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); border: 1px solid #aaa; }
+  .stone-dot.erase { background: #333; border: 1px dashed #666; }
+
+  .action-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-clear { background: #2a1a0a; border: 1px solid #4a3a20; color: var(--text-dim); }
+  .btn-clear:hover { background: #3a2a10; color: var(--text); }
+
+  .btn-vcf-black { background: linear-gradient(135deg, #3a1a08, #2a1008); border: 1px solid var(--accent-black); color: var(--accent-black); text-shadow: 0 0 8px rgba(255,107,53,0.5); }
+  .btn-vcf-black:hover { background: linear-gradient(135deg, #4a2010, #3a1808); box-shadow: 0 0 12px rgba(255,107,53,0.3); }
+
+  .btn-vcf-white { background: linear-gradient(135deg, #082a2a, #052020); border: 1px solid var(--accent-white); color: var(--accent-white); text-shadow: 0 0 8px rgba(78,205,196,0.5); }
+  .btn-vcf-white:hover { background: linear-gradient(135deg, #0a3535, #083030); box-shadow: 0 0 12px rgba(78,205,196,0.3); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: var(--panel2);
+    border: 1px solid #3a2e1a;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row:hover { border-color: var(--accent-forbid); }
+
+  .toggle-switch {
+    width: 34px; height: 18px;
+    background: #3a2e1a;
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-switch.on { background: rgba(255,51,102,0.6); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 14px; height: 14px;
+    background: #888;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .toggle-switch.on::after { left: 18px; background: var(--accent-forbid); }
+
+  .forbid-label { color: var(--accent-forbid); font-size: 0.72rem; }
+
+  .result-panel {
+    background: var(--panel);
+    border: 1px solid #3a2e1a;
+    border-radius: 8px;
+    padding: 16px;
+    width: 230px;
+    min-height: 120px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .result-title {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #3a2e1a;
+    padding-bottom: 8px;
+  }
+
+  .result-content { font-size: 0.82rem; line-height: 1.7; color: var(--text); }
+  .result-found-black { color: var(--accent-black); font-weight: 700; }
+  .result-found-white { color: var(--accent-white); font-weight: 700; }
+  .result-none { color: var(--text-dim); font-style: italic; }
+
+  .move-list { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+
+  .move-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 3px 6px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .move-item.atk-black { background: rgba(255,107,53,0.12); color: var(--accent-black); }
+  .move-item.def-black { background: rgba(255,255,255,0.05); color: #aaa; }
+  .move-item.atk-white { background: rgba(78,205,196,0.12); color: var(--accent-white); }
+  .move-item.def-white { background: rgba(255,255,255,0.05); color: #aaa; }
+  .move-item.forbid-hit { background: rgba(255,51,102,0.15); color: var(--accent-forbid); }
+  .move-item.counter-threat { background: rgba(255,200,0,0.10); color: #ffcc44; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid #3a2e1a;
+    border-top-color: var(--wood);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .legend {
+    display: flex;
+    gap: 10px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  select option { background: #2e2210; }
+
+  .info-box {
+    background: rgba(255,51,102,0.06);
+    border: 1px solid rgba(255,51,102,0.25);
+    border-radius: 4px;
+    padding: 7px 9px;
+    font-size: 0.72rem;
+    color: #cc8899;
+    line-height: 1.6;
+  }
+
+  .verify-step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 8px;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    line-height: 1.6;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .verify-step:hover { background: rgba(255,255,255,0.05); }
+  .verify-step.v-active { background: rgba(255,255,255,0.08); }
+  .verify-step.v-atk  { border-color: var(--accent-white); }
+  .verify-step.v-def  { border-color: #4488ff; }
+  .verify-step.v-warn { border-color: #ffcc44; background: rgba(255,200,0,0.08); }
+  .verify-step.v-err  { border-color: var(--accent-forbid); background: rgba(255,51,102,0.08); }
+  .verify-step.v-ok   { border-color: #44cc88; }
+  .verify-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    line-height: 1.7;
+    display: none;
+    margin-top: -4px;
+  }
+  .verify-detail.show { display: block; }
+  .coord-input {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid #4a3a20;
+    color: var(--text);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    resize: vertical;
+    min-height: 48px;
+  }
+  .coord-input:focus { outline: none; border-color: var(--wood); }
+  .coord-input::placeholder { color: var(--text-dim); }
+
+  .trace-log {
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 5px;
+    padding: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    line-height: 1.7;
+    color: #aaa;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 500px;
+    overflow-y: auto;
+    user-select: all;
+  }
+  .trace-ok   { color: #44cc88; }
+  .trace-cont { color: #88aaff; }
+  .trace-cut  { color: #ff6644; }
+  .trace-warn { color: #ffcc44; }
+  .trace-miss { color: #888; font-style: italic; }
+
+  .mode-toggle-row {
+    display: flex;
+    gap: 4px;
+    background: var(--panel2);
+    border: 1px solid #3a2e1a;
+    border-radius: 5px;
+    padding: 4px;
+  }
+  .mode-toggle-btn {
+    flex: 1;
+    padding: 5px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .mode-toggle-btn.active {
+    background: #2a1a08;
+    border-color: var(--wood);
+    color: var(--wood-light);
+  }
+  .mode-toggle-btn:hover:not(.active) { background: rgba(255,255,255,0.05); }
+
+  .puzzle-area {
+    background: #0d0d0a;
+    border: 1px solid #3a2e1a;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: #aaa;
+    width: 100%;
+    min-height: 56px;
+    resize: vertical;
+  }
+  .puzzle-area:focus { outline: none; border-color: var(--wood); }
+  .puzzle-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px;
+    border-radius: 3px;
+    border-left: 2px solid #4a3a20;
+    background: rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text);
+    transition: background 0.1s;
+  }
+  .puzzle-list-item:hover { background: rgba(255,255,255,0.05); border-left-color: var(--wood); }
+  .puzzle-list-item .pname { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .puzzle-list-item .pdel { color: var(--accent-forbid); opacity:0.6; cursor:pointer; padding:0 2px; }
+  .puzzle-list-item .pdel:hover { opacity:1; }
+
+  .alt-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    background: rgba(78,205,196,0.07);
+    border: 1px solid rgba(78,205,196,0.25);
+    border-radius: 5px;
+    font-size: 0.78rem;
+  }
+  .alt-turn-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+  .alt-turn-stone {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .alt-turn-stone.black { background: radial-gradient(circle at 35% 35%, #555, #111); border: 1px solid #444; }
+  .alt-turn-stone.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); border: 1px solid #aaa; }
+
+  .vcf-playback-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255,107,53,0.07);
+    border: 1px solid rgba(255,107,53,0.2);
+    border-radius: 5px;
+    width: 100%;
+    max-width: calc(100vw - 40px);
+  }
+  .vcf-pb-btn {
+    padding: 4px 10px;
+    background: var(--panel2);
+    border: 1px solid #4a3a20;
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .vcf-pb-btn:hover:not(:disabled) { background: #3a2e18; border-color: var(--wood); }
+  .vcf-pb-btn:disabled { opacity: 0.35; cursor: default; }
+  .vcf-pb-counter {
+    flex: 1;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .move-item.highlighted {
+    outline: 1px solid var(--wood);
+    background: rgba(200,169,110,0.15) !important;
+  }
+
+  .about-section {
+    margin-top: 24px;
+    width: 100%;
+    max-width: 800px;
+    background: var(--panel);
+    border: 1px solid #3a2e1a;
+    border-radius: 8px;
+    padding: 18px 22px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .about-col { flex: 1; min-width: 180px; }
+  .about-col h3 {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #3a2e1a;
+  }
+  .about-col p, .about-col li {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .about-col ul { padding-left: 14px; }
+  .about-col li { list-style: disc; }
+
+  footer {
+    margin-top: 28px;
+    padding: 14px 0 8px;
+    font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-align: center;
+    border-top: 1px solid #2a2010;
+    width: 100%;
+    max-width: 800px;
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<h1>五子棋 VCF 分析器</h1>
+<p class="subtitle">VCF 連四取勝搜尋分析 · 支援禁手規則 · 黑 / 白雙色</p>
+
+<div class="main-layout">
+  <div class="board-wrap">
+    <canvas id="board" width="540" height="540"></canvas>
+    <div class="vcf-playback-bar" id="vcf-playback-bar" style="display:none;margin-top:10px;">
+      <button class="vcf-pb-btn" id="vcf-pb-first" onmousedown="event.preventDefault()" onclick="vcfPlaybackGo(0,this)">|◀</button>
+      <button class="vcf-pb-btn" id="vcf-pb-prev"  onmousedown="event.preventDefault()" onclick="vcfPlaybackStep(-1,this)">◀</button>
+      <span class="vcf-pb-counter" id="vcf-pb-counter">0 / 0</span>
+      <button class="vcf-pb-btn" id="vcf-pb-next"  onmousedown="event.preventDefault()" onclick="vcfPlaybackStep(1,this)">▶</button>
+      <button class="vcf-pb-btn" id="vcf-pb-last"  onmousedown="event.preventDefault()" onclick="vcfPlaybackGo(-1,this)">▶|</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;gap:6px;">
+      <button id="tab-edit" class="action-btn" onclick="switchTab('edit')"
+        style="flex:1;padding:7px;font-size:0.8rem;background:#2a1a08;border:1px solid var(--wood);color:var(--wood-light);">盤面編輯</button>
+      <button id="tab-verify" class="action-btn" onclick="switchTab('verify')"
+        style="flex:1;padding:7px;font-size:0.8rem;background:var(--panel2);border:1px solid #4a3a20;color:var(--text-dim);">路徑驗證</button>
+    </div>
+
+    <div class="panel" id="panel-edit">
+      <div class="panel-title">盤面編輯</div>
+      <div class="tool-row">
+        <button class="tool-btn active-black" id="btn-black" onclick="setTool('black')">
+          <span class="stone-dot black"></span>黑棋
+        </button>
+        <button class="tool-btn" id="btn-white" onclick="setTool('white')">
+          <span class="stone-dot white"></span>白棋
+        </button>
+        <button class="tool-btn" id="btn-erase" onclick="setTool('erase')">
+          <span class="stone-dot erase"></span>橡皮擦
+        </button>
+      </div>
+      <button class="action-btn btn-clear" onclick="clearBoard()">清空棋盤</button>
+
+      <div class="toggle-row" id="alt-mode-toggle-row" onclick="toggleAltMode()" style="border-color:#3a8a8a;">
+        <span style="color:#4ecdc4;">對弈錄入（黑白交替）</span>
+        <div class="toggle-switch" id="alt-mode-toggle-switch" style="background:#3a2e1a;"></div>
+      </div>
+      <div id="alt-mode-bar" class="alt-mode-bar" style="display:none;">
+        <div class="alt-turn-indicator">
+          <span class="alt-turn-stone" id="alt-turn-stone"></span>
+          <span id="alt-turn-label"></span>
+        </div>
+        <button class="vcf-pb-btn" onclick="undoAltMove()" style="padding:3px 8px;">↩ 悔棋</button>
+      </div>
+
+      <div class="panel-title" style="margin-top:4px;">快速輸入局面</div>
+      <div style="font-size:0.72rem;color:var(--text-dim);line-height:1.7;">
+        用座標貼上初始局面，空格分隔<br>
+        <span style="opacity:0.7;">例：H8 G7 J5 ...</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;">
+        <span style="color:var(--white-stone);text-shadow:0 0 4px #aaa;font-size:1rem;">○</span>
+        <textarea id="input-white" class="coord-input" placeholder="白棋座標" style="min-height:36px;flex:1;"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;">
+        <span style="color:#444;font-size:1.1rem;text-shadow:0 0 2px #888;">●</span>
+        <textarea id="input-black" class="coord-input" placeholder="黑棋座標" style="min-height:36px;flex:1;"></textarea>
+      </div>
+      <button class="action-btn" onclick="applyBoardFromInput()"
+        style="background:#1a2a1a;border:1px solid #44aa66;color:#66cc88;font-size:0.85rem;padding:8px;">
+        ✔ 套用局面
+      </button>
+
+      <div class="panel-title" style="margin-top:4px;">禁手規則</div>
+      <div class="toggle-row" onclick="toggleForbidden()">
+        <span>啟用黑棋禁手</span>
+        <div class="toggle-switch" id="forbid-toggle"></div>
+      </div>
+      <div class="info-box" id="forbid-info" style="display:none;">
+        <b style="color:var(--accent-forbid);">禁手判斷開啟</b><br>
+        黑棋不可下：長連 · 四四 · 三三<br>
+        白棋 VCF 可利用禁手封鎖黑棋防守
+      </div>
+
+      <div class="panel-title" style="margin-top:4px;">VCF 計算</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;">
+        <span style="color:var(--text-dim);white-space:nowrap;">最大深度</span>
+        <select id="depth-select" style="flex:1;background:var(--panel2);border:1px solid #4a3a20;color:var(--text);border-radius:4px;padding:4px 6px;font-family:'Noto Serif TC',serif;font-size:0.8rem;">
+          <option value="5">5 手</option>
+          <option value="10">10 手</option>
+          <option value="15">15 手</option>
+          <option value="20" selected>20 手</option>
+          <option value="30">30 手</option>
+          <option value="50">50 手</option>
+          <option value="100">100 手</option>
+          <option value="inf">∞ 無上限</option>
+        </select>
+      </div>
+      <div class="mode-toggle-row">
+        <button class="mode-toggle-btn" id="mode-iddfs" onclick="setSearchMode('iddfs')">
+          IDDFS<br><span style="font-size:0.6rem;opacity:0.7;">逐層加深</span>
+        </button>
+        <button class="mode-toggle-btn active" id="mode-direct" onclick="setSearchMode('direct')">
+          直接深度<br><span style="font-size:0.6rem;opacity:0.7;">清TT單次</span>
+        </button>
+      </div>
+      <button class="action-btn btn-vcf-black" onclick="runVCF(1)">⬤ 計算黑棋 VCF</button>
+      <button class="action-btn btn-vcf-white" onclick="runVCF(2)">○ 計算白棋 VCF</button>
+      <button id="btn-cancel" class="action-btn" onclick="cancelVCF()"
+        style="display:none;background:#2a0a0a;border:1px solid #ff6b35;color:#ff6b35;">⏹ 取消搜尋</button>
+
+      <div class="panel-title" style="margin-top:4px;">題目管理</div>
+      <div style="font-size:0.72rem;color:var(--text-dim);line-height:1.6;">
+        儲存目前局面為題目，或貼上 JSON 載入
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input id="puzzle-name" type="text" placeholder="題目名稱" style="flex:1;background:var(--panel2);border:1px solid #4a3a20;color:var(--text);border-radius:4px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;">
+        <button class="action-btn" onclick="savePuzzle()"
+          style="padding:5px 10px;background:#0a2010;border:1px solid #44aa66;color:#66cc88;font-size:0.78rem;white-space:nowrap;">
+          ＋ 存
+        </button>
+      </div>
+      <div id="puzzle-list" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;"></div>
+      <textarea id="puzzle-json" class="puzzle-area" placeholder="貼上題目 JSON 後按「載入」"></textarea>
+      <div style="display:flex;gap:6px;">
+        <button class="action-btn" onclick="loadPuzzleFromJSON()"
+          style="flex:1;padding:6px;background:#082020;border:1px solid var(--accent-white);color:var(--accent-white);font-size:0.78rem;">
+          載入 JSON
+        </button>
+        <button class="action-btn" onclick="exportAllPuzzles()"
+          style="flex:1;padding:6px;background:var(--panel2);border:1px solid #4a3a20;color:var(--text-dim);font-size:0.78rem;">
+          匯出全部
+        </button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-black)"></div>黑攻</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-white)"></div>白攻</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4488ff"></div>守方</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-forbid)"></div>禁手</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-verify" style="display:none;">
+      <div class="panel-title">路徑驗證模式</div>
+
+      <div style="font-size:0.75rem;color:var(--text-dim);line-height:1.6;">
+        攻方：
+        <label style="margin-right:8px;cursor:pointer;">
+          <input type="radio" name="vatk" value="2" checked onchange="verifyAttacker=2"> 白棋
+        </label>
+        <label style="cursor:pointer;">
+          <input type="radio" name="vatk" value="1" onchange="verifyAttacker=1"> 黑棋
+        </label>
+      </div>
+
+      <div style="font-size:0.72rem;color:var(--text-dim);">輸入手順座標（空格或換行分隔）<br>
+        <span style="opacity:0.7;">例：H8 G8 H7 G9 H6</span>
+      </div>
+      <textarea class="coord-input" id="verify-input" placeholder="H8 G8 H7 G9 H6&#10;或點棋盤錄入↓"></textarea>
+
+      <div style="display:flex;gap:6px;">
+        <button class="action-btn" onclick="startVerifyClick()"
+          style="flex:1;font-size:0.8rem;padding:7px;background:#082020;border:1px solid var(--accent-white);color:var(--accent-white);">
+          ▶ 開始驗證
+        </button>
+        <button class="action-btn" onclick="clearVerify()"
+          style="flex:1;font-size:0.8rem;padding:7px;background:var(--panel2);border:1px solid #4a3a20;color:var(--text-dim);">
+          清除
+        </button>
+      </div>
+
+      <div class="panel-title" style="margin-top:4px;">剪枝追蹤模式</div>
+      <div style="font-size:0.72rem;color:var(--text-dim);line-height:1.6;">
+        輸入已知答案手順，追蹤主搜尋在哪步被剪枝。<br>
+        <span style="color:#ffcc44;">清空 TT，直接最大深度跑一次。</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;margin-top:2px;">
+        <span style="color:var(--text-dim);white-space:nowrap;">追蹤深度</span>
+        <select id="trace-depth-select" style="flex:1;background:var(--panel2);border:1px solid #4a3a20;color:var(--text);border-radius:4px;padding:4px 6px;font-family:'Noto Serif TC',serif;font-size:0.8rem;">
+          <option value="10">10 手</option>
+          <option value="20">20 手</option>
+          <option value="30" selected>30 手</option>
+          <option value="50">50 手</option>
+          <option value="100">100 手</option>
+        </select>
+      </div>
+      <button class="action-btn" onclick="startTraceSearch()"
+        style="background:#1a1a08;border:1px solid #aaaa44;color:#dddd66;font-size:0.85rem;padding:8px;">
+        🔍 剪枝追蹤搜尋
+      </button>
+
+      <div style="font-size:0.7rem;color:var(--text-dim);padding:4px 0;">
+        或直接在棋盤點擊錄入手順（攻/守自動交替）
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:0.75rem;">
+        <button class="action-btn" onclick="undoVerifyClick()"
+          style="flex:1;font-size:0.75rem;padding:5px;background:var(--panel2);border:1px solid #4a3a20;color:var(--text-dim);">
+          ↩ 撤回
+        </button>
+        <span id="verify-click-status" style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.7rem;"></span>
+      </div>
+    </div>
+
+    <div class="result-panel" id="result-panel-main">
+      <div class="result-title">分析結果</div>
+      <div class="result-content" id="result-area">
+        <span class="result-none">請編輯棋盤後按下計算按鈕</span>
+      </div>
+    </div>
+
+    <div class="result-panel" id="verify-result-panel" style="display:none;max-height:700px;">
+      <div class="result-title">驗證診斷</div>
+      <div id="verify-result-area" style="font-size:0.82rem;"></div>
+    </div>
+
+    <div class="result-panel" id="trace-result-panel" style="display:none;max-height:700px;width:500px;">
+      <div class="result-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>剪枝追蹤日誌</span>
+        <button onclick="copyTraceLog()"
+          style="font-size:0.65rem;padding:2px 8px;background:#2a2a10;border:1px solid #aaaa44;color:#dddd66;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;">
+          複製全部
+        </button>
+      </div>
+      <div id="trace-result-area"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 常數 ==========
+const SIZE = 15;
+const CELL = 34;
+const PAD = 32;
+const CANVAS = PAD*2 + CELL*(SIZE-1);  // 32*2 + 34*14 = 540
+const BLACK = 1, WHITE = 2, EMPTY = 0;
+const DIRS = [[1,0],[0,1],[1,1],[1,-1]];
+
+// ========== 狀態 ==========
+let board = Array.from({length:SIZE}, () => new Array(SIZE).fill(0));
+let tool = 'black';
+let vcfMoves = [];
+let vcfAttacker = 0;
+let useForbidden = false;
+let activeWorker = null;
+let searchMode = 'direct';
+
+let altMode = false;
+let altTurn = BLACK;
+let altHistory = [];
+
+let vcfPlaybackMoves = [];
+let vcfPlaybackStep_cur = 0;
+
+function setSearchMode(mode) {
+  searchMode = mode;
+  document.getElementById('mode-iddfs').className = 'mode-toggle-btn' + (mode==='iddfs'?' active':'');
+  document.getElementById('mode-direct').className = 'mode-toggle-btn' + (mode==='direct'?' active':'');
+}
+
+const canvas = document.getElementById('board');
+canvas.width = CANVAS;
+canvas.height = CANVAS;
+const ctx = canvas.getContext('2d');
+
+function toggleForbidden() {
+  useForbidden = !useForbidden;
+  document.getElementById('forbid-toggle').className = 'toggle-switch' + (useForbidden ? ' on' : '');
+  document.getElementById('forbid-info').style.display = useForbidden ? 'block' : 'none';
+  vcfMoves = []; vcfAttacker = 0;
+  render();
+}
+
+// ========== Offscreen board cache ==========
+let _boardCache = null;
+
+function buildBoardCache() {
+  const oc = document.createElement('canvas');
+  oc.width = CANVAS; oc.height = CANVAS;
+  const octx = oc.getContext('2d');
+
+  // 木色漸層底色
+  const grad = octx.createLinearGradient(0,0,CANVAS,CANVAS);
+  grad.addColorStop(0, '#d4a96a');
+  grad.addColorStop(0.5, '#c8a058');
+  grad.addColorStop(1, '#b88a48');
+  octx.fillStyle = grad;
+  octx.fillRect(0,0,CANVAS,CANVAS);
+
+  // 木紋（只畫一次，用固定 seed 讓每次結果相同）
+  octx.strokeStyle = 'rgba(120,80,20,0.06)';
+  octx.lineWidth = 1;
+  // 用 xorshift 固定亂數，避免每次 render 都不同
+  let _s = 0x12345678;
+  const rand = () => { _s ^= _s<<13; _s ^= _s>>7; _s ^= _s<<17; return (_s>>>0)/4294967296; };
+  for (let i=0; i<60; i++) {
+    const y = rand()*CANVAS;
+    octx.beginPath(); octx.moveTo(0,y); octx.lineTo(CANVAS,y+rand()*10-5); octx.stroke();
+  }
+
+  // 棋盤線
+  octx.strokeStyle = 'rgba(90,60,20,0.7)';
+  octx.lineWidth = 0.8;
+  for (let i=0; i<SIZE; i++) {
+    const x = PAD + i*CELL, y = PAD + i*CELL;
+    octx.beginPath(); octx.moveTo(x, PAD); octx.lineTo(x, PAD+(SIZE-1)*CELL); octx.stroke();
+    octx.beginPath(); octx.moveTo(PAD, y); octx.lineTo(PAD+(SIZE-1)*CELL, y); octx.stroke();
+  }
+
+  // 外框加粗
+  octx.strokeStyle = 'rgba(90,60,20,0.85)';
+  octx.lineWidth = 2;
+  octx.strokeRect(PAD, PAD, (SIZE-1)*CELL, (SIZE-1)*CELL);
+
+  // 星位
+  const stars = [[3,3],[3,11],[7,7],[11,3],[11,11]];
+  octx.fillStyle = 'rgba(90,60,20,0.8)';
+  stars.forEach(([r,c]) => {
+    octx.beginPath();
+    octx.arc(PAD+c*CELL, PAD+r*CELL, 3.5, 0, Math.PI*2);
+    octx.fill();
+  });
+
+  // 座標標籤
+  octx.font = '10px JetBrains Mono, monospace';
+  octx.fillStyle = 'rgba(90,60,20,0.6)';
+  const cols = 'ABCDEFGHJKLMNOP';
+  for (let i=0; i<SIZE; i++) {
+    const x = PAD + i*CELL;
+    const y = PAD + i*CELL;
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillText(cols[i], x, PAD/2);
+    octx.fillText(cols[i], x, CANVAS - PAD/2);
+    octx.fillText(SIZE-i, PAD/2, y);
+    octx.fillText(SIZE-i, CANVAS - PAD/2, y);
+  }
+  octx.textBaseline = 'alphabetic';
+
+  _boardCache = oc;
+}
+
+function drawBoard() {
+  if (!_boardCache) buildBoardCache();
+  ctx.drawImage(_boardCache, 0, 0);
+}
+
+function drawStones() {
+  for (let r=0; r<SIZE; r++)
+    for (let c=0; c<SIZE; c++)
+      if (board[r][c]) drawStone(r, c, board[r][c]);
+}
+
+function drawStone(r, c, color, alpha=1, label=null, labelColor=null) {
+  const x = PAD + c*CELL, y = PAD + r*CELL, rad = CELL*0.42;
+  ctx.globalAlpha = alpha;
+  if (color === BLACK) {
+    const g = ctx.createRadialGradient(x-rad*0.3, y-rad*0.3, rad*0.05, x, y, rad);
+    g.addColorStop(0, '#666'); g.addColorStop(1, '#0a0a0a');
+    ctx.fillStyle = g;
+  } else {
+    const g = ctx.createRadialGradient(x-rad*0.3, y-rad*0.3, rad*0.05, x, y, rad);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.7, '#e8e0d0'); g.addColorStop(1, '#c0b898');
+    ctx.fillStyle = g;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 3; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
+  }
+  ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+
+  if (label !== null) {
+    ctx.fillStyle = labelColor || (color===BLACK?'#fff':'#222');
+    ctx.font = `bold ${rad*0.9}px JetBrains Mono, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y+1);
+    ctx.textBaseline = 'alphabetic';
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawForbidMark(r, c, alpha=0.85) {
+  const x = PAD + c*CELL, y = PAD + r*CELL, s = CELL*0.28;
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#ff3366';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+s,y-s); ctx.lineTo(x-s,y+s); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawVCF() {
+  if (!vcfMoves.length) return;
+  const isBlack = vcfAttacker === BLACK;
+  const atkColor = isBlack ? 'rgba(255,107,53,0.85)' : 'rgba(78,205,196,0.85)';
+  const defColor = 'rgba(80,120,255,0.7)';
+  const forbidColor = 'rgba(255,51,102,0.85)';
+
+  for (let i=0; i<vcfMoves.length-1; i++) {
+    const {r:r1,c:c1,type:t1} = vcfMoves[i];
+    const {r:r2,c:c2} = vcfMoves[i+1];
+    const lineCol = t1==='atk' ? atkColor : t1==='forbid-block' ? forbidColor : defColor;
+    ctx.strokeStyle = lineCol;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3,3]);
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(PAD+c1*CELL, PAD+r1*CELL);
+    ctx.lineTo(PAD+c2*CELL, PAD+r2*CELL);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
+  vcfMoves.forEach(({r,c,type}, idx) => {
+    if (type === 'forbid-block') {
+      const x = PAD+c*CELL, y = PAD+r*CELL, rad = CELL*0.42;
+      ctx.strokeStyle = forbidColor;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.arc(x, y, rad+3, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 1;
+      drawForbidMark(r, c, 0.9);
+      ctx.fillStyle = '#ff3366';
+      ctx.font = `bold 10px JetBrains Mono, monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(idx+1, x, y-CELL*0.42-8);
+      ctx.textBaseline = 'alphabetic';
+      return;
+    }
+
+    const isAtk = type === 'atk';
+    const stoneColor = isAtk ? vcfAttacker : (vcfAttacker===BLACK ? WHITE : BLACK);
+    const ring = isAtk ? atkColor : defColor;
+
+    ctx.strokeStyle = ring;
+    ctx.lineWidth = 2.5;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(PAD+c*CELL, PAD+r*CELL, CELL*0.42+3, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    drawStone(r, c, stoneColor, 0.9, idx+1, isAtk?(stoneColor===BLACK?'#ff9966':'#003333'):'#ffffff');
+  });
+
+  if (useForbidden) {
+    for (let r=0; r<SIZE; r++) for (let c=0; c<SIZE; c++) {
+      if (board[r][c] !== EMPTY) continue;
+      if (isForbidden(board, r, c)) {
+        drawForbidMark(r, c, 0.35);
+      }
+    }
+  }
+}
+
+function render() {
+  ctx.clearRect(0,0,CANVAS,CANVAS);
+  drawBoard();
+  drawStones();
+  drawVCF();
+}
+
+canvas.addEventListener('click', e => {
+  if (currentTab === 'verify') return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CANVAS / rect.width;
+  const scaleY = CANVAS / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  const c = Math.round((mx - PAD) / CELL);
+  const r = Math.round((my - PAD) / CELL);
+  if (r<0||r>=SIZE||c<0||c>=SIZE) return;
+
+  if (altMode) {
+    if (board[r][c] !== EMPTY) return;
+    board[r][c] = altTurn;
+    bbSet(r, c, altTurn);
+    altHistory.push({r, c, color: altTurn});
+    altTurn = altTurn === BLACK ? WHITE : BLACK;
+    updateAltTurnUI();
+    vcfMoves = []; vcfAttacker = 0;
+    render();
+  } else {
+    const prev = board[r][c];
+    if (tool==='black') board[r][c] = board[r][c]===BLACK ? EMPTY : BLACK;
+    else if (tool==='white') board[r][c] = board[r][c]===WHITE ? EMPTY : WHITE;
+    else board[r][c] = EMPTY;
+    if (prev && prev !== board[r][c]) bbClear(r, c, prev);
+    if (board[r][c]) bbSet(r, c, board[r][c]);
+    vcfMoves = []; vcfAttacker = 0;
+    render();
+  }
+});
+
+function setTool(t) {
+  tool = t;
+  ['black','white','erase'].forEach(x => {
+    const btn = document.getElementById('btn-'+x);
+    btn.className = 'tool-btn' + (t===x ? ` active-${x}` : '');
+  });
+}
+
+function toggleAltMode() {
+  altMode = !altMode;
+  const sw = document.getElementById('alt-mode-toggle-switch');
+  const bar = document.getElementById('alt-mode-bar');
+  const toolRow = document.querySelector('.tool-row');
+  if (altMode) {
+    sw.className = 'toggle-switch on';
+    sw.style.background = 'rgba(78,205,196,0.6)';
+    bar.style.display = '';
+    altTurn = BLACK;
+    altHistory = [];
+    updateAltTurnUI();
+    if (toolRow) toolRow.style.opacity = '0.4';
+  } else {
+    sw.className = 'toggle-switch';
+    sw.style.background = '#3a2e1a';
+    bar.style.display = 'none';
+    if (toolRow) toolRow.style.opacity = '1';
+  }
+}
+
+function updateAltTurnUI() {
+  const stone = document.getElementById('alt-turn-stone');
+  const label = document.getElementById('alt-turn-label');
+  const total = altHistory.length;
+  stone.className = 'alt-turn-stone ' + (altTurn === BLACK ? 'black' : 'white');
+  label.textContent = (altTurn === BLACK ? '黑棋下' : '白棋下') + `（第 ${total+1} 手）`;
+}
+
+function undoAltMove() {
+  if (!altHistory.length) return;
+  const last = altHistory.pop();
+  board[last.r][last.c] = EMPTY;
+  bbClear(last.r, last.c, last.color);
+  altTurn = last.color;
+  vcfMoves = []; vcfAttacker = 0;
+  updateAltTurnUI();
+  render();
+}
+
+function clearBoard() {
+  board = Array.from({length:SIZE}, () => new Array(SIZE).fill(0));
+  bbSync(board);
+  vcfMoves = []; vcfAttacker = 0;
+  document.getElementById('result-area').innerHTML = '<span class="result-none">棋盤已清空</span>';
+  render();
+}
+
+function applyBoardFromInput() {
+  const COLS = 'ABCDEFGHJKLMNOP';
+  const coordToRC = s => {
+    s = s.trim().toUpperCase();
+    if (s.length < 2) return null;
+    const col = COLS.indexOf(s[0]);
+    const row = SIZE - parseInt(s.slice(1));
+    if (col<0 || isNaN(row) || row<0 || row>=SIZE) return null;
+    return {r:row, c:col};
+  };
+  const whiteRaw = document.getElementById('input-white').value;
+  const blackRaw = document.getElementById('input-black').value;
+
+  board = Array.from({length:SIZE}, () => new Array(SIZE).fill(0));
+
+  const errors = [];
+
+  const parse = (raw, color) => {
+    const tokens = raw.trim().split(/[\s,，]+/).filter(Boolean);
+    tokens.forEach(s => {
+      const rc = coordToRC(s);
+      if (!rc) { errors.push(`無法解析座標：${s}`); return; }
+      if (board[rc.r][rc.c] !== EMPTY) { errors.push(`座標重複：${s}`); return; }
+      board[rc.r][rc.c] = color;
+    });
+  };
+
+  parse(whiteRaw, WHITE);
+  parse(blackRaw, BLACK);
+
+  bbSync(board);
+  vcfMoves = []; vcfAttacker = 0;
+
+  if (errors.length) {
+    document.getElementById('result-area').innerHTML =
+      `<span style="color:#ff6666;">⚠ 部分座標有誤：<br>${errors.join('<br>')}</span>`;
+  } else {
+    document.getElementById('result-area').innerHTML =
+      `<span style="color:#66cc88;">✔ 局面已套用</span>`;
+  }
+  render();
+}
+
+// ========== Bitboard ==========
+function bbLineIdx(r, c, dir) {
+  switch(dir) {
+    case 0: return { i: r,       p: c };
+    case 1: return { i: c,       p: r };
+    case 2: return { i: r-c+14,  p: c };
+    case 3: return { i: r+c,     p: r };
+  }
+}
+
+let BL = [
+  [new Uint16Array(15), new Uint16Array(15), new Uint16Array(29), new Uint16Array(29)],
+  [new Uint16Array(15), new Uint16Array(15), new Uint16Array(29), new Uint16Array(29)]
+];
+
+function bbSet(r, c, p) {
+  const bl = BL[p-1];
+  const {i:i0,p:p0}=bbLineIdx(r,c,0); bl[0][i0]|=(1<<p0);
+  const {i:i1,p:p1}=bbLineIdx(r,c,1); bl[1][i1]|=(1<<p1);
+  const {i:i2,p:p2}=bbLineIdx(r,c,2); bl[2][i2]|=(1<<p2);
+  const {i:i3,p:p3}=bbLineIdx(r,c,3); bl[3][i3]|=(1<<p3);
+}
+function bbClear(r, c, p) {
+  const bl = BL[p-1];
+  const {i:i0,p:p0}=bbLineIdx(r,c,0); bl[0][i0]&=~(1<<p0);
+  const {i:i1,p:p1}=bbLineIdx(r,c,1); bl[1][i1]&=~(1<<p1);
+  const {i:i2,p:p2}=bbLineIdx(r,c,2); bl[2][i2]&=~(1<<p2);
+  const {i:i3,p:p3}=bbLineIdx(r,c,3); bl[3][i3]&=~(1<<p3);
+}
+
+function bbSync(b) {
+  BL = [
+    [new Uint16Array(15), new Uint16Array(15), new Uint16Array(29), new Uint16Array(29)],
+    [new Uint16Array(15), new Uint16Array(15), new Uint16Array(29), new Uint16Array(29)]
+  ];
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (b[r][c]) bbSet(r, c, b[r][c]);
+  }
+}
+
+function bbWindow(bl_dir, lineIdx, pos) {
+  const line = bl_dir[lineIdx];
+  const shift = pos - 4;
+  const w = shift >= 0 ? (line >> shift) : (line << (-shift));
+  return (w & 0x1FF) | (1 << 4);
+}
+
+const _C = 4;
+const T_FIVE     = new Uint8Array(512);
+const T_OVERLINE = new Uint8Array(512);
+const T_FIVE_GE5 = new Uint8Array(512);
+const T_FOUR_CNT = new Uint8Array(512);
+const T_IS_FOUR  = new Uint8Array(512);
+const T_IS_LIVE4 = new Uint8Array(512);
+const T_IS_FOUR_W = new Uint8Array(512);
+const T_IS_LIVE4_W= new Uint8Array(512);
+
+(function buildTables() {
+  for (let w = 0; w < 512; w++) {
+    if (!(w & (1 << _C))) continue;
+    let len = 1;
+    for (let d=1; _C-d>=0 && (w>>(_C-d))&1; d++) len++;
+    for (let d=1; _C+d<9  && (w>>(_C+d))&1; d++) len++;
+
+    if (len === 5) { T_FIVE[w]=1; T_FIVE_GE5[w]=1; }
+    else if (len > 5)  { T_OVERLINE[w]=1; T_FIVE_GE5[w]=1; }
+
+    if (len >= 5) continue;
+
+    let fp_b = 0;
+    let fp_w = 0;
+
+    for (let g = -4; g <= 4; g++) {
+      const gp = _C + g;
+      if (gp < 0 || gp >= 9) continue;
+      if ((w >> gp) & 1) continue;
+      const w2 = w | (1 << gp);
+      let l2 = 1;
+      for (let d=1; gp-d>=0 && (w2>>(gp-d))&1; d++) l2++;
+      for (let d=1; gp+d<9  && (w2>>(gp+d))&1; d++) l2++;
+      if (l2 === 5) fp_b++;
+      if (l2 >= 5) fp_w++;
+    }
+    T_FOUR_CNT[w] = fp_b > 2 ? 2 : fp_b;
+    T_IS_FOUR[w]  = fp_b >= 1 ? 1 : 0;
+    T_IS_LIVE4[w] = fp_b >= 2 ? 1 : 0;
+    T_IS_FOUR_W[w] = fp_w >= 1 ? 1 : 0;
+    T_IS_LIVE4_W[w]= fp_w >= 2 ? 1 : 0;
+  }
+})();
+
+function inBounds(r, c) { return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+
+function isFive(b, r, c, p) {
+  const bl = BL[p-1];
+  for (let d = 0; d < 4; d++) {
+    const {i, p:pos} = bbLineIdx(r, c, d);
+    const w = bbWindow(bl[d], i, pos);
+    if (p === BLACK ? T_FIVE[w] : T_FIVE_GE5[w]) return true;
+  }
+  return false;
+}
+
+function isOverline(b, r, c, p) {
+  const bl = BL[p-1];
+  for (let d = 0; d < 4; d++) {
+    const {i, p:pos} = bbLineIdx(r, c, d);
+    if (T_OVERLINE[bbWindow(bl[d], i, pos)]) return true;
+  }
+  return false;
+}
+
+function countDir(b, r, c, dr, dc, p) {
+  let n=0, rr=r+dr, cc=c+dc;
+  while(inBounds(rr,cc) && b[rr][cc]===p) { n++; rr+=dr; cc+=dc; }
+  return n;
+}
+function lineCount(b, r, c, dr, dc, p) {
+  return 1 + countDir(b,r,c,dr,dc,p) + countDir(b,r,c,-dr,-dc,p);
+}
+
+function isFour(b, r, c, p) {
+  if (b[r][c] !== EMPTY) return false;
+  b[r][c] = p; bbSet(r, c, p);
+  let ok = false;
+  if (!isFive(b, r, c, p)) {
+    const bl = BL[p-1];
+    const tbl = p === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
+    for (let d = 0; d < 4; d++) {
+      const {i, p:pos} = bbLineIdx(r, c, d);
+      if (tbl[bbWindow(bl[d], i, pos)]) { ok = true; break; }
+    }
+  }
+  b[r][c] = EMPTY; bbClear(r, c, p);
+  return ok;
+}
+
+function getPatternInDir(b, r, c, dr, dc, p) {
+  const opp = (p===BLACK)?WHITE:BLACK;
+  let best = null;
+  for (let start=-4; start<=0; start++) {
+    let stones=0, empties=0, hasOpp=false, emptyPos=[];
+    for (let k=0; k<5; k++) {
+      const rr=r+(start+k)*dr, cc=c+(start+k)*dc;
+      if (!inBounds(rr,cc)){hasOpp=true;break;}
+      const v=b[rr][cc];
+      if (v===opp){hasOpp=true;break;}
+      if (v===p) stones++;
+      else {empties++; emptyPos.push(k);}
+    }
+    if (hasOpp) continue;
+    if (stones===5) {
+      if (p===BLACK) {
+        const rb=r+(start-1)*dr, cb=c+(start-1)*dc;
+        const ra=r+(start+5)*dr, ca=c+(start+5)*dc;
+        if ((inBounds(rb,cb)&&b[rb][cb]===BLACK)||(inBounds(ra,ca)&&b[ra][ca]===BLACK)) continue;
+      }
+      return 'five';
+    }
+    if (stones===4&&empties===1) {
+      const rb=r+(start-1)*dr, cb=c+(start-1)*dc;
+      const ra=r+(start+5)*dr, ca=c+(start+5)*dc;
+      const ob=inBounds(rb,cb)&&b[rb][cb]===EMPTY;
+      const oa=inBounds(ra,ca)&&b[ra][ca]===EMPTY;
+      const inner=emptyPos[0]>0&&emptyPos[0]<4;
+      if (inner) best='rush4';
+      else if (ob&&oa) return 'open4';
+      else if (best!=='open4') best='rush4';
+    }
+  }
+  return best;
+}
+
+function countFours(b, r, c, p) {
+  let cnt=0;
+  for (const [dr,dc] of DIRS) {
+    const t=getPatternInDir(b,r,c,dr,dc,p);
+    if(t==='rush4'||t==='open4') cnt++;
+  }
+  return cnt;
+}
+function countFoursDirs(b, r, c) { return countFours(b,r,c,BLACK); }
+
+const FORBID_MAX_DEPTH = 5;
+
+function getFivePoints(b, r, c) {
+  const pts = [];
+  for (const [dr,dc] of DIRS) {
+    for (let dist = -4; dist <= 4; dist++) {
+      const nr = r + dist*dr, nc = c + dist*dc;
+      if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
+      b[nr][nc] = BLACK;
+      const len = lineCount(b, nr, nc, dr, dc, BLACK);
+      b[nr][nc] = EMPTY;
+      if (len === 5) pts.push([nr, nc]);
+    }
+  }
+  const seen = new Set();
+  return pts.filter(([r2,c2]) => {
+    const k = r2*SIZE+c2;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}
+
+function isRealFourInDir(b, r, c, dr, dc) {
+  for (let dist = -4; dist <= 4; dist++) {
+    const nr = r + dist*dr, nc = c + dist*dc;
+    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
+    b[nr][nc] = BLACK;
+    const len = lineCount(b, nr, nc, dr, dc, BLACK);
+    b[nr][nc] = EMPTY;
+    if (len === 5) return true;
+  }
+  return false;
+}
+
+function countFoursInDir(b, r, c, dr, dc) {
+  const dists = [];
+  for (let dist = -4; dist <= 4; dist++) {
+    const nr = r + dist*dr, nc = c + dist*dc;
+    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
+    b[nr][nc] = BLACK;
+    if (lineCount(b, nr, nc, dr, dc, BLACK) === 5) dists.push(dist);
+    b[nr][nc] = EMPTY;
+  }
+  if (dists.length === 0) return 0;
+  let groups = 1;
+  for (let i = 1; i < dists.length; i++) {
+    if (dists[i] - dists[i-1] !== 5) groups++;
+  }
+  return groups;
+}
+
+function countRealFourDirs(b, r, c) {
+  let cnt = 0;
+  for (const [dr,dc] of DIRS) cnt += countFoursInDir(b, r, c, dr, dc);
+  return cnt;
+}
+
+function isLiveFourInDir(b, r, c, dr, dc) {
+  let validFivePts = 0;
+  for (let dist = -4; dist <= 4; dist++) {
+    const nr = r + dist*dr, nc = c + dist*dc;
+    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
+    b[nr][nc] = BLACK;
+    const len = lineCount(b, nr, nc, dr, dc, BLACK);
+    b[nr][nc] = EMPTY;
+    if (len === 5) validFivePts++;
+  }
+  return validFivePts >= 2;
+}
+
+function isLiveThreeInDir(b, r, c, dr, dc, visiting, depth) {
+  for (let dist = -4; dist <= 4; dist++) {
+    const nr = r + dist*dr, nc = c + dist*dc;
+    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
+
+    b[nr][nc] = BLACK;
+
+    const overline = isOverline(b, nr, nc, BLACK);
+    const five = isFive(b, nr, nc, BLACK);
+
+    if (!overline && !five) {
+      const makesLiveFour = isLiveFourInDir(b, nr, nc, dr, dc);
+
+      if (makesLiveFour) {
+        b[nr][nc] = EMPTY;
+        if (!isForbiddenWithVisited(b, nr, nc, visiting, depth)) {
+          return true;
+        }
+        continue;
+      }
+    }
+
+    b[nr][nc] = EMPTY;
+  }
+  return false;
+}
+
+function countLiveThreeDirs(b, r, c, visiting, depth) {
+  let cnt = 0;
+  for (const [dr,dc] of DIRS) {
+    if (isLiveThreeInDir(b, r, c, dr, dc, visiting, depth)) cnt++;
+  }
+  return cnt;
+}
+
+function isForbiddenWithVisited(b, r, c, visiting, depth) {
+  if (b[r][c] !== EMPTY) return false;
+  const key = r * SIZE + c;
+  if (visiting.has(key)) return false;
+  if (depth >= FORBID_MAX_DEPTH) return false;
+
+  b[r][c] = BLACK;
+
+  let result = false;
+  if (isFive(b, r, c, BLACK)) {
+    // 成五不禁
+  } else if (isOverline(b, r, c, BLACK)) {
+    result = true;
+  } else if (countRealFourDirs(b, r, c) >= 2) {
+    result = true;
+  } else {
+    const nextVisiting = new Set(visiting);
+    nextVisiting.add(key);
+    if (countLiveThreeDirs(b, r, c, nextVisiting, depth + 1) >= 2) {
+      result = true;
+    }
+  }
+
+  b[r][c] = EMPTY;
+  return result;
+}
+
+function getForbidType(b, r, c) {
+  if (b[r][c] !== EMPTY) return null;
+  b[r][c] = BLACK;
+
+  let result = null;
+  if (isFive(b, r, c, BLACK)) {
+    b[r][c] = EMPTY;
+    return null;
+  }
+
+  if (isOverline(b, r, c, BLACK)) {
+    result = 'overline';
+  } else if (countRealFourDirs(b, r, c) >= 2) {
+    result = 'double4';
+  } else {
+    const visiting = new Set([r * SIZE + c]);
+    if (countLiveThreeDirs(b, r, c, visiting, 0) >= 2) {
+      result = 'double3';
+    }
+  }
+
+  b[r][c] = EMPTY;
+  return result;
+}
+
+function isForbidden(b, r, c) {
+  return getForbidType(b, r, c) !== null;
+}
+
+const NEAR = 2;
+function nearCandidates(b) {
+  const cands = new Uint8Array(SIZE * SIZE);
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (b[r][c]===EMPTY) continue;
+    for (let dr=-NEAR;dr<=NEAR;dr++) for (let dc=-NEAR;dc<=NEAR;dc++) {
+      const nr=r+dr, nc=c+dc;
+      if (inBounds(nr,nc) && b[nr][nc]===EMPTY) cands[nr*SIZE+nc]=1;
+    }
+  }
+  return cands;
+}
+
+function findFours(b, p) {
+  const list = [];
+  const cands = nearCandidates(b);
+  const tFour = p === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
+  const bl = BL[p-1];
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (!cands[r*SIZE+c]) continue;
+    if (p===BLACK && useForbidden) {
+      b[r][c]=BLACK; bbSet(r,c,BLACK);
+      const wins=isFive(b,r,c,BLACK);
+      b[r][c]=EMPTY; bbClear(r,c,BLACK);
+      if (!wins && isForbidden(b,r,c)) continue;
+    }
+    b[r][c]=p; bbSet(r,c,p);
+    if (isFive(b,r,c,p)) { b[r][c]=EMPTY; bbClear(r,c,p); list.unshift([r,c,'five']); continue; }
+    let hasFour = false;
+    for (let d=0; d<4; d++) {
+      const {i, p:pos} = bbLineIdx(r, c, d);
+      if (tFour[bbWindow(bl[d], i, pos)]) { hasFour = true; break; }
+    }
+    b[r][c]=EMPTY; bbClear(r,c,p);
+    if (hasFour) list.push([r,c,'four']);
+  }
+  return list;
+}
+
+function findDefense(b, attacker, defender, lastR, lastC) {
+  const mustBlock = new Set();
+  if (lastR !== undefined) {
+    for (const [dr,dc] of DIRS) {
+      for (let dist=-4;dist<=4;dist++) {
+        const nr=lastR+dist*dr, nc=lastC+dist*dc;
+        if (!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+        b[nr][nc]=attacker; bbSet(nr,nc,attacker);
+        if (isFive(b,nr,nc,attacker)) mustBlock.add(nr*SIZE+nc);
+        b[nr][nc]=EMPTY; bbClear(nr,nc,attacker);
+      }
+    }
+  } else {
+    for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+      if (b[r][c]!==EMPTY) continue;
+      b[r][c]=attacker; bbSet(r,c,attacker);
+      if (isFive(b,r,c,attacker)) mustBlock.add(r*SIZE+c);
+      b[r][c]=EMPTY; bbClear(r,c,attacker);
+    }
+    for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+      if (b[r][c]!==attacker) continue;
+      for (const [dr,dc] of DIRS) {
+        const patt=getPatternInDir(b,r,c,dr,dc,attacker);
+        if (patt!=='rush4'&&patt!=='open4') continue;
+        for (let dist=-4;dist<=4;dist++) {
+          const nr=r+dist*dr, nc=c+dist*dc;
+          if (!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+          b[nr][nc]=attacker; bbSet(nr,nc,attacker);
+          if (isFive(b,nr,nc,attacker)) mustBlock.add(nr*SIZE+nc);
+          b[nr][nc]=EMPTY; bbClear(nr,nc,attacker);
+        }
+      }
+    }
+  }
+  return [...mustBlock].map(key=>[Math.floor(key/SIZE),key%SIZE]);
+}
+
+const ZK = (() => {
+  const rng = (()=>{ let s=0x9e3779b9; return ()=>{ s^=s<<13;s^=s>>7;s^=s<<17; return(s>>>0)/4294967296; }; })();
+  return Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>[0,Math.floor(rng()*2**30),Math.floor(rng()*2**30)]));
+})();
+
+function boardHash(b) {
+  let h=0;
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(b[r][c]) h^=ZK[r][c][b[r][c]];
+  return h;
+}
+
+function coverHash(mustCover) {
+  let h=0;
+  for (const k of mustCover) h^=(k*2654435761)>>>0;
+  return h;
+}
+
+let TT = new Map();
+function ttKey(h, lim, ch) {
+  return ((BigInt(h>>>0))<<34n) | (BigInt(lim&0xFFFFF)<<14n) | BigInt(ch&0x3FFF);
+}
+
+function checkLiveFourWin(b, r, c, attacker) {
+  for (const [dr,dc] of DIRS) {
+    if (getPatternInDir(b,r,c,dr,dc,attacker)!=='open4') continue;
+    let legal=0;
+    for (let dist=-4;dist<=4;dist++) {
+      const nr=r+dist*dr, nc=c+dist*dc;
+      if (!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+      b[nr][nc]=attacker;
+      const wins=isFive(b,nr,nc,attacker);
+      b[nr][nc]=EMPTY;
+      if (!wins) continue;
+      if (attacker===BLACK&&useForbidden&&isForbidden(b,nr,nc)) continue;
+      legal++;
+    }
+    if (legal>=2) return true;
+  }
+  return false;
+}
+
+function sortedFours(b, p) {
+  const raw=findFours(b,p);
+  const tLive = p === WHITE ? T_IS_LIVE4_W : T_IS_LIVE4;
+  const tFour = p === WHITE ? T_IS_FOUR_W  : T_IS_FOUR;
+  const scored=raw.map(([r,c,type])=>{
+    if(type==='five') return {r,c,type,score:200};
+    b[r][c]=p; bbSet(r,c,p);
+    let score=0;
+    const bl=BL[p-1];
+    for(let d=0;d<4;d++){
+      const {i,p:pos}=bbLineIdx(r,c,d);
+      const w=bbWindow(bl[d],i,pos);
+      if(tLive[w]) score+=100;
+      else if(tFour[w]) score+=10;
+    }
+    b[r][c]=EMPTY; bbClear(r,c,p);
+    return {r,c,type,score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored;
+}
+
+function isDefendable(b, r, c, defender) {
+  if (b[r][c]!==EMPTY) return false;
+  if (defender===BLACK && useForbidden && isForbidden(b,r,c)) return false;
+  return true;
+}
+
+function getDefenderFourBlocks(b, defender) {
+  const cands=nearCandidates(b);
+  const fivePts=new Set();
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (!cands[r*SIZE+c]) continue;
+    b[r][c]=defender; bbSet(r,c,defender);
+    const wins=isFive(b,r,c,defender);
+    b[r][c]=EMPTY; bbClear(r,c,defender);
+    if (wins) fivePts.add(r*SIZE+c);
+  }
+  if (fivePts.size>0) return {hasFive:true, fivePts, blocks: new Set()};
+  const blocks=new Set();
+  const bl=BL[defender-1];
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (b[r][c]!==defender) continue;
+    for (let d=0;d<4;d++){
+      const {i,p:pos}=bbLineIdx(r,c,d);
+      if (!T_IS_FOUR[bbWindow(bl[d],i,pos)]) continue;
+      const [dr,dc]=DIRS[d];
+      for (let dist=-4;dist<=4;dist++) {
+        const nr=r+dist*dr, nc=c+dist*dc;
+        if (!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+        b[nr][nc]=defender; bbSet(nr,nc,defender);
+        if (isFive(b,nr,nc,defender)) blocks.add(nr*SIZE+nc);
+        b[nr][nc]=EMPTY; bbClear(nr,nc,defender);
+      }
+    }
+  }
+  return {hasFive:false, fivePts:new Set(), blocks};
+}
+
+// 全域追蹤狀態
+let _traceLog   = [];
+let _tracePath  = [];
+let _traceOn    = false;
+
+const _COLS2 = 'ABCDEFGHJKLMNOP';
+function _rc2s(r,c){ return _COLS2[c]+(SIZE-r); }
+function _setStr(s){ return s.size===0?'{}':'{'+[...s].map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE)).join(',')+'}'; }
+
+let cancelFlag = false;
+let searching = false;
+
+function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, traceDepth) {
+  if (cancelFlag) return 'cancelled';
+  if (atkLeft<=0) return null;
+
+  if (!tracePath) tracePath = [];
+  if (traceDepth === undefined) traceDepth = 0;
+
+  const ch=coverHash(mustCover);
+  const tk=ttKey(hash, atkLeft, ch);
+  const ttVal=TT.get(tk);
+  if (ttVal!==undefined && ttVal>=atkLeft) {
+    if (_traceOn && traceDepth < tracePath.length) {
+      const tp = tracePath[traceDepth];
+      _traceLog.push(`[CUT-TT]  d=${traceDepth} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} 期望攻方走${_rc2s(tp.r,tp.c)}，TT剪枝(ttVal=${ttVal}>=atkLeft)`);
+    }
+    return null;
+  }
+
+  const cands=nearCandidates(b);
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (!cands[r*SIZE+c]) continue;
+    b[r][c]=attacker;
+    if (isFive(b,r,c,attacker)) {
+      b[r][c]=EMPTY;
+      return [{r,c,type:'atk'}];
+    }
+    b[r][c]=EMPTY;
+  }
+  if (atkLeft<=1) { const p1=TT.get(tk); if(p1===undefined||1>p1) TT.set(tk,1); return null; }
+
+  const candidates=sortedFours(b, attacker);
+
+  if (_traceOn && traceDepth < tracePath.length) {
+    const tp = tracePath[traceDepth];
+    const inCands = candidates.some(({r,c}) => r===tp.r && c===tp.c);
+    if (!inCands) {
+      _traceLog.push(`[MISS]    d=${traceDepth} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} 目標手${_rc2s(tp.r,tp.c)}不在候選四列表中（candidates=${candidates.map(({r,c})=>_rc2s(r,c)).join(',')}）`);
+    }
+  }
+
+  for (const {r:fr, c:fc} of candidates) {
+    const isTracedAtk = _traceOn && traceDepth < tracePath.length &&
+                        fr === tracePath[traceDepth].r && fc === tracePath[traceDepth].c;
+
+    b[fr][fc]=attacker; bbSet(fr,fc,attacker);
+    const newHash=hash^ZK[fr][fc][attacker];
+
+    const defRaw=findDefense(b,attacker,defender,fr,fc);
+    const defPoints=defRaw.map(([dr,dc])=>({
+      r:dr, c:dc,
+      canDefend: isDefendable(b,dr,dc,defender),
+      forbidType: !isDefendable(b,dr,dc,defender)?(getForbidType(b,dr,dc)||'forbidden'):null
+    }));
+    const defendable=defPoints.filter(p=>p.canDefend);
+    const allForbid =defPoints.filter(p=>!p.canDefend);
+
+    if (defPoints.length===0) {
+      if (isTracedAtk) _traceLog.push(`[CUT-DEF0] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} 找不到守方必堵點，跳過`);
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+    }
+
+    if (mustCover.size > 0) {
+      const selfKey = fr*SIZE+fc;
+      const defKeySet = new Set(defRaw.map(([dr,dc]) => dr*SIZE+dc));
+      const remaining = [...mustCover].filter(mk => mk !== selfKey);
+      if (remaining.length > 0) {
+        if (defendable.length !== 1) {
+          if (isTracedAtk) _traceLog.push(`[CUT-MC1] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} remaining=${remaining.map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} defendable.len=${defendable.length}（活四/禁手，守方可去成五）`);
+          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+        }
+        const allCovered = remaining.every(mk => defKeySet.has(mk));
+        if (!allCovered) {
+          if (isTracedAtk) _traceLog.push(`[CUT-MC2] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} remaining=${remaining.map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} defKeySet=${[...defKeySet].map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} 守方堵點無法覆蓋所有remaining`);
+          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+        }
+      }
+    }
+
+    if (checkLiveFourWin(b,fr,fc,attacker)) {
+      if (isTracedAtk) _traceLog.push(`[OK-L4WIN] d=${traceDepth} atk=${_rc2s(fr,fc)} 活四直接勝`);
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      return [{r:fr,c:fc,type:'atk'}];
+    }
+
+    if (defendable.length===0) {
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      const fp=allForbid[0];
+      return [{r:fr,c:fc,type:'atk'},{r:fp.r,c:fp.c,type:'forbid-block',forbidType:fp.forbidType}];
+    }
+
+    if (defendable.length>1) {
+      if (mustCover.size===0) {
+        b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+        return [{r:fr,c:fc,type:'atk'}];
+      }
+      let allDefFail=true;
+      for (const dp of defendable) {
+        b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        const dHash=newHash^ZK[dp.r][dp.c][defender];
+        const {hasFive:dFive, fivePts:dFivePts, blocks:dBlocks}=getDefenderFourBlocks(b,defender);
+        const nextMust = dFive ? dFivePts : dBlocks;
+        const nextTraceDep = isTracedAtk ? traceDepth+1 : (tracePath.length+1);
+        const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust,tracePath,nextTraceDep);
+        b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+        if (sub==='cancelled') { b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); return 'cancelled'; }
+        if (!sub) { allDefFail=false; break; }
+      }
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      if (!allDefFail) continue;
+      for (const dp of defendable) {
+        b[fr][fc]=attacker; bbSet(fr,fc,attacker);
+        b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        const dHash=newHash^ZK[dp.r][dp.c][defender];
+        const {hasFive:dFive2, fivePts:dFivePts2, blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
+        const nextMust2 = dFive2 ? dFivePts2 : dBlocks2;
+        const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust2,tracePath,traceDepth+1);
+        b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+        b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+        if (sub==='cancelled') return 'cancelled';
+        if (sub) return [{r:fr,c:fc,type:'atk'},{r:dp.r,c:dp.c,type:'def'},...sub];
+      }
+      continue;
+    }
+
+    const {r:dr_def, c:dc_def}=defendable[0];
+    b[dr_def][dc_def]=defender; bbSet(dr_def,dc_def,defender);
+    const defHash=newHash^ZK[dr_def][dc_def][defender];
+
+    const {hasFive:counterFive, fivePts:counterFivePts, blocks:counterBlocks}=getDefenderFourBlocks(b,defender);
+
+    if (isTracedAtk) {
+      const mcStr = _setStr(mustCover);
+      const defStr = _rc2s(dr_def, dc_def);
+      const nextMcStr = counterFive ? _setStr(counterFivePts) : _setStr(counterBlocks);
+      _traceLog.push(`[CONT]    d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} mustCover=${mcStr} def=${defStr} → nextMustCover=${nextMcStr}${counterFive?' (hasFive!)':''}`);
+    }
+
+    if (counterFive) {
+      const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,counterFivePts,tracePath,isTracedAtk?traceDepth+1:(tracePath.length+1));
+      b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      if (sub==='cancelled') return 'cancelled';
+      if (sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
+      continue;
+    }
+
+    const newMust=counterBlocks;
+
+    const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,newMust,tracePath,isTracedAtk?traceDepth+1:(tracePath.length+1));
+
+    b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+    b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+
+    if (sub==='cancelled') return 'cancelled';
+    if (sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
+  }
+
+  const prev=TT.get(tk);
+  if (prev===undefined || atkLeft>prev) TT.set(tk,atkLeft);
+  return null;
+}
+
+// ========== Web Worker (Blob URL，相容 GitHub Pages 單檔部署) ==========
+let _vcfWorker = null;
+
+function _getWorkerCode() {
+  // 把引擎邏輯以字串形式回傳，用 Blob 建立 Worker
+  return `
+'use strict';
+const SIZE = 15, CELL = 34, PAD = 32;
+const BLACK = 1, WHITE = 2, EMPTY = 0;
+const DIRS = [[1,0],[0,1],[1,1],[1,-1]];
+const NEAR = 2;
+const FORBID_MAX_DEPTH = 5;
+
+let useForbidden = false;
+
+// ── Bitboard ──
+function bbLineIdx(r,c,dir){
+  switch(dir){
+    case 0: return {i:r,      p:c};
+    case 1: return {i:c,      p:r};
+    case 2: return {i:r-c+14, p:c};
+    case 3: return {i:r+c,    p:r};
+  }
+}
+let BL=[
+  [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)],
+  [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)]
+];
+function bbSet(r,c,p){
+  const bl=BL[p-1];
+  const {i:i0,p:p0}=bbLineIdx(r,c,0);bl[0][i0]|=(1<<p0);
+  const {i:i1,p:p1}=bbLineIdx(r,c,1);bl[1][i1]|=(1<<p1);
+  const {i:i2,p:p2}=bbLineIdx(r,c,2);bl[2][i2]|=(1<<p2);
+  const {i:i3,p:p3}=bbLineIdx(r,c,3);bl[3][i3]|=(1<<p3);
+}
+function bbClear(r,c,p){
+  const bl=BL[p-1];
+  const {i:i0,p:p0}=bbLineIdx(r,c,0);bl[0][i0]&=~(1<<p0);
+  const {i:i1,p:p1}=bbLineIdx(r,c,1);bl[1][i1]&=~(1<<p1);
+  const {i:i2,p:p2}=bbLineIdx(r,c,2);bl[2][i2]&=~(1<<p2);
+  const {i:i3,p:p3}=bbLineIdx(r,c,3);bl[3][i3]&=~(1<<p3);
+}
+function bbSync(b){
+  BL=[
+    [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)],
+    [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)]
+  ];
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(b[r][c]) bbSet(r,c,b[r][c]);
+}
+function bbWindow(bl_dir,lineIdx,pos){
+  const line=bl_dir[lineIdx];
+  const shift=pos-4;
+  const w=shift>=0?(line>>shift):(line<<(-shift));
+  return (w&0x1FF)|(1<<4);
+}
+const _C=4;
+const T_FIVE=new Uint8Array(512),T_OVERLINE=new Uint8Array(512),T_FIVE_GE5=new Uint8Array(512);
+const T_FOUR_CNT=new Uint8Array(512),T_IS_FOUR=new Uint8Array(512),T_IS_LIVE4=new Uint8Array(512);
+const T_IS_FOUR_W=new Uint8Array(512),T_IS_LIVE4_W=new Uint8Array(512);
+(function buildTables(){
+  for(let w=0;w<512;w++){
+    if(!(w&(1<<_C))) continue;
+    let len=1;
+    for(let d=1;_C-d>=0&&(w>>(_C-d))&1;d++) len++;
+    for(let d=1;_C+d<9 &&(w>>(_C+d))&1;d++) len++;
+    if(len===5){T_FIVE[w]=1;T_FIVE_GE5[w]=1;}
+    else if(len>5){T_OVERLINE[w]=1;T_FIVE_GE5[w]=1;}
+    if(len>=5) continue;
+    let fp_b=0,fp_w=0;
+    for(let g=-4;g<=4;g++){
+      const gp=_C+g;
+      if(gp<0||gp>=9) continue;
+      if((w>>gp)&1) continue;
+      const w2=w|(1<<gp);
+      let l2=1;
+      for(let d=1;gp-d>=0&&(w2>>(gp-d))&1;d++) l2++;
+      for(let d=1;gp+d<9 &&(w2>>(gp+d))&1;d++) l2++;
+      if(l2===5) fp_b++;
+      if(l2>=5) fp_w++;
+    }
+    T_FOUR_CNT[w]=fp_b>2?2:fp_b;
+    T_IS_FOUR[w]=fp_b>=1?1:0;
+    T_IS_LIVE4[w]=fp_b>=2?1:0;
+    T_IS_FOUR_W[w]=fp_w>=1?1:0;
+    T_IS_LIVE4_W[w]=fp_w>=2?1:0;
+  }
+})();
+
+function inBounds(r,c){return r>=0&&r<SIZE&&c>=0&&c<SIZE;}
+function isFive(b,r,c,p){
+  const bl=BL[p-1];
+  for(let d=0;d<4;d++){
+    const {i,p:pos}=bbLineIdx(r,c,d);
+    const w=bbWindow(bl[d],i,pos);
+    if(p===BLACK?T_FIVE[w]:T_FIVE_GE5[w]) return true;
+  }
+  return false;
+}
+function isOverline(b,r,c,p){
+  const bl=BL[p-1];
+  for(let d=0;d<4;d++){
+    const {i,p:pos}=bbLineIdx(r,c,d);
+    if(T_OVERLINE[bbWindow(bl[d],i,pos)]) return true;
+  }
+  return false;
+}
+function countDir(b,r,c,dr,dc,p){
+  let n=0,rr=r+dr,cc=c+dc;
+  while(inBounds(rr,cc)&&b[rr][cc]===p){n++;rr+=dr;cc+=dc;}
+  return n;
+}
+function lineCount(b,r,c,dr,dc,p){
+  return 1+countDir(b,r,c,dr,dc,p)+countDir(b,r,c,-dr,-dc,p);
+}
+function getPatternInDir(b,r,c,dr,dc,p){
+  const opp=(p===BLACK)?WHITE:BLACK;
+  let best=null;
+  for(let start=-4;start<=0;start++){
+    let stones=0,empties=0,hasOpp=false,emptyPos=[];
+    for(let k=0;k<5;k++){
+      const rr=r+(start+k)*dr,cc=c+(start+k)*dc;
+      if(!inBounds(rr,cc)){hasOpp=true;break;}
+      const v=b[rr][cc];
+      if(v===opp){hasOpp=true;break;}
+      if(v===p) stones++;
+      else{empties++;emptyPos.push(k);}
+    }
+    if(hasOpp) continue;
+    if(stones===5){
+      if(p===BLACK){
+        const rb=r+(start-1)*dr,cb=c+(start-1)*dc;
+        const ra=r+(start+5)*dr,ca=c+(start+5)*dc;
+        if((inBounds(rb,cb)&&b[rb][cb]===BLACK)||(inBounds(ra,ca)&&b[ra][ca]===BLACK)) continue;
+      }
+      return 'five';
+    }
+    if(stones===4&&empties===1){
+      const rb=r+(start-1)*dr,cb=c+(start-1)*dc;
+      const ra=r+(start+5)*dr,ca=c+(start+5)*dc;
+      const ob=inBounds(rb,cb)&&b[rb][cb]===EMPTY;
+      const oa=inBounds(ra,ca)&&b[ra][ca]===EMPTY;
+      const inner=emptyPos[0]>0&&emptyPos[0]<4;
+      if(inner) best='rush4';
+      else if(ob&&oa) return 'open4';
+      else if(best!=='open4') best='rush4';
+    }
+  }
+  return best;
+}
+function isRealFourInDir(b,r,c,dr,dc){
+  for(let dist=-4;dist<=4;dist++){
+    const nr=r+dist*dr,nc=c+dist*dc;
+    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+    b[nr][nc]=BLACK;
+    const len=lineCount(b,nr,nc,dr,dc,BLACK);
+    b[nr][nc]=EMPTY;
+    if(len===5) return true;
+  }
+  return false;
+}
+function countFoursInDir(b,r,c,dr,dc){
+  const dists=[];
+  for(let dist=-4;dist<=4;dist++){
+    const nr=r+dist*dr,nc=c+dist*dc;
+    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+    b[nr][nc]=BLACK;
+    if(lineCount(b,nr,nc,dr,dc,BLACK)===5) dists.push(dist);
+    b[nr][nc]=EMPTY;
+  }
+  if(dists.length===0) return 0;
+  let groups=1;
+  for(let i=1;i<dists.length;i++){if(dists[i]-dists[i-1]!==5) groups++;}
+  return groups;
+}
+function countRealFourDirs(b,r,c){
+  let cnt=0;
+  for(const [dr,dc] of DIRS) cnt+=countFoursInDir(b,r,c,dr,dc);
+  return cnt;
+}
+function isLiveFourInDir(b,r,c,dr,dc){
+  let validFivePts=0;
+  for(let dist=-4;dist<=4;dist++){
+    const nr=r+dist*dr,nc=c+dist*dc;
+    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+    b[nr][nc]=BLACK;
+    const len=lineCount(b,nr,nc,dr,dc,BLACK);
+    b[nr][nc]=EMPTY;
+    if(len===5) validFivePts++;
+  }
+  return validFivePts>=2;
+}
+function isLiveThreeInDir(b,r,c,dr,dc,visiting,depth){
+  for(let dist=-4;dist<=4;dist++){
+    const nr=r+dist*dr,nc=c+dist*dc;
+    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+    b[nr][nc]=BLACK;
+    const overline=isOverline(b,nr,nc,BLACK);
+    const five=isFive(b,nr,nc,BLACK);
+    if(!overline&&!five){
+      const makesLiveFour=isLiveFourInDir(b,nr,nc,dr,dc);
+      if(makesLiveFour){
+        b[nr][nc]=EMPTY;
+        if(!isForbiddenWithVisited(b,nr,nc,visiting,depth)) return true;
+        continue;
+      }
+    }
+    b[nr][nc]=EMPTY;
+  }
+  return false;
+}
+function countLiveThreeDirs(b,r,c,visiting,depth){
+  let cnt=0;
+  for(const [dr,dc] of DIRS){if(isLiveThreeInDir(b,r,c,dr,dc,visiting,depth)) cnt++;}
+  return cnt;
+}
+function isForbiddenWithVisited(b,r,c,visiting,depth){
+  if(b[r][c]!==EMPTY) return false;
+  const key=r*SIZE+c;
+  if(visiting.has(key)) return false;
+  if(depth>=FORBID_MAX_DEPTH) return false;
+  b[r][c]=BLACK;
+  let result=false;
+  if(isFive(b,r,c,BLACK)){}
+  else if(isOverline(b,r,c,BLACK)) result=true;
+  else if(countRealFourDirs(b,r,c)>=2) result=true;
+  else{
+    const nv=new Set(visiting);nv.add(key);
+    if(countLiveThreeDirs(b,r,c,nv,depth+1)>=2) result=true;
+  }
+  b[r][c]=EMPTY;
+  return result;
+}
+function getForbidType(b,r,c){
+  if(b[r][c]!==EMPTY) return null;
+  b[r][c]=BLACK;
+  let result=null;
+  if(isFive(b,r,c,BLACK)){b[r][c]=EMPTY;return null;}
+  if(isOverline(b,r,c,BLACK)) result='overline';
+  else if(countRealFourDirs(b,r,c)>=2) result='double4';
+  else{
+    const visiting=new Set([r*SIZE+c]);
+    if(countLiveThreeDirs(b,r,c,visiting,0)>=2) result='double3';
+  }
+  b[r][c]=EMPTY;
+  return result;
+}
+function isForbidden(b,r,c){return getForbidType(b,r,c)!==null;}
+function nearCandidates(b){
+  const cands=new Uint8Array(SIZE*SIZE);
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(b[r][c]===EMPTY) continue;
+    for(let dr=-NEAR;dr<=NEAR;dr++) for(let dc=-NEAR;dc<=NEAR;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(inBounds(nr,nc)&&b[nr][nc]===EMPTY) cands[nr*SIZE+nc]=1;
+    }
+  }
+  return cands;
+}
+function findFours(b,p){
+  const list=[];
+  const cands=nearCandidates(b);
+  const tFour=p===WHITE?T_IS_FOUR_W:T_IS_FOUR;
+  const bl=BL[p-1];
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(!cands[r*SIZE+c]) continue;
+    if(p===BLACK&&useForbidden){
+      b[r][c]=BLACK;bbSet(r,c,BLACK);
+      const wins=isFive(b,r,c,BLACK);
+      b[r][c]=EMPTY;bbClear(r,c,BLACK);
+      if(!wins&&isForbidden(b,r,c)) continue;
+    }
+    b[r][c]=p;bbSet(r,c,p);
+    if(isFive(b,r,c,p)){b[r][c]=EMPTY;bbClear(r,c,p);list.unshift([r,c,'five']);continue;}
+    let hasFour=false;
+    for(let d=0;d<4;d++){
+      const {i,p:pos}=bbLineIdx(r,c,d);
+      if(tFour[bbWindow(bl[d],i,pos)]){hasFour=true;break;}
+    }
+    b[r][c]=EMPTY;bbClear(r,c,p);
+    if(hasFour) list.push([r,c,'four']);
+  }
+  return list;
+}
+function findDefense(b,attacker,defender,lastR,lastC){
+  const mustBlock=new Set();
+  if(lastR!==undefined){
+    for(const [dr,dc] of DIRS){
+      for(let dist=-4;dist<=4;dist++){
+        const nr=lastR+dist*dr,nc=lastC+dist*dc;
+        if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+        b[nr][nc]=attacker;bbSet(nr,nc,attacker);
+        if(isFive(b,nr,nc,attacker)) mustBlock.add(nr*SIZE+nc);
+        b[nr][nc]=EMPTY;bbClear(nr,nc,attacker);
+      }
+    }
+  } else {
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      if(b[r][c]!==EMPTY) continue;
+      b[r][c]=attacker;bbSet(r,c,attacker);
+      if(isFive(b,r,c,attacker)) mustBlock.add(r*SIZE+c);
+      b[r][c]=EMPTY;bbClear(r,c,attacker);
+    }
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      if(b[r][c]!==attacker) continue;
+      for(const [dr,dc] of DIRS){
+        const patt=getPatternInDir(b,r,c,dr,dc,attacker);
+        if(patt!=='rush4'&&patt!=='open4') continue;
+        for(let dist=-4;dist<=4;dist++){
+          const nr=r+dist*dr,nc=c+dist*dc;
+          if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+          b[nr][nc]=attacker;bbSet(nr,nc,attacker);
+          if(isFive(b,nr,nc,attacker)) mustBlock.add(nr*SIZE+nc);
+          b[nr][nc]=EMPTY;bbClear(nr,nc,attacker);
+        }
+      }
+    }
+  }
+  return [...mustBlock].map(key=>[Math.floor(key/SIZE),key%SIZE]);
+}
+const ZK=(()=>{
+  const rng=(()=>{let s=0x9e3779b9;return ()=>{s^=s<<13;s^=s>>7;s^=s<<17;return(s>>>0)/4294967296;};})();
+  return Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>[0,Math.floor(rng()*2**30),Math.floor(rng()*2**30)]));
+})();
+function boardHash(b){
+  let h=0;
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(b[r][c]) h^=ZK[r][c][b[r][c]];
+  return h;
+}
+function coverHash(mustCover){
+  let h=0;
+  for(const k of mustCover) h^=(k*2654435761)>>>0;
+  return h;
+}
+let TT=new Map();
+function ttKey(h,lim,ch){
+  return ((BigInt(h>>>0))<<34n)|(BigInt(lim&0xFFFFF)<<14n)|BigInt(ch&0x3FFF);
+}
+function checkLiveFourWin(b,r,c,attacker){
+  for(const [dr,dc] of DIRS){
+    if(getPatternInDir(b,r,c,dr,dc,attacker)!=='open4') continue;
+    let legal=0;
+    for(let dist=-4;dist<=4;dist++){
+      const nr=r+dist*dr,nc=c+dist*dc;
+      if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+      b[nr][nc]=attacker;
+      const wins=isFive(b,nr,nc,attacker);
+      b[nr][nc]=EMPTY;
+      if(!wins) continue;
+      if(attacker===BLACK&&useForbidden&&isForbidden(b,nr,nc)) continue;
+      legal++;
+    }
+    if(legal>=2) return true;
+  }
+  return false;
+}
+function sortedFours(b,p){
+  const raw=findFours(b,p);
+  const tLive=p===WHITE?T_IS_LIVE4_W:T_IS_LIVE4;
+  const tFour=p===WHITE?T_IS_FOUR_W:T_IS_FOUR;
+  const scored=raw.map(([r,c,type])=>{
+    if(type==='five') return {r,c,type,score:200};
+    b[r][c]=p;bbSet(r,c,p);
+    let score=0;
+    const bl=BL[p-1];
+    for(let d=0;d<4;d++){
+      const {i,p:pos}=bbLineIdx(r,c,d);
+      const w=bbWindow(bl[d],i,pos);
+      if(tLive[w]) score+=100;
+      else if(tFour[w]) score+=10;
+    }
+    b[r][c]=EMPTY;bbClear(r,c,p);
+    return {r,c,type,score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored;
+}
+function isDefendable(b,r,c,defender){
+  if(b[r][c]!==EMPTY) return false;
+  if(defender===BLACK&&useForbidden&&isForbidden(b,r,c)) return false;
+  return true;
+}
+function getDefenderFourBlocks(b,defender){
+  const cands=nearCandidates(b);
+  const fivePts=new Set();
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(!cands[r*SIZE+c]) continue;
+    b[r][c]=defender;bbSet(r,c,defender);
+    const wins=isFive(b,r,c,defender);
+    b[r][c]=EMPTY;bbClear(r,c,defender);
+    if(wins) fivePts.add(r*SIZE+c);
+  }
+  if(fivePts.size>0) return {hasFive:true,fivePts,blocks:new Set()};
+  const blocks=new Set();
+  const bl=BL[defender-1];
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(b[r][c]!==defender) continue;
+    for(let d=0;d<4;d++){
+      const {i,p:pos}=bbLineIdx(r,c,d);
+      if(!T_IS_FOUR[bbWindow(bl[d],i,pos)]) continue;
+      const [dr,dc]=DIRS[d];
+      for(let dist=-4;dist<=4;dist++){
+        const nr=r+dist*dr,nc=c+dist*dc;
+        if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
+        b[nr][nc]=defender;bbSet(nr,nc,defender);
+        if(isFive(b,nr,nc,defender)) blocks.add(nr*SIZE+nc);
+        b[nr][nc]=EMPTY;bbClear(nr,nc,defender);
+      }
+    }
+  }
+  return {hasFive:false,fivePts:new Set(),blocks};
+}
+
+let _cancelFlag=false;
+function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
+  if(_cancelFlag) return 'cancelled';
+  if(atkLeft<=0) return null;
+  const ch=coverHash(mustCover);
+  const tk=ttKey(hash,atkLeft,ch);
+  const ttVal=TT.get(tk);
+  if(ttVal!==undefined&&ttVal>=atkLeft) return null;
+  const cands=nearCandidates(b);
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(!cands[r*SIZE+c]) continue;
+    b[r][c]=attacker;
+    if(isFive(b,r,c,attacker)){b[r][c]=EMPTY;return [{r,c,type:'atk'}];}
+    b[r][c]=EMPTY;
+  }
+  if(atkLeft<=1){const p1=TT.get(tk);if(p1===undefined||1>p1) TT.set(tk,1);return null;}
+  const candidates=sortedFours(b,attacker);
+  for(const {r:fr,c:fc} of candidates){
+    b[fr][fc]=attacker;bbSet(fr,fc,attacker);
+    const newHash=hash^ZK[fr][fc][attacker];
+    const defRaw=findDefense(b,attacker,defender,fr,fc);
+    const defPoints=defRaw.map(([dr,dc])=>({
+      r:dr,c:dc,
+      canDefend:isDefendable(b,dr,dc,defender),
+      forbidType:!isDefendable(b,dr,dc,defender)?(getForbidType(b,dr,dc)||'forbidden'):null
+    }));
+    const defendable=defPoints.filter(p=>p.canDefend);
+    const allForbid=defPoints.filter(p=>!p.canDefend);
+    if(defPoints.length===0){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+    if(mustCover.size>0){
+      const selfKey=fr*SIZE+fc;
+      const defKeySet=new Set(defRaw.map(([dr,dc])=>dr*SIZE+dc));
+      const remaining=[...mustCover].filter(mk=>mk!==selfKey);
+      if(remaining.length>0){
+        if(defendable.length!==1){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+        const allCovered=remaining.every(mk=>defKeySet.has(mk));
+        if(!allCovered){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+      }
+    }
+    if(checkLiveFourWin(b,fr,fc,attacker)){
+      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      return [{r:fr,c:fc,type:'atk'}];
+    }
+    if(defendable.length===0){
+      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      const fp=allForbid[0];
+      return [{r:fr,c:fc,type:'atk'},{r:fp.r,c:fp.c,type:'forbid-block',forbidType:fp.forbidType}];
+    }
+    if(defendable.length>1){
+      if(mustCover.size===0){
+        b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+        return [{r:fr,c:fc,type:'atk'}];
+      }
+      let allDefFail=true;
+      for(const dp of defendable){
+        b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
+        const dHash=newHash^ZK[dp.r][dp.c][defender];
+        const {hasFive:dFive,fivePts:dFivePts,blocks:dBlocks}=getDefenderFourBlocks(b,defender);
+        const nextMust=dFive?dFivePts:dBlocks;
+        const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust);
+        b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
+        if(sub==='cancelled'){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);return 'cancelled';}
+        if(!sub){allDefFail=false;break;}
+      }
+      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      if(!allDefFail) continue;
+      for(const dp of defendable){
+        b[fr][fc]=attacker;bbSet(fr,fc,attacker);
+        b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
+        const dHash=newHash^ZK[dp.r][dp.c][defender];
+        const {hasFive:dFive2,fivePts:dFivePts2,blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
+        const nextMust2=dFive2?dFivePts2:dBlocks2;
+        const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust2);
+        b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
+        b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+        if(sub==='cancelled') return 'cancelled';
+        if(sub) return [{r:fr,c:fc,type:'atk'},{r:dp.r,c:dp.c,type:'def'},...sub];
+      }
+      continue;
+    }
+    const {r:dr_def,c:dc_def}=defendable[0];
+    b[dr_def][dc_def]=defender;bbSet(dr_def,dc_def,defender);
+    const defHash=newHash^ZK[dr_def][dc_def][defender];
+    const {hasFive:counterFive,fivePts:counterFivePts,blocks:counterBlocks}=getDefenderFourBlocks(b,defender);
+    if(counterFive){
+      const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,counterFivePts);
+      b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
+      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      if(sub==='cancelled') return 'cancelled';
+      if(sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
+      continue;
+    }
+    const newMust=counterBlocks;
+    const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,newMust);
+    b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
+    b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+    if(sub==='cancelled') return 'cancelled';
+    if(sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
+  }
+  const prev=TT.get(tk);
+  if(prev===undefined||atkLeft>prev) TT.set(tk,atkLeft);
+  return null;
+}
+
+// ── Worker 訊息處理 ──
+self.onmessage = function(e) {
+  const {type, board, attacker, maxAtk, searchMode, forbidden} = e.data;
+  if(type === 'cancel') { _cancelFlag = true; return; }
+
+  _cancelFlag = false;
+  useForbidden = forbidden;
+  const b = board.map(r=>[...r]);
+  bbSync(b);
+  const h0 = boardHash(b);
+  const defender = attacker === BLACK ? WHITE : BLACK;
+  const startTime = Date.now();
+
+  if(searchMode === 'direct') {
+    TT = new Map();
+    const moves = vcfDFS(b, h0, attacker, defender, maxAtk, new Set());
+    const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+    if(moves && moves !== 'cancelled') {
+      self.postMessage({type:'result', moves, limit: Math.ceil(moves.filter(m=>m.type==='atk'||m.type==='forbid-block').length), mode:'direct', elapsed});
+    } else {
+      self.postMessage({type:'notfound', elapsed});
+    }
+    return;
+  }
+
+  // IDDFS
+  let limit = 1;
+  function step() {
+    if(_cancelFlag) { self.postMessage({type:'cancelled'}); return; }
+    if(limit > maxAtk) {
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+      self.postMessage({type:'notfound', elapsed});
+      return;
+    }
+    TT = new Map(); // 每輪清空，避免低深度失敗記錄汙染高深度搜尋
+    self.postMessage({type:'progress', limit, maxAtk, elapsed: ((Date.now()-startTime)/1000).toFixed(1)});
+    const moves = vcfDFS(b, h0, attacker, defender, limit, new Set());
+    if(moves && moves !== 'cancelled') {
+      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+      self.postMessage({type:'result', moves, limit, mode:'iddfs', elapsed});
+      return;
+    }
+    limit++;
+    setTimeout(step, 0);
+  }
+  step();
+};
+`;
+}
+
+let _workerUrl = null;
+function _getWorker() {
+  if (_vcfWorker) { _vcfWorker.terminate(); _vcfWorker = null; }
+  if (!_workerUrl) {
+    const blob = new Blob([_getWorkerCode()], {type: 'application/javascript'});
+    _workerUrl = URL.createObjectURL(blob);
+  }
+  _vcfWorker = new Worker(_workerUrl);
+  return _vcfWorker;
+}
+
+function cancelVCF() {
+  if (_vcfWorker) {
+    _vcfWorker.postMessage({type: 'cancel'});
+    _vcfWorker.terminate();
+    _vcfWorker = null;
+  }
+  searching = false;
+  vcfMoves = []; vcfAttacker = 0;
+  vcfPlaybackMoves = [];
+  render();
+  document.getElementById('result-area').innerHTML = '<span class="result-none">已取消搜尋</span>';
+  document.getElementById('btn-cancel').style.display = 'none';
+  document.getElementById('vcf-playback-bar').style.display = 'none';
+}
+
+function runVCF(attacker) {
+  if (searching) { cancelVCF(); return; }
+
+  const maxAtkRaw = document.getElementById('depth-select').value;
+  const maxAtk = maxAtkRaw === 'inf' ? 999999 : parseInt(maxAtkRaw, 10);
+  const defender = attacker === BLACK ? WHITE : BLACK;
+  const atkName  = attacker === BLACK ? '黑棋' : '白棋';
+  const atkClass = attacker === BLACK ? 'result-found-black' : 'result-found-white';
+  const atkKey   = attacker === BLACK ? 'atk-black' : 'atk-white';
+  const defKey   = attacker === BLACK ? 'def-black' : 'def-white';
+  const barColor = attacker === BLACK ? 'var(--accent-black)' : 'var(--accent-white)';
+
+  searching = true;
+  document.getElementById('btn-cancel').style.display = 'block';
+  document.getElementById('result-area').innerHTML = `<span class="spinner"></span> 搜尋中…`;
+
+  function showResult(result, elapsed) {
+    searching = false;
+    document.getElementById('btn-cancel').style.display = 'none';
+
+    if (!result) {
+      vcfMoves = []; vcfAttacker = 0; render();
+      vcfPlaybackMoves = [];
+      document.getElementById('vcf-playback-bar').style.display = 'none';
+      const mA = maxAtk >= 999999 ? '任意深度' : `攻擊 ${maxAtk} 手`;
+      document.getElementById('result-area').innerHTML =
+        `<div class="result-none">✗ ${atkName} 在 ${mA} 內<br>找不到 VCF 序列<br><span style="font-size:0.72rem;font-family:JetBrains Mono,monospace;">耗時 ${elapsed}s</span></div>`;
+      return;
+    }
+
+    vcfMoves = result.moves; vcfAttacker = attacker; render();
+    const cols = 'ABCDEFGHJKLMNOP';
+    const forbidNames = {overline:'長連', double4:'四四', double3:'三三'};
+    const forbidCount = result.moves.filter(m => m.type === 'forbid-block').length;
+
+    vcfPlaybackMoves = result.moves;
+    vcfPlaybackStep_cur = result.moves.length;
+    renderVcfPlayback();
+
+    let html = `<div class="${atkClass}">✓ ${atkName} 最短 VCF！${useForbidden ? '<span style="color:var(--accent-forbid);font-size:0.72rem;"> [禁手]</span>' : ''}</div>`;
+    html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:5px 0;font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">`;
+    html += `<span>攻擊 <b style="color:var(--text)">${result.limit}</b> 手</span>`;
+    html += `<span>總計 <b style="color:var(--text)">${result.moves.length}</b> 步</span>`;
+    html += `<span>耗時 <b style="color:var(--text)">${elapsed}s</b></span>`;
+    const modeLabel = result.mode === 'direct' ? '直接' : 'IDDFS';
+    html += `<span style="color:var(--text-dim);">${modeLabel}</span>`;
+    if (forbidCount > 0) html += `<span style="color:var(--accent-forbid);">禁手 ${forbidCount} 處</span>`;
+    html += `</div><div class="move-list" id="vcf-move-list">`;
+    result.moves.forEach(({r, c, type, forbidType}, i) => {
+      const coord = `${cols[c]}${SIZE - r}`;
+      if (type === 'forbid-block') {
+        const fname = forbidNames[forbidType] || '禁手';
+        html += `<div class="move-item forbid-hit" id="vcf-mi-${i}" onclick="vcfPlaybackGo(${i+1})" style="cursor:pointer;">⚠ ${i+1}. 禁手封鎖 → ${coord} <span style="font-size:0.68rem;opacity:0.8;">(${fname})</span></div>`;
+      } else if (type === 'atk') {
+        html += `<div class="move-item ${atkKey}" id="vcf-mi-${i}" onclick="vcfPlaybackGo(${i+1})" style="cursor:pointer;">▶ ${i+1}. ${atkName} → ${coord}</div>`;
+      } else {
+        html += `<div class="move-item ${defKey}" id="vcf-mi-${i}" onclick="vcfPlaybackGo(${i+1})" style="cursor:pointer;">▷ ${i+1}. 防守 → ${coord}</div>`;
+      }
+    });
+    html += '</div>';
+    if (forbidCount > 0) {
+      html += `<div style="margin-top:8px;padding:6px 8px;background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2);border-radius:4px;font-size:0.72rem;color:#cc6680;">⚠ ${forbidCount} 處防守點為禁手，黑棋無法落子</div>`;
+    }
+    document.getElementById('result-area').innerHTML = html;
+    document.getElementById('vcf-playback-bar').style.display = '';
+    updateVcfPlaybackUI();
+  }
+
+  const worker = _getWorker();
+  worker.onmessage = function(e) {
+    const msg = e.data;
+    if (msg.type === 'result') {
+      showResult({moves: msg.moves, limit: msg.limit, mode: msg.mode}, msg.elapsed);
+    } else if (msg.type === 'notfound') {
+      showResult(null, msg.elapsed);
+    } else if (msg.type === 'cancelled') {
+      searching = false;
+      document.getElementById('btn-cancel').style.display = 'none';
+    } else if (msg.type === 'progress') {
+      const pct = msg.maxAtk < 999999 ? Math.round(msg.limit / msg.maxAtk * 100) : 0;
+      const depthLabel = msg.maxAtk >= 999999 ? `深度 <b>${msg.limit}</b>（無上限）` : `深度 <b>${msg.limit}</b> / ${msg.maxAtk} 手`;
+      document.getElementById('result-area').innerHTML =
+        `<span class="spinner"></span> 搜尋中（IDDFS）… ${depthLabel}${useForbidden ? ' · 禁手' : ''}<br>
+         <span style="font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">已耗時 ${msg.elapsed}s</span>
+         ${msg.maxAtk < 999999 ? `<div style="margin-top:6px;height:4px;background:#3a2e1a;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${barColor};transition:width 0.3s;"></div></div>` : ''}`;
+    }
+  };
+  worker.onerror = function(err) {
+    searching = false;
+    document.getElementById('btn-cancel').style.display = 'none';
+    document.getElementById('result-area').innerHTML =
+      `<span style="color:#ff6666;">⚠ 搜尋發生錯誤：${err.message}</span>`;
+  };
+
+  worker.postMessage({
+    type: 'search',
+    board: board.map(r => [...r]),
+    attacker,
+    maxAtk,
+    searchMode,
+    forbidden: useForbidden
+  });
+}
+
+// ========== VCF 回放 ==========
+function renderVcfPlayback() {
+  if (!vcfPlaybackMoves.length) { render(); return; }
+  const sliced = vcfPlaybackMoves.slice(0, vcfPlaybackStep_cur);
+
+  ctx.clearRect(0,0,CANVAS,CANVAS);
+  drawBoard();
+  drawStones();
+
+  const isBlack = vcfAttacker === BLACK;
+  const atkColor = isBlack ? 'rgba(255,107,53,0.85)' : 'rgba(78,205,196,0.85)';
+  const defColor = 'rgba(80,120,255,0.7)';
+  const forbidColor = 'rgba(255,51,102,0.85)';
+
+  for (let i=0; i<sliced.length-1; i++) {
+    const {r:r1,c:c1,type:t1} = sliced[i];
+    const {r:r2,c:c2} = sliced[i+1];
+    const lineCol = t1==='atk' ? atkColor : t1==='forbid-block' ? forbidColor : defColor;
+    ctx.strokeStyle = lineCol; ctx.lineWidth=1.5; ctx.setLineDash([3,3]); ctx.globalAlpha=0.4;
+    ctx.beginPath(); ctx.moveTo(PAD+c1*CELL, PAD+r1*CELL); ctx.lineTo(PAD+c2*CELL, PAD+r2*CELL); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1;
+  }
+
+  sliced.forEach(({r,c,type}, idx) => {
+    const isLast = idx === sliced.length - 1;
+    if (type === 'forbid-block') {
+      const x=PAD+c*CELL, y=PAD+r*CELL, rad=CELL*0.42;
+      ctx.strokeStyle=forbidColor; ctx.lineWidth=2; ctx.globalAlpha=0.7;
+      ctx.beginPath(); ctx.arc(x,y,rad+3,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+      drawForbidMark(r,c,0.9);
+      ctx.fillStyle='#ff3366'; ctx.font=`bold 10px JetBrains Mono,monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(idx+1, x, y-CELL*0.42-8); ctx.textBaseline='alphabetic';
+      return;
+    }
+    const isAtk = type==='atk';
+    const stoneColor = isAtk ? vcfAttacker : (vcfAttacker===BLACK?WHITE:BLACK);
+    const ring = isAtk ? atkColor : defColor;
+    ctx.strokeStyle = isLast ? (isAtk ? '#ffcc44' : '#88aaff') : ring;
+    ctx.lineWidth = isLast ? 3 : 2.5; ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.arc(PAD+c*CELL, PAD+r*CELL, CELL*0.42+3, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+    drawStone(r,c,stoneColor,0.9,idx+1,isAtk?(stoneColor===BLACK?'#ff9966':'#003333'):'#ffffff');
+  });
+
+  if (useForbidden) {
+    for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+      if (board[r][c]!==EMPTY) continue;
+      if (isForbidden(board,r,c)) drawForbidMark(r,c,0.35);
+    }
+  }
+}
+
+function updateVcfPlaybackUI() {
+  const total = vcfPlaybackMoves.length;
+  const cur = vcfPlaybackStep_cur;
+  document.getElementById('vcf-pb-counter').textContent = `${cur} / ${total}`;
+  document.getElementById('vcf-pb-first').disabled = cur <= 0;
+  document.getElementById('vcf-pb-prev').disabled  = cur <= 0;
+  document.getElementById('vcf-pb-next').disabled  = cur >= total;
+  document.getElementById('vcf-pb-last').disabled  = cur >= total;
+
+  for (let i=0; i<total; i++) {
+    const el = document.getElementById(`vcf-mi-${i}`);
+    if (!el) continue;
+    if (cur > 0 && i === cur-1) el.classList.add('highlighted');
+    else el.classList.remove('highlighted');
+  }
+  // 不捲動頁面，只在 result panel 內部捲動
+  if (cur > 0) {
+    const el = document.getElementById(`vcf-mi-${cur-1}`);
+    const panel = document.getElementById('result-panel-main');
+    if (el && panel) {
+      const elTop = el.offsetTop - panel.offsetTop;
+      const elBot = elTop + el.offsetHeight;
+      const pTop = panel.scrollTop;
+      const pBot = pTop + panel.clientHeight;
+      if (elTop < pTop) panel.scrollTop = elTop - 8;
+      else if (elBot > pBot) panel.scrollTop = elBot - panel.clientHeight + 8;
+    }
+  }
+}
+
+function vcfPlaybackGo(idx, btn) {
+  if (btn) btn.blur();
+  if (idx < 0) vcfPlaybackStep_cur = vcfPlaybackMoves.length;
+  else vcfPlaybackStep_cur = Math.max(0, Math.min(vcfPlaybackMoves.length, idx));
+  renderVcfPlayback();
+  updateVcfPlaybackUI();
+}
+
+function vcfPlaybackStep(delta, btn) {
+  vcfPlaybackGo(vcfPlaybackStep_cur + delta, btn);
+}
+
+// ========== 題目管理 ==========
+const PUZZLE_STORAGE_KEY = 'gomoku_vcf_puzzles';
+
+function getBoardCoords() {
+  const COLS2 = 'ABCDEFGHJKLMNOP';
+  const whites = [], blacks = [];
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (board[r][c]===WHITE) whites.push(COLS2[c]+(SIZE-r));
+    else if (board[r][c]===BLACK) blacks.push(COLS2[c]+(SIZE-r));
+  }
+  return {white: whites.join(' '), black: blacks.join(' ')};
+}
+
+function loadPuzzlesFromStorage() {
+  try { return JSON.parse(localStorage.getItem(PUZZLE_STORAGE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function savePuzzlesToStorage(puzzles) {
+  try { localStorage.setItem(PUZZLE_STORAGE_KEY, JSON.stringify(puzzles)); } catch(e) {}
+}
+
+function savePuzzle() {
+  const name = document.getElementById('puzzle-name').value.trim() || `題目 ${new Date().toLocaleString('zh-TW')}`;
+  const coords = getBoardCoords();
+  const puzzle = { name, white: coords.white, black: coords.black, ts: Date.now() };
+  const puzzles = loadPuzzlesFromStorage();
+  puzzles.unshift(puzzle);
+  savePuzzlesToStorage(puzzles);
+  document.getElementById('puzzle-name').value = '';
+  renderPuzzleList();
+  document.getElementById('result-area').innerHTML = `<span style="color:#66cc88;">✔ 已儲存題目：${name}</span>`;
+}
+
+function loadPuzzle(idx) {
+  const puzzles = loadPuzzlesFromStorage();
+  if (!puzzles[idx]) return;
+  const p = puzzles[idx];
+  document.getElementById('input-white').value = p.white || '';
+  document.getElementById('input-black').value = p.black || '';
+  applyBoardFromInput();
+  document.getElementById('result-area').innerHTML = `<span style="color:#66cc88;">✔ 已載入：${p.name}</span>`;
+}
+
+function deletePuzzle(idx) {
+  const puzzles = loadPuzzlesFromStorage();
+  puzzles.splice(idx, 1);
+  savePuzzlesToStorage(puzzles);
+  renderPuzzleList();
+}
+
+function renderPuzzleList() {
+  const puzzles = loadPuzzlesFromStorage();
+  const el = document.getElementById('puzzle-list');
+  if (!puzzles.length) {
+    el.innerHTML = '<div style="font-size:0.68rem;color:var(--text-dim);padding:3px 4px;">尚無已儲存題目</div>';
+    return;
+  }
+  el.innerHTML = puzzles.map((p, i) => `
+    <div class="puzzle-list-item" onclick="loadPuzzle(${i})">
+      <span class="pname" title="${p.name}">${p.name}</span>
+      <span class="pdel" onclick="event.stopPropagation();deletePuzzle(${i})" title="刪除">✕</span>
+    </div>
+  `).join('');
+}
+
+function loadPuzzleFromJSON() {
+  const raw = document.getElementById('puzzle-json').value.trim();
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const puzzles_new = Array.isArray(data) ? data : [data];
+    const stored = loadPuzzlesFromStorage();
+    puzzles_new.forEach(p => { if (p.name && (p.white!==undefined || p.black!==undefined)) stored.unshift(p); });
+    savePuzzlesToStorage(stored);
+    renderPuzzleList();
+    document.getElementById('puzzle-json').value = '';
+    document.getElementById('result-area').innerHTML = `<span style="color:#66cc88;">✔ 已匯入 ${puzzles_new.length} 個題目</span>`;
+  } catch(e) {
+    document.getElementById('result-area').innerHTML = `<span style="color:#ff6666;">✗ JSON 解析失敗：${e.message}</span>`;
+  }
+}
+
+function exportAllPuzzles() {
+  const puzzles = loadPuzzlesFromStorage();
+  if (!puzzles.length) {
+    document.getElementById('result-area').innerHTML = '<span style="color:var(--text-dim);">尚無題目可匯出</span>';
+    return;
+  }
+  const json = JSON.stringify(puzzles, null, 2);
+  document.getElementById('puzzle-json').value = json;
+  navigator.clipboard.writeText(json).then(() => {
+    document.getElementById('result-area').innerHTML = `<span style="color:#66cc88;">✔ 已複製 ${puzzles.length} 個題目到剪貼板</span>`;
+  }).catch(() => {
+    document.getElementById('result-area').innerHTML = `<span style="color:#ffcc44;">⚠ 已顯示在下方文字框（請手動複製）</span>`;
+  });
+}
+
+render();
+renderPuzzleList();
+
+// ========== 路徑驗證模式 ==========
+let currentTab = 'edit';
+let verifyAttacker = WHITE;
+let verifyClickSeq = [];
+let verifyBoardSnapshot = null;
+let verifyHighlightStep = -1;
+
+const COLS = 'ABCDEFGHJKLMNOP';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('panel-edit').style.display    = tab==='edit'   ? '' : 'none';
+  document.getElementById('panel-verify').style.display  = tab==='verify' ? '' : 'none';
+  document.getElementById('result-panel-main').style.display   = tab==='edit'   ? '' : 'none';
+  document.getElementById('verify-result-panel').style.display = tab==='verify' ? '' : 'none';
+  if (tab==='edit') document.getElementById('trace-result-panel').style.display = 'none';
+
+  const te = document.getElementById('tab-edit');
+  const tv = document.getElementById('tab-verify');
+  if (tab==='edit') {
+    te.style.background='#2a1a08'; te.style.borderColor='var(--wood)'; te.style.color='var(--wood-light)';
+    tv.style.background='var(--panel2)'; tv.style.borderColor='#4a3a20'; tv.style.color='var(--text-dim)';
+    verifyClickSeq = [];
+    renderVerifyBoard(null, []);
+  } else {
+    tv.style.background='#082a2a'; tv.style.borderColor='var(--accent-white)'; tv.style.color='var(--accent-white)';
+    te.style.background='var(--panel2)'; te.style.borderColor='#4a3a20'; te.style.color='var(--text-dim)';
+    verifyBoardSnapshot = board.map(r=>[...r]);
+    verifyClickSeq = [];
+    updateVerifyClickStatus();
+    document.getElementById('verify-result-area').innerHTML =
+      '<span style="color:var(--text-dim);font-size:0.78rem;">輸入手順後按「開始驗證」<br>或直接在棋盤點擊錄入</span>';
+    renderVerifyBoard(verifyBoardSnapshot, []);
+  }
+}
+
+function coordToRC(s) {
+  s = s.trim().toUpperCase();
+  if (s.length < 2) return null;
+  const col = COLS.indexOf(s[0]);
+  const row = SIZE - parseInt(s.slice(1));
+  if (col<0 || isNaN(row) || row<0 || row>=SIZE) return null;
+  return {r:row, c:col};
+}
+
+function rcToCoord(r, c) {
+  return COLS[c] + (SIZE - r);
+}
+
+canvas.addEventListener('click', e => {
+  if (currentTab !== 'verify') return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CANVAS / rect.width;
+  const scaleY = CANVAS / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+  const c = Math.round((mx - PAD) / CELL);
+  const r = Math.round((my - PAD) / CELL);
+  if (r<0||r>=SIZE||c<0||c>=SIZE) return;
+
+  verifyClickSeq.push(rcToCoord(r, c));
+  document.getElementById('verify-input').value = verifyClickSeq.join(' ');
+  updateVerifyClickStatus();
+
+  const bSnap = verifyBoardSnapshot || board.map(r2=>[...r2]);
+  renderVerifyBoard(bSnap, verifyClickSeq);
+});
+
+function undoVerifyClick() {
+  if (!verifyClickSeq.length) return;
+  verifyClickSeq.pop();
+  document.getElementById('verify-input').value = verifyClickSeq.join(' ');
+  updateVerifyClickStatus();
+  const bSnap = verifyBoardSnapshot || board.map(r2=>[...r2]);
+  renderVerifyBoard(bSnap, verifyClickSeq);
+}
+
+function updateVerifyClickStatus() {
+  const n = verifyClickSeq.length;
+  const isAtk = n % 2 === 0;
+  const who = isAtk ? (verifyAttacker===WHITE?'白(攻)':'黑(攻)') : (verifyAttacker===WHITE?'黑(守)':'白(守)');
+  document.getElementById('verify-click-status').textContent =
+    n ? `已錄 ${n} 手，下一手：${who}` : `下一手：${who}`;
+}
+
+function renderVerifyBoard(bSnap, seq) {
+  if (!bSnap) { render(); return; }
+  const b = bSnap.map(r=>[...r]);
+  const atk = verifyAttacker;
+  const def = atk===WHITE ? BLACK : WHITE;
+
+  ctx.clearRect(0,0,CANVAS,CANVAS);
+  drawBoard();
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++)
+    if (b[r][c]) drawStone(r, c, b[r][c]);
+
+  const parsed = seq.map(s=>coordToRC(s)).filter(Boolean);
+  parsed.forEach((rc, i) => {
+    if (!rc || b[rc.r][rc.c]!==EMPTY) return;
+    const isAtkMove = i%2===0;
+    const color = isAtkMove ? atk : def;
+    b[rc.r][rc.c] = color;
+    const ring = isAtkMove ? (atk===WHITE?'rgba(78,205,196,0.9)':'rgba(255,107,53,0.9)') : 'rgba(80,120,255,0.8)';
+    ctx.strokeStyle = ring; ctx.lineWidth=2.5; ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.arc(PAD+rc.c*CELL, PAD+rc.r*CELL, CELL*0.42+3, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+    drawStone(rc.r, rc.c, color, 0.92, i+1, isAtkMove?(color===BLACK?'#ff9966':'#003333'):'#fff');
+  });
+}
+
+function clearVerify() {
+  verifyClickSeq = [];
+  document.getElementById('verify-input').value = '';
+  document.getElementById('verify-result-area').innerHTML =
+    '<span style="color:var(--text-dim);font-size:0.78rem;">已清除</span>';
+  updateVerifyClickStatus();
+  renderVerifyBoard(verifyBoardSnapshot, []);
+}
+
+// ★ 修正 2：startVerifyClick 加入守方必堵點驗證
+function startVerifyClick() {
+  const raw = document.getElementById('verify-input').value;
+  const tokens = raw.trim().split(/[\s,，]+/).filter(Boolean);
+  if (!tokens.length) {
+    document.getElementById('verify-result-area').innerHTML =
+      '<span style="color:#ff6666;">請先輸入手順座標</span>';
+    return;
+  }
+
+  const bSnap = verifyBoardSnapshot || board.map(r=>[...r]);
+  const atk = parseInt(document.getElementById('panel-verify').querySelector('input[name="vatk"]:checked').value);
+  verifyAttacker = atk;
+  const def = atk===WHITE ? BLACK : WHITE;
+
+  const moves = tokens.map((s,i)=>({
+    coord: s,
+    rc: coordToRC(s),
+    isAtk: i%2===0
+  }));
+
+  const b = bSnap.map(r=>[...r]);
+  bbSync(b);
+
+  const steps = [];
+  let fatalIdx = -1;
+
+  // ★ 修正：追蹤上一個攻方步的必堵點，守方落子必須在此集合內
+  let lastDefKeys = null;    // Set<key>，上一攻方步產生的必堵點
+  let lastDefCoords = [];    // 顯示用
+
+  for (let i=0; i<moves.length; i++) {
+    bbSync(b);
+    const mv = moves[i];
+    const step = { idx:i, coord:mv.coord, rc:mv.rc, isAtk:mv.isAtk, issues:[], info:[] };
+
+    if (!mv.rc) {
+      step.issues.push(`座標 "${mv.coord}" 無法解析`);
+      step.fatal = true;
+      steps.push(step);
+      fatalIdx = i;
+      break;
+    }
+    const {r,c} = mv.rc;
+
+    if (b[r][c] !== EMPTY) {
+      step.issues.push(`(${mv.coord}) 該格已有棋子，無法落子`);
+      step.fatal = true;
+      steps.push(step);
+      fatalIdx = i;
+      break;
+    }
+
+    const color = mv.isAtk ? atk : def;
+
+    if (mv.isAtk) {
+      // 攻方步：清除上一輪的必堵點記錄（攻方步不受限制）
+      lastDefKeys = null;
+      lastDefCoords = [];
+
+      b[r][c] = atk; bbSet(r,c,atk);
+      const makesFive = isFive(b,r,c,atk);
+
+      if (makesFive) {
+        step.info.push('✓ 成五（含長連）！VCF 完成');
+        step.result = 'five';
+        steps.push(step);
+        break;
+      }
+
+      let hasFour = false;
+      const bl = BL[atk-1];
+      const tFourAtk = atk === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
+      for (let d=0;d<4;d++) {
+        const {i:li, p:pos} = bbLineIdx(r,c,d);
+        if (tFourAtk[bbWindow(bl[d],li,pos)]) { hasFour=true; break; }
+      }
+
+      if (!hasFour) {
+        step.issues.push(`(${mv.coord}) 攻方這手沒有形成四，不是有效 VCF 手`);
+        step.fatal = true;
+        steps.push(step);
+        fatalIdx = i;
+        break;
+      }
+
+      const defRaw = findDefense(b, atk, def, r, c);
+      const defPts = defRaw.map(([dr,dc])=>{
+        const canDef = isDefendable(b,dr,dc,def);
+        return { r:dr, c:dc, canDef,
+          forbidType: !canDef ? (getForbidType(b,dr,dc)||'forbidden') : null };
+      });
+      const defOk = defPts.filter(p=>p.canDef);
+      const defForbid = defPts.filter(p=>!p.canDef);
+
+      if (defPts.length===0) {
+        step.issues.push(`(${mv.coord}) 找不到守方必堵點（此四沒有成五威脅？）`);
+        step.fatal=true; steps.push(step); fatalIdx=i; break;
+      }
+      if (defOk.length===0) {
+        step.info.push(`✓ 所有防守點為禁手（${defForbid.map(p=>rcToCoord(p.r,p.c)).join('/')}），攻方勝`);
+        step.result = 'forbid-win';
+        steps.push(step); break;
+      }
+      if (defOk.length > 1) {
+        const tLive4 = atk === WHITE ? T_IS_LIVE4_W : T_IS_LIVE4;
+        const bl2 = BL[atk-1];
+        let isLive4 = false;
+        for (let d=0;d<4;d++){
+          const {i,p:pos}=bbLineIdx(r,c,d);
+          if (tLive4[bbWindow(bl2[d],i,pos)]) { isLive4=true; break; }
+        }
+        if (isLive4) {
+          step.info.push(`活四！守方需堵：${defOk.map(p=>rcToCoord(p.r,p.c)).join(' / ')}`);
+          step.isRealLive4 = true;
+        } else {
+          step.info.push(`雙四！守方無法同時堵住：${defOk.map(p=>rcToCoord(p.r,p.c)).join(' / ')}`);
+          step.isRealLive4 = false;
+        }
+        step.isLiveFour = true;
+      } else {
+        step.info.push(`守方唯一堵點：${rcToCoord(defOk[0].r, defOk[0].c)}`);
+      }
+      if (defForbid.length) {
+        step.info.push(`禁手點（不可堵）：${defForbid.map(p=>rcToCoord(p.r,p.c)).join(' ')}`);
+      }
+
+      const {hasFive:cFive, fivePts:cFivePts, blocks:cBlocks} = getDefenderFourBlocks(b, def);
+      if (cFive) {
+        const pts = [...cFivePts].map(k=>rcToCoord(Math.floor(k/SIZE),k%SIZE));
+        step.info.push(`⚠ 守方有直接成五威脅：${pts.join(' ')}（攻方下一手必須蓋住）`);
+        step.mustCover = pts;
+      } else if (cBlocks.size > 0) {
+        const pts = [...cBlocks].map(k=>rcToCoord(Math.floor(k/SIZE),k%SIZE));
+        step.info.push(`守方反擊四成五點：${pts.join(' ')}（mustCover）`);
+        step.mustCover = pts;
+      }
+
+      step.defPts = defOk.map(p=>rcToCoord(p.r,p.c));
+
+      // ★ 修正：記錄此攻方步的必堵點，供下一守方步驗證
+      lastDefKeys = new Set(defOk.map(p => p.r * SIZE + p.c));
+      lastDefCoords = defOk.map(p => rcToCoord(p.r, p.c));
+
+      steps.push(step);
+
+    } else {
+      // ★ 修正：守方必須落在上一攻方步的必堵點內
+      if (lastDefKeys !== null && !lastDefKeys.has(r * SIZE + c)) {
+        step.issues.push(
+          `(${mv.coord}) 守方落點不在攻方四的必堵點內` +
+          `（合法堵點：${lastDefCoords.join(' / ')}），此手非法`
+        );
+        step.fatal = true;
+        // 仍落子以便盤面渲染到此步
+        b[r][c] = def; bbSet(r,c,def);
+        steps.push(step);
+        fatalIdx = i;
+        break;
+      }
+
+      b[r][c] = def; bbSet(r,c,def);
+
+      // 守方落子後，清除 lastDefKeys（下一手是攻方，不需要繼承）
+      lastDefKeys = null;
+      lastDefCoords = [];
+
+      // 先判斷守方「這步落子本身」是否成五（守方直接贏，攻方已輸）
+      if (isFive(b, r, c, def)) {
+        step.issues.push(`⚠ 守方落子 (${mv.coord}) 本身即成五，攻方已輸！`);
+        step.fatal = true;
+        steps.push(step);
+        fatalIdx = i;
+        break;
+      }
+
+      const {hasFive:dFive, fivePts:dFivePts, blocks:dBlocks} = getDefenderFourBlocks(b, def);
+      if (dFive) {
+        const pts = [...dFivePts].map(k=>rcToCoord(Math.floor(k/SIZE),k%SIZE));
+        step.info.push(`⚠ 守方堵後有直接成五威脅：${pts.join(' ')}（攻方下一手必須蓋住）`);
+        step.mustCover = pts;
+        steps.push(step);
+      } else if (dBlocks.size > 0) {
+        const pts = [...dBlocks].map(k=>rcToCoord(Math.floor(k/SIZE),k%SIZE));
+        step.info.push(`守方堵後反擊四成五點：${pts.join(' ')}（傳入下層 mustCover）`);
+        step.mustCover = pts;
+        steps.push(step);
+      } else {
+        step.info.push(`守方堵後無反擊四`);
+        steps.push(step);
+      }
+    }
+  }
+
+  renderVerifyResult(steps, fatalIdx, bSnap, moves, atk, def);
+}
+
+let _vSnap = null, _vMoves = [], _vAtk = WHITE;
+
+function renderVerifyResult(steps, fatalIdx, bSnap, moves, atk, def) {
+  _vSnap = bSnap; _vMoves = moves; _vAtk = atk;
+
+  const area = document.getElementById('verify-result-area');
+  const atkName = atk===WHITE ? '白' : '黑';
+  const defName = atk===WHITE ? '黑' : '白';
+
+  let html = '';
+  const hasError = fatalIdx >= 0;
+  const lastStep = steps[steps.length-1];
+  const isComplete = lastStep && (lastStep.result==='five'||lastStep.result==='forbid-win');
+
+  if (isComplete) {
+    html += `<div style="color:#44cc88;font-weight:700;margin-bottom:8px;">✓ 路徑合法，VCF 成立！</div>`;
+  } else if (hasError) {
+    html += `<div style="color:var(--accent-forbid);font-weight:700;margin-bottom:8px;">✗ 第 ${fatalIdx+1} 步出現問題</div>`;
+  } else {
+    html += `<div style="color:#ffcc44;font-weight:700;margin-bottom:8px;">⚠ 路徑未完整（共 ${steps.length} 步，尚未成五）</div>`;
+  }
+
+  steps.forEach((step, i) => {
+    const isAtkStep = step.isAtk;
+    const hasFatal = step.fatal || step.issues.length > 0;
+    const hasWarn = step.mustCover && step.mustCover.length > 0;
+
+    let cls = isAtkStep ? 'v-atk' : 'v-def';
+    if (hasFatal) cls = 'v-err';
+    else if (step.result==='five'||step.result==='forbid-win') cls = 'v-ok';
+    else if (hasWarn) cls = 'v-warn';
+
+    const who = isAtkStep ? `${atkName}(攻)` : `${defName}(守)`;
+    const icon = hasFatal ? '✗' : (step.result==='five'?'★':(hasWarn?'⚠':'▸'));
+
+    html += `<div class="verify-step ${cls}" onclick="toggleVerifyDetail(${i})">`;
+    html += `${icon} ${i+1}. ${who} → ${step.coord}`;
+    if (step.isLiveFour) html += ` <span style="color:#ffcc44;font-size:0.65rem;">${step.isRealLive4?'活四':'雙四'}</span>`;
+    html += `</div>`;
+
+    html += `<div class="verify-detail" id="vd-${i}">`;
+    step.info.forEach(s => { html += `<div style="color:var(--text-dim);">${s}</div>`; });
+    step.issues.forEach(s => { html += `<div style="color:var(--accent-forbid);">${s}</div>`; });
+    html += `</div>`;
+  });
+
+  area.innerHTML = html;
+  document.getElementById('verify-result-panel').style.display = '';
+  renderVerifyBoard(bSnap, moves.map(m=>m.coord));
+}
+
+function toggleVerifyDetail(idx) {
+  const el = document.getElementById(`vd-${idx}`);
+  if (!el) return;
+  el.classList.toggle('show');
+  if (_vSnap && _vMoves.length) {
+    renderVerifyBoard(_vSnap, _vMoves.slice(0, idx+1).map(m=>m.coord));
+  }
+}
+
+// ========== 剪枝追蹤模式 ==========
+function copyTraceLog() {
+  const el = document.getElementById('trace-result-area');
+  const text = el ? el.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.parentElement.querySelector('button');
+    if (btn) { const orig=btn.textContent; btn.textContent='✓ 已複製'; setTimeout(()=>btn.textContent=orig, 1500); }
+  });
+}
+
+function startTraceSearch() {
+  const raw = document.getElementById('verify-input').value;
+  const tokens = raw.trim().split(/[\s,，]+/).filter(Boolean);
+  if (!tokens.length) {
+    document.getElementById('trace-result-area').innerHTML =
+      '<span style="color:#ff6666;">請先在上方輸入框填入已知答案手順</span>';
+    document.getElementById('trace-result-panel').style.display = '';
+    return;
+  }
+
+  const atk = parseInt(document.getElementById('panel-verify').querySelector('input[name="vatk"]:checked').value);
+  const def = atk===WHITE ? BLACK : WHITE;
+  const maxAtk = parseInt(document.getElementById('trace-depth-select').value);
+
+  const allMoves = tokens.map(s => coordToRC(s));
+  const atkMoves = [];
+  for (let i = 0; i < allMoves.length; i++) {
+    if (i % 2 === 0) atkMoves.push(allMoves[i]);
+  }
+
+  const validAtk = atkMoves.filter(Boolean);
+  if (validAtk.length === 0) {
+    document.getElementById('trace-result-area').innerHTML =
+      '<span style="color:#ff6666;">手順解析失敗，請確認座標格式</span>';
+    document.getElementById('trace-result-panel').style.display = '';
+    return;
+  }
+
+  document.getElementById('trace-result-panel').style.display = '';
+  document.getElementById('trace-result-area').innerHTML =
+    '<span class="spinner"></span> 追蹤搜尋中（清空 TT，直接最大深度）…';
+
+  const bSnap = verifyBoardSnapshot || board.map(r=>[...r]);
+
+  setTimeout(() => {
+    _traceLog = [];
+    _tracePath = validAtk;
+    _traceOn = true;
+
+    TT = new Map();
+    cancelFlag = false;
+    const b = bSnap.map(r => [...r]);
+    bbSync(b);
+    const h0 = boardHash(b);
+
+    _traceLog.push(`=== 剪枝追蹤開始 ===`);
+    _traceLog.push(`攻方：${atk===WHITE?'白':'黑'}  maxAtk=${maxAtk}`);
+    _traceLog.push(`追蹤路徑（攻方步）：${validAtk.map(rc=>rc?_rc2s(rc.r,rc.c):'?').join(' → ')}`);
+    _traceLog.push(`完整手順：${tokens.join(' ')}`);
+    _traceLog.push(`─────────────────────────────`);
+
+    const startTime = Date.now();
+    const result = vcfDFS(b, h0, atk, def, maxAtk, new Set(), validAtk, 0);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+    _traceOn = false;
+
+    _traceLog.push(`─────────────────────────────`);
+    if (result && result !== 'cancelled') {
+      _traceLog.push(`★ 搜尋找到答案！耗時 ${elapsed}s`);
+      _traceLog.push(`  路徑：${result.map(m=>_rc2s(m.r,m.c)).join(' ')}`);
+    } else {
+      _traceLog.push(`✗ 搜尋未找到答案（maxAtk=${maxAtk}）耗時 ${elapsed}s`);
+    }
+
+    renderTraceResult(_traceLog);
+  }, 30);
+}
+
+function renderTraceResult(lines) {
+  const area = document.getElementById('trace-result-area');
+
+  const html = lines.map(line => {
+    let cls = '';
+    if (line.startsWith('[CONT]'))     cls = 'trace-cont';
+    else if (line.startsWith('[CUT-')) cls = 'trace-cut';
+    else if (line.startsWith('[MISS]')) cls = 'trace-warn';
+    else if (line.startsWith('[OK-'))  cls = 'trace-ok';
+    else if (line.startsWith('★'))    cls = 'trace-ok';
+    else if (line.startsWith('✗'))    cls = 'trace-cut';
+    else if (line.startsWith('===') || line.startsWith('─')) cls = 'trace-warn';
+
+    const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return cls ? `<span class="${cls}">${escaped}</span>` : escaped;
+  }).join('\n');
+
+  area.innerHTML = `<div class="trace-log">${html}</div>`;
+}
+
+</script>
+
+<!-- 說明區塊 -->
+<div class="about-section">
+  <div class="about-col">
+    <h3>什麼是 VCF？</h3>
+    <p>VCF（Victory by Continuous Fours）是五子棋的一種必勝技術：攻方連續出四，強迫守方每步都得堵，直到形成活四或禁手而得勝。</p>
+  </div>
+  <div class="about-col">
+    <h3>使用方式</h3>
+    <ul>
+      <li>在棋盤上擺好局面（或貼上座標快速輸入）</li>
+      <li>選擇最大搜尋深度</li>
+      <li>按「計算黑棋 VCF」或「計算白棋 VCF」</li>
+      <li>結果顯示攻守手順與每步分析</li>
+      <li>可用「路徑驗證」逐步確認已知手順</li>
+    </ul>
+  </div>
+  <div class="about-col">
+    <h3>題目管理</h3>
+    <p>可將局面儲存為題目，支援 JSON 匯入 / 匯出，方便跨裝置備份。</p>
+  </div>
+</div>
+
+<footer>
+  Hangsau · Line: hangsau &nbsp;·&nbsp; 五子棋 VCF 分析器
+</footer>
+
+<script>
+(function() {
+  const isDev = new URLSearchParams(location.search).has('dev');
+  if (!isDev) {
+    const style = document.createElement('style');
+    style.textContent = `
+      #trace-result-panel { display: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const pv = document.getElementById('panel-verify');
+      if (!pv) return;
+      const children = Array.from(pv.children);
+      let hiding = false;
+      children.forEach(el => {
+        if (el.classList.contains('panel-title') && el.textContent.includes('剪枝追蹤')) {
+          hiding = true;
+        }
+        if (hiding) el.style.display = 'none';
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
