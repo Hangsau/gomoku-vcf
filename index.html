@@ -1109,19 +1109,32 @@ let BL = [
   [new Uint16Array(15), new Uint16Array(15), new Uint16Array(29), new Uint16Array(29)]
 ];
 
+// 預計算 bbLineIdx 的 i/p，消除每次呼叫的 object allocation
+const BB_I = new Uint8Array(15 * 15 * 4);
+const BB_P = new Uint8Array(15 * 15 * 4);
+(function buildBBIdx() {
+  for (let r = 0; r < 15; r++) for (let c = 0; c < 15; c++) {
+    const base = (r * 15 + c) * 4;
+    BB_I[base+0] = r;       BB_P[base+0] = c;
+    BB_I[base+1] = c;       BB_P[base+1] = r;
+    BB_I[base+2] = r-c+14;  BB_P[base+2] = c;
+    BB_I[base+3] = r+c;     BB_P[base+3] = r;
+  }
+})();
+
 function bbSet(r, c, p) {
-  const bl = BL[p-1];
-  const {i:i0,p:p0}=bbLineIdx(r,c,0); bl[0][i0]|=(1<<p0);
-  const {i:i1,p:p1}=bbLineIdx(r,c,1); bl[1][i1]|=(1<<p1);
-  const {i:i2,p:p2}=bbLineIdx(r,c,2); bl[2][i2]|=(1<<p2);
-  const {i:i3,p:p3}=bbLineIdx(r,c,3); bl[3][i3]|=(1<<p3);
+  const bl = BL[p-1], base = (r * 15 + c) * 4;
+  bl[0][BB_I[base]]   |= (1 << BB_P[base]);
+  bl[1][BB_I[base+1]] |= (1 << BB_P[base+1]);
+  bl[2][BB_I[base+2]] |= (1 << BB_P[base+2]);
+  bl[3][BB_I[base+3]] |= (1 << BB_P[base+3]);
 }
 function bbClear(r, c, p) {
-  const bl = BL[p-1];
-  const {i:i0,p:p0}=bbLineIdx(r,c,0); bl[0][i0]&=~(1<<p0);
-  const {i:i1,p:p1}=bbLineIdx(r,c,1); bl[1][i1]&=~(1<<p1);
-  const {i:i2,p:p2}=bbLineIdx(r,c,2); bl[2][i2]&=~(1<<p2);
-  const {i:i3,p:p3}=bbLineIdx(r,c,3); bl[3][i3]&=~(1<<p3);
+  const bl = BL[p-1], base = (r * 15 + c) * 4;
+  bl[0][BB_I[base]]   &= ~(1 << BB_P[base]);
+  bl[1][BB_I[base+1]] &= ~(1 << BB_P[base+1]);
+  bl[2][BB_I[base+2]] &= ~(1 << BB_P[base+2]);
+  bl[3][BB_I[base+3]] &= ~(1 << BB_P[base+3]);
 }
 
 function bbSync(b) {
@@ -1188,20 +1201,18 @@ const T_IS_LIVE4_W= new Uint8Array(512);
 function inBounds(r, c) { return r>=0 && r<SIZE && c>=0 && c<SIZE; }
 
 function isFive(b, r, c, p) {
-  const bl = BL[p-1];
+  const bl = BL[p-1], base = (r * 15 + c) * 4;
   for (let d = 0; d < 4; d++) {
-    const {i, p:pos} = bbLineIdx(r, c, d);
-    const w = bbWindow(bl[d], i, pos);
+    const w = bbWindow(bl[d], BB_I[base+d], BB_P[base+d]);
     if (p === BLACK ? T_FIVE[w] : T_FIVE_GE5[w]) return true;
   }
   return false;
 }
 
 function isOverline(b, r, c, p) {
-  const bl = BL[p-1];
+  const bl = BL[p-1], base = (r * 15 + c) * 4;
   for (let d = 0; d < 4; d++) {
-    const {i, p:pos} = bbLineIdx(r, c, d);
-    if (T_OVERLINE[bbWindow(bl[d], i, pos)]) return true;
+    if (T_OVERLINE[bbWindow(bl[d], BB_I[base+d], BB_P[base+d])]) return true;
   }
   return false;
 }
@@ -1220,11 +1231,10 @@ function isFour(b, r, c, p) {
   b[r][c] = p; bbSet(r, c, p);
   let ok = false;
   if (!isFive(b, r, c, p)) {
-    const bl = BL[p-1];
+    const bl = BL[p-1], base = (r * 15 + c) * 4;
     const tbl = p === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
     for (let d = 0; d < 4; d++) {
-      const {i, p:pos} = bbLineIdx(r, c, d);
-      if (tbl[bbWindow(bl[d], i, pos)]) { ok = true; break; }
+      if (tbl[bbWindow(bl[d], BB_I[base+d], BB_P[base+d])]) { ok = true; break; }
     }
   }
   b[r][c] = EMPTY; bbClear(r, c, p);
@@ -1312,13 +1322,20 @@ function isRealFourInDir(b, r, c, dr, dc) {
 }
 
 function countFoursInDir(b, r, c, dr, dc) {
+  const buf = new Int8Array(11);
+  for (let k = 0; k < 11; k++) {
+    const nr = r + (k-5)*dr, nc = c + (k-5)*dc;
+    buf[k] = inBounds(nr, nc) ? b[nr][nc] : -1;
+  }
   const dists = [];
-  for (let dist = -4; dist <= 4; dist++) {
-    const nr = r + dist*dr, nc = c + dist*dc;
-    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
-    b[nr][nc] = BLACK;
-    if (lineCount(b, nr, nc, dr, dc, BLACK) === 5) dists.push(dist);
-    b[nr][nc] = EMPTY;
+  for (let i = 0; i < 11; i++) {
+    if (buf[i] !== EMPTY) continue;
+    buf[i] = BLACK;
+    let left = 0, right = 0;
+    for (let k = i-1; k >= 0 && buf[k] === BLACK; k--) left++;
+    for (let k = i+1; k < 11 && buf[k] === BLACK; k++) right++;
+    if (1 + left + right === 5) dists.push(i - 5);
+    buf[i] = EMPTY;
   }
   if (dists.length === 0) return 0;
   let groups = 1;
@@ -1330,19 +1347,28 @@ function countFoursInDir(b, r, c, dr, dc) {
 
 function countRealFourDirs(b, r, c) {
   let cnt = 0;
-  for (const [dr,dc] of DIRS) cnt += countFoursInDir(b, r, c, dr, dc);
+  for (const [dr,dc] of DIRS) {
+    cnt += countFoursInDir(b, r, c, dr, dc);
+    if (cnt >= 2) return cnt;
+  }
   return cnt;
 }
 
 function isLiveFourInDir(b, r, c, dr, dc) {
+  const buf = new Int8Array(11);
+  for (let k = 0; k < 11; k++) {
+    const nr = r + (k-5)*dr, nc = c + (k-5)*dc;
+    buf[k] = inBounds(nr, nc) ? b[nr][nc] : -1;
+  }
   let validFivePts = 0;
-  for (let dist = -4; dist <= 4; dist++) {
-    const nr = r + dist*dr, nc = c + dist*dc;
-    if (!inBounds(nr,nc) || b[nr][nc] !== EMPTY) continue;
-    b[nr][nc] = BLACK;
-    const len = lineCount(b, nr, nc, dr, dc, BLACK);
-    b[nr][nc] = EMPTY;
-    if (len === 5) validFivePts++;
+  for (let i = 0; i < 11; i++) {
+    if (buf[i] !== EMPTY) continue;
+    buf[i] = BLACK;
+    let left = 0, right = 0;
+    for (let k = i-1; k >= 0 && buf[k] === BLACK; k--) left++;
+    for (let k = i+1; k < 11 && buf[k] === BLACK; k++) right++;
+    if (1 + left + right === 5) validFivePts++;
+    buf[i] = EMPTY;
   }
   return validFivePts >= 2;
 }
@@ -1467,9 +1493,9 @@ function findFours(b, p) {
     b[r][c]=p; bbSet(r,c,p);
     if (isFive(b,r,c,p)) { b[r][c]=EMPTY; bbClear(r,c,p); list.unshift([r,c,'five']); continue; }
     let hasFour = false;
+    const _base = (r * 15 + c) * 4;
     for (let d=0; d<4; d++) {
-      const {i, p:pos} = bbLineIdx(r, c, d);
-      if (tFour[bbWindow(bl[d], i, pos)]) { hasFour = true; break; }
+      if (tFour[bbWindow(bl[d], BB_I[_base+d], BB_P[_base+d])]) { hasFour = true; break; }
     }
     b[r][c]=EMPTY; bbClear(r,c,p);
     if (hasFour) list.push([r,c,'four']);
@@ -1563,10 +1589,9 @@ function sortedFours(b, p) {
     if(type==='five') return {r,c,type,score:200};
     b[r][c]=p; bbSet(r,c,p);
     let score=0;
-    const bl=BL[p-1];
+    const bl=BL[p-1], _base=(r*15+c)*4;
     for(let d=0;d<4;d++){
-      const {i,p:pos}=bbLineIdx(r,c,d);
-      const w=bbWindow(bl[d],i,pos);
+      const w=bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d]);
       if(tLive[w]) score+=100;
       else if(tFour[w]) score+=10;
     }
@@ -1598,9 +1623,9 @@ function getDefenderFourBlocks(b, defender) {
   const bl=BL[defender-1];
   for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
     if (b[r][c]!==defender) continue;
+    const _base=(r*15+c)*4;
     for (let d=0;d<4;d++){
-      const {i,p:pos}=bbLineIdx(r,c,d);
-      if (!T_IS_FOUR[bbWindow(bl[d],i,pos)]) continue;
+      if (!T_IS_FOUR[bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d])]) continue;
       const [dr,dc]=DIRS[d];
       for (let dist=-4;dist<=4;dist++) {
         const nr=r+dist*dr, nc=c+dist*dc;
@@ -1816,19 +1841,30 @@ let BL=[
   [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)],
   [new Uint16Array(15),new Uint16Array(15),new Uint16Array(29),new Uint16Array(29)]
 ];
+const BB_I=new Uint8Array(15*15*4);
+const BB_P=new Uint8Array(15*15*4);
+(function buildBBIdx(){
+  for(let r=0;r<15;r++) for(let c=0;c<15;c++){
+    const base=(r*15+c)*4;
+    BB_I[base+0]=r;      BB_P[base+0]=c;
+    BB_I[base+1]=c;      BB_P[base+1]=r;
+    BB_I[base+2]=r-c+14; BB_P[base+2]=c;
+    BB_I[base+3]=r+c;    BB_P[base+3]=r;
+  }
+})();
 function bbSet(r,c,p){
-  const bl=BL[p-1];
-  const {i:i0,p:p0}=bbLineIdx(r,c,0);bl[0][i0]|=(1<<p0);
-  const {i:i1,p:p1}=bbLineIdx(r,c,1);bl[1][i1]|=(1<<p1);
-  const {i:i2,p:p2}=bbLineIdx(r,c,2);bl[2][i2]|=(1<<p2);
-  const {i:i3,p:p3}=bbLineIdx(r,c,3);bl[3][i3]|=(1<<p3);
+  const bl=BL[p-1],base=(r*15+c)*4;
+  bl[0][BB_I[base]]  |=(1<<BB_P[base]);
+  bl[1][BB_I[base+1]]|=(1<<BB_P[base+1]);
+  bl[2][BB_I[base+2]]|=(1<<BB_P[base+2]);
+  bl[3][BB_I[base+3]]|=(1<<BB_P[base+3]);
 }
 function bbClear(r,c,p){
-  const bl=BL[p-1];
-  const {i:i0,p:p0}=bbLineIdx(r,c,0);bl[0][i0]&=~(1<<p0);
-  const {i:i1,p:p1}=bbLineIdx(r,c,1);bl[1][i1]&=~(1<<p1);
-  const {i:i2,p:p2}=bbLineIdx(r,c,2);bl[2][i2]&=~(1<<p2);
-  const {i:i3,p:p3}=bbLineIdx(r,c,3);bl[3][i3]&=~(1<<p3);
+  const bl=BL[p-1],base=(r*15+c)*4;
+  bl[0][BB_I[base]]  &=~(1<<BB_P[base]);
+  bl[1][BB_I[base+1]]&=~(1<<BB_P[base+1]);
+  bl[2][BB_I[base+2]]&=~(1<<BB_P[base+2]);
+  bl[3][BB_I[base+3]]&=~(1<<BB_P[base+3]);
 }
 function bbSync(b){
   BL=[
@@ -1878,19 +1914,17 @@ const T_IS_FOUR_W=new Uint8Array(512),T_IS_LIVE4_W=new Uint8Array(512);
 
 function inBounds(r,c){return r>=0&&r<SIZE&&c>=0&&c<SIZE;}
 function isFive(b,r,c,p){
-  const bl=BL[p-1];
+  const bl=BL[p-1],base=(r*15+c)*4;
   for(let d=0;d<4;d++){
-    const {i,p:pos}=bbLineIdx(r,c,d);
-    const w=bbWindow(bl[d],i,pos);
+    const w=bbWindow(bl[d],BB_I[base+d],BB_P[base+d]);
     if(p===BLACK?T_FIVE[w]:T_FIVE_GE5[w]) return true;
   }
   return false;
 }
 function isOverline(b,r,c,p){
-  const bl=BL[p-1];
+  const bl=BL[p-1],base=(r*15+c)*4;
   for(let d=0;d<4;d++){
-    const {i,p:pos}=bbLineIdx(r,c,d);
-    if(T_OVERLINE[bbWindow(bl[d],i,pos)]) return true;
+    if(T_OVERLINE[bbWindow(bl[d],BB_I[base+d],BB_P[base+d])]) return true;
   }
   return false;
 }
@@ -1949,13 +1983,17 @@ function isRealFourInDir(b,r,c,dr,dc){
   return false;
 }
 function countFoursInDir(b,r,c,dr,dc){
+  const buf=new Int8Array(11);
+  for(let k=0;k<11;k++){const nr=r+(k-5)*dr,nc=c+(k-5)*dc;buf[k]=inBounds(nr,nc)?b[nr][nc]:-1;}
   const dists=[];
-  for(let dist=-4;dist<=4;dist++){
-    const nr=r+dist*dr,nc=c+dist*dc;
-    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
-    b[nr][nc]=BLACK;
-    if(lineCount(b,nr,nc,dr,dc,BLACK)===5) dists.push(dist);
-    b[nr][nc]=EMPTY;
+  for(let i=0;i<11;i++){
+    if(buf[i]!==EMPTY) continue;
+    buf[i]=BLACK;
+    let left=0,right=0;
+    for(let k=i-1;k>=0&&buf[k]===BLACK;k--) left++;
+    for(let k=i+1;k<11&&buf[k]===BLACK;k++) right++;
+    if(1+left+right===5) dists.push(i-5);
+    buf[i]=EMPTY;
   }
   if(dists.length===0) return 0;
   let groups=1;
@@ -1964,18 +2002,21 @@ function countFoursInDir(b,r,c,dr,dc){
 }
 function countRealFourDirs(b,r,c){
   let cnt=0;
-  for(const [dr,dc] of DIRS) cnt+=countFoursInDir(b,r,c,dr,dc);
+  for(const [dr,dc] of DIRS){cnt+=countFoursInDir(b,r,c,dr,dc);if(cnt>=2) return cnt;}
   return cnt;
 }
 function isLiveFourInDir(b,r,c,dr,dc){
+  const buf=new Int8Array(11);
+  for(let k=0;k<11;k++){const nr=r+(k-5)*dr,nc=c+(k-5)*dc;buf[k]=inBounds(nr,nc)?b[nr][nc]:-1;}
   let validFivePts=0;
-  for(let dist=-4;dist<=4;dist++){
-    const nr=r+dist*dr,nc=c+dist*dc;
-    if(!inBounds(nr,nc)||b[nr][nc]!==EMPTY) continue;
-    b[nr][nc]=BLACK;
-    const len=lineCount(b,nr,nc,dr,dc,BLACK);
-    b[nr][nc]=EMPTY;
-    if(len===5) validFivePts++;
+  for(let i=0;i<11;i++){
+    if(buf[i]!==EMPTY) continue;
+    buf[i]=BLACK;
+    let left=0,right=0;
+    for(let k=i-1;k>=0&&buf[k]===BLACK;k--) left++;
+    for(let k=i+1;k<11&&buf[k]===BLACK;k++) right++;
+    if(1+left+right===5) validFivePts++;
+    buf[i]=EMPTY;
   }
   return validFivePts>=2;
 }
@@ -2062,9 +2103,9 @@ function findFours(b,p){
     b[r][c]=p;bbSet(r,c,p);
     if(isFive(b,r,c,p)){b[r][c]=EMPTY;bbClear(r,c,p);list.unshift([r,c,'five']);continue;}
     let hasFour=false;
+    const _base=(r*15+c)*4;
     for(let d=0;d<4;d++){
-      const {i,p:pos}=bbLineIdx(r,c,d);
-      if(tFour[bbWindow(bl[d],i,pos)]){hasFour=true;break;}
+      if(tFour[bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d])]){hasFour=true;break;}
     }
     b[r][c]=EMPTY;bbClear(r,c,p);
     if(hasFour) list.push([r,c,'four']);
@@ -2151,10 +2192,9 @@ function sortedFours(b,p){
     if(type==='five') return {r,c,type,score:200};
     b[r][c]=p;bbSet(r,c,p);
     let score=0;
-    const bl=BL[p-1];
+    const bl=BL[p-1],_base=(r*15+c)*4;
     for(let d=0;d<4;d++){
-      const {i,p:pos}=bbLineIdx(r,c,d);
-      const w=bbWindow(bl[d],i,pos);
+      const w=bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d]);
       if(tLive[w]) score+=100;
       else if(tFour[w]) score+=10;
     }
@@ -2184,9 +2224,9 @@ function getDefenderFourBlocks(b,defender){
   const bl=BL[defender-1];
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
     if(b[r][c]!==defender) continue;
+    const _base=(r*15+c)*4;
     for(let d=0;d<4;d++){
-      const {i,p:pos}=bbLineIdx(r,c,d);
-      if(!T_IS_FOUR[bbWindow(bl[d],i,pos)]) continue;
+      if(!T_IS_FOUR[bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d])]) continue;
       const [dr,dc]=DIRS[d];
       for(let dist=-4;dist<=4;dist++){
         const nr=r+dist*dr,nc=c+dist*dc;
@@ -2895,9 +2935,9 @@ function startVerifyClick() {
       let hasFour = false;
       const bl = BL[atk-1];
       const tFourAtk = atk === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
+      const _base = (r*15+c)*4;
       for (let d=0;d<4;d++) {
-        const {i:li, p:pos} = bbLineIdx(r,c,d);
-        if (tFourAtk[bbWindow(bl[d],li,pos)]) { hasFour=true; break; }
+        if (tFourAtk[bbWindow(bl[d],BB_I[_base+d],BB_P[_base+d])]) { hasFour=true; break; }
       }
 
       if (!hasFour) {
@@ -2928,11 +2968,10 @@ function startVerifyClick() {
       }
       if (defOk.length > 1) {
         const tLive4 = atk === WHITE ? T_IS_LIVE4_W : T_IS_LIVE4;
-        const bl2 = BL[atk-1];
+        const bl2 = BL[atk-1], _base2=(r*15+c)*4;
         let isLive4 = false;
         for (let d=0;d<4;d++){
-          const {i,p:pos}=bbLineIdx(r,c,d);
-          if (tLive4[bbWindow(bl2[d],i,pos)]) { isLive4=true; break; }
+          if (tLive4[bbWindow(bl2[d],BB_I[_base2+d],BB_P[_base2+d])]) { isLive4=true; break; }
         }
         if (isLive4) {
           step.info.push(`活四！守方需堵：${defOk.map(p=>rcToCoord(p.r,p.c)).join(' / ')}`);

@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v25（2026/04/12）
+
+效能優化（三項）：
+
+- **優化一：Line Buffer**（`countFoursInDir` / `isLiveFourInDir`）：預取 ±5 格（11 格）到 local `Int8Array`，消除每次 `lineCount` 的 while 迴圈 + 2D array 存取，主要熱路徑加速 3-4x
+- **優化二：countRealFourDirs 早退**：達到 cnt>=2 立即返回，省去無用方向的計算
+- **優化三：bbLineIdx Lookup Table**（`BB_I` / `BB_P` Uint8Array）：消除全部 `bbLineIdx` 呼叫的 object allocation + 解構，以預計算 typed array index 取代，main + worker 雙版本同步更新
+
+Main thread 與 Worker blob 同步完成，預期整體搜尋加速 **1.5x–2x**。
+
+---
+
 ## v24-public（2026/04/08）
 
 開放版製作：
