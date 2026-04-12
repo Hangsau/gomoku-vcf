@@ -1749,6 +1749,10 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
       let allDefFail=true;
       for (const dp of defendable) {
         b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        if (isFive(b,dp.r,dp.c,defender)) {
+          b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+          allDefFail=false; break;
+        }
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive, fivePts:dFivePts, blocks:dBlocks}=getDefenderFourBlocks(b,defender);
         const nextMust = dFive ? dFivePts : dBlocks;
@@ -1763,6 +1767,11 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
       for (const dp of defendable) {
         b[fr][fc]=attacker; bbSet(fr,fc,attacker);
         b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        if (isFive(b,dp.r,dp.c,defender)) {
+          b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+          continue;
+        }
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive2, fivePts:dFivePts2, blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
         const nextMust2 = dFive2 ? dFivePts2 : dBlocks2;
@@ -1777,6 +1786,12 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
 
     const {r:dr_def, c:dc_def}=defendable[0];
     b[dr_def][dc_def]=defender; bbSet(dr_def,dc_def,defender);
+    // 白棋堵點本身也可能連五 → 白棋獲勝，此攻擊路徑無效
+    if (isFive(b,dr_def,dc_def,defender)) {
+      b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      continue;
+    }
     const defHash=newHash^ZK[dr_def][dc_def][defender];
 
     const {hasFive:counterFive, fivePts:counterFivePts, blocks:counterBlocks}=getDefenderFourBlocks(b,defender);
@@ -2296,6 +2311,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
       let allDefFail=true;
       for(const dp of defendable){
         b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
+        if(isFive(b,dp.r,dp.c,defender)){b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);allDefFail=false;break;}
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive,fivePts:dFivePts,blocks:dBlocks}=getDefenderFourBlocks(b,defender);
         const nextMust=dFive?dFivePts:dBlocks;
@@ -2309,6 +2325,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
       for(const dp of defendable){
         b[fr][fc]=attacker;bbSet(fr,fc,attacker);
         b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
+        if(isFive(b,dp.r,dp.c,defender)){b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive2,fivePts:dFivePts2,blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
         const nextMust2=dFive2?dFivePts2:dBlocks2;
@@ -2322,6 +2339,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
     }
     const {r:dr_def,c:dc_def}=defendable[0];
     b[dr_def][dc_def]=defender;bbSet(dr_def,dc_def,defender);
+    if(isFive(b,dr_def,dc_def,defender)){b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
     const defHash=newHash^ZK[dr_def][dc_def][defender];
     const {hasFive:counterFive,fivePts:counterFivePts,blocks:counterBlocks}=getDefenderFourBlocks(b,defender);
     if(counterFive){

@@ -10,6 +10,13 @@
 
 Main thread 與 Worker blob 同步完成，預期整體搜尋加速 **1.5x–2x**。
 
+**Bug 修正（AND node 守方連五漏判）**：
+
+- 衝四過程中，守方堵點本身若能形成五連（白棋連五獲勝），此攻擊路徑應立即判定無效
+- `vcfDFS` AND node 的三處落守子位置（single-defendable、multi-defendable allDefFail scan、multi-defendable path scan）均補上 `isFive(b, block_pos, defender)` 檢查
+- main thread + Worker blob 共 6 處同步修正（single×2 + multi×4）
+- 此 bug 為 v24 前既有，v25 同步修正
+
 ---
 
 ## v24-public（2026/04/08）
