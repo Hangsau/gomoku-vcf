@@ -585,27 +585,6 @@
       </div>
 
       <div class="panel-title" style="margin-top:4px;">VCF 計算</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem;">
-        <span style="color:var(--text-dim);white-space:nowrap;">最大深度</span>
-        <select id="depth-select" style="flex:1;background:var(--panel2);border:1px solid #4a3a20;color:var(--text);border-radius:4px;padding:4px 6px;font-family:'Noto Serif TC',serif;font-size:0.8rem;">
-          <option value="5">5 手</option>
-          <option value="10">10 手</option>
-          <option value="15">15 手</option>
-          <option value="20" selected>20 手</option>
-          <option value="30">30 手</option>
-          <option value="50">50 手</option>
-          <option value="100">100 手</option>
-          <option value="inf">∞ 無上限</option>
-        </select>
-      </div>
-      <div class="mode-toggle-row">
-        <button class="mode-toggle-btn" id="mode-iddfs" onclick="setSearchMode('iddfs')">
-          IDDFS<br><span style="font-size:0.6rem;opacity:0.7;">逐層加深</span>
-        </button>
-        <button class="mode-toggle-btn active" id="mode-direct" onclick="setSearchMode('direct')">
-          直接深度<br><span style="font-size:0.6rem;opacity:0.7;">清TT單次</span>
-        </button>
-      </div>
       <div class="toggle-row" id="shortest-toggle-row" onclick="toggleShortest()">
         <span style="color:var(--text-dim);">找最短路徑（較慢）</span>
         <div class="toggle-switch" id="shortest-toggle-switch"></div>
@@ -749,7 +728,6 @@ let vcfMoves = [];
 let vcfAttacker = 0;
 let useForbidden = false;
 let activeWorker = null;
-let searchMode = 'direct';
 let findShortest = false;
 
 let altMode = false;
@@ -758,12 +736,6 @@ let altHistory = [];
 
 let vcfPlaybackMoves = [];
 let vcfPlaybackStep_cur = 0;
-
-function setSearchMode(mode) {
-  searchMode = mode;
-  document.getElementById('mode-iddfs').className = 'mode-toggle-btn' + (mode==='iddfs'?' active':'');
-  document.getElementById('mode-direct').className = 'mode-toggle-btn' + (mode==='direct'?' active':'');
-}
 
 function toggleShortest() {
   findShortest = !findShortest;
@@ -2367,7 +2339,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
 
 // ── Worker 訊息處理 ──
 self.onmessage = function(e) {
-  const {type, board, attacker, maxAtk, searchMode, forbidden, shortest} = e.data;
+  const {type, board, attacker, maxAtk, forbidden, shortest} = e.data;
   if(type === 'cancel') { _cancelFlag = true; return; }
 
   _cancelFlag = false;
@@ -2378,59 +2350,34 @@ self.onmessage = function(e) {
   const defender = attacker === BLACK ? WHITE : BLACK;
   const startTime = Date.now();
 
-  if(searchMode === 'direct') {
-    TT = new Map();
-    const moves = vcfDFS(b, h0, attacker, defender, maxAtk, new Set());
-    if(moves && moves !== 'cancelled') {
-      let bestMoves = moves;
-      let bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
-      const originalLimit = bestLimit;
-      // 只在「找最短路徑」模式下逐步嘗試 N-1 手
-      if(shortest) {
-        while(!_cancelFlag && bestLimit > 1) {
-          self.postMessage({
-            type: 'progress-retry',
-            found: bestLimit,
-            retrying: bestLimit - 1,
-            elapsed: ((Date.now()-startTime)/1000).toFixed(1)
-          });
-          TT = new Map();
-          const shorter = vcfDFS(b, h0, attacker, defender, bestLimit - 1, new Set());
-          if(!shorter || shorter === 'cancelled') break;
-          bestMoves = shorter;
-          bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
-        }
+  TT = new Map();
+  const moves = vcfDFS(b, h0, attacker, defender, maxAtk, new Set());
+  if(moves && moves !== 'cancelled') {
+    let bestMoves = moves;
+    let bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
+    const originalLimit = bestLimit;
+    // 只在「找最短路徑」模式下逐步嘗試 N-1 手
+    if(shortest) {
+      while(!_cancelFlag && bestLimit > 1) {
+        self.postMessage({
+          type: 'progress-retry',
+          found: bestLimit,
+          retrying: bestLimit - 1,
+          elapsed: ((Date.now()-startTime)/1000).toFixed(1)
+        });
+        TT = new Map();
+        const shorter = vcfDFS(b, h0, attacker, defender, bestLimit - 1, new Set());
+        if(!shorter || shorter === 'cancelled') break;
+        bestMoves = shorter;
+        bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
       }
-      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
-      self.postMessage({type:'result', moves: bestMoves, limit: bestLimit, mode:'direct', shortened: bestLimit < originalLimit, originalLimit, elapsed});
-    } else {
-      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
-      self.postMessage({type:'notfound', elapsed});
     }
-    return;
+    const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+    self.postMessage({type:'result', moves: bestMoves, limit: bestLimit, shortened: bestLimit < originalLimit, originalLimit, elapsed});
+  } else {
+    const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
+    self.postMessage({type:'notfound', elapsed});
   }
-
-  // IDDFS
-  let limit = 1;
-  function step() {
-    if(_cancelFlag) { self.postMessage({type:'cancelled'}); return; }
-    if(limit > maxAtk) {
-      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
-      self.postMessage({type:'notfound', elapsed});
-      return;
-    }
-    TT = new Map(); // 每輪清空，避免低深度失敗記錄汙染高深度搜尋
-    self.postMessage({type:'progress', limit, maxAtk, elapsed: ((Date.now()-startTime)/1000).toFixed(1)});
-    const moves = vcfDFS(b, h0, attacker, defender, limit, new Set());
-    if(moves && moves !== 'cancelled') {
-      const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
-      self.postMessage({type:'result', moves, limit, mode:'iddfs', elapsed});
-      return;
-    }
-    limit++;
-    setTimeout(step, 0);
-  }
-  step();
 };
 `;
 }
@@ -2464,14 +2411,12 @@ function cancelVCF() {
 function runVCF(attacker) {
   if (searching) { cancelVCF(); return; }
 
-  const maxAtkRaw = document.getElementById('depth-select').value;
-  const maxAtk = maxAtkRaw === 'inf' ? 999999 : parseInt(maxAtkRaw, 10);
+  const maxAtk = 999999;
   const defender = attacker === BLACK ? WHITE : BLACK;
   const atkName  = attacker === BLACK ? '黑棋' : '白棋';
   const atkClass = attacker === BLACK ? 'result-found-black' : 'result-found-white';
   const atkKey   = attacker === BLACK ? 'atk-black' : 'atk-white';
   const defKey   = attacker === BLACK ? 'def-black' : 'def-white';
-  const barColor = attacker === BLACK ? 'var(--accent-black)' : 'var(--accent-white)';
 
   searching = true;
   document.getElementById('btn-cancel').style.display = 'block';
@@ -2485,9 +2430,8 @@ function runVCF(attacker) {
       vcfMoves = []; vcfAttacker = 0; render();
       vcfPlaybackMoves = [];
       document.getElementById('vcf-playback-bar').style.display = 'none';
-      const mA = maxAtk >= 999999 ? '任意深度' : `攻擊 ${maxAtk} 手`;
       document.getElementById('result-area').innerHTML =
-        `<div class="result-none">✗ ${atkName} 在 ${mA} 內<br>找不到 VCF 序列<br><span style="font-size:0.72rem;font-family:JetBrains Mono,monospace;">耗時 ${elapsed}s</span></div>`;
+        `<div class="result-none">✗ ${atkName} 找不到 VCF 序列<br><span style="font-size:0.72rem;font-family:JetBrains Mono,monospace;">耗時 ${elapsed}s</span></div>`;
       return;
     }
 
@@ -2500,15 +2444,12 @@ function runVCF(attacker) {
     vcfPlaybackStep_cur = result.moves.length;
     renderVcfPlayback();
 
-    let html = `<div class="${atkClass}">✓ ${atkName} 最短 VCF！${useForbidden ? '<span style="color:var(--accent-forbid);font-size:0.72rem;"> [禁手]</span>' : ''}</div>`;
+    let html = `<div class="${atkClass}">✓ ${atkName} VCF 存在！${useForbidden ? '<span style="color:var(--accent-forbid);font-size:0.72rem;"> [禁手]</span>' : ''}</div>`;
     html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:5px 0;font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">`;
     html += `<span>攻擊 <b style="color:var(--text)">${result.limit}</b> 手</span>`;
     html += `<span>總計 <b style="color:var(--text)">${result.moves.length}</b> 步</span>`;
     html += `<span>耗時 <b style="color:var(--text)">${elapsed}s</b></span>`;
-    const modeLabel = result.mode === 'direct'
-      ? (result.shortened ? `直接（${result.originalLimit}→${result.limit} 手）` : '直接')
-      : 'IDDFS';
-    html += `<span style="color:var(--text-dim);">${modeLabel}</span>`;
+    if (result.shortened) html += `<span style="color:var(--text-dim);">${result.originalLimit}→${result.limit} 手</span>`;
     if (forbidCount > 0) html += `<span style="color:var(--accent-forbid);">禁手 ${forbidCount} 處</span>`;
     html += `</div><div class="move-list" id="vcf-move-list">`;
     result.moves.forEach(({r, c, type, forbidType}, i) => {
@@ -2535,7 +2476,7 @@ function runVCF(attacker) {
   worker.onmessage = function(e) {
     const msg = e.data;
     if (msg.type === 'result') {
-      showResult({moves: msg.moves, limit: msg.limit, mode: msg.mode}, msg.elapsed);
+      showResult({moves: msg.moves, limit: msg.limit, shortened: msg.shortened, originalLimit: msg.originalLimit}, msg.elapsed);
     } else if (msg.type === 'notfound') {
       showResult(null, msg.elapsed);
     } else if (msg.type === 'cancelled') {
@@ -2545,13 +2486,6 @@ function runVCF(attacker) {
       document.getElementById('result-area').innerHTML =
         `<span class="spinner"></span> 找到 <b>${msg.found}</b> 手，嘗試縮短至 <b>${msg.retrying}</b> 手…<br>
          <span style="font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">已耗時 ${msg.elapsed}s</span>`;
-    } else if (msg.type === 'progress') {
-      const pct = msg.maxAtk < 999999 ? Math.round(msg.limit / msg.maxAtk * 100) : 0;
-      const depthLabel = msg.maxAtk >= 999999 ? `深度 <b>${msg.limit}</b>（無上限）` : `深度 <b>${msg.limit}</b> / ${msg.maxAtk} 手`;
-      document.getElementById('result-area').innerHTML =
-        `<span class="spinner"></span> 搜尋中（IDDFS）… ${depthLabel}${useForbidden ? ' · 禁手' : ''}<br>
-         <span style="font-size:0.72rem;color:var(--text-dim);font-family:JetBrains Mono,monospace;">已耗時 ${msg.elapsed}s</span>
-         ${msg.maxAtk < 999999 ? `<div style="margin-top:6px;height:4px;background:#3a2e1a;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${barColor};transition:width 0.3s;"></div></div>` : ''}`;
     }
   };
   worker.onerror = function(err) {
@@ -2566,7 +2500,6 @@ function runVCF(attacker) {
     board: board.map(r => [...r]),
     attacker,
     maxAtk,
-    searchMode,
     forbidden: useForbidden,
     shortest: findShortest
   });
