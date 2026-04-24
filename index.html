@@ -606,6 +606,10 @@
           直接深度<br><span style="font-size:0.6rem;opacity:0.7;">清TT單次</span>
         </button>
       </div>
+      <div class="toggle-row" id="shortest-toggle-row" onclick="toggleShortest()">
+        <span style="color:var(--text-dim);">找最短路徑（較慢）</span>
+        <div class="toggle-switch" id="shortest-toggle-switch"></div>
+      </div>
       <button class="action-btn btn-vcf-black" onclick="runVCF(1)">⬤ 計算黑棋 VCF</button>
       <button class="action-btn btn-vcf-white" onclick="runVCF(2)">○ 計算白棋 VCF</button>
       <button id="btn-cancel" class="action-btn" onclick="cancelVCF()"
@@ -746,6 +750,7 @@ let vcfAttacker = 0;
 let useForbidden = false;
 let activeWorker = null;
 let searchMode = 'direct';
+let findShortest = false;
 
 let altMode = false;
 let altTurn = BLACK;
@@ -758,6 +763,11 @@ function setSearchMode(mode) {
   searchMode = mode;
   document.getElementById('mode-iddfs').className = 'mode-toggle-btn' + (mode==='iddfs'?' active':'');
   document.getElementById('mode-direct').className = 'mode-toggle-btn' + (mode==='direct'?' active':'');
+}
+
+function toggleShortest() {
+  findShortest = !findShortest;
+  document.getElementById('shortest-toggle-switch').className = 'toggle-switch' + (findShortest?' on':'');
 }
 
 const canvas = document.getElementById('board');
@@ -1477,9 +1487,9 @@ function nearCandidates(b) {
   return cands;
 }
 
-function findFours(b, p) {
+function findFours(b, p, cands) {
   const list = [];
-  const cands = nearCandidates(b);
+  if (!cands) cands = nearCandidates(b);
   const tFour = p === WHITE ? T_IS_FOUR_W : T_IS_FOUR;
   const bl = BL[p-1];
   for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
@@ -1581,8 +1591,8 @@ function checkLiveFourWin(b, r, c, attacker) {
   return false;
 }
 
-function sortedFours(b, p) {
-  const raw=findFours(b,p);
+function sortedFours(b, p, cands) {
+  const raw=findFours(b,p,cands);
   const tLive = p === WHITE ? T_IS_LIVE4_W : T_IS_LIVE4;
   const tFour = p === WHITE ? T_IS_FOUR_W  : T_IS_FOUR;
   const scored=raw.map(([r,c,type])=>{
@@ -1672,16 +1682,11 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
   const cands=nearCandidates(b);
   for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
     if (!cands[r*SIZE+c]) continue;
-    b[r][c]=attacker;
-    if (isFive(b,r,c,attacker)) {
-      b[r][c]=EMPTY;
-      return [{r,c,type:'atk'}];
-    }
-    b[r][c]=EMPTY;
+    if (isFive(b,r,c,attacker)) return [{r,c,type:'atk'}];
   }
   if (atkLeft<=1) { const p1=TT.get(tk); if(p1===undefined||1>p1) TT.set(tk,1); return null; }
 
-  const candidates=sortedFours(b, attacker);
+  const candidates=sortedFours(b, attacker, cands);
 
   if (_traceOn && traceDepth < tracePath.length) {
     const tp = tracePath[traceDepth];
@@ -2102,9 +2107,9 @@ function nearCandidates(b){
   }
   return cands;
 }
-function findFours(b,p){
+function findFours(b,p,cands){
   const list=[];
-  const cands=nearCandidates(b);
+  if(!cands) cands=nearCandidates(b);
   const tFour=p===WHITE?T_IS_FOUR_W:T_IS_FOUR;
   const bl=BL[p-1];
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
@@ -2199,8 +2204,8 @@ function checkLiveFourWin(b,r,c,attacker){
   }
   return false;
 }
-function sortedFours(b,p){
-  const raw=findFours(b,p);
+function sortedFours(b,p,cands){
+  const raw=findFours(b,p,cands);
   const tLive=p===WHITE?T_IS_LIVE4_W:T_IS_LIVE4;
   const tFour=p===WHITE?T_IS_FOUR_W:T_IS_FOUR;
   const scored=raw.map(([r,c,type])=>{
@@ -2266,12 +2271,10 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
   const cands=nearCandidates(b);
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
     if(!cands[r*SIZE+c]) continue;
-    b[r][c]=attacker;
-    if(isFive(b,r,c,attacker)){b[r][c]=EMPTY;return [{r,c,type:'atk'}];}
-    b[r][c]=EMPTY;
+    if(isFive(b,r,c,attacker)) return [{r,c,type:'atk'}];
   }
   if(atkLeft<=1){const p1=TT.get(tk);if(p1===undefined||1>p1) TT.set(tk,1);return null;}
-  const candidates=sortedFours(b,attacker);
+  const candidates=sortedFours(b,attacker,cands);
   for(const {r:fr,c:fc} of candidates){
     b[fr][fc]=attacker;bbSet(fr,fc,attacker);
     const newHash=hash^ZK[fr][fc][attacker];
@@ -2364,7 +2367,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
 
 // ── Worker 訊息處理 ──
 self.onmessage = function(e) {
-  const {type, board, attacker, maxAtk, searchMode, forbidden} = e.data;
+  const {type, board, attacker, maxAtk, searchMode, forbidden, shortest} = e.data;
   if(type === 'cancel') { _cancelFlag = true; return; }
 
   _cancelFlag = false;
@@ -2382,19 +2385,21 @@ self.onmessage = function(e) {
       let bestMoves = moves;
       let bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
       const originalLimit = bestLimit;
-      // 找到解後，逐步嘗試 N-1 手，直到縮無可縮
-      while(!_cancelFlag && bestLimit > 1) {
-        self.postMessage({
-          type: 'progress-retry',
-          found: bestLimit,
-          retrying: bestLimit - 1,
-          elapsed: ((Date.now()-startTime)/1000).toFixed(1)
-        });
-        TT = new Map();
-        const shorter = vcfDFS(b, h0, attacker, defender, bestLimit - 1, new Set());
-        if(!shorter || shorter === 'cancelled') break;
-        bestMoves = shorter;
-        bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
+      // 只在「找最短路徑」模式下逐步嘗試 N-1 手
+      if(shortest) {
+        while(!_cancelFlag && bestLimit > 1) {
+          self.postMessage({
+            type: 'progress-retry',
+            found: bestLimit,
+            retrying: bestLimit - 1,
+            elapsed: ((Date.now()-startTime)/1000).toFixed(1)
+          });
+          TT = new Map();
+          const shorter = vcfDFS(b, h0, attacker, defender, bestLimit - 1, new Set());
+          if(!shorter || shorter === 'cancelled') break;
+          bestMoves = shorter;
+          bestLimit = bestMoves.filter(m => m.type==='atk' || m.type==='forbid-block').length;
+        }
       }
       const elapsed = ((Date.now()-startTime)/1000).toFixed(2);
       self.postMessage({type:'result', moves: bestMoves, limit: bestLimit, mode:'direct', shortened: bestLimit < originalLimit, originalLimit, elapsed});
@@ -2562,7 +2567,8 @@ function runVCF(attacker) {
     attacker,
     maxAtk,
     searchMode,
-    forbidden: useForbidden
+    forbidden: useForbidden,
+    shortest: findShortest
   });
 }
 
