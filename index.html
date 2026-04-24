@@ -1470,7 +1470,7 @@ function findFours(b, p, cands) {
       b[r][c]=BLACK; bbSet(r,c,BLACK);
       const wins=isFive(b,r,c,BLACK);
       b[r][c]=EMPTY; bbClear(r,c,BLACK);
-      if (!wins && isForbidden(b,r,c)) continue;
+      if (!wins && forbidState[r*15+c]) continue;
     }
     b[r][c]=p; bbSet(r,c,p);
     if (isFive(b,r,c,p)) { b[r][c]=EMPTY; bbClear(r,c,p); list.unshift([r,c,'five']); continue; }
@@ -1544,6 +1544,30 @@ function ttKey(h, lim, ch) {
   return ((BigInt(h>>>0))<<34n) | (BigInt(lim&0xFFFFF)<<14n) | BigInt(ch&0x3FFF);
 }
 
+// ── FORBID 預標記（Rapfi 架構參考）──
+let forbidState = new Uint8Array(225);
+function initForbidState(b) {
+  forbidState.fill(0);
+  if (!useForbidden) return;
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++)
+    if (b[r][c]===EMPTY && isForbiddenWithVisited(b,r,c,new Set(),0))
+      forbidState[r*15+c]=1;
+}
+function computeForbidAround(b,r,c) {
+  const ch=[];
+  for (let nr=Math.max(0,r-4);nr<=Math.min(14,r+4);nr++)
+    for (let nc=Math.max(0,c-4);nc<=Math.min(14,c+4);nc++) {
+      if (b[nr][nc]!==EMPTY) continue;
+      const idx=nr*15+nc;
+      const nv=(useForbidden&&isForbiddenWithVisited(b,nr,nc,new Set(),0))?1:0;
+      if (forbidState[idx]!==nv) { ch.push(idx,forbidState[idx]); forbidState[idx]=nv; }
+    }
+  return ch;
+}
+function restoreForbidChanges(ch) {
+  for (let i=0;i<ch.length;i+=2) forbidState[ch[i]]=ch[i+1];
+}
+
 function checkLiveFourWin(b, r, c, attacker) {
   for (const [dr,dc] of DIRS) {
     if (getPatternInDir(b,r,c,dr,dc,attacker)!=='open4') continue;
@@ -1555,7 +1579,7 @@ function checkLiveFourWin(b, r, c, attacker) {
       const wins=isFive(b,nr,nc,attacker);
       b[nr][nc]=EMPTY;
       if (!wins) continue;
-      if (attacker===BLACK&&useForbidden&&isForbidden(b,nr,nc)) continue;
+      if (attacker===BLACK&&useForbidden&&forbidState[nr*15+nc]) continue;
       legal++;
     }
     if (legal>=2) return true;
@@ -1586,7 +1610,7 @@ function sortedFours(b, p, cands) {
 
 function isDefendable(b, r, c, defender) {
   if (b[r][c]!==EMPTY) return false;
-  if (defender===BLACK && useForbidden && isForbidden(b,r,c)) return false;
+  if (defender===BLACK && useForbidden && forbidState[r*15+c]) return false;
   return true;
 }
 
@@ -1673,6 +1697,7 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
                         fr === tracePath[traceDepth].r && fc === tracePath[traceDepth].c;
 
     b[fr][fc]=attacker; bbSet(fr,fc,attacker);
+    const chgAtk=computeForbidAround(b,fr,fc);
     const newHash=hash^ZK[fr][fc][attacker];
 
     const defRaw=findDefense(b,attacker,defender,fr,fc);
@@ -1686,7 +1711,7 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
 
     if (defPoints.length===0) {
       if (isTracedAtk) _traceLog.push(`[CUT-DEF0] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} 找不到守方必堵點，跳過`);
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
     }
 
     if (mustCover.size > 0) {
@@ -1696,38 +1721,39 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
       if (remaining.length > 0) {
         if (defendable.length !== 1) {
           if (isTracedAtk) _traceLog.push(`[CUT-MC1] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} remaining=${remaining.map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} defendable.len=${defendable.length}（活四/禁手，守方可去成五）`);
-          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+          restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
         }
         const allCovered = remaining.every(mk => defKeySet.has(mk));
         if (!allCovered) {
           if (isTracedAtk) _traceLog.push(`[CUT-MC2] d=${traceDepth} atk=${_rc2s(fr,fc)} atkLeft=${atkLeft} mustCover=${_setStr(mustCover)} remaining=${remaining.map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} defKeySet=${[...defKeySet].map(k=>_rc2s(Math.floor(k/SIZE),k%SIZE))} 守方堵點無法覆蓋所有remaining`);
-          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
+          restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); continue;
         }
       }
     }
 
     if (checkLiveFourWin(b,fr,fc,attacker)) {
       if (isTracedAtk) _traceLog.push(`[OK-L4WIN] d=${traceDepth} atk=${_rc2s(fr,fc)} 活四直接勝`);
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
       return [{r:fr,c:fc,type:'atk'}];
     }
 
     if (defendable.length===0) {
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
       const fp=allForbid[0];
       return [{r:fr,c:fc,type:'atk'},{r:fp.r,c:fp.c,type:'forbid-block',forbidType:fp.forbidType}];
     }
 
     if (defendable.length>1) {
       if (mustCover.size===0) {
-        b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+        restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
         return [{r:fr,c:fc,type:'atk'}];
       }
       let allDefFail=true;
       for (const dp of defendable) {
         b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        const chgDef1=computeForbidAround(b,dp.r,dp.c);
         if (isFive(b,dp.r,dp.c,defender)) {
-          b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+          restoreForbidChanges(chgDef1); b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
           allDefFail=false; break;
         }
         const dHash=newHash^ZK[dp.r][dp.c][defender];
@@ -1735,26 +1761,28 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
         const nextMust = dFive ? dFivePts : dBlocks;
         const nextTraceDep = isTracedAtk ? traceDepth+1 : (tracePath.length+1);
         const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust,tracePath,nextTraceDep);
-        b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
-        if (sub==='cancelled') { b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); return 'cancelled'; }
+        restoreForbidChanges(chgDef1); b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+        if (sub==='cancelled') { restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker); return 'cancelled'; }
         if (!sub) { allDefFail=false; break; }
       }
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
       if (!allDefFail) continue;
       for (const dp of defendable) {
         b[fr][fc]=attacker; bbSet(fr,fc,attacker);
+        const chgAtk2=computeForbidAround(b,fr,fc);
         b[dp.r][dp.c]=defender; bbSet(dp.r,dp.c,defender);
+        const chgDef2=computeForbidAround(b,dp.r,dp.c);
         if (isFive(b,dp.r,dp.c,defender)) {
-          b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
-          b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+          restoreForbidChanges(chgDef2); b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+          restoreForbidChanges(chgAtk2); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
           continue;
         }
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive2, fivePts:dFivePts2, blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
         const nextMust2 = dFive2 ? dFivePts2 : dBlocks2;
         const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust2,tracePath,traceDepth+1);
-        b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
-        b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+        restoreForbidChanges(chgDef2); b[dp.r][dp.c]=EMPTY; bbClear(dp.r,dp.c,defender);
+        restoreForbidChanges(chgAtk2); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
         if (sub==='cancelled') return 'cancelled';
         if (sub) return [{r:fr,c:fc,type:'atk'},{r:dp.r,c:dp.c,type:'def'},...sub];
       }
@@ -1763,10 +1791,11 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
 
     const {r:dr_def, c:dc_def}=defendable[0];
     b[dr_def][dc_def]=defender; bbSet(dr_def,dc_def,defender);
+    const chgDef=computeForbidAround(b,dr_def,dc_def);
     // 白棋堵點本身也可能連五 → 白棋獲勝，此攻擊路徑無效
     if (isFive(b,dr_def,dc_def,defender)) {
-      b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgDef); b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
       continue;
     }
     const defHash=newHash^ZK[dr_def][dc_def][defender];
@@ -1782,8 +1811,8 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
 
     if (counterFive) {
       const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,counterFivePts,tracePath,isTracedAtk?traceDepth+1:(tracePath.length+1));
-      b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
-      b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgDef); b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+      restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
       if (sub==='cancelled') return 'cancelled';
       if (sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
       continue;
@@ -1793,8 +1822,8 @@ function vcfDFS(b, hash, attacker, defender, atkLeft, mustCover, tracePath, trac
 
     const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,newMust,tracePath,isTracedAtk?traceDepth+1:(tracePath.length+1));
 
-    b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
-    b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
+    restoreForbidChanges(chgDef); b[dr_def][dc_def]=EMPTY; bbClear(dr_def,dc_def,defender);
+    restoreForbidChanges(chgAtk); b[fr][fc]=EMPTY; bbClear(fr,fc,attacker);
 
     if (sub==='cancelled') return 'cancelled';
     if (sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
@@ -2090,7 +2119,7 @@ function findFours(b,p,cands){
       b[r][c]=BLACK;bbSet(r,c,BLACK);
       const wins=isFive(b,r,c,BLACK);
       b[r][c]=EMPTY;bbClear(r,c,BLACK);
-      if(!wins&&isForbidden(b,r,c)) continue;
+      if(!wins&&forbidState[r*15+c]) continue;
     }
     b[r][c]=p;bbSet(r,c,p);
     if(isFive(b,r,c,p)){b[r][c]=EMPTY;bbClear(r,c,p);list.unshift([r,c,'five']);continue;}
@@ -2158,6 +2187,29 @@ let TT=new Map();
 function ttKey(h,lim,ch){
   return ((BigInt(h>>>0))<<34n)|(BigInt(lim&0xFFFFF)<<14n)|BigInt(ch&0x3FFF);
 }
+// ── FORBID 預標記 ──
+let forbidState=new Uint8Array(225);
+function initForbidState(b){
+  forbidState.fill(0);
+  if(!useForbidden) return;
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++)
+    if(b[r][c]===EMPTY&&isForbiddenWithVisited(b,r,c,new Set(),0))
+      forbidState[r*15+c]=1;
+}
+function computeForbidAround(b,r,c){
+  const ch=[];
+  for(let nr=Math.max(0,r-4);nr<=Math.min(14,r+4);nr++)
+    for(let nc=Math.max(0,c-4);nc<=Math.min(14,c+4);nc++){
+      if(b[nr][nc]!==EMPTY) continue;
+      const idx=nr*15+nc;
+      const nv=(useForbidden&&isForbiddenWithVisited(b,nr,nc,new Set(),0))?1:0;
+      if(forbidState[idx]!==nv){ch.push(idx,forbidState[idx]);forbidState[idx]=nv;}
+    }
+  return ch;
+}
+function restoreForbidChanges(ch){
+  for(let i=0;i<ch.length;i+=2) forbidState[ch[i]]=ch[i+1];
+}
 function checkLiveFourWin(b,r,c,attacker){
   for(const [dr,dc] of DIRS){
     if(getPatternInDir(b,r,c,dr,dc,attacker)!=='open4') continue;
@@ -2169,7 +2221,7 @@ function checkLiveFourWin(b,r,c,attacker){
       const wins=isFive(b,nr,nc,attacker);
       b[nr][nc]=EMPTY;
       if(!wins) continue;
-      if(attacker===BLACK&&useForbidden&&isForbidden(b,nr,nc)) continue;
+      if(attacker===BLACK&&useForbidden&&forbidState[nr*15+nc]) continue;
       legal++;
     }
     if(legal>=2) return true;
@@ -2198,7 +2250,7 @@ function sortedFours(b,p,cands){
 }
 function isDefendable(b,r,c,defender){
   if(b[r][c]!==EMPTY) return false;
-  if(defender===BLACK&&useForbidden&&isForbidden(b,r,c)) return false;
+  if(defender===BLACK&&useForbidden&&forbidState[r*15+c]) return false;
   return true;
 }
 function getDefenderFourBlocks(b,defender){
@@ -2249,6 +2301,7 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
   const candidates=sortedFours(b,attacker,cands);
   for(const {r:fr,c:fc} of candidates){
     b[fr][fc]=attacker;bbSet(fr,fc,attacker);
+    const chgAtk=computeForbidAround(b,fr,fc);
     const newHash=hash^ZK[fr][fc][attacker];
     const defRaw=findDefense(b,attacker,defender,fr,fc);
     const defPoints=defRaw.map(([dr,dc])=>({
@@ -2258,55 +2311,58 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
     }));
     const defendable=defPoints.filter(p=>p.canDefend);
     const allForbid=defPoints.filter(p=>!p.canDefend);
-    if(defPoints.length===0){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+    if(defPoints.length===0){restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
     if(mustCover.size>0){
       const selfKey=fr*SIZE+fc;
       const defKeySet=new Set(defRaw.map(([dr,dc])=>dr*SIZE+dc));
       const remaining=[...mustCover].filter(mk=>mk!==selfKey);
       if(remaining.length>0){
-        if(defendable.length!==1){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+        if(defendable.length!==1){restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
         const allCovered=remaining.every(mk=>defKeySet.has(mk));
-        if(!allCovered){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+        if(!allCovered){restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
       }
     }
     if(checkLiveFourWin(b,fr,fc,attacker)){
-      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
       return [{r:fr,c:fc,type:'atk'}];
     }
     if(defendable.length===0){
-      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
       const fp=allForbid[0];
       return [{r:fr,c:fc,type:'atk'},{r:fp.r,c:fp.c,type:'forbid-block',forbidType:fp.forbidType}];
     }
     if(defendable.length>1){
       if(mustCover.size===0){
-        b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+        restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
         return [{r:fr,c:fc,type:'atk'}];
       }
       let allDefFail=true;
       for(const dp of defendable){
         b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
-        if(isFive(b,dp.r,dp.c,defender)){b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);allDefFail=false;break;}
+        const chgDef1=computeForbidAround(b,dp.r,dp.c);
+        if(isFive(b,dp.r,dp.c,defender)){restoreForbidChanges(chgDef1);b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);allDefFail=false;break;}
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive,fivePts:dFivePts,blocks:dBlocks}=getDefenderFourBlocks(b,defender);
         const nextMust=dFive?dFivePts:dBlocks;
         const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust);
-        b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
-        if(sub==='cancelled'){b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);return 'cancelled';}
+        restoreForbidChanges(chgDef1);b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
+        if(sub==='cancelled'){restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);return 'cancelled';}
         if(!sub){allDefFail=false;break;}
       }
-      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
       if(!allDefFail) continue;
       for(const dp of defendable){
         b[fr][fc]=attacker;bbSet(fr,fc,attacker);
+        const chgAtk2=computeForbidAround(b,fr,fc);
         b[dp.r][dp.c]=defender;bbSet(dp.r,dp.c,defender);
-        if(isFive(b,dp.r,dp.c,defender)){b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+        const chgDef2=computeForbidAround(b,dp.r,dp.c);
+        if(isFive(b,dp.r,dp.c,defender)){restoreForbidChanges(chgDef2);b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);restoreForbidChanges(chgAtk2);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
         const dHash=newHash^ZK[dp.r][dp.c][defender];
         const {hasFive:dFive2,fivePts:dFivePts2,blocks:dBlocks2}=getDefenderFourBlocks(b,defender);
         const nextMust2=dFive2?dFivePts2:dBlocks2;
         const sub=vcfDFS(b,dHash,attacker,defender,atkLeft-1,nextMust2);
-        b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
-        b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+        restoreForbidChanges(chgDef2);b[dp.r][dp.c]=EMPTY;bbClear(dp.r,dp.c,defender);
+        restoreForbidChanges(chgAtk2);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
         if(sub==='cancelled') return 'cancelled';
         if(sub) return [{r:fr,c:fc,type:'atk'},{r:dp.r,c:dp.c,type:'def'},...sub];
       }
@@ -2314,21 +2370,22 @@ function vcfDFS(b,hash,attacker,defender,atkLeft,mustCover){
     }
     const {r:dr_def,c:dc_def}=defendable[0];
     b[dr_def][dc_def]=defender;bbSet(dr_def,dc_def,defender);
-    if(isFive(b,dr_def,dc_def,defender)){b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
+    const chgDef=computeForbidAround(b,dr_def,dc_def);
+    if(isFive(b,dr_def,dc_def,defender)){restoreForbidChanges(chgDef);b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);continue;}
     const defHash=newHash^ZK[dr_def][dc_def][defender];
     const {hasFive:counterFive,fivePts:counterFivePts,blocks:counterBlocks}=getDefenderFourBlocks(b,defender);
     if(counterFive){
       const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,counterFivePts);
-      b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
-      b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+      restoreForbidChanges(chgDef);b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
+      restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
       if(sub==='cancelled') return 'cancelled';
       if(sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
       continue;
     }
     const newMust=counterBlocks;
     const sub=vcfDFS(b,defHash,attacker,defender,atkLeft-1,newMust);
-    b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
-    b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
+    restoreForbidChanges(chgDef);b[dr_def][dc_def]=EMPTY;bbClear(dr_def,dc_def,defender);
+    restoreForbidChanges(chgAtk);b[fr][fc]=EMPTY;bbClear(fr,fc,attacker);
     if(sub==='cancelled') return 'cancelled';
     if(sub) return [{r:fr,c:fc,type:'atk'},{r:dr_def,c:dc_def,type:'def'},...sub];
   }
@@ -2346,6 +2403,7 @@ self.onmessage = function(e) {
   useForbidden = forbidden;
   const b = board.map(r=>[...r]);
   bbSync(b);
+  initForbidState(b);
   const h0 = boardHash(b);
   const defender = attacker === BLACK ? WHITE : BLACK;
   const startTime = Date.now();
@@ -3128,6 +3186,7 @@ function startTraceSearch() {
     cancelFlag = false;
     const b = bSnap.map(r => [...r]);
     bbSync(b);
+    initForbidState(b);
     const h0 = boardHash(b);
 
     _traceLog.push(`=== 剪枝追蹤開始 ===`);
