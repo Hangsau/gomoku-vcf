@@ -96,7 +96,6 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   <header>
     <h1><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#F2B544" stroke-width="1.8"><circle cx="9" cy="12" r="5"/><circle cx="16" cy="12" r="5" fill="#F2B544" stroke="none" opacity=".9"/></svg>詰題試煉場</h1>
     <nav style="display:flex;gap:8px;flex-wrap:wrap">
-      <a class="hbtn" href="./">VCF 分析器</a>
       <button class="hbtn" type="button" id="btnPhoto">從照片匯入</button>
       <button class="hbtn" type="button" id="btnShare">複製這題的連結</button>
       <button class="hbtn" type="button" id="btnCard" disabled>產生分享卡</button>
@@ -181,7 +180,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   </div>
   <p class="hint" id="phHint" style="margin:10px 0">選一張棋盤的照片或截圖。照片只在你的瀏覽器裡處理，不會上傳。</p>
   <div style="position:relative;max-height:70vh;overflow:auto;border-radius:12px;background:#0B0E14">
-    <canvas id="phCanvas" style="display:block;max-width:100%;height:auto;cursor:crosshair;touch-action:manipulation"></canvas>
+    <canvas id="phCanvas" style="display:block;max-width:100%;height:auto;cursor:crosshair;touch-action:none"></canvas>
   </div>
 </dialog>
 
@@ -511,8 +510,29 @@ function phDraw() {
   if (!PH.img) return;
   c.drawImage(PH.img, 0, 0);
   const s = Math.max(2, PH.w / 400);
-  PH.corners.forEach((p, i) => { c.beginPath(); c.arc(p[0], p[1], 6 * s, 0, 7); c.fillStyle = '#F2B544'; c.fill(); c.font = `${10 * s}px sans-serif`; c.fillText(String(i + 1), p[0] + 8 * s, p[1] - 8 * s); });
-  if (!PH.pts) return;
+  if (PH.corners.length === 4) {   // 整張格線疊上去：有沒有對齊一眼看得出來
+    const Hq = homography(orderCorners(PH.corners));
+    c.strokeStyle = 'rgba(60,198,180,.85)'; c.lineWidth = Math.max(1.5, s * .9);
+    for (let i = 0; i < 15; i++) {
+      c.beginPath(); let p = Hq(0, i / 14); c.moveTo(p[0], p[1]); p = Hq(1, i / 14); c.lineTo(p[0], p[1]); c.stroke();
+      c.beginPath(); p = Hq(i / 14, 0); c.moveTo(p[0], p[1]); p = Hq(i / 14, 1); c.lineTo(p[0], p[1]); c.stroke();
+    }
+  }
+  PH.corners.forEach((p, i) => {
+    c.beginPath(); c.arc(p[0], p[1], 14 * s, 0, 7); c.strokeStyle = '#F2B544'; c.lineWidth = 2 * s; c.stroke();   // 拖動把手
+    c.beginPath(); c.arc(p[0], p[1], 2.5 * s, 0, 7); c.fillStyle = '#F2B544'; c.fill();
+    c.font = `${10 * s}px sans-serif`; c.fillText(String(i + 1), p[0] + 16 * s, p[1] - 16 * s);
+  });
+  if (PH.loupe) {   // 放大鏡：手指會擋住的地方，放大 3 倍畫在畫面左上（手指在左上時畫右上）
+    const [lx, ly] = PH.loupe, R = Math.round(Math.min(PH.w, PH.h) * .16), z = 3;
+    const cx = lx < PH.w / 2 && ly < PH.h / 2 ? PH.w - R - 10 : R + 10, cy = R + 10;
+    c.save(); c.beginPath(); c.arc(cx, cy, R, 0, 7); c.clip();
+    c.drawImage(PH.img, lx - R / z, ly - R / z, 2 * R / z, 2 * R / z, cx - R, cy - R, 2 * R, 2 * R);
+    c.restore();
+    c.beginPath(); c.arc(cx, cy, R, 0, 7); c.strokeStyle = '#F2B544'; c.lineWidth = 3 * s / 2; c.stroke();
+    c.beginPath(); c.moveTo(cx - R, cy); c.lineTo(cx + R, cy); c.moveTo(cx, cy - R); c.lineTo(cx, cy + R); c.strokeStyle = 'rgba(255,90,80,.9)'; c.lineWidth = s / 2; c.stroke();
+  }
+  if (!PH.pts || PH.dragging >= 0) return;
   const cell = Math.hypot(PH.pts[1][0] - PH.pts[0][0], PH.pts[1][1] - PH.pts[0][1]);
   for (let k = 0; k < 225; k++) {
     const [x, y] = PH.pts[k], v = PH.cls[k];
@@ -582,7 +602,8 @@ function phAnalyze() {
       const perp = du !== 0 ? py : px;   // 沿橫線取樣 → 往縱向偏移；沿縱線取樣 → 往橫向偏移
       const cx = x + du * ux[0] + dv * uy[0], cy = y + du * ux[1] + dv * uy[1];
       let m = base;
-      for (const o of [-2, -1, 1, 2]) { const L = lum(cx + o * perp[0], cy + o * perp[1]); if (L !== null) m = Math.min(m, L); }
+      const R = Math.max(2, Math.round(cell * .06));   // 實拍（2026-11-03）：四角差一點點、格線被透視拉粗拉細，往兩側多找 0.06 格才踩得到線
+      for (let o = -R; o <= R; o++) { if (!o) continue; const L = lum(cx + o * perp[0], cy + o * perp[1]); if (L !== null) m = Math.min(m, L); }
       return m;
     };
     for (const t of [.12, .2, .28]) {
@@ -611,7 +632,7 @@ function phAnalyze() {
     PH.conf.push(Math.min(1, Math.abs(stone - .55) / .15 * .35));   // 離門檻 .15 以內 → 低於 .35 → 標紅圈
   }
   const nb = PH.cls.filter(x => x === 'b').length, nw = PH.cls.filter(x => x === 'w').length, low = PH.conf.filter(x => x < .35).length;
-  $('phHint').innerHTML = `認出 <b>黑 ${nb}、白 ${nw}</b>。<span style="color:#FF7A6B">紅圈</span>是比較沒把握的點（${low} 個）。點交叉點可以改：空 → 黑 → 白 → 空。確認後按「套用到棋盤」。`;
+  $('phHint').innerHTML = `認出 <b>黑 ${nb}、白 ${nw}</b>。先看青色格線有沒有壓在棋盤的線上，沒有就按住角落的圓圈拖動。<span style="color:#FF7A6B">紅圈</span>是比較沒把握的點（${low} 個）。點交叉點可以改：空 → 黑 → 白 → 空。確認後按「套用到棋盤」。`;
   $('phApply').disabled = false;
   phDraw();
 }
@@ -631,22 +652,48 @@ $('phFile').onchange = e => {
     PH.img = off; PH.w = cv.width; PH.h = cv.height; PH.data = off.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
     PH.corners = []; PH.pts = null; PH.cls = null;
     $('phReset').disabled = false; $('phApply').disabled = true;
-    $('phHint').innerHTML = '點棋盤<b>最外圈格線的四個角</b>（四個角的交叉點，不是木框邊緣），順序不拘。';
+    $('phHint').innerHTML = '放棋盤<b>最外圈格線的四個角</b>（四個角的交叉點，不是棋盤邊緣），順序不拘。<b>按住</b>會出現放大鏡，對準交叉點再放開。放好後會疊出格線；沒對齊就按住角落的圓圈拖動。';
     phDraw();
     URL.revokeObjectURL(img.src);
   };
   img.src = URL.createObjectURL(f);
 };
-$('phCanvas').addEventListener('click', e => {
+// 手指操作（2026-11-03 實拍：手機上點四個角容易偏）：
+//   放角：按住會出現放大鏡，移到交叉點再放開；四個角都放好後：按住角落把手可以拖動微調（放開重新判斷）；點交叉點＝改黑白
+PH.dragging = -1; PH.loupe = null;
+let phDown = null;
+const phXY = e => { const cv = $('phCanvas'), rc = cv.getBoundingClientRect(); return [(e.clientX - rc.left) * cv.width / rc.width, (e.clientY - rc.top) * cv.height / rc.height]; };
+$('phCanvas').addEventListener('pointerdown', e => {
   if (!PH.img) return;
-  const cv = $('phCanvas'), rc = cv.getBoundingClientRect();
-  const x = (e.clientX - rc.left) * cv.width / rc.width, y = (e.clientY - rc.top) * cv.height / rc.height;
+  const [x, y] = phXY(e), s = Math.max(2, PH.w / 400);
+  phDown = { x, y, moved: false };
+  if (PH.corners.length < 4) { PH.loupe = [x, y]; phDraw(); e.preventDefault(); return; }
+  let best = -1, bd = 1e9;
+  PH.corners.forEach((p, i) => { const d = Math.hypot(p[0] - x, p[1] - y); if (d < bd) { bd = d; best = i; } });
+  if (bd < 26 * s) { PH.dragging = best; PH.loupe = [x, y]; $('phCanvas').setPointerCapture(e.pointerId); phDraw(); e.preventDefault(); }
+});
+$('phCanvas').addEventListener('pointermove', e => {
+  if (!phDown) return;
+  const [x, y] = phXY(e);
+  if (Math.hypot(x - phDown.x, y - phDown.y) > 4) phDown.moved = true;
+  if (PH.corners.length < 4) { PH.loupe = [x, y]; phDraw(); e.preventDefault(); return; }
+  if (PH.dragging >= 0) { PH.corners[PH.dragging] = [x, y]; PH.loupe = [x, y]; phDraw(); e.preventDefault(); }
+});
+$('phCanvas').addEventListener('pointerup', e => {
+  if (!phDown) return;
+  const [x, y] = phXY(e), wasDrag = PH.dragging >= 0, moved = phDown.moved;
+  phDown = null; PH.loupe = null;
   if (PH.corners.length < 4) {
     PH.corners.push([x, y]);
-    if (PH.corners.length === 4) phAnalyze(); else { $('phHint').innerHTML = `已點 ${PH.corners.length} 個角，還差 ${4 - PH.corners.length} 個。`; phDraw(); }
+    if (PH.corners.length === 4) phAnalyze(); else { $('phHint').innerHTML = `已放 ${PH.corners.length} 個角，還差 ${4 - PH.corners.length} 個。（按住會出現放大鏡，對準交叉點再放開）`; phDraw(); }
     return;
   }
-  if (!PH.pts) return;
+  if (wasDrag) { PH.dragging = -1; if (moved) phAnalyze(); else if (PH.pts) phToggle(x, y); else phDraw(); return; }   // 角落把手按了沒拖＝點那個交叉點
+  if (moved || !PH.pts) { phDraw(); return; }
+  phToggle(x, y);
+});
+$('phCanvas').addEventListener('pointercancel', () => { phDown = null; PH.loupe = null; if (PH.dragging >= 0) { PH.dragging = -1; phAnalyze(); } else phDraw(); });
+function phToggle(x, y) {
   let best = -1, bd = 1e9;
   PH.pts.forEach(([px, py], k) => { const dd = Math.hypot(px - x, py - y); if (dd < bd) { bd = dd; best = k; } });
   const cell = Math.hypot(PH.pts[1][0] - PH.pts[0][0], PH.pts[1][1] - PH.pts[0][1]);
@@ -654,7 +701,7 @@ $('phCanvas').addEventListener('click', e => {
   PH.cls[best] = { e: 'b', b: 'w', w: 'e' }[PH.cls[best]];
   PH.conf[best] = 1;
   phDraw();
-});
+}
 $('phReset').onclick = () => { PH.corners = []; PH.pts = null; PH.cls = null; $('phApply').disabled = true; $('phHint').innerHTML = '重新點棋盤最外圈格線的四個角。'; phDraw(); };
 $('phApply').onclick = () => {
   const b = [], w = [];
