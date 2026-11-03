@@ -147,10 +147,12 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   <section class="panel" aria-label="輸入題目">
     <label for="txt" class="label">貼上題目</label>
     <div class="inputRow" style="margin-top:8px">
-      <textarea id="txt" placeholder="黑 H8 G7 J7 ｜ 白 J9 K8   或   H8 G7 J7|J9 K8   或   題庫 JSON（{&quot;black&quot;:…,&quot;white&quot;:…}）"></textarea>
+      <textarea id="txt" placeholder="黑 H8 G7 J7 ｜ 白 J9 K8　或　文字棋盤（┌┬┐├┼┤ 畫的 15×15，●黑 ○白，貼上就會放上棋盤）　或　題庫 JSON"></textarea>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="tool" type="button" id="btnLoad">放上棋盤</button>
         <button class="tool" type="button" id="btnCopy">複製目前盤面</button>
+        <button class="tool" type="button" id="btnCopyTxt">複製成文字棋盤</button>
+        <button class="tool" type="button" id="btnPng">下載棋盤圖</button>
       </div>
     </div>
     <p class="hint" id="status">座標：直行 A–P（沒有 I）、橫列 1–15（下到上）。連珠規則：黑棋有禁手（三三、四四、長連）。</p>
@@ -279,9 +281,37 @@ function boardChanged() {
 }
 
 // ---------- 輸入 ----------
+// 文字棋盤（2026-11-03 使用者）：┌┬┐├┼┤└┴┘ 畫的 15×15，●＝黑、○＝白；第一行＝第 15 路、第一個字＝A 行
+const STONE_B = '●⚫■', STONE_W = '○◯⚪□';
+function parseTextBoard(s) {
+  const lines = s.split(/\r?\n/).map(l => l.trim()).filter(l => l && [...l].some(ch => '┌┬┐├┼┤└┴┘─│+.·'.includes(ch) || STONE_B.includes(ch) || STONE_W.includes(ch)));
+  if (lines.length < 5 || !lines.some(l => [...l].some(ch => STONE_B.includes(ch) || STONE_W.includes(ch)))) return null;
+  const b = [], w = [];
+  lines.slice(0, 15).forEach((line, r) => [...line].slice(0, 15).forEach((ch, c) => {
+    const t = COLS[c] + (15 - r);
+    if (STONE_B.includes(ch)) b.push(t); else if (STONE_W.includes(ch)) w.push(t);
+  }));
+  return [b.join(' '), w.join(' ')];
+}
+function toTextBoard() {
+  const rows = [];
+  for (let r = 0; r < 15; r++) {
+    let line = '';
+    for (let c = 0; c < 15; c++) {
+      const t = COLS[c] + (15 - r);
+      if (black.has(t)) line += '●';
+      else if (white.has(t)) line += '○';
+      else line += r === 0 ? (c === 0 ? '┌' : c === 14 ? '┐' : '┬') : r === 14 ? (c === 0 ? '└' : c === 14 ? '┘' : '┴') : (c === 0 ? '├' : c === 14 ? '┤' : '┼');
+    }
+    rows.push(line);
+  }
+  return rows.join('\n');
+}
 function parseInput(s) {
   s = s.trim();
   if (!s) return null;
+  const tb = parseTextBoard(s);
+  if (tb) return tb;
   if (s.startsWith('{')) { try { const j = JSON.parse(s); return [j.black || '', j.white || '']; } catch { return null; } }
   let b = s, w = '';
   const m = s.match(/黑([^白｜|]*)[｜|]?\s*白(.*)/);
@@ -296,8 +326,17 @@ function loadPosition(b, w) {
   [...black].forEach(t => white.delete(t));
   boardChanged();
 }
-$('btnLoad').onclick = () => { const p = parseInput($('txt').value); if (!p) { $('status').textContent = '看不懂這段輸入：請用「黑 H8 G7 ｜ 白 J9」或題庫 JSON。'; return; } loadPosition(p[0], p[1]); };
+$('btnLoad').onclick = () => { const p = parseInput($('txt').value); if (!p) { $('status').textContent = '看不懂這段輸入：請用「黑 H8 G7 ｜ 白 J9」、文字棋盤（●○）或題庫 JSON。'; return; } loadPosition(p[0], p[1]); };
+$('txt').addEventListener('paste', () => setTimeout(() => { const s = $('txt').value; if (parseTextBoard(s)) { const p = parseTextBoard(s); loadPosition(p[0], p[1]); $('status').textContent = `已讀入文字棋盤：黑 ${black.size}、白 ${white.size}。`; } }, 0));   // 貼上文字棋盤就直接放上棋盤
 $('btnCopy').onclick = async () => { const s = `黑 ${[...black].join(' ')} ｜ 白 ${[...white].join(' ')}`; $('txt').value = s; try { await navigator.clipboard.writeText(s); $('status').textContent = '已複製盤面。'; } catch { } };
+$('btnCopyTxt').onclick = async () => { const s = toTextBoard(); $('txt').value = s; try { await navigator.clipboard.writeText(s); $('status').textContent = '已複製成文字棋盤（●黑 ○白），可以直接貼到聊天或文件。'; } catch { $('status').textContent = '已放進上面的框，手動複製即可。'; } };
+$('btnPng').onclick = async () => {   // 棋盤（含目前播放到的解答手順）存成圖片
+  const xml = new XMLSerializer().serializeToString($('board')).replace('<svg', `<svg xmlns="http://www.w3.org/2000/svg" width="${SZ * 2}" height="${SZ * 2}"`);
+  const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+  try { await img.decode(); } catch { $('status').textContent = '產生圖片失敗。'; return; }
+  const cv = document.createElement('canvas'); cv.width = SZ * 2; cv.height = SZ * 2; cv.getContext('2d').drawImage(img, 0, 0);
+  const a = document.createElement('a'); a.download = `棋盤-黑${black.size}白${white.size}.png`; a.href = cv.toDataURL('image/png'); a.click();
+};
 $('btnShare').onclick = async () => { try { await navigator.clipboard.writeText(location.href); $('status').textContent = '已複製這題的連結，貼給朋友就能打開同一題。'; } catch { $('status').textContent = location.href; } };
 $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
