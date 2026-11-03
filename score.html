@@ -563,8 +563,10 @@ function phDraw() {
     c.font = `${10 * s}px sans-serif`; c.fillText(String(i + 1), p[0] + 16 * s, p[1] - 16 * s);
   });
   if (PH.loupe) {   // 放大鏡：手指會擋住的地方，放大 3 倍畫在畫面左上（手指在左上時畫右上）
-    const [lx, ly] = PH.loupe, R = Math.round(Math.min(PH.w, PH.h) * .16), z = 3;
-    const cx = lx < PH.w / 2 && ly < PH.h / 2 ? PH.w - R - 10 : R + 10, cy = R + 10;
+    // 放大鏡畫在手指正上方（太靠上就改畫下方）：長圖在手機上會捲動，固定畫在圖的最上面會看不到（2026-11-03 App 截圖）
+    const [lx, ly] = PH.loupe, R = Math.round(Math.min(PH.w, PH.h) * .2), z = 3;
+    const cx = Math.min(PH.w - R - 4, Math.max(R + 4, lx));
+    const cy = ly - R * 1.7 - R > 0 ? ly - R * 1.7 : Math.min(PH.h - R - 4, ly + R * 1.7);
     c.save(); c.beginPath(); c.arc(cx, cy, R, 0, 7); c.clip();
     c.drawImage(PH.img, lx - R / z, ly - R / z, 2 * R / z, 2 * R / z, cx - R, cy - R, 2 * R, 2 * R);
     c.restore();
@@ -662,7 +664,9 @@ function phAnalyze() {
   for (let r = 0; r < 15; r++) for (let c = 0; c < 15; c++) {
     const nbh = [];
     for (let rr = Math.max(0, r - 3); rr <= Math.min(14, r + 3); rr++) for (let cc = Math.max(0, c - 3); cc <= Math.min(14, c + 3); cc++) nbh.push(F[rr * 15 + cc]);
-    const ref = [0, 1, 2].map(j => med(nbh.map(f => f[j])));
+    // 參考＝附近「十字最清楚」的那一半點（幾乎一定是空格）；整片都是子的地方，直接取中位數會拿棋子當參考（App 截圖 I7 漏掉）
+    const emp = nbh.slice().sort((a, b) => b[2] - a[2]).slice(0, Math.max(3, Math.ceil(nbh.length / 4)));   // 前 25%：密集區附近一半以上是子也不怕
+    const ref = [0, 1, 2].map(j => med(emp.map(f => f[j])));
     const [y, s, x] = F[r * 15 + c];
     const occl = (ref[2] - x) / Math.max(ref[2], 1e-3);   // 十字被蓋掉的比例：空格 ≈ 0、棋子 ≈ 1
     const dy = (y - ref[0]) / 255, ds = s - ref[1];
@@ -725,16 +729,19 @@ function phAutoCorners() {
       const span = P[j] - P[i]; if (span < Math.min(W, H) * .25) continue;
       for (let C = -.6; C <= .601; C += .05) {
         const A = P[j] * (C + 1) - P[i], p = u => (A * u + P[i]) / (C * u + 1);
-        let err = 0, votes = 0, ok = true; const sel = new Set();
-        for (let k = 0; k < 15 && ok; k++) {
-          const tg = p(k / 14), dd = Math.abs(p(Math.min(1, (k + 1) / 14)) - p(Math.max(0, (k - 1) / 14))) / (k === 0 || k === 14 ? 1 : 2);
+        // 中間的線可以有幾條抓不到（一整排棋子蓋住格線很常見，2026-11-03 App 截圖），最多 3 條；最外圈兩條就是 i、j 本身
+        let err = 0, votes = 0, ok = true, missing = 0; const sel = new Set([i, j]);
+        votes = V[i] + V[j];
+        for (let k = 1; k < 14 && ok; k++) {
+          const tg = p(k / 14), dd = Math.abs(p((k + 1) / 14) - p((k - 1) / 14)) / 2;
           let m = 0, me = 1e9;
           for (let q = 0; q < P.length; q++) { const e = Math.abs(P[q] - tg); if (e < me) { me = e; m = q; } }
-          if (me / dd > .3 || sel.has(m)) ok = false; else { sel.add(m); err += me / dd; votes += V[m]; }
+          if (me / dd > .3 || sel.has(m)) { if (++missing > 3) ok = false; }
+          else { sel.add(m); err += me / dd; votes += V[m]; }
         }
         if (!ok) continue;
-        const score = votes - err * meanV * 2;
-        if (!best || score > best[0]) best = [score, [...sel].sort((a, b) => P[a] - P[b])];
+        const score = votes - err * meanV * 2 - missing * meanV;
+        if (!best || score > best[0]) best = [score, [i, j]];
       }
     }
     return best ? best[1].map(m => L[m]) : null;
@@ -742,7 +749,7 @@ function phAutoCorners() {
   const vert = pick15(family(0, vx, vy), true), horz = pick15(family(90, hx, hy), false);
   if (!vert || !horz) return null;
   const inter = (a, b) => { const [r1, t1] = a, [r2, t2] = b, a1 = Math.cos(t1), b1 = Math.sin(t1), a2 = Math.cos(t2), b2 = Math.sin(t2), det = a1 * b2 - a2 * b1; return [(r1 * b2 - r2 * b1) / det / sc, (a1 * r2 - a2 * r1) / det / sc]; };
-  return [inter(vert[0], horz[0]), inter(vert[14], horz[0]), inter(vert[14], horz[14]), inter(vert[0], horz[14])];
+  return [inter(vert[0], horz[0]), inter(vert[1], horz[0]), inter(vert[1], horz[1]), inter(vert[0], horz[1])];   // pick15 回傳最外圈兩條線
 }
 $('btnPhoto').onclick = () => $('dlgPhoto').showModal();
 $('phFile').onchange = e => {
