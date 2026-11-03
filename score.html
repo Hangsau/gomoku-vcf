@@ -344,6 +344,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 let worker = null, reqId = 0;
 function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js'); worker.onmessage = onResult; }
 function score() {
+  stopUsage();
   if (busy) { newWorker(); busy = false; $('btnGo').textContent = '評分這一題'; $('note').textContent = '已取消。'; renderStages(); return; }
   if (!black.size) { $('note').textContent = '棋盤上還沒有黑子。'; return; }
   if (!worker) newWorker();
@@ -373,6 +374,49 @@ function onResult(e) {
   result = r; step = 0;
   $('status').textContent = `計算時間 ${(totalMs / 1000).toFixed(1)} 秒${curScale > 1 ? `（搜尋量自動加大到 ×${curScale}）` : ''}。`;
   renderAll();
+  if (r.accepted) startUsage(r);
+}
+
+// ---------- 棋子使用率（2026-11-03）：每顆子拿掉重評，跟本機引擎同一套規則 ----------
+//   壞掉（沒 VCF／手數變／不唯一／繞路變多）＝必要；分數掉 ≥10%＝有用（佈假路、陷阱）；其他＝廢子
+//   分數 × clamp(1 + (使用率 − 0.75), 0.7, 1.25)；先秀原始分數，背景用多個 worker 平行算完再套上
+let usage = null, usagePool = [];
+function stopUsage() { usagePool.forEach(w => w.terminate()); usagePool = []; usage = null; }
+function startUsage(base) {
+  stopUsage();
+  const raw = base.score, L = base.L, det = base.detours, myResult = base;
+  const list = [...black].map(c => [c, 'b']).concat([...white].map(c => [c, 'w']));
+  usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [] };
+  renderRate();
+  const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 4) - 1));
+  let next = 0, rid = 0;
+  const feed = w => {
+    if (next >= list.length) return;
+    const [c, col] = list[next++];
+    const B = col === 'b' ? [...black].filter(x => x !== c) : [...black], W = col === 'w' ? [...white].filter(x => x !== c) : [...white];
+    w.cur = c;
+    w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: 0, scale: curScale });
+  };
+  for (let k = 0; k < n; k++) {
+    const w = new Worker('score-worker.js');
+    w.onmessage = ev => {
+      if (result !== myResult || !usage) return;   // 已經換題或重算
+      const v = ev.data.ok ? ev.data.result : null;
+      const broken = !(v && v.vcf === true && v.L === L && v.unique === true && v.detours >= 0 && v.detours <= det);
+      if (broken) usage.need++; else if (v.score < raw * 0.9) usage.useful++; else usage.waste.push(w.cur);
+      usage.done++;
+      if (usage.done === usage.total) {
+        const rate = (usage.need + usage.useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
+        result.rawScore = raw;
+        result.usage = { rate, mult, need: usage.need, useful: usage.useful, waste: usage.waste.length, wasteAt: usage.waste.join(' ') };
+        result.score = Math.round(raw * mult * 10) / 10;
+        usagePool.forEach(x => x.terminate()); usagePool = []; usage = null;
+        renderAll();
+      } else { renderRate(); feed(w); }
+    };
+    usagePool.push(w);
+    feed(w);
+  }
 }
 $('btnGo').onclick = score;
 
@@ -451,6 +495,7 @@ function renderRate() {
     ['stones', '子數', r ? `${r.nb}/${r.nw}` : '—'],
     ['hook', '深誘餌', f.deepDecoys ?? '—'],
     ['unlock', '解禁', f.forbidLift ?? '—'],
+    ['ratio', '棋子使用率', usage ? `計算中 ${usage.done}/${usage.total}` : r && r.usage ? `${Math.round(r.usage.rate * 100)}%（×${r.usage.mult.toFixed(2)}）` : '—'],
   ];
   $('tiles').innerHTML = tiles.map(([k, n, v]) => `<div class="tile">${ico(k, 20)}<div><div class="k">${n}</div><b>${esc(v)}</b></div></div>`).join('');
   $('btnCard').disabled = !ok;
@@ -474,7 +519,8 @@ function renderSrc() {
   }
   items.sort((a, b) => b[2] - a[2]);
   const top = items.slice(0, 8), rest = items.slice(8).reduce((s, x) => s + x[2], 0);
-  $('src').innerHTML = '<span class="label">得分來源</span>' + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
+  const u = r.usage ? `<span class="chip ${r.usage.mult < 1 ? 'neg' : ''}">${ico('ratio')}棋子使用率 ${Math.round(r.usage.rate * 100)}% <b>×${r.usage.mult.toFixed(2)}</b>${r.usage.waste ? `（廢子 ${r.usage.waste}）` : '（零廢子）'}</span>` : '';
+  $('src').innerHTML = '<span class="label">得分來源</span>' + u + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
     (items.length > 8 ? `<span class="chip dim">其他 ${items.length - 8} 項 ${rest >= 0 ? '+' : ''}${rest.toFixed(1)}</span>` : '');
 }
 
