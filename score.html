@@ -97,6 +97,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
     <h1><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#F2B544" stroke-width="1.8"><circle cx="9" cy="12" r="5"/><circle cx="16" cy="12" r="5" fill="#F2B544" stroke="none" opacity=".9"/></svg>詰題試煉場</h1>
     <nav style="display:flex;gap:8px;flex-wrap:wrap">
       <a class="hbtn" href="./">VCF 分析器</a>
+      <button class="hbtn" type="button" id="btnPhoto">從照片匯入</button>
       <button class="hbtn" type="button" id="btnShare">複製這題的連結</button>
       <button class="hbtn" type="button" id="btnCard" disabled>產生分享卡</button>
       <button class="hbtn" type="button" id="btnHelp">規則說明</button>
@@ -168,6 +169,20 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   </ol>
   <p class="hint">段位門檻目前是暫定的固定數字，之後會調整。評分引擎跟出題 AI 用的是同一套程式。</p>
   <form method="dialog"><button class="tool" type="submit">知道了</button></form>
+</dialog>
+
+<dialog id="dlgPhoto" style="max-width:min(980px,96vw);width:96vw">
+  <h2 style="margin-top:0">從照片匯入</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <label class="tool" style="cursor:pointer">選照片／拍照<input type="file" id="phFile" accept="image/*" style="display:none"></label>
+    <button class="tool" type="button" id="phReset" disabled>重新點四個角</button>
+    <button class="tool" type="button" id="phApply" disabled style="border-color:var(--pass);color:var(--pass)">套用到棋盤</button>
+    <form method="dialog" style="margin:0"><button class="tool" type="submit">取消</button></form>
+  </div>
+  <p class="hint" id="phHint" style="margin:10px 0">選一張棋盤的照片或截圖。照片只在你的瀏覽器裡處理，不會上傳。</p>
+  <div style="position:relative;max-height:70vh;overflow:auto;border-radius:12px;background:#0B0E14">
+    <canvas id="phCanvas" style="display:block;max-width:100%;height:auto;cursor:crosshair;touch-action:manipulation"></canvas>
+  </div>
 </dialog>
 
 <dialog id="dlgCard">
@@ -488,6 +503,167 @@ function drawCard() {
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 $('btnCard').onclick = async () => { try { await document.fonts.ready; } catch {} drawCard(); $('dlgCard').showModal(); };
 $('btnDl').onclick = () => { const a = document.createElement('a'); a.download = `vcf-${result.division}-${result.L}手.png`; a.href = $('cardCanvas').toDataURL('image/png'); a.click(); };
+
+// ---------- 從照片匯入（2026-11-03）：先定位（點四個角 → 拉正）→ 每個交叉點分三群（黑／白／空）→ 使用者檢查修正 → 套用 ----------
+const PH = { img: null, w: 0, h: 0, data: null, corners: [], cls: null, conf: null, pts: null };
+function phDraw() {
+  const cv = $('phCanvas'), c = cv.getContext('2d');
+  if (!PH.img) return;
+  c.drawImage(PH.img, 0, 0);
+  const s = Math.max(2, PH.w / 400);
+  PH.corners.forEach((p, i) => { c.beginPath(); c.arc(p[0], p[1], 6 * s, 0, 7); c.fillStyle = '#F2B544'; c.fill(); c.font = `${10 * s}px sans-serif`; c.fillText(String(i + 1), p[0] + 8 * s, p[1] - 8 * s); });
+  if (!PH.pts) return;
+  const cell = Math.hypot(PH.pts[1][0] - PH.pts[0][0], PH.pts[1][1] - PH.pts[0][1]);
+  for (let k = 0; k < 225; k++) {
+    const [x, y] = PH.pts[k], v = PH.cls[k];
+    c.lineWidth = Math.max(2, cell * .08);
+    if (v === 'b' || v === 'w') {
+      c.beginPath(); c.arc(x, y, cell * .38, 0, 7);
+      c.fillStyle = v === 'b' ? 'rgba(20,20,20,.75)' : 'rgba(250,250,245,.8)'; c.fill();
+      c.strokeStyle = PH.conf[k] < .35 ? '#FF7A6B' : '#3CC6B4'; c.stroke();
+    } else {
+      c.beginPath(); c.arc(x, y, cell * .08, 0, 7); c.fillStyle = PH.conf[k] < .35 ? '#FF7A6B' : 'rgba(60,198,180,.8)'; c.fill();
+      if (PH.conf[k] < .35) { c.beginPath(); c.arc(x, y, cell * .38, 0, 7); c.strokeStyle = '#FF7A6B'; c.stroke(); }
+    }
+  }
+}
+// 單位正方形 → 四邊形（左上、右上、右下、左下）的投影轉換
+function homography(q) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q;
+  const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const g = (sx * dy2 - dx2 * sy) / den, h = (dx1 * sy - sx * dy1) / den;
+  const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+  return (u, v) => { const w = g * u + h * v + 1; return [(a * u + b * v + x0) / w, (d * u + e * v + y0) / w]; };
+}
+function orderCorners(p) {   // 依位置排成 左上、右上、右下、左下（點的順序隨便）
+  const tl = p.reduce((m, q) => q[0] + q[1] < m[0] + m[1] ? q : m), br = p.reduce((m, q) => q[0] + q[1] > m[0] + m[1] ? q : m);
+  const tr = p.reduce((m, q) => q[0] - q[1] > m[0] - m[1] ? q : m), bl = p.reduce((m, q) => q[1] - q[0] > m[1] - m[0] ? q : m);
+  return [tl, tr, br, bl];
+}
+function phAnalyze() {
+  const H = homography(orderCorners(PH.corners));
+  PH.pts = [];
+  for (let r = 0; r < 15; r++) for (let c = 0; c < 15; c++) PH.pts.push(H(c / 14, r / 14));
+  const cell = Math.hypot(PH.pts[1][0] - PH.pts[0][0], PH.pts[1][1] - PH.pts[0][1]);
+  const rad = Math.max(2, cell * .26), d = PH.data;
+  // 每個交叉點三個特徵：中心小圓的平均亮度 Y、彩度 S（棋子幾乎沒有彩度；木頭、彩色棋盤有）、
+  // 十字 X＝斜角方向比格線方向亮多少（空的交叉點有格線穿過中心 → 十字較暗；棋子蓋住格線 → 沒有十字）。
+  // X 讓白色棋盤上的白子也分得出來（白子和白棋盤一樣亮、一樣沒彩度，但白子沒有十字）
+  const lum = (px, py) => { px = Math.round(px); py = Math.round(py); if (px < 0 || py < 0 || px >= PH.w || py >= PH.h) return null; const i = (py * PH.w + px) * 4; return .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]; };
+  const F = PH.pts.map(([x, y]) => {
+    let sy = 0, ss = 0, n = 0;
+    const step = Math.max(1, Math.floor(rad / 6));
+    for (let dy = -rad; dy <= rad; dy += step) for (let dx = -rad; dx <= rad; dx += step) {
+      if (dx * dx + dy * dy > rad * rad) continue;
+      const px = Math.round(x + dx), py = Math.round(y + dy);
+      if (px < 0 || py < 0 || px >= PH.w || py >= PH.h) continue;
+      const i = (py * PH.w + px) * 4, R = d[i], G = d[i + 1], B = d[i + 2];
+      const mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+      sy += .299 * R + .587 * G + .114 * B; ss += mx ? (mx - mn) / mx : 0; n++;
+    }
+    // 十字：沿著格線方向（往鄰點的方向，透視後也對）取點 vs 斜角取點
+    const k = PH.pts.indexOf(PH.pts.find(p => p[0] === x && p[1] === y));
+    const r0 = Math.floor(k / 15), c0 = k % 15;
+    const nb = (dr, dc) => {   // 往鄰點的方向向量；在邊緣外側沒有點 → 改用內側的鄰點再反向
+      const out = r0 + dr < 0 || r0 + dr > 14 || c0 + dc < 0 || c0 + dc > 14;
+      const q = PH.pts[(out ? r0 - dr : r0 + dr) * 15 + (out ? c0 - dc : c0 + dc)], sgn = out ? -1 : 1;
+      return [(q[0] - x) * sgn, (q[1] - y) * sgn];
+    };
+    const ux = nb(0, 1), uy = nb(1, 0);
+    let ax = 0, an = 0, dg = 0, dn = 0;
+    // 取樣點用格子座標（du 往右幾格、dv 往下幾格）；超出棋盤的不取（邊上的點外側沒有格線，取了會把十字沖淡）
+    const at = (du, dv) => (c0 + du < -1e-9 || c0 + du > 14 + 1e-9 || r0 + dv < -1e-9 || r0 + dv > 14 + 1e-9) ? null : lum(x + du * ux[0] + dv * uy[0], y + du * ux[1] + dv * uy[1]);
+    // 格線很細（1–2 像素）：沿格線取樣時，往垂直方向左右各看 2 像素取最暗，才不會因為差一像素就沒踩到線
+    const nrm = v => { const L = Math.hypot(v[0], v[1]) || 1; return [v[0] / L, v[1] / L]; };
+    const px = nrm(ux), py = nrm(uy);
+    const onLine = (du, dv) => {
+      const base = at(du, dv); if (base === null) return null;
+      const perp = du !== 0 ? py : px;   // 沿橫線取樣 → 往縱向偏移；沿縱線取樣 → 往橫向偏移
+      const cx = x + du * ux[0] + dv * uy[0], cy = y + du * ux[1] + dv * uy[1];
+      let m = base;
+      for (const o of [-2, -1, 1, 2]) { const L = lum(cx + o * perp[0], cy + o * perp[1]); if (L !== null) m = Math.min(m, L); }
+      return m;
+    };
+    for (const t of [.12, .2, .28]) {
+      for (const s of [1, -1]) {
+        for (const [du, dv] of [[s * t, 0], [0, s * t]]) { const L = onLine(du, dv); if (L !== null) { ax += L; an++; } }
+        for (const s2 of [1, -1]) { const L = at(s * t * .75, s2 * t * .75); if (L !== null) { dg += L; dn++; } }
+      }
+    }
+    const cross = an && dn ? (dg / dn - ax / an) / 255 : 0;
+    return [sy / Math.max(1, n), ss / Math.max(1, n), cross];
+  });
+  // 三群 k-means（亮度、彩度、十字）；初值＝最暗／中位／最亮
+  const ys = F.map(f => f[0]).sort((a, b) => a - b);
+  const med = F.slice().sort((a, b) => a[0] - b[0])[112];
+  let C = [[ys[2], .1, 0], [med[0], med[1], med[2]], [ys[222], .1, 0]];
+  const dist = (f, c) => Math.hypot((f[0] - c[0]) / 255, (f[1] - c[1]) * .8, (f[2] - c[2]) * 3);
+  let lab = new Array(225).fill(1);
+  for (let it = 0; it < 20; it++) {
+    lab = F.map(f => { let b = 0; for (let k = 1; k < 3; k++) if (dist(f, C[k]) < dist(f, C[b])) b = k; return b; });
+    C = C.map((c, k) => { const m = F.filter((_, i) => lab[i] === k); return m.length ? [0, 1, 2].map(j => m.reduce((s, f) => s + f[j], 0) / m.length) : c; });
+  }
+  // 最多的那群＝空格；剩下兩群：暗＝黑、亮＝白
+  const cnt = [0, 1, 2].map(k => lab.filter(x => x === k).length);
+  const empty = cnt.indexOf(Math.max(...cnt)), others = [0, 1, 2].filter(k => k !== empty).sort((a, b) => C[a][0] - C[b][0]);
+  const name = k => k === empty ? 'e' : k === others[0] ? 'b' : 'w';
+  PH.cls = lab.map(name);
+  PH.conf = F.map((f, i) => { const ds = C.map(c => dist(f, c)).sort((a, b) => a - b); return ds[1] ? (ds[1] - ds[0]) / ds[1] : 1; });
+  // 太少子的「黑／白」群其實可能都是空格的雜訊：一群超過 120 顆不合理 → 不處理，交給使用者修
+  const nb = PH.cls.filter(x => x === 'b').length, nw = PH.cls.filter(x => x === 'w').length, low = PH.conf.filter(x => x < .35).length;
+  $('phHint').innerHTML = `認出 <b>黑 ${nb}、白 ${nw}</b>。<span style="color:#FF7A6B">紅圈</span>是比較沒把握的點（${low} 個）。點交叉點可以改：空 → 黑 → 白 → 空。確認後按「套用到棋盤」。`;
+  $('phApply').disabled = false;
+  phDraw();
+}
+$('btnPhoto').onclick = () => $('dlgPhoto').showModal();
+$('phFile').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => {
+    const MAXW = 1600, sc = Math.min(1, MAXW / img.naturalWidth);
+    const cv = $('phCanvas');
+    cv.width = Math.round(img.naturalWidth * sc); cv.height = Math.round(img.naturalHeight * sc);
+    const c = cv.getContext('2d');
+    c.drawImage(img, 0, 0, cv.width, cv.height);
+    const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height;
+    off.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    PH.img = off; PH.w = cv.width; PH.h = cv.height; PH.data = off.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    PH.corners = []; PH.pts = null; PH.cls = null;
+    $('phReset').disabled = false; $('phApply').disabled = true;
+    $('phHint').innerHTML = '點棋盤<b>最外圈格線的四個角</b>（四個角的交叉點，不是木框邊緣），順序不拘。';
+    phDraw();
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+};
+$('phCanvas').addEventListener('click', e => {
+  if (!PH.img) return;
+  const cv = $('phCanvas'), rc = cv.getBoundingClientRect();
+  const x = (e.clientX - rc.left) * cv.width / rc.width, y = (e.clientY - rc.top) * cv.height / rc.height;
+  if (PH.corners.length < 4) {
+    PH.corners.push([x, y]);
+    if (PH.corners.length === 4) phAnalyze(); else { $('phHint').innerHTML = `已點 ${PH.corners.length} 個角，還差 ${4 - PH.corners.length} 個。`; phDraw(); }
+    return;
+  }
+  if (!PH.pts) return;
+  let best = -1, bd = 1e9;
+  PH.pts.forEach(([px, py], k) => { const dd = Math.hypot(px - x, py - y); if (dd < bd) { bd = dd; best = k; } });
+  const cell = Math.hypot(PH.pts[1][0] - PH.pts[0][0], PH.pts[1][1] - PH.pts[0][1]);
+  if (bd > cell * .6) return;
+  PH.cls[best] = { e: 'b', b: 'w', w: 'e' }[PH.cls[best]];
+  PH.conf[best] = 1;
+  phDraw();
+});
+$('phReset').onclick = () => { PH.corners = []; PH.pts = null; PH.cls = null; $('phApply').disabled = true; $('phHint').innerHTML = '重新點棋盤最外圈格線的四個角。'; phDraw(); };
+$('phApply').onclick = () => {
+  const b = [], w = [];
+  PH.cls.forEach((v, k) => { const t = COLS[k % 15] + (15 - Math.floor(k / 15)); if (v === 'b') b.push(t); else if (v === 'w') w.push(t); });
+  $('dlgPhoto').close();
+  loadPosition(b.join(' '), w.join(' '));
+  $('status').textContent = `已從照片匯入：黑 ${b.length}、白 ${w.length}。請再對一次棋盤，確定沒有認錯。`;
+};
 
 // ---------- 開場 ----------
 function renderAll() { drawBoard(); renderStages(); renderRate(); renderSrc(); renderPlay(); }
