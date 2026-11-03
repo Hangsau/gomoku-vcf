@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>詰題試煉場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F121A; --panel: #161A24; --panel2: #1B2030; --line: #252B3A; --line2: #2E3546;
+  --text: #EDEFF5; --text2: #B6BCCB; --text3: #8F97AB;
+  --pass: #3CC6B4; --passBg: #1F3B39; --gold: #F2B544; --goldBg: #3A2F17; --fail: #FF7A6B; --failBg: #3D1F1F; --warn: #F2B544;
+  --chip: #1F2A3D; --chipIcon: #9EC1FF;
+  --mono: 'Chakra Petch', 'JetBrains Mono', monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; }
+a { color: #7FD6C8; } a:hover { color: #B5EDE4; }
+button { font-family: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+.hbtn { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line2); background: #171B26; color: var(--text); font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+.hbtn:hover { border-color: #46506A; }
+.row { display: flex; flex-wrap: wrap; gap: 18px; align-items: stretch; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; min-width: 0; }
+.label { font-size: 13px; color: var(--text3); letter-spacing: 2px; }
+/* 關卡 */
+#stages { flex: 0 1 230px; display: flex; flex-direction: column; gap: 4px; }
+.stage { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; padding: 6px 0; }
+.stage .dot { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line2); background: #1A1E2A; }
+.stage .dot svg { stroke: var(--text3); }
+.stage b { font-size: 15px; display: block; }
+.stage small { font-size: 12px; color: var(--text3); display: block; line-height: 1.4; }
+.stage.pass .dot { border-color: var(--pass); background: var(--passBg); } .stage.pass .dot svg { stroke: var(--pass); }
+.stage.fail .dot { border-color: var(--fail); background: var(--failBg); } .stage.fail .dot svg { stroke: var(--fail); } .stage.fail b { color: var(--fail); }
+.stage.warn .dot { border-color: var(--warn); background: var(--goldBg); } .stage.warn .dot svg { stroke: var(--warn); }
+.stage.gold .dot { border-color: var(--gold); background: var(--goldBg); } .stage.gold .dot svg { stroke: var(--gold); } .stage.gold b { color: var(--gold); }
+.stage.run .dot { border-color: #7FD6C8; animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { box-shadow: 0 0 0 0 rgba(127,214,200,.0); } to { box-shadow: 0 0 0 6px rgba(127,214,200,.25); } }
+.link { width: 2px; height: 12px; background: var(--line2); margin-left: 21px; }
+.link.on { background: var(--pass); }
+/* 棋盤 */
+#boardPanel { flex: 1 1 460px; background: radial-gradient(circle at 50% 40%, #232A3A 0%, var(--panel) 70%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.frame { padding: 10px; border-radius: 14px; background: #3B2C17; box-shadow: 0 0 0 2px #6B5128, 0 18px 40px rgba(0,0,0,.45); max-width: 100%; }
+#board { display: block; width: min(500px, 100%); height: auto; touch-action: manipulation; cursor: crosshair; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tool { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.tool[aria-pressed="true"] { border-color: var(--pass); color: var(--pass); }
+.tool:disabled { opacity: .45; cursor: default; }
+.go { min-height: 52px; min-width: 200px; border-radius: 26px; border: 0; background: var(--pass); color: #0F121A; font-weight: 900; font-size: 17px; cursor: pointer; }
+.go:disabled { background: #2C4A47; color: #7E9C98; cursor: default; }
+#moveInfo { font-family: var(--mono); font-size: 14px; color: var(--text3); min-height: 20px; text-align: center; }
+#note { width: 100%; max-width: 520px; background: #1B2030; border-radius: 12px; padding: 10px 14px; font-size: 14px; line-height: 1.6; color: var(--text2); min-height: 48px; }
+#note b { color: var(--text); }
+/* 評定 */
+#ratePanel { flex: 1 1 300px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.gauge { position: relative; width: 240px; height: 210px; }
+.gauge .num { position: absolute; left: 0; right: 0; top: 78px; text-align: center; }
+.gauge .num b { font-family: var(--mono); font-size: 46px; line-height: 1; display: block; }
+.gauge .num span { font-size: 12px; color: var(--text3); }
+.rank { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 14px; background: linear-gradient(180deg, #3A2F17, #2A2213); border: 1px solid #6B5528; }
+.rank .t { font-size: 12px; color: #E8C98A; }
+.rank b { font-size: 20px; color: #FFE3A3; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.tile { background: var(--panel2); border-radius: 12px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; }
+.tile svg { stroke: #7FD6C8; flex: 0 0 auto; }
+.tile .k { font-size: 11px; color: var(--text3); }
+.tile b { font-family: var(--mono); font-size: 20px; }
+/* 得分來源 */
+#src { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.chip { display: inline-flex; gap: 6px; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--chip); font-size: 14px; }
+.chip svg { stroke: var(--chipIcon); }
+.chip b { font-family: var(--mono); }
+.chip.neg { background: var(--failBg); }
+.chip.dim { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
+/* 輸入 */
+.inputRow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.inputRow textarea { flex: 1 1 360px; min-height: 64px; background: #10141D; color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 12px; font-family: var(--mono); font-size: 14px; resize: vertical; }
+.hint { font-size: 12px; color: var(--text3); line-height: 1.6; }
+.strip { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.strip button { min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: #171B26; color: var(--text3); font-family: var(--mono); font-size: 12px; cursor: pointer; }
+.strip button.ev { background: #3A2F17; color: #FFE3A3; border-color: #6B5528; }
+.strip button.cur { outline: 2px solid var(--pass); }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line2); border-radius: 18px; padding: 20px; max-width: min(560px, 92vw); }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+#cardCanvas { width: 100%; height: auto; border-radius: 12px; display: block; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 720px) { #stages { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; } .stage { grid-template-columns: 36px 1fr; flex: 1 1 140px; } .stage .dot { width: 36px; height: 36px; } .link { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#F2B544" stroke-width="1.8"><circle cx="9" cy="12" r="5"/><circle cx="16" cy="12" r="5" fill="#F2B544" stroke="none" opacity=".9"/></svg>詰題試煉場</h1>
+    <nav style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="hbtn" href="./">VCF 分析器</a>
+      <button class="hbtn" type="button" id="btnShare">複製這題的連結</button>
+      <button class="hbtn" type="button" id="btnCard" disabled>產生分享卡</button>
+      <button class="hbtn" type="button" id="btnHelp">規則說明</button>
+    </nav>
+  </header>
+
+  <div class="row">
+    <nav class="panel" id="stages" aria-label="五道關卡"></nav>
+
+    <section class="panel" id="boardPanel" aria-label="棋盤">
+      <div class="frame"><svg id="board" viewBox="0 0 520 520" role="img" aria-label="15 路棋盤，點交叉點放子"></svg></div>
+      <div class="tools" role="group" aria-label="放子工具">
+        <button class="tool" type="button" data-tool="b" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="#EDEFF5"/></svg>黑子</button>
+        <button class="tool" type="button" data-tool="w" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="none" stroke="#EDEFF5" stroke-width="2"/></svg>白子</button>
+        <button class="tool" type="button" data-tool="e" aria-pressed="false">擦掉</button>
+        <button class="tool" type="button" id="btnClear">清空</button>
+      </div>
+      <button class="go" type="button" id="btnGo">評分這一題</button>
+      <div class="tools" id="play" hidden>
+        <button class="tool" type="button" id="pPrev" aria-label="上一手">◀</button>
+        <button class="tool" type="button" id="pAuto">▶ 播放解答</button>
+        <button class="tool" type="button" id="pNext" aria-label="下一手">▶</button>
+        <button class="tool" type="button" id="pReset">回到題目</button>
+      </div>
+      <div id="moveInfo"></div>
+      <div class="strip" id="strip"></div>
+      <div id="note">在棋盤上擺好題目（黑先），或在下面貼座標，按「評分這一題」。計算在你的瀏覽器裡進行，不會上傳題目。</div>
+    </section>
+
+    <section class="panel" id="ratePanel" aria-label="難度評定">
+      <span class="label" style="align-self:flex-start" id="divLabel">難度評定</span>
+      <div class="gauge">
+        <svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true">
+          <path d="M 52.1 187.9 A 96 96 0 1 1 187.9 187.9" fill="none" stroke="#252B3A" stroke-width="18" stroke-linecap="round"/>
+          <path id="gArc" d="" fill="none" stroke="#F2B544" stroke-width="18" stroke-linecap="round"/>
+        </svg>
+        <div class="num"><b id="gNum">—</b><span id="gMax"></span></div>
+      </div>
+      <div class="rank"><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" fill="#F2B544" stroke="#FFE3A3" stroke-width="1"><path d="M12 2l8 4.5v9L12 22l-8-6.5v-9z"/></svg><div><div class="t" id="rankT">段位</div><b id="rankB">—</b></div></div>
+      <div class="tiles" id="tiles"></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-label="得分來源">
+    <div id="src"><span class="label">得分來源</span><span class="hint">評分後顯示每一項加了幾分</span></div>
+  </section>
+
+  <section class="panel" aria-label="輸入題目">
+    <label for="txt" class="label">貼上題目</label>
+    <div class="inputRow" style="margin-top:8px">
+      <textarea id="txt" placeholder="黑 H8 G7 J7 ｜ 白 J9 K8   或   H8 G7 J7|J9 K8   或   題庫 JSON（{&quot;black&quot;:…,&quot;white&quot;:…}）"></textarea>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="tool" type="button" id="btnLoad">放上棋盤</button>
+        <button class="tool" type="button" id="btnCopy">複製目前盤面</button>
+      </div>
+    </div>
+    <p class="hint" id="status">座標：直行 A–P（沒有 I）、橫列 1–15（下到上）。連珠規則：黑棋有禁手（三三、四四、長連）。</p>
+  </section>
+</div>
+
+<dialog id="dlgHelp">
+  <h2 style="margin-top:0">規則說明</h2>
+  <ol style="line-height:1.8;padding-left:20px;font-size:14px;color:var(--text2)">
+    <li><b>合法盤面</b>：黑白子數差不超過 1，盤上沒有五連，也沒有人已經可以一步成五。</li>
+    <li><b>黑先 VCF</b>：黑棋只用衝四（每一手都逼白擋）連續取勝。黑棋有禁手，白擋在禁手點也算黑勝。</li>
+    <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
+    <li><b>沒有繞路</b>：多走幾手也能贏的另一條路叫繞路解；1 個扣 15 分，2 個以上不算詰題。</li>
+    <li><b>評定</b>：10 手以內算<b>短篇</b>（看計算量、深誘餌、禁手陷阱、解禁、反四、預備反四、手順），11 手以上算<b>長篇</b>（看手數與解題中的技巧）。兩組各有自己的段位，不互相比較。</li>
+  </ol>
+  <p class="hint">段位門檻目前是暫定的固定數字，之後會調整。評分引擎跟出題 AI 用的是同一套程式。</p>
+  <form method="dialog"><button class="tool" type="submit">知道了</button></form>
+</dialog>
+
+<dialog id="dlgCard">
+  <h2 style="margin-top:0">分享卡</h2>
+  <canvas id="cardCanvas" width="720" height="1040"></canvas>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+    <button class="tool" type="button" id="btnDl">下載圖片</button>
+    <form method="dialog"><button class="tool" type="submit">關閉</button></form>
+  </div>
+</dialog>
+
+<script>
+const COLS = 'ABCDEFGHJKLMNOP', N = 15, CELL = 34, PAD = 22, SZ = PAD * 2 + CELL * 14;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ICON = {
+  shield: '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',
+  route: '<path d="M5 19c0-6 14-4 14-10"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/>',
+  crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
+  steps: '<path d="M4 20h4v-4h4v-4h4V8h4"/>',
+  stones: '<circle cx="9" cy="12" r="5"/><circle cx="16" cy="12" r="5"/>',
+  hook: '<path d="M12 3v11a4 4 0 1 1-8 0v-2"/><path d="M12 3l3 3"/>',
+  unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  hammer: '<path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L3 15l3 3 8-8"/>',
+  zig: '<path d="M4 12h4l2-6 4 12 2-6h4"/>',
+  ratio: '<path d="M4 20L20 4"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>',
+  brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3V4z"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  order: '<path d="M4 6h10M4 12h7M4 18h4"/><path d="M17 4v16M14 17l3 3 3-3"/>',
+};
+const ico = (k, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+
+// ---------- 狀態 ----------
+let black = new Set(), white = new Set(), tool = 'b', result = null, step = 0, autoTimer = null, busy = false;
+const xy = t => [PAD + COLS.indexOf(t[0]) * CELL, PAD + (N - parseInt(t.slice(1), 10)) * CELL];
+const coordOf = (c, r) => COLS[c] + (N - r);
+function moves() { return result && result.solution ? result.solution.replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : []; }
+function steps() { return (result && result.steps) || []; }
+const noteAt = s => s > 0 ? steps()[Math.floor((s - 1) / 2)] : null;
+
+// ---------- 棋盤 ----------
+function drawBoard() {
+  let g = `<rect width="${SZ}" height="${SZ}" rx="8" fill="#E9C98B"/>`;
+  for (let i = 0; i < N; i++) {
+    g += `<line x1="${PAD}" y1="${PAD + i * CELL}" x2="${PAD + 14 * CELL}" y2="${PAD + i * CELL}" stroke="#5B4524" stroke-width="1"/>`;
+    g += `<line x1="${PAD + i * CELL}" y1="${PAD}" x2="${PAD + i * CELL}" y2="${PAD + 14 * CELL}" stroke="#5B4524" stroke-width="1"/>`;
+    g += `<text x="${PAD + i * CELL}" y="${SZ - 4}" text-anchor="middle" font-size="10" fill="#7A6038">${COLS[i]}</text>`;
+    g += `<text x="6" y="${PAD + i * CELL + 4}" font-size="10" fill="#7A6038">${N - i}</text>`;
+  }
+  [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]].forEach(([c, r]) => g += `<circle cx="${PAD + c * CELL}" cy="${PAD + r * CELL}" r="3.5" fill="#5B4524"/>`);
+  const stone = (t, col, label) => {
+    const [x, y] = xy(t);
+    g += `<circle cx="${x}" cy="${y}" r="15" fill="${col === 'b' ? '#1B1A17' : '#FBFAF6'}" stroke="#1B1A17" stroke-width="${col === 'b' ? 0 : 1.3}"/>`;
+    if (label) g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${col === 'b' ? '#fff' : '#1B1A17'}">${label}</text>`;
+  };
+  black.forEach(t => stone(t, 'b'));
+  white.forEach(t => stone(t, 'w'));
+  const mv = moves();
+  for (let k = 0; k < step && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? 'b' : 'w', String(Math.floor(k / 2) + 1));
+  const n = noteAt(step);
+  if (n) {
+    (n.others || []).forEach(t => { if (mv.slice(0, step).includes(t)) return; const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#D2601A" stroke-width="2.5"/>`; });
+    (n.traps || []).forEach(t => { const [x, y] = xy(t); g += `<path d="M${x - 7} ${y - 7}L${x + 7} ${y + 7}M${x + 7} ${y - 7}L${x - 7} ${y + 7}" stroke="#C0262D" stroke-width="3"/>`; });
+    const [x, y] = xy(n.atk); g += `<circle cx="${x}" cy="${y}" r="19" fill="none" stroke="#0F8A7A" stroke-width="3"/>`;
+  }
+  if (result && result.alts && result.alts.length && step === 0) {   // 別解：第一個分岔點的其他走法
+    result.alts[0].moves.forEach(t => { const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="#C0262D" stroke-width="3" stroke-dasharray="4 3"/>`; });
+  }
+  $('board').innerHTML = g;
+}
+$('board').addEventListener('click', e => {
+  if (busy) return;
+  const pt = $('board').createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform($('board').getScreenCTM().inverse());
+  const c = Math.round((p.x - PAD) / CELL), r = Math.round((p.y - PAD) / CELL);
+  if (c < 0 || c >= N || r < 0 || r >= N) return;
+  const t = coordOf(c, r);
+  black.delete(t); white.delete(t);
+  if (tool === 'b') black.add(t); else if (tool === 'w') white.add(t);
+  boardChanged();
+});
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
+  tool = b.dataset.tool;
+  document.querySelectorAll('[data-tool]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('btnClear').onclick = () => { black.clear(); white.clear(); boardChanged(); };
+
+function boardChanged() {
+  result = null; step = 0; stopAuto();
+  location.replace('#b=' + [...black].join(',') + '&w=' + [...white].join(','));
+  renderAll();
+}
+
+// ---------- 輸入 ----------
+function parseInput(s) {
+  s = s.trim();
+  if (!s) return null;
+  if (s.startsWith('{')) { try { const j = JSON.parse(s); return [j.black || '', j.white || '']; } catch { return null; } }
+  let b = s, w = '';
+  const m = s.match(/黑([^白｜|]*)[｜|]?\s*白(.*)/);
+  if (m) { b = m[1]; w = m[2]; }
+  else if (/[｜|]/.test(s)) { [b, w] = s.split(/[｜|]/); }
+  const ok = t => /^[A-HJ-P](1[0-5]|[1-9])$/.test(t);
+  const toks = x => x.toUpperCase().split(/[\s,，、]+/).filter(ok);
+  return [toks(b).join(' '), toks(w).join(' ')];
+}
+function loadPosition(b, w) {
+  black = new Set(b.split(/\s+/).filter(Boolean)); white = new Set(w.split(/\s+/).filter(Boolean));
+  [...black].forEach(t => white.delete(t));
+  boardChanged();
+}
+$('btnLoad').onclick = () => { const p = parseInput($('txt').value); if (!p) { $('status').textContent = '看不懂這段輸入：請用「黑 H8 G7 ｜ 白 J9」或題庫 JSON。'; return; } loadPosition(p[0], p[1]); };
+$('btnCopy').onclick = async () => { const s = `黑 ${[...black].join(' ')} ｜ 白 ${[...white].join(' ')}`; $('txt').value = s; try { await navigator.clipboard.writeText(s); $('status').textContent = '已複製盤面。'; } catch { } };
+$('btnShare').onclick = async () => { try { await navigator.clipboard.writeText(location.href); $('status').textContent = '已複製這題的連結，貼給朋友就能打開同一題。'; } catch { $('status').textContent = location.href; } };
+$('btnHelp').onclick = () => $('dlgHelp').showModal();
+
+// ---------- 評分（背景 Worker；可取消） ----------
+let worker = null, reqId = 0;
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js'); worker.onmessage = onResult; }
+function score() {
+  if (busy) { newWorker(); busy = false; $('btnGo').textContent = '評分這一題'; $('note').textContent = '已取消。'; renderStages(); return; }
+  if (!black.size) { $('note').textContent = '棋盤上還沒有黑子。'; return; }
+  if (!worker) newWorker();
+  busy = true; result = null; step = 0;
+  $('btnGo').textContent = '計算中…（再按一次取消）';
+  $('note').innerHTML = '計算中：找最短 VCF、逐手檢查別解與繞路。長題可能要幾十秒。';
+  renderStages(true);
+  worker.postMessage({ id: ++reqId, black: [...black].join(' '), white: [...white].join(' '), attackerWhite: 0, scale: 1 });
+}
+function onResult(e) {
+  if (e.data.id !== reqId) return;
+  busy = false; $('btnGo').textContent = '評分這一題';
+  if (!e.data.ok) { $('note').textContent = '計算出錯：' + e.data.error; renderStages(); return; }
+  result = e.data.result; step = 0;
+  $('status').textContent = `計算時間 ${(e.data.ms / 1000).toFixed(1)} 秒。`;
+  renderAll();
+}
+$('btnGo').onclick = score;
+
+// ---------- 關卡 ----------
+function stageStates() {
+  const r = result;
+  const S = [
+    { k: 'shield', t: '合法盤面', d: `黑 ${black.size}・白 ${white.size}`, s: '' },
+    { k: 'bolt', t: '黑先 VCF', d: '連續衝四取勝', s: '' },
+    { k: 'key', t: '唯一解', d: '每一手都只有一條路', s: '' },
+    { k: 'route', t: '沒有繞路', d: '多走幾手也能贏的路', s: '' },
+    { k: 'crown', t: '評定難度', d: '', s: '' },
+  ];
+  if (!r) return S;
+  if (r.legal === false) { S[0].s = 'fail'; S[0].d = r.reason; return S; }
+  S[0].s = 'pass';
+  if (r.vcf !== true) { S[1].s = 'fail'; S[1].d = r.reason || '沒有 VCF'; return S; }
+  S[1].s = 'pass'; S[1].d = `${r.L} 手連續衝四勝`;
+  if (r.unique === null) { S[2].s = 'warn'; S[2].d = r.reason; return S; }
+  if (!r.unique) {
+    S[2].s = 'fail';
+    const a = r.alts && r.alts[0];
+    S[2].d = a ? `第 ${a.step} 手除了 ${a.main}，${a.moves.join('、')} 也能贏` : '有別的贏法';
+    return S;
+  }
+  S[2].s = 'pass';
+  if (r.detours >= 2) { S[3].s = 'fail'; S[3].d = `繞路解 ${r.detours} 個（2 個以上不算詰題）`; return S; }
+  if (r.detours < 0) { S[3].s = 'warn'; S[3].d = '檢查量超過上限，無法確定'; return S; }
+  S[3].s = r.detours === 1 ? 'warn' : 'pass'; S[3].d = r.detours === 1 ? '繞路解 1 個（扣 15 分）' : '繞路解 0 個';
+  S[4].s = 'gold'; S[4].d = r.division === 'short' ? '短篇（10 手以內）' : '長篇（11 手以上）';
+  if (!r.accepted && r.division === 'short' && r.L < 4) S[4].d += '・不到 4 手，不評段位';
+  return S;
+}
+function renderStages(running) {
+  const S = stageStates();
+  let firstOpen = S.findIndex(x => !x.s);
+  $('stages').innerHTML = '<span class="label">關卡</span>' + S.map((x, i) => {
+    const cls = running && i === 0 ? 'run' : x.s;
+    return (i ? `<span aria-hidden="true" class="link ${S[i - 1].s === 'pass' ? 'on' : ''}"></span>` : '') +
+      `<div class="stage ${cls}"><span class="dot">${ico(x.k, 22)}</span><div><b>${x.t}</b><small>${esc(x.d)}</small></div></div>`;
+  }).join('');
+}
+
+// ---------- 評定 ----------
+const RANKS = {   // 暫定：固定門檻，不跟任何題庫比（使用者 2026-11-03）
+  long: [[0, '見習'], [150, '初段'], [300, '三段'], [500, '五段'], [800, '名人']],
+  short: [[0, '見習'], [130, '初段'], [170, '三段'], [220, '五段'], [280, '名人']],
+};
+const SCALE = { long: 1000, short: 350 };
+function arc(f) {
+  f = Math.max(0, Math.min(1, f));
+  const a0 = 135 * Math.PI / 180, a1 = (135 + 270 * f) * Math.PI / 180;
+  const x0 = 120 + 96 * Math.cos(a0), y0 = 120 + 96 * Math.sin(a0), x1 = 120 + 96 * Math.cos(a1), y1 = 120 + 96 * Math.sin(a1);
+  return f <= 0 ? '' : `M ${x0.toFixed(1)} ${y0.toFixed(1)} A 96 96 0 ${270 * f > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+}
+function rankOf(r) {
+  if (!r || !r.accepted) return null;
+  const t = RANKS[r.division]; let name = t[0][1];
+  t.forEach(([v, n]) => { if (r.score >= v) name = n; });
+  return name;
+}
+function renderRate() {
+  const r = result, ok = r && r.vcf === true && r.unique === true && r.detours >= 0 && r.detours <= 1;
+  const div = r && r.division;
+  $('divLabel').textContent = div === 'short' ? '短篇評定（10 手以內）' : div === 'long' ? '長篇評定（11 手以上）' : '難度評定';
+  $('gNum').textContent = ok ? r.score.toFixed(1) : '—';
+  $('gMax').textContent = ok ? `滿格 ${SCALE[div]}` : (r ? '這題還沒過關' : '');
+  $('gArc').setAttribute('d', ok ? arc(r.score / SCALE[div]) : '');
+  const rk = ok ? rankOf(r) : null;
+  $('rankT').textContent = div === 'short' ? '短篇段位' : div === 'long' ? '長篇段位' : '段位';
+  $('rankB').textContent = rk || '—';
+  const f = r && r.features || {};
+  const tiles = [
+    ['steps', '手數', r && r.L ? r.L : '—'],
+    ['stones', '子數', r ? `${r.nb}/${r.nw}` : '—'],
+    ['hook', '深誘餌', f.deepDecoys ?? '—'],
+    ['unlock', '解禁', f.forbidLift ?? '—'],
+  ];
+  $('tiles').innerHTML = tiles.map(([k, n, v]) => `<div class="tile">${ico(k, 20)}<div><div class="k">${n}</div><b>${esc(v)}</b></div></div>`).join('');
+  $('btnCard').disabled = !ok;
+}
+const PART = {   // 長篇各項（引擎的英文名 → 中文＋圖示）
+  length: ['手數', 'steps'], lengthGrow: ['後段手數加成', 'steps'], ratioRamp: ['以少勝多', 'ratio'], overtake: ['手數超越子數', 'ratio'], overtake2: ['大幅超越子數', 'ratio'],
+  counter: ['反四', 'zig'], borrow: ['借用途中的子', 'link'], multiUse: ['一子多用', 'stones'], forbidTrap: ['禁手陷阱', 'x'], forbidFinish: ['逼對方下禁手', 'x'],
+  jumps: ['跳躍', 'route'], deepDecoys: ['深誘餌', 'hook'], forbidLift: ['解禁', 'unlock'], decoyNewPlayed: ['途中誘餌', 'hook'], selfFours: ['自製四', 'hammer'],
+  lowInitFours: ['途中生線', 'hammer'], delayedBorrow: ['延遲借用', 'link'], indirect: ['換處衝四', 'route'], clusters: ['起始子分散', 'stones'], decoys: ['明誘餌', 'hook'],
+  counterPrep: ['預備反四', 'zig'], orderTraps: ['手順', 'order'],
+};
+const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route' };
+function renderSrc() {
+  const r = result;
+  if (!r || r.vcf !== true || r.unique !== true) { $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">過了唯一解這關才評分</span>'; return; }
+  let items = [];
+  if (r.division === 'short') items = Object.entries(r.shortParts).filter(([, v]) => v).map(([k, v]) => [k, SPART[k] || 'bolt', v]);
+  else {
+    items = Object.entries(r.parts).filter(([, v]) => v).map(([k, v]) => [(PART[k] || [k])[0], (PART[k] || [0, 'bolt'])[1], v]);
+    if (r.detourPenalty) items.push(['繞路', 'route', r.detourPenalty]);
+  }
+  items.sort((a, b) => b[2] - a[2]);
+  const top = items.slice(0, 8), rest = items.slice(8).reduce((s, x) => s + x[2], 0);
+  $('src').innerHTML = '<span class="label">得分來源</span>' + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
+    (items.length > 8 ? `<span class="chip dim">其他 ${items.length - 8} 項 ${rest >= 0 ? '+' : ''}${rest.toFixed(1)}</span>` : '');
+}
+
+// ---------- 逐手播放與解說 ----------
+function noteText(n) {
+  if (!n) return result && result.vcf === true ? '按 ▶ 一手一手看解答。青圈＝這一手、橘圈＝當下也能衝但走不通的四（假路）、紅 ✕＝禁手陷阱。' : $('note').innerHTML;
+  const a = [];
+  if (n.forced) a.push('被迫：白剛擋出四，只能擋回去');
+  if (n.lift) a.push('<b>解禁</b>：這一點原本是禁手');
+  if (n.traps && n.traps.length) a.push(`<b>禁手陷阱 ${n.traps.length} 個</b>（✕）`);
+  if (n.others && n.others.length) a.push(`另外 <b>${n.others.length} 個四</b>也能衝（橘圈），但走不通`);
+  if (n.order && n.order.length) a.push(`<b>手順</b>：${n.order.join('、')} 現在衝太早`);
+  if (n.counter) a.push('<b>反四</b>：白擋下後自己成四');
+  if (n.counterPrep) a.push('<b>預備反四</b>：用先前佈好的子擋回去');
+  if (n.selfFour) a.push('<b>自製四</b>：整個四都是途中下的子');
+  else if (n.borrow) a.push(`借用途中下的子 ${n.borrow} 顆`);
+  if (n.jump) a.push('<b>跳躍</b>：換到遠處衝');
+  if (n.finish) a.push(`收尾：<b>${n.finish}</b>`);
+  return `<b>第 ${n.n} 手 ${n.atk}</b>${n.def ? `（白擋 ${n.def}）` : ''}：` + (a.length ? a.join('；') : '一般衝四');
+}
+const isEv = n => n.lift || (n.traps && n.traps.length) || n.counter || n.counterPrep || (n.order && n.order.length) || n.selfFour || n.jump;
+function renderPlay() {
+  const ok = result && result.vcf === true;
+  $('play').hidden = !ok;
+  const mv = moves();
+  $('moveInfo').textContent = ok ? (step ? `MOVE ${Math.ceil(step / 2)} / ${result.L}　·　${mv[step - 1]}` : `解答 ${result.L} 手`) : '';
+  $('strip').innerHTML = ok ? steps().map(n => `<button type="button" data-go="${2 * n.n - 1}" class="${isEv(n) ? 'ev' : ''} ${step && Math.ceil(step / 2) === n.n ? 'cur' : ''}" title="${n.atk}">${n.n}</button>`).join('') : '';
+  if (ok) $('note').innerHTML = noteText(noteAt(step));
+  else if (result) $('note').innerHTML = result.legal === false ? '盤面不合法：' + esc(result.reason) : esc(result.reason || '沒有 VCF。');
+}
+$('strip').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; stopAuto(); step = +b.dataset.go; drawBoard(); renderPlay(); });
+const maxStep = () => moves().length;
+$('pPrev').onclick = () => { stopAuto(); step = Math.max(0, step - 1); drawBoard(); renderPlay(); };
+$('pNext').onclick = () => { stopAuto(); step = Math.min(maxStep(), step + 1); drawBoard(); renderPlay(); };
+$('pReset').onclick = () => { stopAuto(); step = 0; drawBoard(); renderPlay(); };
+function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; $('pAuto').textContent = '▶ 播放解答'; } }
+$('pAuto').onclick = () => {
+  if (autoTimer) { stopAuto(); return; }
+  if (step >= maxStep()) step = 0;
+  $('pAuto').textContent = '❚❚ 暫停';
+  autoTimer = setInterval(() => { step++; drawBoard(); renderPlay(); if (step >= maxStep()) stopAuto(); }, 700);
+};
+
+// ---------- 分享卡（G2 卡牌） ----------
+function drawCard() {
+  const cv = $('cardCanvas'), c = cv.getContext('2d'), W = cv.width, H = cv.height, r = result;
+  const g = c.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#F5D27A'); g.addColorStop(.45, '#B9822F'); g.addColorStop(.7, '#F5D27A'); g.addColorStop(1, '#8C5E1E');
+  c.fillStyle = g; rr(c, 0, 0, W, H, 34); c.fill();
+  c.fillStyle = '#221A3B'; rr(c, 10, 10, W - 20, H - 20, 28); c.fill();
+  c.textBaseline = 'alphabetic';
+  c.fillStyle = '#4A3A1A'; rr(c, 34, 34, 230, 44, 22); c.fill();
+  c.fillStyle = '#FFE3A3'; c.font = '700 22px "Noto Sans TC"';
+  c.fillText((r.division === 'short' ? '短篇・' : '長篇・') + (rankOf(r) || ''), 54, 64);
+  c.fillStyle = '#A79FC4'; c.font = '20px "Chakra Petch"'; c.textAlign = 'right'; c.fillText('詰題試煉場', W - 40, 64); c.textAlign = 'left';
+  const bx = 40, by = 100, bs = W - 80, cell = (bs - 40) / 14, p = 20;
+  c.fillStyle = '#E9C98B'; rr(c, bx, by, bs, bs, 14); c.fill();
+  c.strokeStyle = '#5B4524'; c.lineWidth = 1.2;
+  for (let i = 0; i < N; i++) {
+    c.beginPath(); c.moveTo(bx + p, by + p + i * cell); c.lineTo(bx + p + 14 * cell, by + p + i * cell); c.stroke();
+    c.beginPath(); c.moveTo(bx + p + i * cell, by + p); c.lineTo(bx + p + i * cell, by + p + 14 * cell); c.stroke();
+  }
+  const put = (t, col) => { const x = bx + p + COLS.indexOf(t[0]) * cell, y = by + p + (N - parseInt(t.slice(1), 10)) * cell; c.beginPath(); c.arc(x, y, cell * .44, 0, 7); c.fillStyle = col === 'b' ? '#1B1A17' : '#FBFAF6'; c.fill(); if (col === 'w') { c.strokeStyle = '#1B1A17'; c.lineWidth = 1.5; c.stroke(); } };
+  black.forEach(t => put(t, 'b')); white.forEach(t => put(t, 'w'));
+  const ty = by + bs + 60;
+  c.fillStyle = '#F1EEFA'; c.font = '900 40px "Noto Sans TC"'; c.fillText(`黑先 ${r.L} 手勝`, 40, ty);
+  c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText(`黑 ${r.nb}・白 ${r.nw}　唯一解　繞路 ${r.detours}`, 40, ty + 38);
+  const f = r.features || {}, stats = [['深誘餌', f.deepDecoys], ['禁手陷阱', f.forbidTrap], ['解禁', f.forbidLift], ['反四', f.counter]];
+  stats.forEach(([n, v], i) => {
+    const x = 40 + i * ((W - 80) / 4), y = ty + 64, w = (W - 80) / 4 - 10;
+    c.fillStyle = '#2C2350'; rr(c, x, y, w, 76, 12); c.fill();
+    c.fillStyle = '#A79FC4'; c.font = '18px "Noto Sans TC"'; c.textAlign = 'center'; c.fillText(n, x + w / 2, y + 28);
+    c.fillStyle = '#F1EEFA'; c.font = '700 28px "Chakra Petch"'; c.fillText(String(v ?? 0), x + w / 2, y + 62); c.textAlign = 'left';
+  });
+  c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText('鑑定分數', 40, H - 44);
+  c.fillStyle = '#FFE3A3'; c.font = '700 54px "Chakra Petch"'; c.textAlign = 'right'; c.fillText(r.score.toFixed(1), W - 40, H - 40); c.textAlign = 'left';
+}
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+$('btnCard').onclick = async () => { try { await document.fonts.ready; } catch {} drawCard(); $('dlgCard').showModal(); };
+$('btnDl').onclick = () => { const a = document.createElement('a'); a.download = `vcf-${result.division}-${result.L}手.png`; a.href = $('cardCanvas').toDataURL('image/png'); a.click(); };
+
+// ---------- 開場 ----------
+function renderAll() { drawBoard(); renderStages(); renderRate(); renderSrc(); renderPlay(); }
+(function init() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const b = (h.get('b') || '').split(',').filter(Boolean), w = (h.get('w') || '').split(',').filter(Boolean);
+  const ok = t => /^[A-HJ-P](1[0-5]|[1-9])$/.test(t);
+  black = new Set(b.filter(ok)); white = new Set(w.filter(ok).filter(t => !black.has(t)));
+  renderAll();
+})();
+</script>
+</body>
+</html>
