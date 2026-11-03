@@ -115,7 +115,6 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
         <button class="tool" type="button" id="btnClear">清空</button>
       </div>
       <button class="go" type="button" id="btnGo">評分這一題</button>
-      <label class="hint" style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer"><input type="checkbox" id="special" style="width:20px;height:20px"> 特殊玩法（例如全部跳一格）：不限黑白子數、不扣分</label>
       <div class="tools" id="play" hidden>
         <button class="tool" type="button" id="pPrev" aria-label="上一手">◀</button>
         <button class="tool" type="button" id="pAuto">▶ 播放解答</button>
@@ -372,7 +371,6 @@ function onResult(e) {
   }
   busy = false; $('btnGo').textContent = '評分這一題';
   if (!e.data.ok) { $('note').textContent = '計算出錯：' + e.data.error; renderStages(); return; }
-  if (r && r.balancePenalty && $('special').checked) { r.score = Math.round(r.score / r.balancePenalty * 10) / 10; delete r.balancePenalty; }   // 特殊玩法不扣黑白數
   result = r; step = 0;
   $('status').textContent = `計算時間 ${(totalMs / 1000).toFixed(1)} 秒${curScale > 1 ? `（搜尋量自動加大到 ×${curScale}）` : ''}。`;
   renderAll();
@@ -386,8 +384,7 @@ let usage = null, usagePool = [];
 function stopUsage() { usagePool.forEach(w => w.terminate()); usagePool = []; usage = null; }
 function startUsage(base) {
   stopUsage();
-  const pen = base.balancePenalty || 1;   // 黑白不平衡 ×0.97：比較時用不扣的原始分，最後再乘回去（勾特殊玩法時前面已拿掉）
-  const special = $('special').checked;
+  const pen = base.balancePenalty || 1;   // 黑白不平衡 ×0.97：比較時用不扣的原始分，最後再乘回去
   const raw = base.score / pen, L = base.L, det = base.detours, myResult = base;
   const list = [...black].map(c => [c, 'b']).concat([...white].map(c => [c, 'w']));
   usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [] };
@@ -412,9 +409,9 @@ function startUsage(base) {
       if (usage.done === usage.total) {
         // 黑白要平衡（黑先一樣多）：能成對拿掉的才是真廢子，落單的是「平衡子」算必要（跟本機引擎同一套）
         const wB = usage.waste.filter(c => black.has(c)).length, wW = usage.waste.length - wB;
-        const d = special ? 0 : black.size - white.size, pairs = special ? 0 : Math.min(wB, wW);   // 特殊玩法：不管黑白平衡，廢子照單顆算
+        const d = black.size - white.size, pairs = Math.min(wB, wW);
         const extra = d > 0 ? Math.min(wB - pairs, d) : d < 0 ? Math.min(wW - pairs, -d) : 0;
-        const trueWaste = special ? usage.waste.length : 2 * pairs + extra, useful = usage.useful + usage.waste.length - trueWaste;
+        const trueWaste = 2 * pairs + extra, useful = usage.useful + usage.waste.length - trueWaste;
         const rate = (usage.need + useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
         result.rawScore = raw;
         result.usage = { rate, mult, need: usage.need, useful, waste: trueWaste, wasteAt: usage.waste.join(' ') };
