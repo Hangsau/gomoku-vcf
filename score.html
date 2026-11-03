@@ -384,7 +384,8 @@ let usage = null, usagePool = [];
 function stopUsage() { usagePool.forEach(w => w.terminate()); usagePool = []; usage = null; }
 function startUsage(base) {
   stopUsage();
-  const raw = base.score, L = base.L, det = base.detours, myResult = base;
+  const pen = base.balancePenalty || 1;   // 黑白不平衡 ×0.97：比較時用不扣的原始分，最後再乘回去
+  const raw = base.score / pen, L = base.L, det = base.detours, myResult = base;
   const list = [...black].map(c => [c, 'b']).concat([...white].map(c => [c, 'w']));
   usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [] };
   renderRate();
@@ -403,13 +404,18 @@ function startUsage(base) {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
       const broken = !(v && v.vcf === true && v.L === L && v.unique === true && v.detours >= 0 && v.detours <= det);
-      if (broken) usage.need++; else if (v.score < raw * 0.9) usage.useful++; else usage.waste.push(w.cur);
+      if (broken) usage.need++; else if (v.score / (v.balancePenalty || 1) < raw * 0.9) usage.useful++; else usage.waste.push(w.cur);
       usage.done++;
       if (usage.done === usage.total) {
-        const rate = (usage.need + usage.useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
+        // 黑白要平衡（黑先一樣多）：能成對拿掉的才是真廢子，落單的是「平衡子」算必要（跟本機引擎同一套）
+        const wB = usage.waste.filter(c => black.has(c)).length, wW = usage.waste.length - wB;
+        const d = black.size - white.size, pairs = Math.min(wB, wW);
+        const extra = d > 0 ? Math.min(wB - pairs, d) : d < 0 ? Math.min(wW - pairs, -d) : 0;
+        const trueWaste = 2 * pairs + extra, useful = usage.useful + usage.waste.length - trueWaste;
+        const rate = (usage.need + useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
         result.rawScore = raw;
-        result.usage = { rate, mult, need: usage.need, useful: usage.useful, waste: usage.waste.length, wasteAt: usage.waste.join(' ') };
-        result.score = Math.round(raw * mult * 10) / 10;
+        result.usage = { rate, mult, need: usage.need, useful, waste: trueWaste, wasteAt: usage.waste.join(' ') };
+        result.score = Math.round(raw * mult * pen * 10) / 10;
         usagePool.forEach(x => x.terminate()); usagePool = []; usage = null;
         renderAll();
       } else { renderRate(); feed(w); }
@@ -520,7 +526,8 @@ function renderSrc() {
   items.sort((a, b) => b[2] - a[2]);
   const top = items.slice(0, 8), rest = items.slice(8).reduce((s, x) => s + x[2], 0);
   const u = r.usage ? `<span class="chip ${r.usage.mult < 1 ? 'neg' : ''}">${ico('ratio')}棋子使用率 ${Math.round(r.usage.rate * 100)}% <b>×${r.usage.mult.toFixed(2)}</b>${r.usage.waste ? `（廢子 ${r.usage.waste}）` : '（零廢子）'}</span>` : '';
-  $('src').innerHTML = '<span class="label">得分來源</span>' + u + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
+  const bal = r.balancePenalty ? `<span class="chip neg">${ico('stones')}黑白不一樣多 <b>×${r.balancePenalty}</b></span>` : '';
+  $('src').innerHTML = '<span class="label">得分來源</span>' + u + bal + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
     (items.length > 8 ? `<span class="chip dim">其他 ${items.length - 8} 項 ${rest >= 0 ? '+' : ''}${rest.toFixed(1)}</span>` : '');
 }
 
