@@ -351,14 +351,27 @@ function score() {
   $('btnGo').textContent = '計算中…（再按一次取消）';
   $('note').innerHTML = '計算中：找最短 VCF、逐手檢查別解與繞路。長題可能要幾十秒。';
   renderStages(true);
-  worker.postMessage({ id: ++reqId, black: [...black].join(' '), white: [...white].join(' '), attackerWhite: 0, scale: 1 });
+  curScale = 1; totalMs = 0;
+  send();
 }
+// 搜尋量用完（長題）→ 自動放大 4 倍重算，最多 256 倍；過程中隨時可取消（2026-11-03：上百手的題一定會有人測）
+let curScale = 1, totalMs = 0;
+function send() { worker.postMessage({ id: ++reqId, black: [...black].join(' '), white: [...white].join(' '), attackerWhite: 0, scale: curScale }); }
 function onResult(e) {
   if (e.data.id !== reqId) return;
+  if (e.data.ok) totalMs += e.data.ms;
+  const r = e.data.ok ? e.data.result : null;
+  const ranOut = r && (r.vcf === null || r.unique === null || r.detours < 0);
+  if (ranOut && curScale < 256) {
+    curScale *= 4;
+    $('note').innerHTML = `長題：搜尋量不夠，自動加大到 <b>×${curScale}</b> 重算中…（已算 ${(totalMs / 1000).toFixed(1)} 秒，再按一次可取消）`;
+    send();
+    return;
+  }
   busy = false; $('btnGo').textContent = '評分這一題';
   if (!e.data.ok) { $('note').textContent = '計算出錯：' + e.data.error; renderStages(); return; }
-  result = e.data.result; step = 0;
-  $('status').textContent = `計算時間 ${(e.data.ms / 1000).toFixed(1)} 秒。`;
+  result = r; step = 0;
+  $('status').textContent = `計算時間 ${(totalMs / 1000).toFixed(1)} 秒${curScale > 1 ? `（搜尋量自動加大到 ×${curScale}）` : ''}。`;
   renderAll();
 }
 $('btnGo').onclick = score;
