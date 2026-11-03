@@ -636,6 +636,75 @@ function phAnalyze() {
   $('phApply').disabled = false;
   phDraw();
 }
+// 自動找四角（2026-11-03 使用者：手機不好點四個角）：
+// 細線遮罩（兩側都比它亮；墊子邊緣這種一邊暗一邊亮的交界不算）→ 直線、橫線兩族各自霍夫投票
+// → 每族挑「15 條間距最規律、票最多」的線 → 兩族最外側的線交點＝四角。找不到回 null（改手動放角）
+function phAutoCorners() {
+  const sc = 1000 / Math.max(PH.w, PH.h), W = Math.round(PH.w * sc), H = Math.round(PH.h * sc);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d'); c.drawImage(PH.img, 0, 0, W, H);
+  const d = c.getImageData(0, 0, W, H).data, Y = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) Y[i] = .299 * d[4 * i] + .587 * d[4 * i + 1] + .114 * d[4 * i + 2];
+  const II = new Float64Array((W + 1) * (H + 1));   // 積分圖 → 13×13 平均
+  for (let y = 0; y < H; y++) { let row = 0; for (let x = 0; x < W; x++) { row += Y[y * W + x]; II[(y + 1) * (W + 1) + x + 1] = II[y * (W + 1) + x + 1] + row; } }
+  const blur = (x, y) => { const x0 = Math.max(0, x - 6), x1 = Math.min(W, x + 7), y0 = Math.max(0, y - 6), y1 = Math.min(H, y + 7); return (II[y1 * (W + 1) + x1] - II[y0 * (W + 1) + x1] - II[y1 * (W + 1) + x0] + II[y0 * (W + 1) + x0]) / ((x1 - x0) * (y1 - y0)); };
+  const at = (x, y) => Y[Math.min(H - 1, Math.max(0, y)) * W + Math.min(W - 1, Math.max(0, x))];
+  const hx = [], hy = [], vx = [], vy = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const v = Y[y * W + x];
+    if (v >= blur(x, y) - 12) continue;
+    if (at(x, y - 3) - v > 12 && at(x, y + 3) - v > 12) { hx.push(x); hy.push(y); }
+    if (at(x - 3, y) - v > 12 && at(x + 3, y) - v > 12) { vx.push(x); vy.push(y); }
+  }
+  const diag = Math.ceil(Math.hypot(W, H)) + 2;
+  const family = (cdeg, xs, ys) => {
+    const th = []; for (let a = cdeg - 25; a <= cdeg + 25.001; a += .25) th.push(a * Math.PI / 180);
+    const bestV = new Float32Array(2 * diag), bestT = new Float32Array(2 * diag), acc = new Int32Array(2 * diag);
+    for (const t of th) {
+      acc.fill(0); const ct = Math.cos(t), st = Math.sin(t);
+      for (let i = 0; i < xs.length; i++) acc[Math.floor(xs[i] * ct + ys[i] * st) + diag]++;
+      for (let r = 0; r < 2 * diag; r++) if (acc[r] > bestV[r]) { bestV[r] = acc[r]; bestT[r] = t; }
+    }
+    const sm = bestV.map((_, r) => (bestV[r - 1] || 0) / 3 + bestV[r] / 3 + (bestV[r + 1] || 0) / 3);
+    const nz = Array.from(bestV).filter(v => v > 0).sort((a, b) => a - b);
+    if (!nz.length) return [];
+    const thr = nz[Math.floor(.99 * (nz.length - 1))] * .25, out = [];
+    for (let r = 3; r < sm.length - 3; r++) {
+      if (sm[r] < thr) continue;
+      let mx = true; for (let q = r - 3; q <= r + 3; q++) if (sm[q] > sm[r]) { mx = false; break; }
+      if (mx) out.push([r - diag, bestT[r], bestV[r]]);
+    }
+    return out;
+  };
+  const posMid = (l, vert) => vert ? (l[0] - H / 2 * Math.sin(l[1])) / Math.cos(l[1]) : (l[0] - W / 2 * Math.cos(l[1])) / Math.sin(l[1]);
+  const pick15 = (cands, vert) => {
+    const L = cands.slice().sort((a, b) => posMid(a, vert) - posMid(b, vert)), P = L.map(l => posMid(l, vert)), V = L.map(l => l[2]);
+    const meanV = V.reduce((a, b) => a + b, 0) / Math.max(1, V.length);
+    let best = null;
+    // 15 條線的位置：斜拍時近大遠小，不是等距 → 用 1D 透視 p(u) = (A·u + B)/(C·u + 1)，u = k/14；C 掃 −0.6～0.6（0＝等距）
+    for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+      const span = P[j] - P[i]; if (span < Math.min(W, H) * .25) continue;
+      for (let C = -.6; C <= .601; C += .05) {
+        const A = P[j] * (C + 1) - P[i], p = u => (A * u + P[i]) / (C * u + 1);
+        let err = 0, votes = 0, ok = true; const sel = new Set();
+        for (let k = 0; k < 15 && ok; k++) {
+          const tg = p(k / 14), dd = Math.abs(p(Math.min(1, (k + 1) / 14)) - p(Math.max(0, (k - 1) / 14))) / (k === 0 || k === 14 ? 1 : 2);
+          let m = 0, me = 1e9;
+          for (let q = 0; q < P.length; q++) { const e = Math.abs(P[q] - tg); if (e < me) { me = e; m = q; } }
+          if (me / dd > .3 || sel.has(m)) ok = false; else { sel.add(m); err += me / dd; votes += V[m]; }
+        }
+        if (!ok) continue;
+        const score = votes - err * meanV * 2;
+        if (!best || score > best[0]) best = [score, [...sel].sort((a, b) => P[a] - P[b])];
+      }
+    }
+    return best ? best[1].map(m => L[m]) : null;
+  };
+  const vert = pick15(family(0, vx, vy), true), horz = pick15(family(90, hx, hy), false);
+  if (!vert || !horz) return null;
+  const inter = (a, b) => { const [r1, t1] = a, [r2, t2] = b, a1 = Math.cos(t1), b1 = Math.sin(t1), a2 = Math.cos(t2), b2 = Math.sin(t2), det = a1 * b2 - a2 * b1; return [(r1 * b2 - r2 * b1) / det / sc, (a1 * r2 - a2 * r1) / det / sc]; };
+  return [inter(vert[0], horz[0]), inter(vert[14], horz[0]), inter(vert[14], horz[14]), inter(vert[0], horz[14])];
+}
 $('btnPhoto').onclick = () => $('dlgPhoto').showModal();
 $('phFile').onchange = e => {
   const f = e.target.files[0];
@@ -652,8 +721,15 @@ $('phFile').onchange = e => {
     PH.img = off; PH.w = cv.width; PH.h = cv.height; PH.data = off.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
     PH.corners = []; PH.pts = null; PH.cls = null;
     $('phReset').disabled = false; $('phApply').disabled = true;
-    $('phHint').innerHTML = '放棋盤<b>最外圈格線的四個角</b>（四個角的交叉點，不是棋盤邊緣），順序不拘。<b>按住</b>會出現放大鏡，對準交叉點再放開。放好後會疊出格線；沒對齊就按住角落的圓圈拖動。';
+    $('phHint').innerHTML = '自動找棋盤中…';
     phDraw();
+    setTimeout(() => {
+      let q = null;
+      try { q = phAutoCorners(); } catch (err) { q = null; }
+      const inside = q && q.every(([x, y]) => x > -PH.w * .05 && x < PH.w * 1.05 && y > -PH.h * .05 && y < PH.h * 1.05);
+      if (inside) { PH.corners = q; phAnalyze(); $('phHint').innerHTML = '已自動找到棋盤。' + $('phHint').innerHTML; }
+      else { $('phHint').innerHTML = '沒自動找到棋盤，請手動放<b>最外圈格線的四個角</b>（交叉點，不是棋盤邊緣），順序不拘。<b>按住</b>會出現放大鏡，對準再放開。'; phDraw(); }
+    }, 30);
     URL.revokeObjectURL(img.src);
   };
   img.src = URL.createObjectURL(f);
