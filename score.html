@@ -74,6 +74,17 @@ header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px; d
 .chip { display: inline-flex; gap: 6px; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--chip); font-size: 14px; }
 .chip svg { stroke: var(--chipIcon); }
 .chip b { font-family: var(--mono); }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; width: 100%; margin-top: 8px; align-items: start; }
+.part { background: var(--chip); border-radius: 14px; font-size: 14px; }
+.part summary { display: flex; gap: 8px; align-items: center; padding: 10px 12px; cursor: pointer; min-height: 24px; list-style: none; }
+.part summary::-webkit-details-marker { display: none; }
+.part summary svg { stroke: var(--chipIcon); flex: none; }
+.part summary span { flex: 1; }
+.part summary b { font-family: var(--mono); }
+.part.neg { background: var(--failBg); }
+.part.zero { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
+.partBody { padding: 0 12px 12px; font-size: 13px; line-height: 1.6; color: var(--text3); }
+.partBody ul { margin: 6px 0 0; padding-left: 18px; }
 .chip.neg { background: var(--failBg); }
 .chip.dim { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
 /* 輸入 */
@@ -188,7 +199,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
 
 <dialog id="dlgCard">
   <h2 style="margin-top:0">分享卡</h2>
-  <canvas id="cardCanvas" width="720" height="1040"></canvas>
+  <canvas id="cardCanvas" width="720" height="960"></canvas>
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
     <button class="tool" type="button" id="btnDl">下載圖片</button>
     <form method="dialog"><button class="tool" type="submit">關閉</button></form>
@@ -513,21 +524,44 @@ const PART = {   // 長篇各項（引擎的英文名 → 中文＋圖示）
   counterPrep: ['預備反四', 'zig'], orderTraps: ['手順', 'order'],
 };
 const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route' };
+const PART_RULE = {
+  '計算量': r => `要證明其他走法都不行，要讀 ${r.readNodes ?? '–'} 個局面。讀得越多分越高，但越往上越難漲。`,
+  '深誘餌': r => `錯的第一手能走幾步才破，每條依深度給分。這題有 ${(r.features || {}).deepDecoys ?? 0} 條深誘餌。`,
+  '禁手陷阱': r => `看起來能衝四，其實是禁手的點。`,
+  '解禁': r => `原本是禁手，黑自己的棋讓它變可以下，而且解答真的下在那裡。`,
+  '反四': r => `白擋下後自己成四，黑要先擋回去。`,
+  '預備反四': r => `先衝別的四，把對方反四的線處理好。`,
+  '手順': r => `換個順序就贏不了的地方。`,
+  '繞路': r => `比最短解多幾手也能贏的走法，這題 ${r.detours ?? 0} 條。`,
+};
+function partWhere(k, r) {   // 這一項出現在第幾手、哪一點
+  const S = r.steps || [], list = [];
+  S.forEach(n => {
+    if (k === '解禁' && n.lift) list.push(`第 ${n.n} 手 ${n.atk}`);
+    if (k === '反四' && n.counter) list.push(`第 ${n.n} 手白擋 ${n.def}`);
+    if (k === '預備反四' && n.counterPrep) list.push(`第 ${n.n} 手 ${n.atk}`);
+    if (k === '手順' && n.order && n.order.length) list.push(`第 ${n.n} 手：${n.order.join('、')} 現在衝太早`);
+    if (k === '禁手陷阱' && n.traps && n.traps.length) list.push(`第 ${n.n} 手：${n.traps.join('、')}`);
+  });
+  return list;
+}
 function renderSrc() {
   const r = result;
   if (!r || r.vcf !== true || r.unique !== true) { $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">過了唯一解這關才評分</span>'; return; }
   let items = [];
-  if (r.shortParts) items = Object.entries(r.shortParts).filter(([, v]) => v).map(([k, v]) => [k, SPART[k] || 'bolt', v]);   // 統一難度（長短篇同一套）
+  if (r.shortParts) items = Object.entries(r.shortParts).filter(([k, v]) => v || k !== '繞路').map(([k, v]) => [k, SPART[k] || 'bolt', v]);   // 統一難度（長短篇同一套）：沒拿到分的項目也列出來
   else {
     items = Object.entries(r.parts).filter(([, v]) => v).map(([k, v]) => [(PART[k] || [k])[0], (PART[k] || [0, 'bolt'])[1], v]);
     if (r.detourPenalty) items.push(['繞路', 'route', r.detourPenalty]);
   }
   items.sort((a, b) => b[2] - a[2]);
-  const top = items.slice(0, 8), rest = items.slice(8).reduce((s, x) => s + x[2], 0);
-  const u = r.usage ? `<span class="chip ${r.usage.mult < 1 ? 'neg' : ''}">${ico('ratio')}棋子使用率 ${Math.round(r.usage.rate * 100)}% <b>×${r.usage.mult.toFixed(2)}</b>${r.usage.waste ? `（廢子 ${r.usage.waste}）` : '（零廢子）'}</span>` : '';
+  const u = r.usage ? `<span class="chip ${r.usage.mult < 1 ? 'neg' : ''}">${ico('ratio')}棋子使用率 ${Math.round(r.usage.rate * 100)}% <b>×${r.usage.mult.toFixed(2)}</b>${r.usage.waste ? `（廢子 ${r.usage.waste}）` : ''}</span>` : '';
   const bal = r.balancePenalty ? `<span class="chip neg">${ico('stones')}黑白不一樣多 <b>×${r.balancePenalty}</b></span>` : '';
-  $('src').innerHTML = '<span class="label">得分來源</span>' + u + bal + top.map(([n, k, v]) => `<span class="chip ${v < 0 ? 'neg' : ''}">${ico(k)}${esc(n)} <b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></span>`).join('') +
-    (items.length > 8 ? `<span class="chip dim">其他 ${items.length - 8} 項 ${rest >= 0 ? '+' : ''}${rest.toFixed(1)}</span>` : '');
+  const row = ([n, k, v]) => {
+    const rule = PART_RULE[n] ? PART_RULE[n](r) : '', where = v ? partWhere(n, r) : [];
+    return `<details class="part ${v < 0 ? 'neg' : ''} ${v ? '' : 'zero'}"><summary>${ico(k)}<span>${esc(n)}</span><b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></summary><div class="partBody">${esc(rule) || '這一項的加分。'}${where.length ? `<ul>${where.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div></details>`;
+  };
+  $('src').innerHTML = '<span class="label">得分來源</span>' + u + bal + `<div class="parts">${items.map(row).join('')}</div>`;
 }
 
 // ---------- 逐手播放與解說 ----------
@@ -580,7 +614,7 @@ function drawCard() {
   c.textBaseline = 'alphabetic';
   c.fillStyle = '#4A3A1A'; rr(c, 34, 34, 230, 44, 22); c.fill();
   c.fillStyle = '#FFE3A3'; c.font = '700 22px "Noto Sans TC"';
-  c.fillText((r.division === 'short' ? '短篇・' : '長篇・') + (rankOf(r) || ''), 54, 64);
+  c.fillText(rankOf(r) || '詰題', 54, 64);
   c.fillStyle = '#A79FC4'; c.font = '20px "Chakra Petch"'; c.textAlign = 'right'; c.fillText('詰題試煉場', W - 40, 64); c.textAlign = 'left';
   const bx = 40, by = 100, bs = W - 80, cell = (bs - 40) / 14, p = 20;
   c.fillStyle = '#E9C98B'; rr(c, bx, by, bs, bs, 14); c.fill();
@@ -592,21 +626,15 @@ function drawCard() {
   const put = (t, col) => { const x = bx + p + COLS.indexOf(t[0]) * cell, y = by + p + (N - parseInt(t.slice(1), 10)) * cell; c.beginPath(); c.arc(x, y, cell * .44, 0, 7); c.fillStyle = col === 'b' ? '#1B1A17' : '#FBFAF6'; c.fill(); if (col === 'w') { c.strokeStyle = '#1B1A17'; c.lineWidth = 1.5; c.stroke(); } };
   black.forEach(t => put(t, 'b')); white.forEach(t => put(t, 'w'));
   const ty = by + bs + 60;
-  c.fillStyle = '#F1EEFA'; c.font = '900 40px "Noto Sans TC"'; c.fillText(`黑先 ${r.L} 手勝`, 40, ty);
-  c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText(`黑 ${r.nb}・白 ${r.nw}　唯一解　繞路 ${r.detours}`, 40, ty + 38);
-  const f = r.features || {}, stats = [['深誘餌', f.deepDecoys], ['禁手陷阱', f.forbidTrap], ['解禁', f.forbidLift], ['反四', f.counter]];
-  stats.forEach(([n, v], i) => {
-    const x = 40 + i * ((W - 80) / 4), y = ty + 64, w = (W - 80) / 4 - 10;
-    c.fillStyle = '#2C2350'; rr(c, x, y, w, 76, 12); c.fill();
-    c.fillStyle = '#A79FC4'; c.font = '18px "Noto Sans TC"'; c.textAlign = 'center'; c.fillText(n, x + w / 2, y + 28);
-    c.fillStyle = '#F1EEFA'; c.font = '700 28px "Chakra Petch"'; c.fillText(String(v ?? 0), x + w / 2, y + 62); c.textAlign = 'left';
-  });
+  // 分享卡是出題用：不寫幾手勝、不寫加分項，只留黑先和子數
+  c.fillStyle = '#F1EEFA'; c.font = '900 40px "Noto Sans TC"'; c.fillText('黑先，找出 VCF', 40, ty);
+  c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText(`黑 ${r.nb}・白 ${r.nw}`, 40, ty + 38);
   c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText('鑑定分數', 40, H - 44);
   c.fillStyle = '#FFE3A3'; c.font = '700 54px "Chakra Petch"'; c.textAlign = 'right'; c.fillText(r.score.toFixed(1), W - 40, H - 40); c.textAlign = 'left';
 }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 $('btnCard').onclick = async () => { try { await document.fonts.ready; } catch {} drawCard(); $('dlgCard').showModal(); };
-$('btnDl').onclick = () => { const a = document.createElement('a'); a.download = `vcf-${result.division}-${result.L}手.png`; a.href = $('cardCanvas').toDataURL('image/png'); a.click(); };
+$('btnDl').onclick = () => { const a = document.createElement('a'); a.download = `vcf-題目-黑${result.nb}白${result.nw}.png`; a.href = $('cardCanvas').toDataURL('image/png'); a.click(); };
 
 // ---------- 從照片匯入（2026-11-03）：先定位（點四個角 → 拉正）→ 每個交叉點分三群（黑／白／空）→ 使用者檢查修正 → 套用 ----------
 const PH = { img: null, w: 0, h: 0, data: null, corners: [], cls: null, conf: null, pts: null };
