@@ -84,7 +84,13 @@ header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px; d
 .part.neg { background: var(--failBg); }
 .part.zero { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
 .partBody { padding: 0 12px 12px; font-size: 13px; line-height: 1.6; color: var(--text3); }
-.partBody ul { margin: 6px 0 0; padding-left: 18px; }
+.srcRows { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.srcRow { display: flex; justify-content: space-between; gap: 10px; width: 100%; min-height: 36px; padding: 6px 10px; text-align: left; font: inherit; font-size: 13px; color: var(--text); background: rgba(255,255,255,.06); border: 0; border-radius: 8px; cursor: pointer; }
+.srcRow:hover { background: rgba(255,255,255,.12); }
+.srcRow b { font-family: var(--mono); flex: none; }
+.srcNone { margin-top: 6px; }
+.srcOff { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: var(--failBg); color: var(--text); }
+.noteGain { margin-top: 4px; font-size: 13px; color: var(--text3); }
 .chip.neg { background: var(--failBg); }
 .chip.dim { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
 /* 輸入 */
@@ -127,10 +133,11 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
       </div>
       <button class="go" type="button" id="btnGo">評分這一題</button>
       <div class="tools" id="play" hidden>
-        <button class="tool" type="button" id="pPrev" aria-label="上一手">◀</button>
+        <button class="tool" type="button" id="pStart" aria-label="回到最開始" title="回到最開始">|◀</button>
+        <button class="tool" type="button" id="pPrev" aria-label="上一手" title="上一手">◀</button>
         <button class="tool" type="button" id="pAuto">▶ 播放解答</button>
-        <button class="tool" type="button" id="pNext" aria-label="下一手">▶</button>
-        <button class="tool" type="button" id="pReset">回到題目</button>
+        <button class="tool" type="button" id="pNext" aria-label="下一手" title="下一手">▶</button>
+        <button class="tool" type="button" id="pEnd" aria-label="到最後一手" title="到最後一手">▶|</button>
       </div>
       <div id="moveInfo"></div>
       <div class="strip" id="strip"></div>
@@ -236,6 +243,7 @@ const xy = t => [PAD + COLS.indexOf(t[0]) * CELL, PAD + (N - parseInt(t.slice(1)
 const coordOf = (c, r) => COLS[c] + (N - r);
 function moves() { return result && result.solution ? result.solution.replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : []; }
 function steps() { return (result && result.steps) || []; }
+let preview = null, rows = [];   // preview：得分來源點開後畫在棋盤上的假路／廢子；rows：來源列表的每一列
 const noteAt = s => s > 0 ? steps()[Math.floor((s - 1) / 2)] : null;
 
 // ---------- 棋盤 ----------
@@ -257,11 +265,19 @@ function drawBoard() {
   white.forEach(t => stone(t, 'w'));
   const mv = moves();
   for (let k = 0; k < step && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? 'b' : 'w', String(Math.floor(k / 2) + 1));
-  const n = noteAt(step);
+  const n = preview ? null : noteAt(step);
   if (n) {
     (n.others || []).forEach(t => { if (mv.slice(0, step).includes(t)) return; const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#D2601A" stroke-width="2.5"/>`; });
     (n.traps || []).forEach(t => { const [x, y] = xy(t); g += `<path d="M${x - 7} ${y - 7}L${x + 7} ${y + 7}M${x + 7} ${y - 7}L${x - 7} ${y + 7}" stroke="#C0262D" stroke-width="3"/>`; });
     const [x, y] = xy(n.atk); g += `<circle cx="${x}" cy="${y}" r="19" fill="none" stroke="#0F8A7A" stroke-width="3"/>`;
+  }
+  if (preview) {   // 得分來源點開看的：錯的走法（虛線圈＋手數）、沒作用的子（虛線方框）
+    (preview.line || []).forEach((t, k) => {
+      const [x, y] = xy(t), bl = k % 2 === 0;
+      g += `<circle cx="${x}" cy="${y}" r="15" fill="${bl ? '#1B1A17' : '#FBFAF6'}" fill-opacity=".62" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+      g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${bl ? '#fff' : '#1B1A17'}">${Math.floor(k / 2) + 1}</text>`;
+    });
+    (preview.mark || []).forEach(t => { const [x, y] = xy(t); g += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="6" fill="none" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="5 3"/>`; });
   }
   if (result && result.alts && result.alts.length && step === 0) {   // 別解：第一個分岔點的其他走法
     result.alts[0].moves.forEach(t => { const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="#C0262D" stroke-width="3" stroke-dasharray="4 3"/>`; });
@@ -286,7 +302,7 @@ document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
 $('btnClear').onclick = () => { black.clear(); white.clear(); boardChanged(); };
 
 function boardChanged() {
-  result = null; step = 0; stopAuto();
+  result = null; step = 0; preview = null; stopAuto();
   location.replace('#b=' + [...black].join(',') + '&w=' + [...white].join(','));
   renderAll();
 }
@@ -524,62 +540,111 @@ const PART = {   // 長篇各項（引擎的英文名 → 中文＋圖示）
   counterPrep: ['預備反四', 'zig'], orderTraps: ['手順', 'order'],
 };
 const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route' };
+const fmtPt = v => { const x = Math.round(v * 10) / 10; return (x > 0 ? '+' : '') + x; };
 const PART_RULE = {
-  '計算量': r => `要證明其他走法都不行，要讀 ${r.readNodes ?? '–'} 個局面。讀得越多分越高，但越往上越難漲。`,
-  '深誘餌': r => `錯的第一手能走幾步才破，每條依深度給分。這題有 ${(r.features || {}).deepDecoys ?? 0} 條深誘餌。`,
-  '禁手陷阱': r => `看起來能衝四，其實是禁手的點。`,
-  '解禁': r => `原本是禁手，黑自己的棋讓它變可以下，而且解答真的下在那裡。`,
-  '反四': r => `白擋下後自己成四，黑要先擋回去。`,
-  '預備反四': r => `先衝別的四，把對方反四的線處理好。`,
-  '手順': r => `換個順序就贏不了的地方。`,
-  '繞路': r => `比最短解多幾手也能贏的走法，這題 ${r.detours ?? 0} 條。`,
+  '計算量': r => `解題的人要讀多少局面，才能確定別的走法都不行。全題共讀 ${(r.readNodes || 0).toLocaleString()} 個局面，算法是 20 × log₂(1 + 局面數)，所以讀得越多分越高，但越往上越難漲。分數算在全題，不分到單手。`,
+  '深誘餌': () => '錯的第一手能連衝 3 個四以上才斷，就算深誘餌。每條得 2 ×（連衝數 − 1），連衝數最多算到 7，全部最多 120 分。',
+  '禁手陷阱': () => '看起來能衝四，其實是禁手的點。同一點只算一次；第 k 個得 3 × (1 − 0.5^k)。',
+  '解禁': () => '這一點原本是禁手，黑自己下的子讓它變可以下，解答又真的下在那裡。每次 30 分。',
+  '反四': () => '白擋下的同時自己成四，黑要先擋回去。第 k 次得 8 × (1 − 0.5^k)。',
+  '預備反四': () => '黑擋回去的四，用到更早佈好、之前沒用過的子。每次 30 分。',
+  '手順': () => '後面才該下的四，現在先衝就贏不了。每手最多算 2 個，每個 15 分。',
+  '繞路': r => `除了解答之外還有 ${r.detours ?? 0} 條多走幾手也能贏的路，每條扣 15 分。`,
 };
-function partWhere(k, r) {   // 這一項出現在第幾手、哪一點
-  const S = r.steps || [], list = [];
+function liftHands(r) {   // 真的算分的解禁手（features.liftAt 是引擎計分用的清單，格式 G8@4）
+  return new Set(String((r.features || {}).liftAt || '').split(/\s+/).filter(Boolean).map(x => +x.split('@')[1]));
+}
+// 每一項分數的來源。pts 加總要等於引擎的分數，對不上就在畫面上標出來（audit 也用同一份）
+function sources(r) {
+  const S = r.steps || [], R = { 計算量: [], 深誘餌: [], 禁手陷阱: [], 解禁: [], 反四: [], 預備反四: [], 手順: [] };
+  (r.stepReads || []).forEach((v, i) => { if (S[i]) R.計算量.push({ t: `第 ${i + 1} 手 ${S[i].atk}：讀 ${v.toLocaleString()} 個局面`, go: 2 * i + 1 }); });
+  (r.decoyLines || []).filter(d => d.len >= 3).sort((a, b) => b.len - a.len).forEach(d => R.深誘餌.push({ t: `先走 ${d.at}：${d.len >= 7 ? `至少連衝 ${d.len} 個四` : `連衝 ${d.len} 個四才斷`}`, pts: 2 * (d.len - 1), line: d.moves, len: d.len, at: d.at }));
+  const seen = new Set(), lifts = liftHands(r);
+  let tk = 0, ck = 0;
   S.forEach(n => {
-    if (k === '解禁' && n.lift) list.push(`第 ${n.n} 手 ${n.atk}`);
-    if (k === '反四' && n.counter) list.push(`第 ${n.n} 手白擋 ${n.def}`);
-    if (k === '預備反四' && n.counterPrep) list.push(`第 ${n.n} 手 ${n.atk}`);
-    if (k === '手順' && n.order && n.order.length) list.push(`第 ${n.n} 手：${n.order.join('、')} 現在衝太早`);
-    if (k === '禁手陷阱' && n.traps && n.traps.length) list.push(`第 ${n.n} 手：${n.traps.join('、')}`);
+    const go = 2 * n.n - 1;
+    (n.traps || []).forEach(t => { if (seen.has(t)) return; seen.add(t); tk++; R.禁手陷阱.push({ hand: n.n, t: `第 ${n.n} 手：${t} 是禁手`, pts: 3 * (1 - 0.5 ** tk), go }); });
+    if (lifts.has(n.n)) R.解禁.push({ hand: n.n, t: `第 ${n.n} 手下在 ${n.atk}`, pts: 30, go });
+    if (n.counter) { ck++; R.反四.push({ hand: n.n, t: `第 ${n.n} 手白擋 ${n.def} 同時成四`, pts: 8 * (1 - 0.5 ** ck), go: go + 1 }); }
+    if (n.counterPrep) R.預備反四.push({ hand: n.n, t: `第 ${n.n} 手 ${n.atk} 擋回去`, pts: 30, go });
+    (n.order || []).forEach(t => R.手順.push({ hand: n.n, t: `第 ${n.n} 手：${t} 現在衝太早`, pts: 15, go }));
   });
-  return list;
+  return R;
+}
+function handGains(r, hand) {
+  const R = sources(r), out = [];
+  Object.keys(R).forEach(k => { const v = R[k].filter(x => x.hand === hand && x.pts).reduce((a, x) => a + x.pts, 0); if (v) out.push({ part: k, pts: v }); });
+  return out;
 }
 function renderSrc() {
   const r = result;
   if (!r || r.vcf !== true || r.unique !== true) { $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">過了唯一解這關才評分</span>'; return; }
-  let items = [];
-  if (r.shortParts) items = Object.entries(r.shortParts).filter(([k, v]) => v || k !== '繞路').map(([k, v]) => [k, SPART[k] || 'bolt', v]);   // 統一難度（長短篇同一套）：沒拿到分的項目也列出來
-  else {
-    items = Object.entries(r.parts).filter(([, v]) => v).map(([k, v]) => [(PART[k] || [k])[0], (PART[k] || [0, 'bolt'])[1], v]);
-    if (r.detourPenalty) items.push(['繞路', 'route', r.detourPenalty]);
-  }
+  const opened = new Set([...$('src').querySelectorAll('details[open]')].map(d => d.dataset.k));   // 使用率算完會重畫，點開的不要收起來
+  rows = [];
+  const R = sources(r);
+  let items = Object.entries(r.shortParts || {}).filter(([k, v]) => v || k !== '繞路').map(([k, v]) => [k, SPART[k] || 'bolt', v]);   // 沒拿到分的項目也列出來
   items.sort((a, b) => b[2] - a[2]);
-  const u = r.usage ? `<span class="chip ${r.usage.mult < 1 ? 'neg' : ''}">${ico('ratio')}棋子使用率 ${Math.round(r.usage.rate * 100)}% <b>×${r.usage.mult.toFixed(2)}</b>${r.usage.waste ? `（廢子 ${r.usage.waste}）` : ''}</span>` : '';
-  const bal = r.balancePenalty ? `<span class="chip neg">${ico('stones')}黑白不一樣多 <b>×${r.balancePenalty}</b></span>` : '';
+  const rowBtn = x => { rows.push(x); return `<button type="button" class="srcRow" data-row="${rows.length - 1}"><span>${esc(x.t)}</span>${x.pts ? `<b>${fmtPt(x.pts)}</b>` : ''}</button>`; };
+  const detail = (k, name, icon, val, cls, body) => `<details class="part ${cls}" data-k="${esc(k)}" ${opened.has(k) ? 'open' : ''}><summary>${ico(icon)}<span>${esc(name)}</span><b>${val}</b></summary><div class="partBody">${body}</div></details>`;
   const row = ([n, k, v]) => {
-    const rule = PART_RULE[n] ? PART_RULE[n](r) : '', where = v ? partWhere(n, r) : [];
-    return `<details class="part ${v < 0 ? 'neg' : ''} ${v ? '' : 'zero'}"><summary>${ico(k)}<span>${esc(n)}</span><b>${v > 0 ? '+' : ''}${(+v).toFixed(v % 1 ? 1 : 0)}</b></summary><div class="partBody">${esc(rule) || '這一項的加分。'}${where.length ? `<ul>${where.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div></details>`;
+    const list = R[n] || [], sum = list.reduce((a, x) => a + (x.pts || 0), 0);
+    const capped = n === '深誘餌' && sum > 120;
+    const off = n !== '計算量' && n !== '繞路' && !capped && Math.abs(sum - v) > 0.11;
+    const shallow = n === '深誘餌' ? (r.decoyLines || []).filter(d => d.len < 3).length : 0;
+    const body = esc(PART_RULE[n] ? PART_RULE[n](r) : '')
+      + (list.length ? `<div class="srcRows">${list.map(rowBtn).join('')}</div>` : v ? '' : '<div class="srcNone">這題沒有。</div>')
+      + (shallow ? `<div class="srcNone">另外 ${shallow} 個錯的第一手衝不到 3 個四，不加分。</div>` : '')
+      + (capped ? `<div class="srcNone">加起來 ${Math.round(sum)} 分，超過上限，只算 120。</div>` : '')
+      + (off ? `<div class="srcOff">明細加起來 ${fmtPt(sum)}，和分數 ${fmtPt(v)} 對不上，這題可能有問題。</div>` : '');
+    return detail(n, n, k, fmtPt(v), `${v < 0 ? 'neg' : ''} ${v ? '' : 'zero'}`, body);
   };
-  $('src').innerHTML = '<span class="label">得分來源</span>' + u + bal + `<div class="parts">${items.map(row).join('')}</div>`;
+  let extra = '';
+  if (r.usage) {
+    const U = r.usage, W = String(U.wasteAt || '').split(/\s+/).filter(Boolean);
+    const body = `棋盤上每顆子都拿掉重算一次：拿掉就解不開的 ${U.need} 顆、有用的 ${U.useful} 顆（拿掉分數掉 10% 以上，或要留著補黑白一樣多）、廢子 ${U.waste} 顆。總分乘上 1 +（使用率 − 75%），範圍 ×0.7 到 ×1.25。`
+      + (W.length ? `<div class="srcRows">${rowBtn({ t: `看拿掉也沒差的子（${W.length} 顆）`, mark: W, note: `<b>拿掉也沒差的子</b>（虛線框）：${W.map(esc).join('、')}。其中要留著補黑白一樣多的不算廢子。` })}</div>` : '');
+    extra += detail('棋子使用率', `棋子使用率 ${Math.round(U.rate * 100)}%`, 'ratio', '×' + U.mult.toFixed(2), U.mult < 1 ? 'neg' : '', body);
+  }
+  if (r.balancePenalty) extra += detail('黑白不一樣多', '黑白不一樣多', 'stones', '×' + r.balancePenalty, 'neg', '黑先的題目黑白要一樣多，不一樣就扣一點。');
+  $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">點開看每一項從哪裡來</span>' + `<div class="parts">${items.map(row).join('')}${extra}</div>`;
 }
+$('src').addEventListener('click', e => {
+  const b = e.target.closest('.srcRow'); if (!b) return;
+  const x = rows[+b.dataset.row]; if (!x) return;
+  stopAuto();
+  if (x.go != null) { preview = null; step = x.go; }
+  else {
+    step = 0;
+    preview = x.line
+      ? { line: x.line, note: `<b>假路：先走 ${esc(x.at)}</b>（虛線）。${x.line.map((t, k) => (k % 2 ? '白 ' : '黑 ') + esc(t)).join(' → ')}。${x.len >= 7 ? `至少能連衝 ${x.len} 個四（深度只算到這裡），` : `連衝 ${x.len} 個四之後就衝不下去了，`}看起來能走，其實不是解答。這條 <b>${fmtPt(x.pts)}</b>。按 ▶ 回到解答。` }
+      : { mark: x.mark, note: x.note };
+  }
+  drawBoard(); renderPlay();
+  $('boardPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+});
 
 // ---------- 逐手播放與解說 ----------
 function noteText(n) {
+  if (preview) return preview.note;
   if (!n) return result && result.vcf === true ? '按 ▶ 一手一手看解答。青圈＝這一手、橘圈＝當下也能衝但走不通的四（假路）、紅 ✕＝禁手陷阱。' : $('note').innerHTML;
-  const a = [];
-  if (n.forced) a.push('被迫：白剛擋出四，只能擋回去');
-  if (n.lift) a.push('<b>解禁</b>：這一點原本是禁手');
-  if (n.traps && n.traps.length) a.push(`<b>禁手陷阱 ${n.traps.length} 個</b>（✕）`);
-  if (n.others && n.others.length) a.push(`另外 <b>${n.others.length} 個四</b>也能衝（橘圈），但走不通`);
-  if (n.order && n.order.length) a.push(`<b>手順</b>：${n.order.join('、')} 現在衝太早`);
-  if (n.counter) a.push('<b>反四</b>：白擋下後自己成四');
-  if (n.counterPrep) a.push('<b>預備反四</b>：用先前佈好的子擋回去');
-  if (n.selfFour) a.push('<b>自製四</b>：整個四都是途中下的子');
-  else if (n.borrow) a.push(`借用途中下的子 ${n.borrow} 顆`);
-  if (n.jump) a.push('<b>跳躍</b>：換到遠處衝');
-  if (n.finish) a.push(`收尾：<b>${n.finish}</b>`);
-  return `<b>第 ${n.n} 手 ${n.atk}</b>${n.def ? `（白擋 ${n.def}）` : ''}：` + (a.length ? a.join('；') : '一般衝四');
+  const a = [], lifted = liftHands(result).has(n.n);
+  if (n.forced) a.push('白剛剛擋出四，這手只能擋回去，同時自己成四');
+  else if (n.finish === '雙四／活四') a.push('一次做出兩個成五點，白擋不完，<b>黑勝</b>');
+  else if (n.finish === '逼守方下禁手') a.push('白唯一的擋點是禁手，<b>黑勝</b>');
+  else if (n.def) a.push(`衝四，白只能擋 ${esc(n.def)}`);
+  if (lifted) a.push('<b>解禁</b>：這一點原本是禁手，前面黑下的子讓它可以下');
+  else if (n.lift) a.push('這一點原本是禁手，但不是黑自己解開的（例如白擋掉），不算解禁');
+  if (n.traps && n.traps.length) a.push(`<b>禁手陷阱</b>：${n.traps.map(esc).join('、')} 看起來能衝，其實是禁手（✕）`);
+  if (n.others && n.others.length) a.push(`另外 ${n.others.map(esc).join('、')} 也能衝四（橘圈），但走不通`);
+  if (n.order && n.order.length) a.push(`<b>手順</b>：${n.order.map(esc).join('、')} 之後要下，現在先衝就贏不了`);
+  if (n.counter) a.push('<b>反四</b>：白這一擋自己也成四，黑下一手要先擋回去');
+  if (n.counterPrep) a.push('<b>預備反四</b>：擋回去的四用到更早佈好的子');
+  if (n.selfFour) a.push('這個四全用途中下的子');
+  else if (n.borrow) a.push(`這個四借用途中下的 ${n.borrow} 顆子`);
+  if (n.jump) a.push('換到遠處衝');
+  const gain = handGains(result, n.n), rd = (result.stepReads || [])[n.n - 1];
+  const foot = [gain.length ? '這手加分：' + gain.map(g => `${esc(g.part)} <b>${fmtPt(g.pts)}</b>`).join('、') : '這手沒有直接加分', rd ? `要讀 ${rd.toLocaleString()} 個局面` : ''].filter(Boolean).join('；');
+  return `<b>第 ${n.n} 手 ${esc(n.atk)}</b>${n.def ? `（白 ${esc(n.def)}）` : ''}：${a.join('；')}。<div class="noteGain">${foot}</div>`;
 }
 const isEv = n => n.lift || (n.traps && n.traps.length) || n.counter || n.counterPrep || (n.order && n.order.length) || n.selfFour || n.jump;
 function renderPlay() {
@@ -591,14 +656,17 @@ function renderPlay() {
   if (ok) $('note').innerHTML = noteText(noteAt(step));
   else if (result) $('note').innerHTML = result.legal === false ? '盤面不合法：' + esc(result.reason) : esc(result.reason || '沒有 VCF。');
 }
-$('strip').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; stopAuto(); step = +b.dataset.go; drawBoard(); renderPlay(); });
+$('strip').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; goStep(+b.dataset.go); });
 const maxStep = () => moves().length;
-$('pPrev').onclick = () => { stopAuto(); step = Math.max(0, step - 1); drawBoard(); renderPlay(); };
-$('pNext').onclick = () => { stopAuto(); step = Math.min(maxStep(), step + 1); drawBoard(); renderPlay(); };
-$('pReset').onclick = () => { stopAuto(); step = 0; drawBoard(); renderPlay(); };
+function goStep(k) { stopAuto(); preview = null; step = Math.max(0, Math.min(maxStep(), k)); drawBoard(); renderPlay(); }
+$('pStart').onclick = () => goStep(0);
+$('pPrev').onclick = () => goStep(step - 1);
+$('pNext').onclick = () => goStep(step + 1);
+$('pEnd').onclick = () => goStep(maxStep());
 function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; $('pAuto').textContent = '▶ 播放解答'; } }
 $('pAuto').onclick = () => {
   if (autoTimer) { stopAuto(); return; }
+  preview = null;
   if (step >= maxStep()) step = 0;
   $('pAuto').textContent = '❚❚ 暫停';
   autoTimer = setInterval(() => { step++; drawBoard(); renderPlay(); if (step >= maxStep()) stopAuto(); }, 700);
