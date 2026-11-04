@@ -525,7 +525,7 @@ function renderRate() {
   const tiles = [
     ['steps', '手數', r && r.L ? r.L : '—'],
     ['stones', '子數', r ? `${r.nb}/${r.nw}` : '—'],
-    ['hook', '深誘餌', f.deepDecoys ?? '—'],
+    ['hook', '深誘餌', r.deepLinked ?? '—'],
     ['unlock', '解禁', f.forbidLift ?? '—'],
     ['ratio', '棋子使用率', usage ? `計算中 ${usage.done}/${usage.total}` : r && r.usage ? `${Math.round(r.usage.rate * 100)}%（×${r.usage.mult.toFixed(2)}）` : '—'],
   ];
@@ -543,7 +543,7 @@ const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', 
 const fmtPt = v => { const x = Math.round(v * 10) / 10; return (x > 0 ? '+' : '') + x; };
 const PART_RULE = {
   '計算量': r => `解題的人要讀多少局面，才能確定別的走法都不行。全題共讀 ${(r.readNodes || 0).toLocaleString()} 個局面，算法是 20 × log₂(1 + 局面數)，所以讀得越多分越高，但越往上越難漲。分數算在全題，不分到單手。`,
-  '深誘餌': () => '錯的第一手能連衝 3 個四以上才斷，就算深誘餌。每條得 2 ×（連衝數 − 1），連衝數最多算到 7，全部最多 120 分。',
+  '深誘餌': () => '錯的第一手要能連走至少 4 手、後一手用到這條路下過的子，而且連到解答用的棋，才算深誘餌。每條得 6 × 手數，走到被白反擊才斷再 +10，全部最多 120 分。太淺又單獨一區、不影響解答的錯路，每條扣 2 分，最多扣 20。',
   '禁手陷阱': () => '看起來能衝四，其實是禁手的點。同一點只算一次；第 k 個得 3 × (1 − 0.5^k)。',
   '解禁': () => '這一點原本是禁手，黑自己下的子讓它變可以下，解答又真的下在那裡。每次 30 分。',
   '反四': () => '白擋下的同時自己成四，黑要先擋回去。第 k 次得 8 × (1 − 0.5^k)。',
@@ -558,7 +558,8 @@ function liftHands(r) {   // 真的算分的解禁手（features.liftAt 是引�
 function sources(r) {
   const S = r.steps || [], R = { 計算量: [], 深誘餌: [], 禁手陷阱: [], 解禁: [], 反四: [], 預備反四: [], 手順: [] };
   (r.stepReads || []).forEach((v, i) => { if (S[i]) R.計算量.push({ t: `第 ${i + 1} 手 ${S[i].atk}：讀 ${v.toLocaleString()} 個局面`, go: 2 * i + 1 }); });
-  (r.decoyLines || []).filter(d => d.len >= 3).sort((a, b) => b.len - a.len).forEach(d => R.深誘餌.push({ t: `先走 ${d.at}：${d.len >= 7 ? `至少連衝 ${d.len} 個四` : `連衝 ${d.len} 個四才斷`}`, pts: 2 * (d.len - 1), line: d.moves, len: d.len, at: d.at }));
+  (r.decoyLines || []).filter(d => d.counted).sort((a, b) => b.len - a.len).forEach(d => R.深誘餌.push({ t: `先走 ${d.at}：連走 ${d.len} 手${d.counter ? '，被白反擊才斷' : ''}`, pts: 6 * d.len + (d.counter ? 10 : 0), line: d.moves, len: d.len, at: d.at, counter: d.counter }));
+  (r.decoyLines || []).filter(d => d.iso).forEach((d, i) => R.深誘餌.push({ t: `先走 ${d.at}：只有 ${d.len} 手，單獨一區`, pts: i < 10 ? -2 : 0, line: d.moves, len: d.len, at: d.at, iso: true }));
   const seen = new Set(), lifts = liftHands(r);
   let tk = 0, ck = 0;
   S.forEach(n => {
@@ -588,13 +589,14 @@ function renderSrc() {
   const detail = (k, name, icon, val, cls, body) => `<details class="part ${cls}" data-k="${esc(k)}" ${opened.has(k) ? 'open' : ''}><summary>${ico(icon)}<span>${esc(name)}</span><b>${val}</b></summary><div class="partBody">${body}</div></details>`;
   const row = ([n, k, v]) => {
     const list = R[n] || [], sum = list.reduce((a, x) => a + (x.pts || 0), 0);
-    const capped = n === '深誘餌' && sum > 120;
-    const off = n !== '計算量' && n !== '繞路' && !capped && Math.abs(sum - v) > 0.11;
-    const shallow = n === '深誘餌' ? (r.decoyLines || []).filter(d => d.len < 3).length : 0;
+    const deepSum = n === '深誘餌' ? list.filter(x => !x.iso).reduce((a, x) => a + x.pts, 0) : 0;
+    const capped = deepSum > 120;
+    const off = n !== '計算量' && n !== '繞路' && Math.abs(sum - (capped ? deepSum - 120 : 0) - v) > 0.11;
+    const shallow = n === '深誘餌' ? (r.decoyLines || []).filter(d => !d.counted && !d.iso).length : 0;
     const body = esc(PART_RULE[n] ? PART_RULE[n](r) : '')
       + (list.length ? `<div class="srcRows">${list.map(rowBtn).join('')}</div>` : v ? '' : '<div class="srcNone">這題沒有。</div>')
-      + (shallow ? `<div class="srcNone">另外 ${shallow} 個錯的第一手衝不到 3 個四，不加分。</div>` : '')
-      + (capped ? `<div class="srcNone">加起來 ${Math.round(sum)} 分，超過上限，只算 120。</div>` : '')
+      + (shallow ? `<div class="srcNone">另外 ${shallow} 個錯的第一手不夠深或沒連到解答，不算分。</div>` : '')
+      + (capped ? `<div class="srcNone">深誘餌加起來 ${Math.round(deepSum)} 分，超過上限，只算 120。</div>` : '')
       + (off ? `<div class="srcOff">明細加起來 ${fmtPt(sum)}，和分數 ${fmtPt(v)} 對不上，這題可能有問題。</div>` : '');
     return detail(n, n, k, fmtPt(v), `${v < 0 ? 'neg' : ''} ${v ? '' : 'zero'}`, body);
   };
@@ -616,7 +618,7 @@ $('src').addEventListener('click', e => {
   else {
     step = 0;
     preview = x.line
-      ? { line: x.line, note: `<b>假路：先走 ${esc(x.at)}</b>（虛線）。${x.line.map((t, k) => (k % 2 ? '白 ' : '黑 ') + esc(t)).join(' → ')}。${x.len >= 7 ? `至少能連衝 ${x.len} 個四（深度只算到這裡），` : `連衝 ${x.len} 個四之後就衝不下去了，`}看起來能走，其實不是解答。這條 <b>${fmtPt(x.pts)}</b>。按 ▶ 回到解答。` }
+      ? { line: x.line, note: `<b>假路：先走 ${esc(x.at)}</b>（虛線）。${x.line.map((t, k) => (k % 2 ? '白 ' : '黑 ') + esc(t)).join(' → ')}。${x.iso ? '只有這幾手，又跟解答無關，一眼就能排除。' : `連走 ${x.len} 手${x.counter ? '之後被白反擊，' : '之後，'}就走不下去了，看起來能贏，其實不是解答。`}這條 <b>${fmtPt(x.pts)}</b>。按 ▶ 回到解答。` }
       : { mark: x.mark, note: x.note };
   }
   drawBoard(); renderPlay();
