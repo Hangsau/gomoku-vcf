@@ -468,11 +468,10 @@ function renderStages(running) {
 
 // ---------- 評定 ----------
 // 段位（使用者 2026-11-03：真正段位有九段；跟出題 AI 的訓練等級同一套，vcf-slover engine/actions.hpp ACT_LEVELS）
-const RANKS = {   // 2026-11-03：長篇照書題百分位（九段＝前 1% … 初段＝前 95%）、短篇拉開間距
-  long: [[0, '見習'], [200, '初段'], [340, '二段'], [500, '三段'], [900, '四段'], [1500, '五段'], [2700, '六段'], [3500, '七段'], [4200, '八段'], [4500, '九段']],
-  short: [[0, '見習'], [120, '初段'], [140, '二段'], [160, '三段'], [180, '四段'], [200, '五段'], [230, '六段'], [270, '七段'], [320, '八段'], [380, '九段']],
-};
-const SCALE = { long: 4500, short: 380 };   // 儀表滿格＝九段
+// 段位（2026-11-04 定案）：統一難度、長短篇共用一張表；傳說＝日本題庫前 1%，往下逐級打折、越高段級距越窄
+const LADDER = [[0, '見習生'], [40, '初段'], [70, '二段'], [120, '三段'], [200, '四段'], [315, '五段'], [500, '六段'], [780, '七段'], [1210, '八段'], [1855, '九段'], [2800, '傳說']];
+const RANKS = { long: LADDER, short: LADDER };
+const SCALE = { long: 2800, short: 2800 };   // 儀表滿格＝傳說
 function arc(f) {
   f = Math.max(0, Math.min(1, f));
   const a0 = 135 * Math.PI / 180, a1 = (135 + 270 * f) * Math.PI / 180;
@@ -488,12 +487,12 @@ function rankOf(r) {
 function renderRate() {
   const r = result, ok = r && r.vcf === true && r.unique === true && r.detours >= 0 && r.detours <= 1;
   const div = r && r.division;
-  $('divLabel').textContent = div === 'short' ? '短篇評定（10 手以內）' : div === 'long' ? '長篇評定（11 手以上）' : '難度評定';
+  $('divLabel').textContent = div === 'short' ? '難度評定・短篇（10 手以內）' : div === 'long' ? '難度評定・長篇（11 手以上）' : '難度評定';
   $('gNum').textContent = ok ? r.score.toFixed(1) : '—';
   $('gMax').textContent = ok ? `滿格 ${SCALE[div]}` : (r ? '這題還沒過關' : '');
   $('gArc').setAttribute('d', ok ? arc(r.score / SCALE[div]) : '');
   const rk = ok ? rankOf(r) : null;
-  $('rankT').textContent = div === 'short' ? '短篇段位' : div === 'long' ? '長篇段位' : '段位';
+  $('rankT').textContent = '段位';
   $('rankB').textContent = rk || '—';
   const f = r && r.features || {};
   const tiles = [
@@ -518,7 +517,7 @@ function renderSrc() {
   const r = result;
   if (!r || r.vcf !== true || r.unique !== true) { $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">過了唯一解這關才評分</span>'; return; }
   let items = [];
-  if (r.division === 'short') items = Object.entries(r.shortParts).filter(([, v]) => v).map(([k, v]) => [k, SPART[k] || 'bolt', v]);
+  if (r.shortParts) items = Object.entries(r.shortParts).filter(([, v]) => v).map(([k, v]) => [k, SPART[k] || 'bolt', v]);   // 統一難度（長短篇同一套）
   else {
     items = Object.entries(r.parts).filter(([, v]) => v).map(([k, v]) => [(PART[k] || [k])[0], (PART[k] || [0, 'bolt'])[1], v]);
     if (r.detourPenalty) items.push(['繞路', 'route', r.detourPenalty]);
