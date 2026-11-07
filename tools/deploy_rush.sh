@@ -12,7 +12,7 @@ git fetch -q origin
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "✘ 本機 HEAD 跟 GitHub 的 main 不一樣，先 push／pull 再部署"; exit 1; }
 
 OUT="$(mktemp -d)"
-trap 'rm -rf "$OUT"' EXIT
+trap 'rm -rf "$OUT" .wrangler' EXIT  # .wrangler 是 wrangler 自己留的快取，不留在 repo 裡
 # autocrlf=false：上傳跟 GitHub 上一模一樣的位元組（Windows 預設會轉成 CRLF）
 git -c core.autocrlf=false archive HEAD | tar -x -C "$OUT"
 rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/tools"
