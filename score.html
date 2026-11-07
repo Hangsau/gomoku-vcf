@@ -141,7 +141,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
       </div>
       <div id="moveInfo"></div>
       <div class="strip" id="strip"></div>
-      <div id="note">在棋盤上擺好題目（黑先），或在下面貼座標，按「評分這一題」。計算在你的瀏覽器裡進行，不會上傳題目。</div>
+      <div id="note">在棋盤上擺好題目，或在下面貼座標，按「評分這一題」。會自動判斷是黑先、白先還是雙先。計算在你的瀏覽器裡進行，不會上傳題目。</div>
     </section>
 
     <section class="panel" id="ratePanel" aria-label="難度評定">
@@ -182,6 +182,8 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   <ol style="line-height:1.8;padding-left:20px;font-size:14px;color:var(--text2)">
     <li><b>合法盤面</b>：黑白子數差不超過 1，盤上沒有五連，也沒有人已經可以一步成五。</li>
     <li><b>黑先 VCF</b>：黑棋只用衝四（每一手都逼白擋）連續取勝。黑棋有禁手，白擋在禁手點也算黑勝。</li>
+    <li><b>白先 VCF</b>：白棋只用衝四連續取勝；黑棋防守時有禁手，逼黑擋在禁手點（禁手勝）也算白勝。白先的題目黑可以比白多一顆。</li>
+    <li><b>自動判斷</b>：每題黑先、白先各算一次。只有一種成立就是那一種；兩種都成立叫<b>雙先</b>，兩個分數都會列出來。</li>
     <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
     <li><b>沒有繞路</b>：多走幾手也能贏的另一條路叫繞路解；1 個扣 15 分，2 個以上不算詰題。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
     <li><b>評定</b>：10 手以內算<b>短篇</b>（看計算量、深誘餌、禁手陷阱、解禁、反四、預備反四、手順），11 手以上算<b>長篇</b>（看手數與解題中的技巧）。兩組各有自己的段位，不互相比較。</li>
@@ -264,7 +266,8 @@ function drawBoard() {
   black.forEach(t => stone(t, 'b'));
   white.forEach(t => stone(t, 'w'));
   const mv = moves();
-  for (let k = 0; k < step && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? 'b' : 'w', String(Math.floor(k / 2) + 1));
+  const aC = atkWhite() ? 'w' : 'b', dC = atkWhite() ? 'b' : 'w';   // 白先：進攻方是白
+  for (let k = 0; k < step && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? aC : dC, String(Math.floor(k / 2) + 1));
   const n = preview ? null : noteAt(step);
   if (n) {
     (n.others || []).forEach(t => { if (mv.slice(0, step).includes(t)) return; const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#D2601A" stroke-width="2.5"/>`; });
@@ -273,7 +276,7 @@ function drawBoard() {
   }
   if (preview) {   // 得分來源點開看的：錯的走法（虛線圈＋手數）、沒作用的子（虛線方框）
     (preview.line || []).forEach((t, k) => {
-      const [x, y] = xy(t), bl = k % 2 === 0;
+      const [x, y] = xy(t), bl = (k % 2 === 0) !== !!atkWhite();
       g += `<circle cx="${x}" cy="${y}" r="15" fill="${bl ? '#1B1A17' : '#FBFAF6'}" fill-opacity=".62" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="4 3"/>`;
       g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${bl ? '#fff' : '#1B1A17'}">${Math.floor(k / 2) + 1}</text>`;
     });
@@ -379,12 +382,18 @@ function score() {
   $('btnGo').textContent = '計算中…（再按一次取消）';
   $('note').innerHTML = '計算中：找最短 VCF、逐手檢查別解與繞路。長題可能要幾十秒。';
   renderStages(true);
-  curScale = 1; totalMs = 0;
+  curScale = 1; totalMs = 0; curSide = 0; sideRes = [null, null];
   send();
 }
 // 搜尋量用完（長題）→ 自動放大 4 倍重算，最多 256 倍；過程中隨時可取消（2026-11-03：上百手的題一定會有人測）
 let curScale = 1, totalMs = 0;
-function send() { worker.postMessage({ id: ++reqId, black: [...black].join(' '), white: [...white].join(' '), attackerWhite: 0, scale: curScale }); }
+// 自動判斷黑先、白先（使用者 2026-11-07）：兩種各評一次；只有一種合格就是那一種，兩種都合格是「雙先」
+let curSide = 0, sideRes = [null, null];
+const SIDE_NAME = ['黑先', '白先'];
+function okOf(r) { return !!(r && r.accepted); }   // 評分器的合格判定（手數、唯一、繞路、合法都算進去）
+function atkWhite() { return result && result.attacker === 'white' ? 1 : 0; }
+function atkName() { return atkWhite() ? '白先' : '黑先'; }
+function send() { worker.postMessage({ id: ++reqId, black: [...black].join(' '), white: [...white].join(' '), attackerWhite: curSide, scale: curScale }); }
 function onResult(e) {
   if (e.data.id !== reqId) return;
   if (e.data.ok) totalMs += e.data.ms;
@@ -396,9 +405,22 @@ function onResult(e) {
     send();
     return;
   }
+  if (!e.data.ok) { busy = false; $('btnGo').textContent = '評分這一題'; $('note').textContent = '計算出錯：' + e.data.error; renderStages(); return; }
+  sideRes[curSide] = r;
+  if (curSide === 0) {   // 黑先算完，接著算白先
+    curSide = 1; curScale = 1;
+    $('note').innerHTML = '黑先算完，接著看白先…（再按一次可取消）';
+    send();
+    return;
+  }
   busy = false; $('btnGo').textContent = '評分這一題';
-  if (!e.data.ok) { $('note').textContent = '計算出錯：' + e.data.error; renderStages(); return; }
-  result = r; step = 0;
+  const [rb, rw] = sideRes, ob = okOf(rb), ow = okOf(rw);
+  const pick = ow && (!ob || rw.score > rb.score) ? rw : rb;
+  pick.sideLabel = ob && ow ? '雙先' : ob ? '黑先' : ow ? '白先' : '';
+  pick.sideScores = ob && ow ? { b: rb.score, w: rw.score } : null;
+  result = pick; step = 0;
+  $('note').innerHTML = pick.sideLabel === '雙先' ? `這題<b>黑先、白先都成立</b>（雙先）：黑先 ${rb.score.toFixed(1)} 分、白先 ${rw.score.toFixed(1)} 分，下面顯示分數高的${pick === rw ? '白先' : '黑先'}。`
+    : pick.sideLabel ? `自動判斷：這題是<b>${pick.sideLabel}</b>。` : '黑先、白先都不成立，下面顯示黑先的檢查結果。';
   $('status').textContent = `計算時間 ${(totalMs / 1000).toFixed(1)} 秒${curScale > 1 ? `（搜尋量自動加大到 ×${curScale}）` : ''}。`;
   renderAll();
   if (r.accepted) startUsage(r);
@@ -423,7 +445,7 @@ function startUsage(base) {
     const [c, col] = list[next++];
     const B = col === 'b' ? [...black].filter(x => x !== c) : [...black], W = col === 'w' ? [...white].filter(x => x !== c) : [...white];
     w.cur = c;
-    w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: 0, scale: curScale });
+    w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale });
   };
   for (let k = 0; k < n; k++) {
     const w = new Worker('score-worker.js');
@@ -458,7 +480,7 @@ function stageStates() {
   const r = result;
   const S = [
     { k: 'shield', t: '合法盤面', d: `黑 ${black.size}・白 ${white.size}`, s: '' },
-    { k: 'bolt', t: '黑先 VCF', d: '連續衝四取勝', s: '' },
+    { k: 'bolt', t: `${r && r.sideLabel ? r.sideLabel : atkName()} VCF`, d: '連續衝四取勝', s: '' },
     { k: 'key', t: '唯一解', d: '每一手都只有一條路', s: '' },
     { k: 'route', t: '沒有繞路', d: '多走幾手也能贏的路', s: '' },
     { k: 'crown', t: '評定難度', d: '', s: '' },
@@ -514,9 +536,10 @@ function rankOf(r) {
 function renderRate() {
   const r = result, ok = r && r.vcf === true && r.unique === true && r.detours >= 0 && r.detours <= 1;
   const div = r && r.division;
-  $('divLabel').textContent = div === 'short' ? '難度評定・短篇（10 手以內）' : div === 'long' ? '難度評定・長篇（11 手以上）' : '難度評定';
+  const sideTag = r && r.sideLabel ? r.sideLabel + '・' : '';
+  $('divLabel').textContent = sideTag + (div === 'short' ? '難度評定・短篇（10 手以內）' : div === 'long' ? '難度評定・長篇（11 手以上）' : '難度評定');
   $('gNum').textContent = ok ? r.score.toFixed(1) : '—';
-  $('gMax').textContent = ok ? `滿格 ${SCALE[div]}` : (r ? '這題還沒過關' : '');
+  $('gMax').textContent = ok ? (r.sideScores ? `雙先：黑先 ${r.sideScores.b.toFixed(1)}／白先 ${r.sideScores.w.toFixed(1)}` : `滿格 ${SCALE[div]}`) : (r ? '這題還沒過關' : '');
   $('gArc').setAttribute('d', ok ? arc(r.score / SCALE[div]) : '');
   const rk = ok ? rankOf(r) : null;
   $('rankT').textContent = '段位';
@@ -607,7 +630,7 @@ function renderSrc() {
       + (W.length ? `<div class="srcRows">${rowBtn({ t: `看拿掉也沒差的子（${W.length} 顆）`, mark: W, note: `<b>拿掉也沒差的子</b>（虛線框）：${W.map(esc).join('、')}。其中要留著補黑白一樣多的不算廢子。` })}</div>` : '');
     extra += detail('棋子使用率', `棋子使用率 ${Math.round(U.rate * 100)}%`, 'ratio', '×' + U.mult.toFixed(2), U.mult < 1 ? 'neg' : '', body);
   }
-  if (r.balancePenalty) extra += detail('黑白不一樣多', '黑白不一樣多', 'stones', '×' + r.balancePenalty, 'neg', '黑先的題目黑白要一樣多，不一樣就扣一點。');
+  if (r.balancePenalty) extra += detail('黑白不一樣多', '黑白不一樣多', 'stones', '×' + r.balancePenalty, 'neg', r.attacker === 'white' ? '白先的題目黑要比白多一顆，不是的話扣一點。' : '黑先的題目黑白要一樣多，不一樣就扣一點。');
   $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">點開看每一項從哪裡來</span>' + `<div class="parts">${items.map(row).join('')}${extra}</div>`;
 }
 $('src').addEventListener('click', e => {
@@ -696,8 +719,8 @@ function drawCard() {
   const put = (t, col) => { const x = bx + p + COLS.indexOf(t[0]) * cell, y = by + p + (N - parseInt(t.slice(1), 10)) * cell; c.beginPath(); c.arc(x, y, cell * .44, 0, 7); c.fillStyle = col === 'b' ? '#1B1A17' : '#FBFAF6'; c.fill(); if (col === 'w') { c.strokeStyle = '#1B1A17'; c.lineWidth = 1.5; c.stroke(); } };
   black.forEach(t => put(t, 'b')); white.forEach(t => put(t, 'w'));
   const ty = by + bs + 60;
-  // 分享卡是出題用：不寫幾手勝、不寫加分項，只留黑先和子數
-  c.fillStyle = '#F1EEFA'; c.font = '900 40px "Noto Sans TC"'; c.fillText('黑先，找出 VCF', 40, ty);
+  // 分享卡是出題用：不寫幾手勝、不寫加分項，只留黑先／白先和子數
+  c.fillStyle = '#F1EEFA'; c.font = '900 40px "Noto Sans TC"'; c.fillText(`${r.attacker === 'white' ? '白先' : '黑先'}，找出 VCF`, 40, ty);
   c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText(`黑 ${r.nb}・白 ${r.nw}`, 40, ty + 38);
   c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText('鑑定分數', 40, H - 44);
   c.fillStyle = '#FFE3A3'; c.font = '700 54px "Chakra Petch"'; c.textAlign = 'right'; c.fillText(r.score.toFixed(1), W - 40, H - 40); c.textAlign = 'left';
