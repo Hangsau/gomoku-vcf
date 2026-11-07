@@ -1,17 +1,13 @@
 // vcf-game-api：VCF 限時闖關排行榜（Cloudflare Worker＋D1 vcf-game）
-// POST /run  交一局成績 → {id, place:{rank,total,pps}}（沒守住起始段位 demoted=1 不入榜，place 為 null）
-// GET  /board?by=rank|total|pps&scope=today|all → {rows:[...]}
+// POST /run  交一局成績 → {id, place:{rank:{today,all}}}（結算低於起始段位 demoted=1 不入榜，place 為 null）
+// GET  /board?by=rank&scope=today|all → {rows:[...]}；只有一個榜，依能力分 ab 排（段位由 ab 決定，2026-11-07 使用者：段位高的要排前面）
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
 const ORDER = {
-  rank: "final_rank DESC, total DESC, t ASC",
-  total: "total DESC, t ASC",
-  pps: "pps DESC, t ASC",
+  rank: "ab DESC, t ASC",
 };
 // 比這局好的條件＋綁定值（D1 綁定數要剛好等於 ? 數）
 const BETTER = {
-  rank: (r) => ["(final_rank > ? OR (final_rank = ? AND total > ?))", [r.final_rank, r.final_rank, r.total]],
-  total: (r) => ["total > ?", [r.total]],
-  pps: (r) => ["pps > ?", [r.pps]],
+  rank: (r) => ["ab > ?", [r.ab]],
 };
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +20,7 @@ const num = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) && n
 
 async function placeOf(env, by, day, r) {
   const [cond, vals] = BETTER[by](r);
-  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 ${day ? "AND day = ?" : ""} AND ${cond}`;
+  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 AND solved > 0 ${day ? "AND day = ?" : ""} AND ${cond}`;
   const row = await env.DB.prepare(sql).bind(...(day ? [day] : []), ...vals).first();
   return row.n + 1;
 }
@@ -34,7 +30,7 @@ async function postRun(req, env) {
   try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
   const nick = String(b.nick || "").trim().slice(0, 12);
   const r = {
-    start_rank: num(b.startRank, 0, 8), final_rank: num(b.finalRank, 0, 8),
+    start_rank: num(b.startRank, 0, 8), final_rank: num(b.finalRank, 0, 8), ab: num(b.ab, 0, 100000),
     total: num(b.total, 0, 200000), pps: num(b.pps, 0, 500),
     solved: num(b.solved, 0, 500), wrong: num(b.wrong, 0, 3), seconds: num(b.seconds, 0, 20000),
   };
@@ -43,10 +39,10 @@ async function postRun(req, env) {
   const now = Date.now(), day = taipeiDay(now);
   const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 200) : []).slice(0, 60000);
   const res = await env.DB.prepare(
-    "INSERT INTO runs(t, day, nick, start_rank, final_rank, total, pps, solved, wrong, seconds, demoted, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
-  ).bind(now, day, nick, r.start_rank, r.final_rank, r.total, r.pps, r.solved, r.wrong, r.seconds, demoted, detail).run();
+    "INSERT INTO runs(t, day, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
+  ).bind(now, day, nick, r.start_rank, r.final_rank, r.ab, r.total, r.pps, r.solved, r.wrong, r.seconds, demoted, detail).run();
   const id = res.meta.last_row_id;
-  if (demoted) return json({ id, day, place: null });
+  if (demoted || !r.solved) return json({ id, day, place: null });   // 一題都沒解開＝沒證明任何段位，不入榜
   const place = {};
   for (const by of Object.keys(ORDER)) place[by] = { today: await placeOf(env, by, day, r), all: await placeOf(env, by, null, r) };
   return json({ id, day, place });
@@ -57,14 +53,14 @@ async function getBoard(url, env) {
   const today = url.searchParams.get("scope") !== "all";
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
   const day = taipeiDay(Date.now());
-  const sql = `SELECT id, nick, start_rank, final_rank, total, pps, solved, t FROM runs WHERE demoted = 0 ${today ? "AND day = ?1" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
+  const sql = `SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, t FROM runs WHERE demoted = 0 AND solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
   const st = env.DB.prepare(sql);
   const { results } = await (today ? st.bind(day) : st).all();
   return json({ by, scope: today ? "today" : "all", day, rows: results });
 }
 
 async function getRun(id, env) {
-  const row = await env.DB.prepare("SELECT id, nick, start_rank, final_rank, total, pps, solved, wrong, seconds, demoted, detail, t FROM runs WHERE id = ?1").bind(id).first();
+  const row = await env.DB.prepare("SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail, t FROM runs WHERE id = ?1").bind(id).first();
   return row ? json(row) : json({ error: "not found" }, 404);
 }
 

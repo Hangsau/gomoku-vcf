@@ -68,6 +68,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .flash span { padding: 14px 30px; border-radius: 20px; font-size: 44px; font-weight: 900; background: rgba(15,18,26,.9); display: inline-flex; align-items: center; gap: 14px; }
 .flash .stone { width: 36px; height: 36px; border-radius: 50%; display: inline-block; }
 .flash.bad span { font-size: 24px; color: var(--fail); border: 2px solid var(--fail); }
+.flash.warn span { font-size: 22px; color: var(--gold); border: 2px solid var(--gold); flex-direction: column; gap: 4px; }
 .flash.good span { font-size: 26px; color: var(--teal); border: 2px solid var(--teal); flex-direction: column; gap: 4px; }
 .info { padding: 10px 20px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text2); }
 .atk { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 700; }
@@ -154,7 +155,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
       <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" id="tLeft">60</span><span class="plus" id="tPlus">+20</span></div>
     </div>
     <div style="text-align: right;">
-      <div class="lbl" data-i18n="total">總分</div>
+      <div class="lbl" data-i18n="solvedN">答對</div>
       <div class="n" id="tot" style="color: var(--gold);">0</div>
     </div>
   </div>
@@ -168,8 +169,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="hint" data-i18n="hint">同一格點兩下就下，或按確定</div>
   <div style="flex: 1;"></div>
   <div class="thumb">
-    <button type="button" class="btn ghost" id="skip" style="width: 96px; height: 64px; font-size: 15px; color: var(--text2);" data-i18n="skip">跳過</button>
-    <button type="button" class="btn gold" id="confirm" style="flex: 1; height: 64px; font-size: 21px;" disabled>先點棋盤</button>
+    <button type="button" class="btn ghost" id="skip" style="flex: 1; height: 56px; font-size: 16px; color: var(--text2);" data-i18n="skip">跳過</button>
   </div>
 </section>
 
@@ -179,8 +179,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <span class="muted" id="endWhy" style="font-size: 16px;">時間到</span>
     <div class="stamp" id="stamp"><span style="font-size: 14px;" data-i18n="finalLbl">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">升段了</span></div>
     <div class="tiles">
-      <div><span data-i18n="total">總分</span><b id="eTot">0</b></div>
-      <div><span data-i18n="pps">每秒得分</span><b id="ePps">0</b></div>
+      <div><span data-i18n="abLbl">能力分</span><b id="eAb">0</b></div>
       <div><span data-i18n="solvedN">答對</span><b id="eSolved">0</b></div>
     </div>
     <span id="ePts" style="font-size: 15px; text-align: center;"></span>
@@ -221,6 +220,7 @@ const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; retur
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
+const WARN_MS = 800;
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
 const COLS = 'ABCDEFGHJKLMNOP', N = 15;
 const ENGINE_V = '20261107b';
@@ -236,17 +236,17 @@ const I18N = {
     keep: '能力分不公開：解開比你難的題加得多，簡單題答錯扣得多，結算才知道你在哪一段。', keepDemote: '結算低於起始段位不上排行榜。',
     needNick: '先輸入暱稱', loading: '載入題目中…', loadFail: '題庫讀不到，請重新整理再試',
     timeLeft: '剩餘秒數', total: '總分', lives: '可錯', boardAria: '題目棋盤，點一下選位置，同一格再點一下就下',
-    pTime: '本題 {s} 秒', hint: '同一格點兩下就下，或按確定', skip: '跳過', pick: '先點棋盤', confirm: '確定下 {t}',
+    pTime: '本題 {s} 秒', hint: '點一下就下；禁手或不是四的點只會提醒，不算錯', skip: '跳過', pick: '先點棋盤', confirm: '確定下 {t}',
     black: '黑先', white: '白先', ok: '答對・+{b} 秒', leftN: '還能錯 {n} 題',
     why_mustblock: '要先擋對方的四（{at}）', why_forbidden: '這裡是黑棋禁手', why_notfour: '這手不是四', why_lost: '對方擋完反而連成了',
     why_novcf: '下完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過',
     endTime: '時間到', endWrong: '錯 {n} 題', endNoPuzzle: '題庫讀不到', finalLbl: '結算段位',
     noteUp: '升段了', noteKeep: '維持{r}', noteDown: '掉回{r}', pps: '每秒得分', solvedN: '答對',
     abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
-    placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '今天段位榜第 {a}・總分榜第 {b}・每秒榜第 {c}',
+    placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '段位榜', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '段位榜', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -258,17 +258,17 @@ const I18N = {
     keep: 'Your rating stays hidden: solving harder puzzles earns more, missing easy ones costs more. You see your rank at the end.', keepDemote: 'Finishing below your starting rank keeps you off the leaderboard.',
     needNick: 'Enter a nickname first', loading: 'Loading puzzles…', loadFail: "Couldn't load puzzles. Refresh and try again.",
     timeLeft: 'Time left', total: 'Score', lives: 'Misses left', boardAria: 'Puzzle board. Tap a point to preview, tap it again to play.',
-    pTime: 'This puzzle {s}s', hint: 'Tap a point twice to play, or press the button', skip: 'Skip', pick: 'Tap the board', confirm: 'Play {t}',
+    pTime: 'This puzzle {s}s', hint: 'Tap to play. Forbidden or non-four points only warn you; no miss.', skip: 'Skip', pick: 'Tap the board', confirm: 'Play {t}',
     black: 'Black to play', white: 'White to play', ok: 'Solved · +{b}s', leftN: 'Misses left: {n}',
     why_mustblock: "Block the opponent's four first ({at})", why_forbidden: 'Forbidden point for Black', why_notfour: 'That move is not a four', why_lost: 'The block wins for the defender',
     why_novcf: 'No VCF left after that move', why_bad: "That move doesn't work", why_skip: 'Skipped',
     endTime: "Time's up", endWrong: 'Misses: {n}', endNoPuzzle: "Couldn't load puzzles", finalLbl: 'Final rank',
     noteUp: 'Promoted', noteKeep: 'Stayed {r}', noteDown: 'Dropped to {r}', pps: 'Points/sec', solvedN: 'Solved',
     abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
-    placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Today: #{a} by rank · #{b} by score · #{c} by points/sec',
+    placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Rank', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Rank', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
@@ -280,17 +280,17 @@ const I18N = {
     keep: 'レーティングは非公開：自分より難しい問題を解くと大きく上がり、易しい問題を間違えると大きく下がります。段位は終了時に発表されます。', keepDemote: '開始段位より下で終わるとランキングに載りません。',
     needNick: '先にニックネームを入力してください', loading: '問題を読み込み中…', loadFail: '問題を読み込めませんでした。再読み込みしてください',
     timeLeft: '残り秒数', total: '合計点', lives: '残りミス', boardAria: '問題の盤面。タップで位置を選び、同じ点をもう一度タップすると着手します',
-    pTime: 'この問題 {s} 秒', hint: '同じ点を2回タップで着手、またはボタンを押す', skip: 'スキップ', pick: '盤面をタップ', confirm: '{t} に打つ',
+    pTime: 'この問題 {s} 秒', hint: 'タップで着手。禁手や四にならない点は警告だけで、ミスになりません', skip: 'スキップ', pick: '盤面をタップ', confirm: '{t} に打つ',
     black: '黒先', white: '白先', ok: '正解・+{b} 秒', leftN: 'あと {n} 回ミスできます',
     why_mustblock: '先に相手の四を止める必要があります（{at}）', why_forbidden: 'ここは黒の禁手です', why_notfour: 'この手は四ではありません', why_lost: '相手の受けで逆に負けます',
     why_novcf: 'この手のあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ',
     endTime: '時間切れ', endWrong: '{n} 回ミス', endNoPuzzle: '問題を読み込めません', finalLbl: '最終段位',
     noteUp: '昇段', noteKeep: '{r}を維持', noteDown: '{r}に降段', pps: '毎秒得点', solvedN: '正解数',
     abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
-    placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '今日の順位：段位 {a} 位・合計 {b} 位・毎秒 {c} 位',
+    placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '段位', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '段位', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -302,17 +302,17 @@ const I18N = {
     keep: '능력 점수는 비공개입니다. 나보다 어려운 문제를 풀면 많이 오르고, 쉬운 문제를 틀리면 많이 내려갑니다. 단은 끝난 뒤에 공개됩니다.', keepDemote: '시작 단보다 낮게 끝나면 순위표에 오르지 않습니다.',
     needNick: '먼저 닉네임을 입력하세요', loading: '문제를 불러오는 중…', loadFail: '문제를 불러오지 못했습니다. 새로고침 후 다시 시도하세요',
     timeLeft: '남은 시간', total: '총점', lives: '남은 실수', boardAria: '문제 판. 탭해서 위치를 고르고, 같은 곳을 다시 탭하면 착수합니다',
-    pTime: '이 문제 {s}초', hint: '같은 곳을 두 번 탭하거나 버튼을 누르세요', skip: '건너뛰기', pick: '판을 탭하세요', confirm: '{t}에 두기',
+    pTime: '이 문제 {s}초', hint: '탭하면 바로 둡니다. 금수나 4가 아닌 자리는 경고만 하고 실수로 치지 않습니다', skip: '건너뛰기', pick: '판을 탭하세요', confirm: '{t}에 두기',
     black: '흑선', white: '백선', ok: '정답 · +{b}초', leftN: '{n}번 더 틀릴 수 있음',
     why_mustblock: '먼저 상대의 4를 막아야 합니다 ({at})', why_forbidden: '흑의 금수 자리입니다', why_notfour: '이 수는 4가 아닙니다', why_lost: '상대가 막으면서 오히려 이깁니다',
     why_novcf: '이 수 다음에는 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀',
     endTime: '시간 종료', endWrong: '{n}번 틀림', endNoPuzzle: '문제를 불러올 수 없음', finalLbl: '최종 단',
     noteUp: '승단', noteKeep: '{r} 유지', noteDown: '{r}(으)로 강등', pps: '초당 점수', solvedN: '정답',
     abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
-    placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '오늘 순위: 단 {a}위 · 총점 {b}위 · 초당 {c}위',
+    placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '단', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '단', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
@@ -482,7 +482,7 @@ function tick(t) {
 const atkName = (p) => p.atkWhite ? T('white') : T('black');
 function renderHud() {
   $('tLeft').textContent = Math.ceil(g.left);
-  $('tot').textContent = Math.round(g.total);
+  $('tot').textContent = g.solved;
   $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
   if (g.p) {
     $('pTime').textContent = T('pTime', { s: Math.floor(g.psec) });
@@ -490,8 +490,6 @@ function renderHud() {
 }
 function setGhost(t) {
   g.ghost = t;
-  $('confirm').disabled = !t;
-  $('confirm').textContent = t ? T('confirm', { t }) : T('pick');
   draw();
 }
 function flash(html, cls, ms) {
@@ -523,10 +521,9 @@ async function placeAt(t) {
   g.moves.push(t);
   if (res.r === 'illegal') { g.moves.pop(); g.hold = false; return; }
   if (res.r === 'mustblock') return wrong('mustblock', res.at);
-  if (res.r === 'forbidden') { atk.push(t); draw(); return wrong('forbidden'); }
+  if (res.r === 'forbidden' || res.r === 'notfour') return warn(res.r);
   atk.push(t);
   if (res.r === 'win') { draw(); return solved(res.how); }
-  if (res.r === 'notfour') { draw(); return wrong('notfour'); }
   if (res.r === 'block') {
     def.push(res.def); g.lastDef = res.def;
     draw();
@@ -536,6 +533,12 @@ async function placeAt(t) {
     return;
   }
   wrong('bad');
+}
+
+async function warn(k) {   // 禁手／不是四：提醒一下，棋子不留、不扣可錯次數、不動能力分
+  g.moves.pop(); draw();
+  await flash(T('why_' + k) + '<br><small>' + T('noMiss') + '</small>', 'warn', WARN_MS);
+  if (!g.over) g.hold = false;
 }
 
 async function solved(how) {
@@ -571,10 +574,8 @@ cv.addEventListener('click', (ev) => {
   if (!g || g.hold || g.over) return;
   const t = cellAt(ev);
   if (!t || g.black.includes(t) || g.white.includes(t)) return;
-  if (g.ghost === t) placeAt(t);   // 同一格點第二下＝下
-  else setGhost(t);
+  placeAt(t);   // 點一下就下（使用者 2026-11-07）；禁手／不是四只警告、不落子、不算錯
 });
-$('confirm').onclick = () => placeAt(g && g.ghost);
 $('skip').onclick = () => { if (g && !g.hold && !g.over) { g.hold = true; setGhost(null); wrong('skip'); } };
 window.addEventListener('resize', () => { if (!$('sPlay').hidden) layout(); });
 
@@ -585,15 +586,14 @@ function endGame(why) {
   g.over = true; g.hold = true;
   const finalRank = g.cur, demoted = finalRank < g.start;   // 能力分最後停在哪個區間就是哪段；低於起始段位不入榜
   const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
-  lastRun = { nick: g.nick, startRank: g.start, finalRank, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
+  lastRun = { nick: g.nick, startRank: g.start, finalRank, ab: Math.round(g.ab * 10) / 10, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
   $('endWhy').textContent = why;
   $('endRank').textContent = rankName(finalRank);
   $('endRank').style.fontSize = rankName(finalRank).length > 4 ? '30px' : '';
   $('endNote').textContent = demoted ? T('noteDown', { r: rankName(finalRank) }) : finalRank > g.start ? T('noteUp') : T('noteKeep', { r: rankName(finalRank) });
   $('stamp').classList.toggle('down', demoted);
-  $('eTot').textContent = Math.round(g.total);
-  $('ePps').textContent = pps.toFixed(1);
+  $('eAb').textContent = Math.round(g.ab);
   $('eSolved').textContent = g.solved;
   const top = finalRank < TOP_RANK ? LOW[finalRank + 1] : null;
   $('ePts').textContent = T('abLine', { a: Math.round(g.ab), r: rankName(finalRank), lo: LOW[finalRank], hi: top ?? '∞', next: top ? T('abNext', { top, r: rankName(finalRank + 1) }) : '' });
@@ -609,7 +609,7 @@ async function submit() {
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
-    if (j.place) $('ePlace').textContent = T('place', { a: j.place.rank.today, b: j.place.total.today, c: j.place.pps.today });
+    if (j.place) $('ePlace').textContent = T('place', { a: j.place.rank.today, b: j.place.rank.all });
   } catch {
     if (!lastRun.demoted) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; }
   }
@@ -618,21 +618,19 @@ async function submit() {
 $('retrySubmit').onclick = submit;
 $('again').onclick = () => { g = null; show('sStart'); renderStart(); };
 
-const TABS = [['rank', 'tabRank'], ['total', 'tabTotal'], ['pps', 'tabPps']];
-function boardView(el, by = 'rank', scope = 'today') {
-  el.innerHTML = `<div class="tabs" role="tablist">${TABS.map(([k, n]) => `<button type="button" role="tab" data-by="${k}" aria-selected="${k === by}">${T(n)}</button>`).join('')}</div>
+function boardView(el, scope = 'today') {
+  el.innerHTML = `<span class="muted" style="font-size:13px">${T('boardNote')}</span>
     <div class="scope" style="margin-top:8px">${[['today', 'today'], ['all', 'all']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
     <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
-  el.querySelectorAll('[data-by]').forEach(b => b.onclick = () => boardView(el, b.dataset.by, scope));
-  el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, by, b.dataset.scope));
+  el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, b.dataset.scope));
   const rows = el.querySelector('.rows');
-  fetch(`${API}/board?by=${by}&scope=${scope}&limit=20`).then(r => r.json()).then(j => {
+  fetch(`${API}/board?by=rank&scope=${scope}&limit=20`).then(r => r.json()).then(j => {
     rows.innerHTML = '';
     if (!j.rows || !j.rows.length) { rows.innerHTML = `<span class="muted" style="padding:12px 6px">${T('empty')}</span>`; return; }
     j.rows.forEach((x, i) => {
       const d = document.createElement('div');
       d.className = 'row' + (x.id === myId ? ' me' : '');
-      const val = by === 'pps' ? Number(x.pps).toFixed(1) : Math.round(x.total);
+      const val = Math.round(x.ab);
       d.innerHTML = `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${rankName(x.final_rank) || ''}</span><span class="vl">${val}</span>`;
       d.querySelector('.nm').textContent = x.nick;
       rows.appendChild(d);
