@@ -18,6 +18,7 @@ header { position: sticky; top: 0; background: var(--bg); padding: calc(12px + e
 h1 { margin: 0 0 10px; font-size: 20px; }
 .tabs, .filt { display: flex; gap: 8px; }
 .filt { margin-top: 8px; }
+.filt[hidden] { display: none; }
 .tabs button, .filt button { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text2); font: inherit; }
 .filt button { min-height: 36px; font-size: 14px; }
 .tabs button[aria-pressed="true"], .filt button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
@@ -37,6 +38,28 @@ main { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
 .tag.open { color: var(--gold); } .tag.done { color: var(--ok); } .tag.blocked { color: var(--ng); }
 .msg { color: var(--text2); padding: 24px 0; text-align: center; }
 .sub { font-size: 14px; color: var(--text2); border-left: 2px solid var(--line); padding-left: 8px; }
+/* 數據分頁（2026-11-08）：照本機指揮台「遊戲」分頁的算法與段落，手機上表格可以左右滑 */
+.sec { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.sec h2 { margin: 0; font-size: 17px; }
+.note { font-size: 13px; color: var(--text2); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stat { background: var(--bg); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--text2); }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; font-size: 14px; width: 100%; }
+th, td { padding: 7px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+tbody th { text-align: left; white-space: nowrap; }
+thead th { border-top: 0; color: var(--text2); font-size: 12px; font-weight: 400; white-space: nowrap; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.small { font-size: 12px; color: var(--text2); }
+td.r .small { white-space: nowrap; }
+.hi { color: var(--ng); } .lo { color: #7fb2ff; } .dim { opacity: .6; }
+.bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); }
+.paths { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.path { background: var(--bg); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+.mini { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ng); background: transparent; color: var(--ng); font: inherit; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -45,8 +68,9 @@ main { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
   <div class="tabs" role="group" aria-label="切換">
     <button type="button" data-tab="fb" aria-pressed="true">玩家留言<span class="n" id="nFb"></span></button>
     <button type="button" data-tab="rp" aria-pressed="false">題目回報<span class="n" id="nRp"></span></button>
+    <button type="button" data-tab="st" aria-pressed="false">數據</button>
   </div>
-  <div class="filt" role="group" aria-label="篩選">
+  <div class="filt" id="filt" role="group" aria-label="篩選">
     <button type="button" data-f="open" aria-pressed="true">未處理</button>
     <button type="button" data-f="all" aria-pressed="false">全部</button>
   </div>
@@ -81,6 +105,8 @@ function groups() {   // 同一題的回報併成一張卡
     .sort((x, y) => y.t - x.t);
 }
 function render() {
+  $('filt').hidden = tab === 'st';
+  if (tab === 'st') return renderStats();
   const g = groups();
   $('nFb').textContent = fb.filter(x => x.status === 'open').length || '';
   $('nRp').textContent = g.filter(x => x.status === 'open').length || '';
@@ -120,7 +146,138 @@ function render() {
     }
   }
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
+// ---------- 數據分頁（2026-11-08 使用者：後台把數據也接進來）----------
+// 算法照 vcf-slover/engine/game_stats.py（本機指揮台「遊戲」分頁），改那邊的常數這裡要一起改。
+// 資料：/admin/runs（每局＋每題作答，不含暱稱）＋ 網站上的題庫狀態 game/p/index.json；玩家送來的字一律 esc。
+const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
+const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];
+const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];
+const SPREAD = 0.5, MIN_N = 30;
+const WHY = { novcf: '下完沒 VCF', skip: '跳過', time: '時間到', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
+const CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const esc = (x) => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
+const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(Math.max(1e-6, d)) - Math.log(Math.max(1e-6, ab))) / SPREAD));
+const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const r1 = (x) => Math.round(x * 10) / 10;
+const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+const whyOf = (a) => WHY[a.wk || ''] || '其他';
+const scoreHref = (b, w) => SITE + '/score#b=' + String(b || '').split(' ').join(',') + '&w=' + String(w || '').split(' ').join(',');
+async function puzzleId(b, w, a) {   // 跟 game.html、export_game_puzzles.puzzle_id 同一個算法
+  const norm = s => String(s || '').split(' ').filter(Boolean).sort().join(' ');
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(`${norm(b)}|${norm(w)}|${a}`)));
+  let n = 0n; for (let i = 0; i < 5; i++) n = (n << 8n) | BigInt(h[i]);
+  let out = ''; for (let i = 0; i < 8; i++) out += CROCK[Number((n >> BigInt(35 - 5 * i)) & 31n)];
+  return out;
+}
+function cell(A) {
+  const n = A.length, ok = A.filter(a => a.ok), secs = ok.map(a => a.sec).filter(Number.isFinite);
+  return { n, enough: n >= MIN_N, solve: n ? pct(ok.length, n) : null, expect: n ? Math.round(A.reduce((s, a) => s + a._p, 0) / n * 100) : null, sec: secs.length ? r1(median(secs)) : null };
+}
+let stats = null, statsErr = '';
+async function loadStats() {
+  stats = null; statsErr = '';
+  try {
+    const [runs, bank] = await Promise.all([api('/admin/runs'), fetch(SITE + '/game/p/index.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null)]);
+    stats = await summarize(runs.rows, bank);
+  } catch (e) { statsErr = e.message; }
+  if (tab === 'st') render();
+}
+async function summarize(rows, bank) {
+  const runs = rows.map(r => { let d = []; try { d = JSON.parse(r.detail || '[]'); } catch {} return { ...r, att: Array.isArray(d) ? d : [] }; });
+  const played = runs.filter(r => r.att.length);
+  const atts = [];
+  for (const r of played) for (const a of r.att) {
+    const s = Number(a.s) || 0;
+    if (s <= 0) continue;
+    atts.push({ ...a, _fr: r.final_rank, _pr: rankOf(s), _p: expectP(r.ab || 1, s) });
+  }
+  const frs = [...new Set(atts.map(a => a._fr))].sort((x, y) => x - y), prs = [...new Set(atts.map(a => a._pr))].sort((x, y) => x - y);
+  const table = frs.map(f => ({ fr: RANKS[f], cells: prs.map(p => cell(atts.filter(a => a._fr === f && a._pr === p))) }));
+  const per = frs.map(f => {
+    const A = atts.filter(a => a._fr === f), why = {};
+    for (const a of A) if (!a.ok) why[whyOf(a)] = (why[whyOf(a)] || 0) + 1;
+    const warn = A.filter(a => 'wf' in a);
+    return { fr: RANKS[f], runs: played.filter(r => r.final_rank === f).length, n: A.length, why: Object.entries(why).sort((x, y) => y[1] - x[1]),
+      side: { b: cell(A.filter(a => (a.a || 'b') === 'b')), w: cell(A.filter(a => a.a === 'w')) }, warnN: warn.length,
+      wf: warn.length ? Math.round(warn.reduce((s, a) => s + a.wf, 0) / warn.length * 100) / 100 : null, wn: warn.length ? Math.round(warn.reduce((s, a) => s + a.wn, 0) / warn.length * 100) / 100 : null };
+  });
+  const trans = {};
+  for (const r of played) { trans[r.start_rank] = trans[r.start_rank] || {}; trans[r.start_rank][r.final_rank] = (trans[r.start_rank][r.final_rank] || 0) + 1; }
+  const flow = Object.keys(trans).map(Number).sort((x, y) => x - y).map(s => {
+    const t = trans[s], tot = Object.values(t).reduce((x, y) => x + y, 0);
+    const up = Object.entries(t).filter(([f]) => +f > s).reduce((x, [, v]) => x + v, 0), dn = Object.entries(t).filter(([f]) => +f < s).reduce((x, [, v]) => x + v, 0);
+    return { start: RANKS[s], n: tot, up: pct(up, tot), keep: pct(tot - up - dn, tot), down: pct(dn, tot), to: Object.entries(t).sort((x, y) => x[0] - y[0]).map(([f, v]) => [RANKS[f], v]) };
+  });
+  const paths = played.slice(-12).reverse().map(r => { let ab = START_AB[Math.min(r.start_rank, 7)]; const p = [Math.round(ab)]; for (const a of r.att) { ab += a.e || 0; p.push(Math.round(ab)); } return { start: RANKS[r.start_rank], final: RANKS[r.final_rank], path: p }; });
+  const flips = played.map(r => r.att.map(a => a.e || 0)).filter(es => es.length >= 4).map(es => es.slice(1).filter((y, i) => (es[i] > 0) !== (y > 0)).length / (es.length - 1));
+  // 每一題
+  const ids = await Promise.all(atts.map(a => a.id ? a.id : puzzleId(a.b, a.w, a.a || 'b')));
+  const perP = new Map();
+  atts.forEach((a, i) => {
+    const pid = ids[i];
+    if (!perP.has(pid)) perP.set(pid, { id: pid, b: a.b || '', w: a.w || '', a: a.a || 'b', dan: RANKS[a._pr], pr: a._pr, s: a.s, L: a.L, n: 0, ok: 0, skip: 0, secs: [], exp: 0, why: {} });
+    const x = perP.get(pid);
+    x.n++; x.exp += a._p;
+    if (a.ok) { x.ok++; if (Number.isFinite(a.sec)) x.secs.push(a.sec); }
+    else { x.why[whyOf(a)] = (x.why[whyOf(a)] || 0) + 1; if (a.wk === 'skip') x.skip++; }
+  });
+  const plist = [...perP.values()].map(x => {
+    const solve = pct(x.ok, x.n), skipPct = pct(x.skip, x.n), expect = Math.round(x.exp / x.n * 100);
+    const flag = x.n >= 5 ? [['解開率比預估低很多', solve <= expect - 30], ['一半以上跳過', skipPct >= 50]].filter(f => f[1]).map(f => f[0]) : [];
+    return { ...x, solve, skipPct, expect, sec: x.secs.length ? r1(median(x.secs)) : null, flag };
+  });
+  const bands = [...new Set(plist.map(x => x.pr))].sort((x, y) => x - y).map(p => {
+    const X = plist.filter(x => x.pr === p), A = atts.filter(a => a._pr === p), secs = A.filter(a => a.ok).map(a => a.sec).filter(Number.isFinite);
+    return { dan: RANKS[p], puzzles: X.length, n: A.length, solve: pct(A.filter(a => a.ok).length, A.length), skip: pct(A.filter(a => a.wk === 'skip').length, A.length), sec: secs.length ? r1(median(secs)) : null, multi: X.filter(x => x.n >= 5).length };
+  });
+  // 手數 vs 解開率（2026-11-08 分析加的）
+  const LB = [[1, 5], [6, 9], [10, 13], [14, 19], [20, 29], [30, 999]];
+  const byLen = LB.map(([lo, hi]) => { const A = atts.filter(a => a.L >= lo && a.L <= hi), secs = A.filter(a => a.ok).map(a => a.sec).filter(Number.isFinite); return { label: hi > 99 ? `${lo} 手以上` : `${lo}–${hi} 手`, n: A.length, solve: pct(A.filter(a => a.ok).length, A.length), sec: secs.length ? r1(median(secs)) : null }; }).filter(x => x.n);
+  const today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+  return { runs: runs.length, played: played.length, today: runs.filter(r => r.day === today).length, attempts: atts.length, table, prs: prs.map(p => RANKS[p]), per, flow, paths,
+    flip: { n: flips.length, rate: flips.length ? Math.round(flips.reduce((x, y) => x + y, 0) / flips.length * 100) : null },
+    bands, byLen, bank, puzzlesSeen: plist.length,
+    flagged: plist.filter(x => x.flag.length).sort((x, y) => (x.solve - x.expect) - (y.solve - y.expect) || y.n - x.n), top: [...plist].sort((x, y) => y.n - x.n).slice(0, 50) };
+}
+function spark(P) {
+  const W = 140, H = 32, mx = Math.max(...P), mn = Math.min(...P), X = i => P.length > 1 ? i / (P.length - 1) * (W - 4) + 2 : W / 2, Y = v => mx === mn ? H / 2 : H - 3 - (v - mn) / (mx - mn) * (H - 6);
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline points="${P.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#E2B34B" stroke-width="2"/></svg>`;
+}
+function renderStats() {
+  const list = $('list');
+  if (!stats) { list.innerHTML = `<p class="msg">${statsErr ? '讀不到數據：' + esc(statsErr) : '載入數據中…'}</p>`; if (!statsErr) return; return; }
+  const G = stats, B = G.bank || {};
+  const stat = (k, v, sub) => `<div class="stat"><span>${k}</span><b>${v}</b><span>${sub}</span></div>`;
+  const cellHtml = c => {
+    if (!c.n) return '<td class="r small">–</td>';
+    const d = c.solve - c.expect, cls = !c.enough ? '' : Math.abs(d) < 10 ? '' : d > 0 ? 'lo' : 'hi';
+    return `<td class="r${c.enough ? '' : ' dim'}"><b class="${cls}">${c.solve}%</b><div class="small">預估 ${c.expect}%${c.sec != null ? `・${c.sec} 秒` : ''}</div><div class="small">${c.n} 筆${c.enough ? '' : '・不足'}</div></td>`;
+  };
+  const prow = x => `<tr><td><b>#${esc(x.id)}</b><div class="small">${esc(x.dan)}題・${x.a === 'w' ? '白先' : '黑先'}・${esc(x.s)} 分・${esc(x.L)} 手</div></td><td class="r">${x.n}</td><td class="r"><b class="${x.flag.length ? 'hi' : ''}">${x.solve}%</b></td><td class="r">${x.expect}%</td><td class="r">${x.skipPct}%</td><td class="r">${x.sec ?? '–'}</td><td class="small">${Object.entries(x.why).map(([k, v]) => `${esc(k)} ${v}`).join('、') || '–'}${x.flag.length ? `<div class="hi">${x.flag.map(esc).join('、')}</div>` : ''}</td><td style="white-space:nowrap"><a href="${esc(scoreHref(x.b, x.w))}" target="_blank" rel="noopener">試煉場</a> <button type="button" class="mini" data-block="${esc(x.id)}">停用</button></td></tr>`;
+  const phead = '<thead><tr><th>題號</th><th class="r">作答</th><th class="r">解開率</th><th class="r">預估</th><th class="r">跳過</th><th class="r">中位秒數</th><th>沒解開的原因</th><th></th></tr></thead>';
+  const bk = Object.fromEntries((B.dans || []).map(d => [d.dan, d])), seen = Object.fromEntries(G.bands.map(b => [b.dan, b]));
+  const danNames = [...new Set([...G.bands.map(b => b.dan), ...(B.dans || []).map(d => d.dan)])].sort((x, y) => RANKS.indexOf(x) - RANKS.indexOf(y));
+  const out = [];
+  out.push(`<section class="sec"><h2>玩家解題狀況</h2><div class="stats">${stat('今天的局', G.today.toLocaleString(), '台北時間')}${stat('有作答的局', G.played.toLocaleString(), `共 ${G.runs} 局`)}${stat('作答題數', G.attempts.toLocaleString(), `一格至少 ${MIN_N} 筆才算數`)}${stat('一局裡漲跌換方向', G.flip.rate != null ? G.flip.rate + '%' : '–', `${G.flip.n} 局（4 題以上）；越高越像亂跳`)}</div><span class="note">不含暱稱。資料是打開這頁時抓的，按上面「數據」可以重抓。</span></section>`);
+  out.push(`<section class="sec"><h2>題目作答狀況</h2><span class="note">遊戲題庫 ${(B.total || 0).toLocaleString()} 題・評分版本 ${esc(B.ver || '–')}・匯出 ${esc(B.at || '–')}・被做過 ${G.puzzlesSeen} 題</span><div class="scroll"><table style="min-width:620px"><thead><tr><th>題目段位</th><th class="r">題庫題數</th><th class="r">白先</th><th class="r">被做過</th><th class="r">作答</th><th class="r">解開率</th><th class="r">跳過率</th><th class="r">中位秒數</th><th class="r">做過 5 次以上</th></tr></thead><tbody>${danNames.map(n => { const b = seen[n] || { puzzles: 0, n: 0, solve: null, skip: null, sec: null, multi: 0 }, k = bk[n]; return `<tr><th>${esc(n)}題</th><td class="r">${k ? k.n.toLocaleString() : '–'}</td><td class="r">${k ? k.white.toLocaleString() : '–'}</td><td class="r">${b.puzzles}</td><td class="r">${b.n}</td><td class="r"><b>${b.solve == null ? '–' : b.solve + '%'}</b></td><td class="r">${b.skip == null ? '–' : b.skip + '%'}</td><td class="r">${b.sec ?? '–'}</td><td class="r">${b.multi}</td></tr>`; }).join('')}</tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>手數 vs 解開率</h2><div class="scroll"><table><thead><tr><th>手數</th><th class="r">作答</th><th class="r">解開率</th><th class="r">解開的中位秒數</th></tr></thead><tbody>${G.byLen.map(x => `<tr><th>${x.label}</th><td class="r">${x.n}</td><td class="r"><b>${x.solve}%</b></td><td class="r">${x.sec ?? '–'}</td></tr>`).join('')}</tbody></table></div><span class="note">六段以上是給挑戰族群的長題，解開率低是預期（2026-11-08 定）。</span></section>`);
+  out.push(`<section class="sec"><h2>異常題目（${G.flagged.length}）</h2><span class="note">做過 5 次以上，而且解開率比預估低 30 個百分點以上，或一半以上的人跳過。</span>${G.flagged.length ? `<div class="scroll"><table style="min-width:760px">${phead}<tbody>${G.flagged.map(prow).join('')}</tbody></table></div>` : '<span class="small">目前沒有。現在多數題目只被做過 1 次，還看不出單題的問題。</span>'}</section>`);
+  out.push(`<details class="sec"><summary>被做最多次的 50 題</summary><div class="scroll"><table style="min-width:760px">${phead}<tbody>${G.top.map(prow).join('')}</tbody></table></div></details>`);
+  out.push(`<section class="sec"><h2>結算段位 × 題目段位：實際解開率</h2><span class="note">每格：實際解開率、預估、解開的中位秒數、筆數。資料夠時藍＝比預估好解、紅＝比預估難解（差 10 個百分點以上）。</span><div class="scroll"><table style="min-width:${120 + G.prs.length * 140}px"><thead><tr><th>結算＼題目</th>${G.prs.map(p => `<th class="r">${esc(p)}題</th>`).join('')}</tr></thead><tbody>${G.table.map(r => `<tr><th>${esc(r.fr)}</th>${r.cells.map(cellHtml).join('')}</tr>`).join('')}</tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>各段玩家錯在哪</h2><div class="scroll"><table style="min-width:560px"><thead><tr><th>結算段位</th><th class="r">局／題</th><th>沒解開的原因</th><th class="r">黑先解開</th><th class="r">白先解開</th><th class="r">每題警告</th></tr></thead><tbody>${G.per.map(x => { const tot = x.why.reduce((a, w) => a + w[1], 0), side = c => c.n ? `${c.solve}%<div class="small">${c.n} 筆</div>` : '–'; return `<tr><th>${esc(x.fr)}</th><td class="r">${x.runs}／${x.n}</td><td class="small">${tot ? x.why.map(([k, v]) => `${esc(k)} ${Math.round(v / tot * 100)}%`).join('・') : '–'}</td><td class="r">${side(x.side.b)}</td><td class="r">${side(x.side.w)}</td><td class="r">${x.warnN ? `禁手 ${x.wf}・非四 ${x.wn}<div class="small">${x.warnN} 筆</div>` : '–'}</td></tr>`; }).join('')}</tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>升段過程</h2><span class="note">選某個起始段位的局，結算時升段／守住／掉段各幾成。</span>${G.flow.map(f => `<div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:14px"><b>從${esc(f.start)}起跳</b><span class="small">${f.n} 局</span></div><div class="bar"><div style="width:${f.up}%;background:var(--ok)"></div><div style="width:${f.keep}%;background:var(--gold)"></div><div style="width:${f.down}%;background:var(--ng)"></div></div><span class="small">升 ${f.up}%・守住 ${f.keep}%・掉 ${f.down}%（結算到：${f.to.map(t => `${esc(t[0])} ${t[1]}`).join('、')}）</span></div>`).join('')}</section>`);
+  out.push(`<section class="sec"><h2>最近 12 局的能力分走勢</h2><span class="note">每局從起始能力分開始，每題一個點。一路爬升＝漲跌太慢；上下亂跳＝漲跌太快。</span><div class="paths">${G.paths.map(p => `<div class="path"><span>${esc(p.start)} → <b>${esc(p.final)}</b></span>${spark(p.path)}<span class="small">${p.path[0]} → ${p.path[p.path.length - 1]}・${p.path.length - 1} 題</span></div>`).join('')}</div></section>`);
+  list.innerHTML = out.join('');
+  list.querySelectorAll('[data-block]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.block, x = [...G.flagged, ...G.top].find(p => p.id === id);
+    if (!x || !confirm(`停用 #${id}？遊戲會不再出這題（題目回報分頁可以重新打開）。`)) return;
+    b.disabled = true;
+    try { await api('/admin/report', { pid: id, status: 'blocked', b: x.b, w: x.w, a: x.a }); b.textContent = '已停用'; rp = (await api('/admin/reports')).rows; }
+    catch (e) { alert('停用失敗：' + e.message); b.disabled = false; }
+  });
+}
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') loadStats(); render(); });
 document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
 load();
 </script>
