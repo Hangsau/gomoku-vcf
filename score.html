@@ -372,7 +372,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107'); worker.onmessage = onResult; }
 function score() {
   stopUsage();
   if (busy) { newWorker(); busy = false; $('btnGo').textContent = '評分這一題'; $('note').textContent = '已取消。'; renderStages(); return; }
@@ -448,7 +448,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale });
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js');
+    const w = new Worker('score-worker.js?v=20261107');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
@@ -562,7 +562,7 @@ const PART = {   // 長篇各項（引擎的英文名 → 中文＋圖示）
   lowInitFours: ['途中生線', 'hammer'], delayedBorrow: ['延遲借用', 'link'], indirect: ['換處衝四', 'route'], clusters: ['起始子分散', 'stones'], decoys: ['明誘餌', 'hook'],
   counterPrep: ['預備反四', 'zig'], orderTraps: ['手順', 'order'],
 };
-const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route' };
+const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route', '禁手勝': 'x' };
 const fmtPt = v => { const x = Math.round(v * 10) / 10; return (x > 0 ? '+' : '') + x; };
 const PART_RULE = {
   '計算量': r => `解題的人要讀多少局面，才能確定別的走法都不行。全題共讀 ${(r.readNodes || 0).toLocaleString()} 個局面，算法是 20 × log₂(1 + 局面數)，所以讀得越多分越高，但越往上越難漲。分數算在全題，不分到單手。`,
@@ -572,6 +572,7 @@ const PART_RULE = {
   '反四': () => '白擋下的同時自己成四，黑要先擋回去。第 k 次得 8 × (1 − 0.5^k)。',
   '預備反四': () => '黑擋回去的四，用到更早佈好、之前沒用過的子。每次 30 分。',
   '手順': () => '後面才該下的四，現在先衝就贏不了。每手最多算 2 個，每個 15 分。',
+  '禁手勝': r => r.features && r.features.forbidFinish ? '白先的最後一手逼黑擋在禁手點：黑擋不了，白勝。這叫禁手勝，加 30 分。' : '白先的結局是逼黑擋在禁手點（黑擋不了）才算禁手勝，加 30 分。這題的結局不是。',
   '繞路': r => `除了解答之外還有 ${r.detours ?? 0} 條多走幾手也能贏的路，每條扣 15 分。`,
 };
 function liftHands(r) {   // 真的算分的解禁手（features.liftAt 是引擎計分用的清單，格式 G8@4）
