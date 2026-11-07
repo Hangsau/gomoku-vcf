@@ -132,7 +132,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
       <div class="val" aria-live="polite"><b id="rkName">三段</b><span id="rkBand" style="font-size: 13px;"></span></div>
       <button type="button" id="rkUp" aria-label="升一段" data-i18n-aria="rkUp">+</button>
     </div>
-    <span class="muted" id="rkKeep" style="font-size: 13px; line-height: 1.5;"></span>
+    <span class="muted" id="rkKeep" hidden style="font-size: 13px; line-height: 1.5;"></span>
   </div>
   <div class="pad" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
     <label for="nick" class="muted" style="font-size: 15px;" data-i18n="nick">暱稱</label>
@@ -387,7 +387,7 @@ function renderStart() {
   $('rkBand').textContent = bandText(startRank);
   $('rkDown').disabled = startRank === 0;
   $('rkUp').disabled = startRank === MAX_START;
-  $('rkKeep').textContent = T('keep') + (startRank > 0 ? ' ' + T('keepDemote') : '');
+  $('rkKeep').textContent = '';   // 使用者 2026-11-07：不用跟玩家解釋計分
 }
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(MAX_START, startRank + 1); renderStart(); };
