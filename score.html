@@ -138,6 +138,11 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
         <button class="tool" type="button" id="pAuto">▶ 播放解答</button>
         <button class="tool" type="button" id="pNext" aria-label="下一手" title="下一手">▶</button>
         <button class="tool" type="button" id="pEnd" aria-label="到最後一手" title="到最後一手">▶|</button>
+        <button class="tool" type="button" id="pTry" aria-pressed="false" title="從現在這一手開始，自己換一條路下下看">試別的走法</button>
+      </div>
+      <div class="tools" id="tryBar" hidden>
+        <button class="tool" type="button" id="tUndo">退一手</button>
+        <button class="tool" type="button" id="tBack">回到解答</button>
       </div>
       <div id="moveInfo"></div>
       <div class="strip" id="strip"></div>
@@ -245,6 +250,50 @@ const xy = t => [PAD + COLS.indexOf(t[0]) * CELL, PAD + (N - parseInt(t.slice(1)
 const coordOf = (c, r) => COLS[c] + (N - r);
 function moves() { return result && result.solution ? result.solution.replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : []; }
 function steps() { return (result && result.steps) || []; }
+// ---------- 試走（使用者 2026-11-07：看解答時想自己換一條路走） ----------
+//   從解答的某一手開始，點棋盤下進攻方，電腦照規則擋，告訴你照這條路還剩幾手 VCF
+let trial = null, tryWorker = null, tryBusy = false, tryId = 0;
+function trialStones() {   // 試走時的盤面：題目＋解答走到 base＋自己試的
+  const B = [...black], W = [...white], mv = moves(), aw = atkWhite();
+  const put = (t, k) => ((k % 2 === 0) !== !!aw ? B : W).push(t);
+  for (let k = 0; k < trial.base; k++) put(mv[k], k);
+  trial.mv.forEach((t, k) => put(t, k));
+  return { B, W };
+}
+function startTrial() {
+  stopAuto(); preview = null;
+  const base = Math.min(step - (step % 2), maxStep());
+  trial = { base, mv: [], over: false, msg: `試走：從第 ${base / 2 + 1} 手開始，輪到${atkWhite() ? '白' : '黑'}（進攻方）。點棋盤上的空點下一手，電腦會照規則擋。` };
+  step = base;
+  drawBoard(); renderPlay();
+}
+function endTrial() { trial = null; drawBoard(); renderPlay(); }
+function tryMove(t) {
+  if (!trial || trial.over || tryBusy) return;
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107b');
+  const { B, W } = trialStones(), aw = atkWhite(), me = { t };
+  const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
+  tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
+  const id = ++tryId;
+  tryWorker.onmessage = ev => {
+    if (ev.data.id !== id || !trial) return;
+    tryBusy = false;
+    const r = ev.data.ok ? ev.data.result : { r: 'error' };
+    if (r.r === 'illegal') trial.msg = '那裡已經有子了，換一個空點。';
+    else if (r.r === 'notfour') trial.msg = `${esc(t)} 不是四：VCF 每一手都要衝四，換一手。`;
+    else if (r.r === 'forbidden') trial.msg = `${esc(t)} 是黑的禁手，不能下。`;
+    else if (r.r === 'mustblock') trial.msg = `${defN}有四，要先擋 <b>${esc(r.at)}</b>。`;
+    else if (r.r === 'win') { trial.mv.push(t); trial.over = true; trial.msg = r.how === '禁手勝' ? `${atkN}勝：${defN}要擋的 ${esc(r.at)} 是禁手，擋不了（<b>禁手勝</b>）。按「退一手」可以再試別的。` : `<b>${atkN}勝</b>（${esc(r.how)}）。按「退一手」可以再試別的。`; }
+    else if (r.r === 'block') {
+      trial.mv.push(t, r.def);
+      if (r.lost) { trial.over = true; trial.msg = `電腦擋在 <b>${esc(r.def)}</b>，這一擋${defN}自己成五或做出雙四，<b>${atkN}輸了</b>。按「退一手」換別的走法。`; }
+      else trial.msg = `電腦擋在 <b>${esc(r.def)}</b>。` + (r.vcf > 0 ? `照這條路你還有 <b>${r.vcf} 手</b> VCF。` : r.vcf === 0 ? '照這條路<b>已經沒有 VCF</b> 了，按「退一手」換別的走法。' : '剩下的變化太多，算不完。')
+        + (r.defFour ? `<br>注意：這一擋讓${defN}也成四，你下一手要先擋 <b>${esc(r.defFour)}</b>。` : '');
+    } else trial.msg = '計算出錯了。';
+    drawBoard(); renderPlay();
+  };
+  tryWorker.postMessage({ id, black: B.join(' '), white: W.join(' '), attackerWhite: aw, play: t });
+}
 let preview = null, rows = [];   // preview：得分來源點開後畫在棋盤上的假路／廢子；rows：來源列表的每一列
 const noteAt = s => s > 0 ? steps()[Math.floor((s - 1) / 2)] : null;
 
@@ -267,8 +316,13 @@ function drawBoard() {
   white.forEach(t => stone(t, 'w'));
   const mv = moves();
   const aC = atkWhite() ? 'w' : 'b', dC = atkWhite() ? 'b' : 'w';   // 白先：進攻方是白
-  for (let k = 0; k < step && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? aC : dC, String(Math.floor(k / 2) + 1));
-  const n = preview ? null : noteAt(step);
+  const upto = trial ? trial.base : step;
+  for (let k = 0; k < upto && k < mv.length; k++) stone(mv[k], k % 2 === 0 ? aC : dC, String(Math.floor(k / 2) + 1));
+  if (trial) trial.mv.forEach((t, k) => {
+    stone(t, k % 2 === 0 ? aC : dC, String(Math.floor((trial.base + k) / 2) + 1));
+    const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="17" fill="none" stroke="#7C4DDB" stroke-width="3"/>`;
+  });
+  const n = preview || trial ? null : noteAt(step);
   if (n) {
     (n.others || []).forEach(t => { if (mv.slice(0, step).includes(t)) return; const [x, y] = xy(t); g += `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#D2601A" stroke-width="2.5"/>`; });
     (n.traps || []).forEach(t => { const [x, y] = xy(t); g += `<path d="M${x - 7} ${y - 7}L${x + 7} ${y + 7}M${x + 7} ${y - 7}L${x - 7} ${y + 7}" stroke="#C0262D" stroke-width="3"/>`; });
@@ -294,6 +348,7 @@ $('board').addEventListener('click', e => {
   const c = Math.round((p.x - PAD) / CELL), r = Math.round((p.y - PAD) / CELL);
   if (c < 0 || c >= N || r < 0 || r >= N) return;
   const t = coordOf(c, r);
+  if (trial) { tryMove(t); return; }   // 試走中：點棋盤是下一手，不是改題目
   black.delete(t); white.delete(t);
   if (tool === 'b') black.add(t); else if (tool === 'w') white.add(t);
   boardChanged();
@@ -305,7 +360,7 @@ document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
 $('btnClear').onclick = () => { black.clear(); white.clear(); boardChanged(); };
 
 function boardChanged() {
-  result = null; step = 0; preview = null; stopAuto();
+  result = null; step = 0; preview = null; stopAuto(); trial = null;
   location.replace('#b=' + [...black].join(',') + '&w=' + [...white].join(','));
   renderAll();
 }
@@ -372,8 +427,9 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107b'); worker.onmessage = onResult; }
 function score() {
+  trial = null;
   stopUsage();
   if (busy) { newWorker(); busy = false; $('btnGo').textContent = '評分這一題'; $('note').textContent = '已取消。'; renderStages(); return; }
   if (!black.size) { $('note').textContent = '棋盤上還沒有黑子。'; return; }
@@ -448,7 +504,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale });
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107');
+    const w = new Worker('score-worker.js?v=20261107b');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
@@ -677,14 +733,26 @@ function renderPlay() {
   const ok = result && result.vcf === true;
   $('play').hidden = !ok;
   const mv = moves();
-  $('moveInfo').textContent = ok ? (step ? `MOVE ${Math.ceil(step / 2)} / ${result.L}　·　${mv[step - 1]}` : `解答 ${result.L} 手`) : '';
+  $('moveInfo').textContent = ok ? (trial ? `試走中：從第 ${trial.base / 2 + 1} 手開始，自己下了 ${Math.ceil(trial.mv.length / 2)} 手` : step ? `MOVE ${Math.ceil(step / 2)} / ${result.L}　·　${mv[step - 1]}` : `解答 ${result.L} 手`) : '';
+  $('tryBar').hidden = !(ok && trial);
+  $('pTry').textContent = trial ? '結束試走' : '試別的走法';
+  $('pTry').setAttribute('aria-pressed', trial ? 'true' : 'false');
   $('strip').innerHTML = ok ? steps().map(n => `<button type="button" data-go="${2 * n.n - 1}" class="${isEv(n) ? 'ev' : ''} ${step && Math.ceil(step / 2) === n.n ? 'cur' : ''}" title="${n.atk}">${n.n}</button>`).join('') : '';
-  if (ok) $('note').innerHTML = noteText(noteAt(step));
+  if (ok) $('note').innerHTML = trial ? trial.msg : noteText(noteAt(step));
   else if (result) $('note').innerHTML = result.legal === false ? '盤面不合法：' + esc(result.reason) : esc(result.reason || '沒有 VCF。');
 }
 $('strip').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; goStep(+b.dataset.go); });
 const maxStep = () => moves().length;
-function goStep(k) { stopAuto(); preview = null; step = Math.max(0, Math.min(maxStep(), k)); drawBoard(); renderPlay(); }
+function goStep(k) { stopAuto(); preview = null; trial = null; step = Math.max(0, Math.min(maxStep(), k)); drawBoard(); renderPlay(); }
+$('pTry').onclick = () => trial ? endTrial() : startTrial();
+$('tBack').onclick = endTrial;
+$('tUndo').onclick = () => {
+  if (!trial || tryBusy || !trial.mv.length) return;
+  trial.mv.splice(trial.mv.length % 2 ? -1 : -2);   // 贏的那手只有一顆；擋過的連電腦那手一起退
+  trial.over = false;
+  trial.msg = trial.mv.length ? '退了一手，輪到你下。' : `回到第 ${trial.base / 2 + 1} 手，輪到你下。`;
+  drawBoard(); renderPlay();
+};
 $('pStart').onclick = () => goStep(0);
 $('pPrev').onclick = () => goStep(step - 1);
 $('pNext').onclick = () => goStep(step + 1);
