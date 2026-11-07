@@ -521,7 +521,7 @@ async function nextPuzzle() {
   let p;
   try { p = await pickPuzzle(g.ab, g.used); }
   catch { endGame(T('endNoPuzzle')); return; }
-  g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = [];
+  g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.wf = 0; g.wn = 0;
   setGhost(null);
   $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
   renderHud();
@@ -555,6 +555,7 @@ async function placeAt(t) {
 
 async function warn(k) {   // 禁手／不是四：提醒一下，棋子不留、不扣可錯次數、不動能力分
   g.moves.pop(); draw();
+  if (k === 'forbidden') g.wf++; else g.wn++;   // 後台統計用（2026-11-07）
   await flash(T('why_' + k) + '<br><small>' + T('noMiss') + '</small>', 'warn', WARN_MS);
   if (!g.over) g.hold = false;
 }
@@ -563,7 +564,7 @@ async function solved(how) {
   const p = g.p, sec = g.psec;
   const d = updateAbility(true);
   g.total += p.score; g.left += BONUS_SEC; g.solved++;
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
   await flash(T('ok', { b: BONUS_SEC }), 'good', FEED_MS);
@@ -580,7 +581,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   const p = g.p;
   g.wrong++;
   const d = updateAbility(false);
-  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' ') };
+  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn };
   g.log.push(x);
   renderHud();
   await flash(whyText(x) + (g.wrong >= MAX_WRONG ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', FEED_MS);

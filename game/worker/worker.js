@@ -1,6 +1,7 @@
 // vcf-game-api：VCF 限時闖關排行榜（Cloudflare Worker＋D1 vcf-game）
 // POST /run  交一局成績 → {id, place:{rank:{today,all}}}（結算低於起始段位 demoted=1 不入榜，place 為 null）
 // GET  /board?by=rank&scope=today|all → {rows:[...]}；只有一個榜，依能力分 ab 排（段位由 ab 決定，2026-11-07 使用者：段位高的要排前面）
+// GET  /admin/runs（Authorization: Bearer <管理密碼>）→ 全部局的段位、能力分、每題作答，不含暱稱（後台用，2026-11-07）
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
 const ORDER = {
   rank: "ab DESC, t ASC",
@@ -12,7 +13,7 @@ const BETTER = {
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json; charset=utf-8", ...cors } });
 const taipeiDay = (ms) => new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 10);
@@ -59,6 +60,20 @@ async function getBoard(url, env) {
   return json({ by, scope: today ? "today" : "all", day, rows: results });
 }
 
+// 管理密碼只存在本機（vcf-slover out/hub/game_admin_key.txt，不進 git）；這裡只放它的 SHA-256，原始碼公開也不會洩漏
+const ADMIN_SHA256 = "0cc43f370d482a384f677854da7d68de26ac8db518bb7aa3934ca3bd09165356";
+async function isAdmin(req) {
+  const k = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/, "");
+  if (!k) return false;
+  const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(k)))].map(b => b.toString(16).padStart(2, "0")).join("");
+  return h === ADMIN_SHA256;
+}
+async function adminRuns(req, env) {
+  if (!(await isAdmin(req))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, start_rank, final_rank, ab, solved, wrong, seconds, demoted, detail FROM runs ORDER BY id").all();
+  return json({ rows: results });
+}
+
 async function getRun(id, env) {
   const row = await env.DB.prepare("SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail, t FROM runs WHERE id = ?1").bind(id).first();
   return row ? json(row) : json({ error: "not found" }, 404);
@@ -71,6 +86,7 @@ export default {
     try {
       if (req.method === "POST" && url.pathname === "/run") return await postRun(req, env);
       if (req.method === "GET" && url.pathname === "/board") return await getBoard(url, env);
+      if (req.method === "GET" && url.pathname === "/admin/runs") return await adminRuns(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);
       return json({ error: "not found" }, 404);
