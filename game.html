@@ -152,7 +152,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
       <div class="n" id="tot" style="color: var(--gold);">0</div>
     </div>
   </div>
-  <!-- 段位分與目前段位解題時不顯示，結算才公布（使用者 2026-11-07） -->
+  <!-- 能力分與目前段位解題時不顯示，結算才公布（使用者 2026-11-07） -->
   <div class="bars"><div class="barrow"><span></span><span>可錯 <span class="lives" id="lives"></span></span></div></div>
   <div class="boardWrap" id="boardWrap">
     <canvas id="board" aria-label="題目棋盤，點一下選位置，同一格再點一下就下"></canvas>
@@ -206,12 +206,15 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
 const BANDS = ['入門', '40–70 分', '70–120 分', '120–200 分', '200–315 分', '315–500 分', '500–780 分', '780 分以上'];
-// 段位分（使用者 2026-11-07）：從起始段位區間中間起跳，解題加速率（題目分 ÷ 秒數，不預設幾秒一手），答錯／跳過扣分；
-// 段位分在哪個區間就是哪段——累積到上一段門檻就升，掉回門檻以下就降回去。UP[k]＝第 k 段的門檻（暫定，等真人數據再調）
-const UP = [0, 20, 35, 60, 100, 160, 250, 390, 600];
-const startPts = (r) => (UP[r] + UP[r + 1]) / 2;   // 從起始段位區間的正中間起跳，升降各留半段
-const rankOf = (pts) => { let k = 0; while (k < TOP_RANK && pts >= UP[k + 1]) k++; return k; };
-const rateOf = (p, sec) => p.score / Math.max(1, sec);   // 秒數至少算 1 秒，避免除到爆
+// 能力分（2026-11-07，仿 Lichess 解題積分）：人和題目用同一把尺＝題目分。能力分落在哪段的題目分區間就是哪段（沿用網站段位門檻）。
+// 每題先算預期解開機率 P＝1/(1+exp((ln題目分−ln能力分)/SPREAD))；解開 S=1、答錯／跳過 S=0；ln能力分 += K×(S−P)。
+// 解開比自己難的題加得多、簡單題答錯扣得多；可升可降，停在哪個區間就是哪段。時間到時做到一半的題不算。
+const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];   // 各段題目分下限（網站段位尺）
+const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];  // 起始能力分＝起始段位區間的幾何中點
+const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
+const K_STEP = 0.4;   // 一題最多讓能力分 ×1.5 或 ÷1.5；一局只有幾題，要調得快
+const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
+const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
@@ -236,25 +239,26 @@ async function loadFile(k) {
   if (!files[k]) files[k] = fetch(`game/p/${k}.json?v=20261107`).then(r => { if (!r.ok) throw new Error('題庫讀不到'); return r.json(); });
   return files[k];
 }
-function bandOf(rank) {   // 目前段位 ±1 抽題；自己這段機率加倍
-  if (rank <= 0) return [[FILE_MIN, 1]];
-  const own = Math.min(FILE_MAX, rank);
-  const out = [];
-  for (let k = Math.max(FILE_MIN, own - 1); k <= Math.min(FILE_MAX, own + 1); k++) out.push([k, k === own ? 2 : 1]);
-  return out;
+// 從能力分附近抽題（題目分在能力分 ÷1.25～×1.25；不夠就放寬），難度剛好在解開一半左右時量得最準
+function filesFor(lo, hi) {   // 題庫檔 k 收題目分 [LOW[k], LOW[k+1])，七段檔也收八段
+  const ks = [];
+  for (let k = FILE_MIN; k <= FILE_MAX; k++) if (LOW[k] <= hi && (k === FILE_MAX || LOW[k + 1] > lo)) ks.push(k);
+  return ks.length ? ks : [lo < LOW[FILE_MIN] ? FILE_MIN : FILE_MAX];
 }
-async function pickPuzzle(rank, used) {
-  const band = bandOf(rank);
-  const lists = await Promise.all(band.map(([k]) => loadFile(k)));
-  const choices = band.map(([k, w], i) => ({ k, w, list: lists[i] })).filter(c => c.list.some((_, j) => !used.has(c.k + ':' + j)));
-  const total = choices.reduce((s, c) => s + c.w, 0);
-  let x = Math.random() * total, c = choices[0];
-  for (const ch of choices) { x -= ch.w; if (x <= 0) { c = ch; break; } }
-  let j;
-  do { j = Math.floor(Math.random() * c.list.length); } while (used.has(c.k + ':' + j));
-  used.add(c.k + ':' + j);
-  const [black, white, L, score, atk] = c.list[j];
-  return { rank: c.k, black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w' };
+async function pickPuzzle(ab, used) {
+  for (const f of [1.25, 1.6, 2.5, 1e9]) {
+    const lo = ab / f, hi = ab * f, cands = [];
+    for (const k of filesFor(lo, hi)) {
+      const list = await loadFile(k);
+      list.forEach((x, j) => { if (x[3] >= lo && x[3] <= hi && !used.has(k + ':' + j)) cands.push([k, j, x]); });
+    }
+    if (!cands.length) continue;
+    const [k, j, x] = cands[Math.floor(Math.random() * cands.length)];
+    used.add(k + ':' + j);
+    const [black, white, L, score, atk] = x;
+    return { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w' };
+  }
+  throw new Error('沒有題目了');
 }
 
 // ---------- 開始畫面 ----------
@@ -265,7 +269,7 @@ function renderStart() {
   $('rkBand').textContent = BANDS[startRank];
   $('rkDown').disabled = startRank === 0;
   $('rkUp').disabled = startRank === MAX_START;
-  $('rkKeep').textContent = '解得越快段位分加越多，答錯會扣；段位分不公開，結算才知道停在哪一段' + (startRank > 0 ? '。結算低於起始段位不上排行榜。' : '。');
+  $('rkKeep').textContent = '能力分不公開：解開比你難的題加得多，簡單題答錯扣得多，結算才知道你在哪一段' + (startRank > 0 ? '。結算低於起始段位不上排行榜。' : '。');
 }
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(MAX_START, startRank + 1); renderStart(); };
@@ -328,14 +332,14 @@ function cellAt(ev) {
 let g = null;
 function newGame(nick) {
   return { nick, start: startRank, cur: startRank, total: 0, left: START_SEC, elapsed: 0, wrong: 0, solved: 0,
-    rate: startPts(startRank), gain: 0, used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
+    ab: START_AB[startRank], used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
 }
 $('go').onclick = async () => {
   const nick = $('nick').value.trim();
   if (!nick) { $('startMsg').textContent = '先輸入暱稱'; $('nick').focus(); return; }
   store.set('vcfgame.nick', nick); store.set('vcfgame.rank', String(startRank));
   $('startMsg').textContent = '載入題目中…'; $('go').disabled = true;
-  try { await Promise.all(bandOf(startRank).map(([k]) => loadFile(k))); }
+  try { const a = START_AB[startRank]; await Promise.all(filesFor(a / 1.25, a * 1.25).map(loadFile)); }
   catch { $('startMsg').textContent = '題庫讀不到，請重新整理再試'; $('go').disabled = false; return; }
   $('startMsg').textContent = ''; $('go').disabled = false;
   g = newGame(nick);
@@ -380,7 +384,7 @@ function flash(html, cls, ms) {
 async function nextPuzzle() {
   g.hold = true;
   let p;
-  try { p = await pickPuzzle(g.cur, g.used); }
+  try { p = await pickPuzzle(g.ab, g.used); }
   catch { endGame('題庫讀不到'); return; }
   g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = [];
   setGhost(null);
@@ -417,28 +421,26 @@ async function placeAt(t) {
 
 async function solved(how) {
   const p = g.p, sec = g.psec;
-  const rate = rateOf(p, sec);
-  g.total += p.score; g.rate += rate; g.left += BONUS_SEC; g.solved++;
-  g.gain += rate; g.cur = rankOf(g.rate);
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: +rate.toFixed(1), ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
+  const d = updateAbility(true);
+  g.total += p.score; g.left += BONUS_SEC; g.solved++;
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
   await flash(`答對・+${BONUS_SEC} 秒`, 'good', FEED_MS);
   if (!g.over) nextPuzzle();
 }
 
-// 答錯扣分＝這局平均一題加的分（自己的步調，不設基準）；還沒解過題就扣本段區間的 1/4
-function penalty() {
-  if (g.solved > 0) return g.gain / g.solved;
-  const k = Math.min(g.cur, TOP_RANK - 1);
-  return (UP[k + 1] - UP[k]) / 4;
+function updateAbility(ok) {   // 回傳能力分變化（整數）
+  const before = g.ab, P = expectP(g.ab, g.p.score);
+  g.ab = Math.exp(Math.log(g.ab) + K_STEP * ((ok ? 1 : 0) - P));
+  g.cur = rankOf(g.ab);
+  return Math.round(g.ab - before);
 }
 async function wrong(why) {
   const p = g.p;
   g.wrong++;
-  const pen = penalty();
-  g.rate = Math.max(0, g.rate - pen); g.cur = rankOf(g.rate);
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: -(+pen.toFixed(1)), ok: 0, sec: +g.psec.toFixed(1), why, m: g.moves.join(' ') });
+  const d = updateAbility(false);
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), why, m: g.moves.join(' ') });
   renderHud();
   await flash(why + (g.wrong >= MAX_WRONG ? '' : `<br>還能錯 ${MAX_WRONG - g.wrong} 題`), 'bad', FEED_MS);
   if (g.wrong >= MAX_WRONG) endGame(`錯 ${MAX_WRONG} 題`);
@@ -461,7 +463,7 @@ let lastRun = null, myId = null;
 function endGame(why) {
   if (g.over) return;
   g.over = true; g.hold = true;
-  const finalRank = g.cur, demoted = finalRank < g.start;   // 段位分最後停在哪個區間就是哪段；低於起始段位不入榜
+  const finalRank = g.cur, demoted = finalRank < g.start;   // 能力分最後停在哪個區間就是哪段；低於起始段位不入榜
   const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
   lastRun = { nick: g.nick, startRank: g.start, finalRank, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
@@ -472,14 +474,14 @@ function endGame(why) {
   $('eTot').textContent = Math.round(g.total);
   $('ePps').textContent = pps.toFixed(1);
   $('eSolved').textContent = g.solved;
-  const nxt = finalRank < TOP_RANK ? `，再 ${(UP[finalRank + 1] - g.rate).toFixed(1)} 升${RANKS[finalRank + 1]}` : '';
-  $('ePts').textContent = `段位分 ${g.rate.toFixed(1)}（${RANKS[finalRank]}區間 ${UP[finalRank]}–${finalRank < TOP_RANK ? UP[finalRank + 1] : '∞'}${nxt}）`;
+  const top = finalRank < TOP_RANK ? LOW[finalRank + 1] : null;
+  $('ePts').textContent = `能力分 ${Math.round(g.ab)}（${RANKS[finalRank]}題目分 ${LOW[finalRank]}–${top ?? '以上'}${top ? `，到 ${top} 升${RANKS[finalRank + 1]}` : ''}）`;
   show('sEnd');
   submit();
 }
 async function submit() {
   $('retrySubmit').hidden = true;
-  $('ePlace').textContent = lastRun.demoted ? `段位分掉到${RANKS[lastRun.startRank]}以下，這局不上排行榜。` : '送出成績中…';
+  $('ePlace').textContent = lastRun.demoted ? `能力分掉到${RANKS[lastRun.startRank]}以下，這局不上排行榜。` : '送出成績中…';
   myId = null;
   try {
     const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
@@ -530,7 +532,7 @@ $('openReview').onclick = () => {
     const d = document.createElement('div'); d.className = 'rev';
     const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
     d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? '解開' : '沒解'}</span><span class="tx"></span><a target="_blank" rel="noopener">打開</a>`;
-    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `題目 ${x.s} 分・段位分 +${x.e}` : `${x.why}・段位分 ${x.e}`}`;
+    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `題目 ${x.s} 分・能力分 +${x.e}` : `題目 ${x.s} 分・${x.why}・能力分 ${x.e}`}`;
     d.querySelector('a').href = href;
     list.appendChild(d);
   }
