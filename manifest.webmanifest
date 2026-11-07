@@ -1,0 +1,20 @@
+{
+  "name": "VCF 限時闖關",
+  "short_name": "VCF 闖關",
+  "description": "60 秒解五子棋 VCF 題、衝段位、上排行榜；附詰題試煉場。",
+  "lang": "zh-Hant",
+  "start_url": "./game.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F121A",
+  "theme_color": "#0F121A",
+  "icons": [
+    { "src": "app/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "app/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "詰題試煉場", "url": "./score.html", "icons": [{ "src": "app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
