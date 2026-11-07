@@ -2,6 +2,8 @@
 // POST /run  交一局成績 → {id, place:{rank:{today,all}}}（結算低於起始段位 demoted=1 不入榜，place 為 null）
 // GET  /board?by=rank&scope=today|all → {rows:[...]}；只有一個榜，依能力分 ab 排（段位由 ab 決定，2026-11-07 使用者：段位高的要排前面）
 // GET  /admin/runs（Authorization: Bearer <管理密碼>）→ 全部局的段位、能力分、每題作答，不含暱稱（後台用，2026-11-07）
+// POST /report {pid, b, w, a, kind, text, run} → 玩家回報某一題有問題（2026-11-07）；GET /blocked → 停用題號清單（遊戲抽題時跳過）
+// GET  /admin/reports、POST /admin/report {id, status: open|done|blocked}（Bearer 管理密碼）
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
 const ORDER = {
   rank: "ab DESC, t ASC",
@@ -74,6 +76,41 @@ async function adminRuns(req, env) {
   return json({ rows: results });
 }
 
+const KINDS = ["answer", "unfair", "other"];
+async function postReport(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const pid = String(b.pid || "").replace(/[^0-9A-Z]/g, "").slice(0, 12);
+  const kind = KINDS.includes(b.kind) ? b.kind : "other";
+  const text = String(b.text || "").slice(0, 300);
+  const black = String(b.b || "").slice(0, 400), white = String(b.w || "").slice(0, 400), atk = b.a === "w" ? "w" : "b";
+  if (!pid || !black) return json({ error: "bad fields" }, 400);
+  const now = Date.now();
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM reports WHERE pid = ? AND t > ?").bind(pid, now - 60000).first();
+  if (recent.n >= 5) return json({ error: "too many" }, 429);
+  const r = await env.DB.prepare("INSERT INTO reports(t, pid, black, white, atk, kind, text, run, status) VALUES (?,?,?,?,?,?,?,?, 'open')")
+    .bind(now, pid, black, white, atk, kind, text, Number(b.run) || null).run();
+  return json({ ok: true, id: r.meta.last_row_id });
+}
+async function getBlocked(env) {
+  const { results } = await env.DB.prepare("SELECT DISTINCT pid FROM reports WHERE status = 'blocked'").all();
+  return new Response(JSON.stringify({ ids: results.map(r => r.pid) }), { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "max-age=60", ...cors } });
+}
+async function adminReports(req, env) {
+  if (!(await isAdmin(req))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, pid, black, white, atk, kind, text, run, status FROM reports ORDER BY id DESC LIMIT 300").all();
+  return json({ rows: results });
+}
+async function adminSetReport(req, env) {
+  if (!(await isAdmin(req))) return json({ error: "forbidden" }, 403);
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const st = ["open", "done", "blocked"].includes(b.status) ? b.status : null;
+  if (!st || !b.pid) return json({ error: "bad fields" }, 400);
+  await env.DB.prepare("UPDATE reports SET status = ? WHERE pid = ?").bind(st, String(b.pid)).run();   // 同一題的所有回報一起改
+  return json({ ok: true });
+}
+
 async function getRun(id, env) {
   const row = await env.DB.prepare("SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail, t FROM runs WHERE id = ?1").bind(id).first();
   return row ? json(row) : json({ error: "not found" }, 404);
@@ -87,6 +124,10 @@ export default {
       if (req.method === "POST" && url.pathname === "/run") return await postRun(req, env);
       if (req.method === "GET" && url.pathname === "/board") return await getBoard(url, env);
       if (req.method === "GET" && url.pathname === "/admin/runs") return await adminRuns(req, env);
+      if (req.method === "POST" && url.pathname === "/report") return await postReport(req, env);
+      if (req.method === "GET" && url.pathname === "/blocked") return await getBlocked(env);
+      if (req.method === "GET" && url.pathname === "/admin/reports") return await adminReports(req, env);
+      if (req.method === "POST" && url.pathname === "/admin/report") return await adminSetReport(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);
       return json({ error: "not found" }, 404);

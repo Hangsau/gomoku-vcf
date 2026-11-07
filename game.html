@@ -128,6 +128,12 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .rev .tag.ok { background: var(--tealBg); color: var(--teal); }
 .rev .tag.ng { background: var(--failBg); color: var(--fail); }
 .rev .tx { flex: 1; min-width: 0; }
+.rev .pid { display: block; font-family: var(--num); font-size: 12px; color: var(--text2); }
+.rev .rpt { min-height: 44px; padding: 0 10px; border: 1px solid var(--line2); border-radius: 12px; background: transparent; color: var(--text2); font-size: 13px; white-space: nowrap; }
+.rform { display: flex; flex-direction: column; gap: 8px; padding: 10px 4px 14px; font-size: 14px; }
+.rform .kinds { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.rform label { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; }
+.rform textarea { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 8px 10px; font: inherit; }
 .rev a { color: var(--gold); white-space: nowrap; min-height: 44px; display: inline-flex; align-items: center; }
 @media (prefers-reduced-motion: reduce) { .bar > div, .plus { transition: none; } }
 </style>
@@ -268,7 +274,7 @@ const I18N = {
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '段位榜', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '段位榜', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -290,7 +296,7 @@ const I18N = {
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Rank', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Rank', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
@@ -312,7 +318,7 @@ const I18N = {
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '段位', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '段位', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -334,7 +340,7 @@ const I18N = {
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '단', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '단', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
@@ -424,18 +430,29 @@ function filesFor(lo, hi) {   // 題庫檔 k 收題目分 [LOW[k], LOW[k+1])，�
   for (let k = FILE_MIN; k <= FILE_MAX; k++) if (LOW[k] <= hi && (k === FILE_MAX || LOW[k + 1] > lo)) ks.push(k);
   return ks.length ? ks : [lo < LOW[FILE_MIN] ? FILE_MIN : FILE_MAX];
 }
+// 題號（2026-11-07）：題庫第 6 欄；舊題庫沒有就用同一套算法現算（黑白子排序＋攻方 → SHA-1 前 40 位元 → 8 碼）
+let BLOCKED = new Set();
+fetch(API + '/blocked').then(r => r.json()).then(j => { BLOCKED = new Set(j.ids || []); }).catch(() => {});
+const CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+async function puzzleId(b, w, a) {
+  const norm = s => s.split(' ').filter(Boolean).sort().join(' ');
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(`${norm(b)}|${norm(w)}|${a}`)));
+  let n = 0n; for (let i = 0; i < 5; i++) n = (n << 8n) | BigInt(h[i]);
+  let out = ''; for (let i = 0; i < 8; i++) out += CROCK[Number((n >> BigInt(35 - 5 * i)) & 31n)];
+  return out;
+}
 async function pickPuzzle(ab, used) {
   for (const f of [1.25, 1.6, 2.5, 1e9]) {
     const lo = ab / f, hi = ab * f, cands = [];
     for (const k of filesFor(lo, hi)) {
       const list = await loadFile(k);
-      list.forEach((x, j) => { if (x[3] >= lo && x[3] <= hi && !used.has(k + ':' + j)) cands.push([k, j, x]); });
+      list.forEach((x, j) => { if (x[3] >= lo && x[3] <= hi && !used.has(k + ':' + j) && !(x[5] && BLOCKED.has(x[5]))) cands.push([k, j, x]); });
     }
     if (!cands.length) continue;
     const [k, j, x] = cands[Math.floor(Math.random() * cands.length)];
     used.add(k + ':' + j);
-    const [black, white, L, score, atk] = x;
-    return { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w' };
+    const [black, white, L, score, atk, id] = x;
+    return { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w', id: id || '' };
   }
   throw new Error('沒有題目了');
 }
@@ -611,7 +628,7 @@ async function solved(how) {
   const p = g.p, sec = g.psec;
   const d = updateAbility(true);
   g.total += p.score; g.left += BONUS_SEC; g.solved++;
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn });
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
   await flash(T('ok', { b: BONUS_SEC }), 'good', FEED_MS);
@@ -628,7 +645,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   const p = g.p;
   g.wrong++;
   const d = updateAbility(false);
-  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn };
+  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn };
   g.log.push(x);
   renderHud();
   await flash(whyText(x) + (g.wrong >= MAX_WRONG ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', FEED_MS);
@@ -710,15 +727,34 @@ document.querySelectorAll('.modal').forEach(m => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
 $('openBoard').onclick = $('endBoardBtn').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
+function reportForm(row, x) {   // 回報這題有問題（2026-11-07）：選原因＋幾句話 → Worker /report；後台看得到、可停用
+  if (row.nextElementSibling && row.nextElementSibling.classList.contains('rform')) { row.nextElementSibling.remove(); return; }
+  const f = document.createElement('div'); f.className = 'rform';
+  f.innerHTML = `<b>${T('reportT', { id: x.id || '' })}</b>
+    <div class="kinds">${['answer', 'unfair', 'other'].map((k, i) => `<label><input type="radio" name="rk" value="${k}"${i ? '' : ' checked'}> ${T('rk_' + k)}</label>`).join('')}</div>
+    <textarea maxlength="300" rows="2" placeholder="${T('reportPh')}"></textarea>
+    <div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn gold" style="height:44px;flex:1;font-size:16px">${T('reportSend')}</button><span class="muted msg" role="status" style="font-size:13px"></span></div>`;
+  f.querySelector('button').onclick = async () => {
+    const btn = f.querySelector('button'); btn.disabled = true;
+    try {
+      const r = await fetch(API + '/report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid: x.id, b: x.b, w: x.w, a: x.a, kind: f.querySelector('input:checked').value, text: f.querySelector('textarea').value, run: myId }) });
+      if (!r.ok) throw new Error(r.status);
+      f.querySelector('.msg').textContent = T('reportOk'); row.querySelector('.rpt').disabled = true;
+    } catch { f.querySelector('.msg').textContent = T('reportFail'); btn.disabled = false; }
+  };
+  row.after(f);
+}
 $('openReview').onclick = () => {
   const list = $('revList'); list.innerHTML = '';
   if (!lastRun || !lastRun.detail.length) list.innerHTML = `<span class="muted">${T('noPuzzles')}</span>`;
   for (const x of (lastRun ? lastRun.detail : [])) {
     const d = document.createElement('div'); d.className = 'rev';
     const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
-    d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? T('tagOk') : T('tagNg')}</span><span class="tx"></span><a target="_blank" rel="noopener">${T('open')}</a>`;
-    d.querySelector('.tx').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]), T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })].join(T('sep'));
+    d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? T('tagOk') : T('tagNg')}</span><span class="tx"><span class="info"></span><span class="pid"></span></span><a target="_blank" rel="noopener">${T('open')}</a><button type="button" class="rpt">${T('report')}</button>`;
+    d.querySelector('.info').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]), T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })].join(T('sep'));
     d.querySelector('a').href = href;
+    (x.id ? Promise.resolve(x.id) : puzzleId(x.b, x.w, x.a)).then(id => { x.id = id; d.querySelector('.pid').textContent = '#' + id; });
+    d.querySelector('.rpt').onclick = () => reportForm(d, x);
     list.appendChild(d);
   }
   openModal('mReview');

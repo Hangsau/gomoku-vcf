@@ -9,3 +9,10 @@ CREATE INDEX IF NOT EXISTS runs_ab ON runs(demoted, ab DESC);
 CREATE INDEX IF NOT EXISTS runs_total ON runs(demoted, total DESC);
 CREATE INDEX IF NOT EXISTS runs_pps ON runs(demoted, pps DESC);
 CREATE INDEX IF NOT EXISTS runs_day ON runs(day);
+
+-- 2026-11-07：玩家回報題目問題；status open／done／blocked（blocked＝停用，遊戲不再出、匯出也排除）
+CREATE TABLE IF NOT EXISTS reports(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, pid TEXT NOT NULL, black TEXT, white TEXT, atk TEXT,
+  kind TEXT, text TEXT, run INTEGER, status TEXT NOT NULL DEFAULT 'open');
+CREATE INDEX IF NOT EXISTS reports_pid ON reports(pid);
+CREATE INDEX IF NOT EXISTS reports_status ON reports(status);
