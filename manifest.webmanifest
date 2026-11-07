@@ -1,6 +1,6 @@
 {
-  "name": "VCF 限時闖關",
-  "short_name": "VCF 闖關",
+  "name": "Gomoku Rush — 五子棋限時解題",
+  "short_name": "Gomoku Rush",
   "description": "60 秒解五子棋 VCF 題、衝段位、上排行榜；附詰題試煉場。",
   "lang": "zh-Hant",
   "start_url": "./game.html",
