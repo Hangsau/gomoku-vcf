@@ -16,7 +16,7 @@
   --num: 'Chakra Petch', 'Noto Sans TC', sans-serif;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
+html, body { touch-action: manipulation; margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
 :lang(ja) body, body:lang(ja) { font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; }
 :lang(ko) body, body:lang(ko) { font-family: 'Noto Sans KR', 'Noto Sans TC', sans-serif; word-break: keep-all; }
 .topbar { position: relative; display: flex; justify-content: space-between; align-items: center; padding: calc(6px + env(safe-area-inset-top)) 8px 0; }
@@ -33,6 +33,7 @@ html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 
 .sq.gold { color: var(--gold); }
 .sq span { color: var(--text2); }
 body { min-height: 100dvh; }
+button, a, input { touch-action: manipulation; }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .45; }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
