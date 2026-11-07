@@ -133,6 +133,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .rform { display: flex; flex-direction: column; gap: 8px; padding: 10px 4px 14px; font-size: 14px; }
 .rform .kinds { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .rform label { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; }
+.rform input[type=text] { width: 100%; min-height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 8px 10px; font: inherit; }
 .rform textarea { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 8px 10px; font: inherit; }
 .rev a { color: var(--gold); white-space: nowrap; min-height: 44px; display: inline-flex; align-items: center; }
 @media (prefers-reduced-motion: reduce) { .bar > div, .plus { transition: none; } }
@@ -148,6 +149,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <div>
       <button type="button" class="icob" data-sound aria-pressed="true"></button>
       <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
+      <button type="button" class="icob" id="openMsg" aria-label="給作者留言" data-i18n-aria="msgBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></button>
       <button type="button" class="icob gold" id="openBoard" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></button>
     </div>
     <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
@@ -229,6 +231,16 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <div class="modal" id="mBoard" hidden role="dialog" aria-modal="true" aria-labelledby="mBoardT">
   <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mBoardT" data-i18n="boardT">排行榜</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="startBoard"></div></div>
 </div>
+<div class="modal" id="mMsg" hidden role="dialog" aria-modal="true" aria-labelledby="mMsgT">
+  <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mMsgT" data-i18n="msgT">給作者留言</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="rform">
+      <span class="muted" data-i18n="msgHint">建議、遇到的問題、想要的功能都可以寫，只有作者看得到。</span>
+      <textarea id="msgText" maxlength="500" rows="5" placeholder="想說的話" data-i18n-ph="msgPh" aria-labelledby="mMsgT"></textarea>
+      <input id="msgContact" type="text" maxlength="100" autocomplete="off" placeholder="聯絡方式（選填）" data-i18n-ph="msgContactPh" aria-label="聯絡方式" data-i18n-aria="msgContactPh">
+      <div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn gold" id="msgSend" style="height:44px;flex:1;font-size:16px" data-i18n="msgSend">送出</button><span class="muted" id="msgStatus" role="status" style="font-size:13px"></span></div>
+    </div>
+  </div>
+</div>
 <div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
   <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="revList"></div></div>
 </div>
@@ -275,7 +287,7 @@ const I18N = {
     abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
-    boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
+    boardT: '排行榜', close: '關閉', msgBtn: '給作者留言', msgT: '給作者留言', msgHint: '建議、遇到的問題、想要的功能都可以寫，只有作者看得到。', msgPh: '想說的話', msgContactPh: '聯絡方式（選填，想收到回覆再填，例如 IG 或 email）', msgSend: '送出', msgOk: '收到了，謝謝！', msgFail: '沒送出去，請稍後再試。', msgEmpty: '請先寫點什麼。', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
     tabRank: '段位榜', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
@@ -297,7 +309,7 @@ const I18N = {
     abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
-    boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
+    boardT: 'Leaderboard', close: 'Close', msgBtn: 'Message the developer', msgT: 'Message the developer', msgHint: 'Suggestions, problems, feature ideas: only the developer can read this.', msgPh: 'Your message', msgContactPh: 'Contact (optional, only if you want a reply, e.g. Instagram or email)', msgSend: 'Send', msgOk: 'Got it, thank you!', msgFail: "Couldn't send. Please try again later.", msgEmpty: 'Please write something first.', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
     tabRank: 'Rank', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
@@ -319,7 +331,7 @@ const I18N = {
     abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
-    boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
+    boardT: 'ランキング', close: '閉じる', msgBtn: '作者にメッセージ', msgT: '作者にメッセージ', msgHint: '提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。', msgPh: 'メッセージ', msgContactPh: '連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）', msgSend: '送信', msgOk: '受け取りました。ありがとうございます！', msgFail: '送信できませんでした。しばらくしてからもう一度お試しください。', msgEmpty: 'まず何か書いてください。', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
     tabRank: '段位', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
@@ -341,7 +353,7 @@ const I18N = {
     abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
-    boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
+    boardT: '순위표', close: '닫기', msgBtn: '개발자에게 메시지', msgT: '개발자에게 메시지', msgHint: '제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.', msgPh: '메시지', msgContactPh: '연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)', msgSend: '보내기', msgOk: '잘 받았습니다. 감사합니다!', msgFail: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.', msgEmpty: '먼저 내용을 적어 주세요.', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
     tabRank: '단', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
@@ -747,6 +759,18 @@ document.querySelectorAll('.modal').forEach(m => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
 $('openBoard').onclick = $('endBoardBtn').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
+// 給作者留言（2026-11-08 使用者：給玩家一個留言的地方，只有作者看得到）→ Worker /feedback；作者在 rush.hangsau.app/admin 看
+$('openMsg').onclick = () => { $('msgStatus').textContent = ''; $('msgSend').disabled = false; openModal('mMsg'); };
+$('msgSend').onclick = async () => {
+  const text = $('msgText').value.trim();
+  if (!text) { $('msgStatus').textContent = T('msgEmpty'); $('msgText').focus(); return; }
+  $('msgSend').disabled = true; $('msgStatus').textContent = '';
+  try {
+    const r = await fetch(API + '/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, contact: $('msgContact').value.trim(), nick: store.get('vcfgame.nick') || '', lang }) });
+    if (!r.ok) throw new Error(r.status);
+    $('msgText').value = ''; $('msgStatus').textContent = T('msgOk');
+  } catch { $('msgStatus').textContent = T('msgFail'); $('msgSend').disabled = false; }
+};
 function reportForm(row, x) {   // 回報這題有問題（2026-11-07）：選原因＋幾句話 → Worker /report；後台看得到、可停用
   if (row.nextElementSibling && row.nextElementSibling.classList.contains('rform')) { row.nextElementSibling.remove(); return; }
   const f = document.createElement('div'); f.className = 'rform';

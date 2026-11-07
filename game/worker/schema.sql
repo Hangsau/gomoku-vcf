@@ -16,3 +16,9 @@ CREATE TABLE IF NOT EXISTS reports(
   kind TEXT, text TEXT, run INTEGER, status TEXT NOT NULL DEFAULT 'open');
 CREATE INDEX IF NOT EXISTS reports_pid ON reports(pid);
 CREATE INDEX IF NOT EXISTS reports_status ON reports(status);
+
+-- 2026-11-08：玩家給作者留言；status open／done；contact 是玩家自願填的聯絡方式（個資，只在後台顯示）
+CREATE TABLE IF NOT EXISTS feedback(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, text TEXT NOT NULL, contact TEXT, nick TEXT, lang TEXT,
+  status TEXT NOT NULL DEFAULT 'open');
+CREATE INDEX IF NOT EXISTS feedback_t ON feedback(t);

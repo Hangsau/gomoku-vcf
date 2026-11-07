@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0F121A">
+<meta name="apple-mobile-web-app-title" content="Rush 後台">
+<title>Gomoku Rush 後台</title>
+<style>
+/* Gomoku Rush 後台（2026-11-08）：玩家留言＋題目回報。只有作者用，前面擋 Cloudflare Access。
+   顏色沿用遊戲（game.html）的深色底＋金色重點，讓作者一眼認得是同一個遊戲的東西。
+   玩家寫的字一律用 textContent 放進畫面，不當 HTML，避免有人在留言裡塞程式。 */
+:root { --bg: #0F121A; --panel: #171B26; --line: #262C3B; --text: #ECEAE4; --text2: #A7ABB8; --gold: #E2B34B; --ok: #6FCF97; --ng: #EB6B6B; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Noto Sans TC", sans-serif; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
+header { position: sticky; top: 0; background: var(--bg); padding: calc(12px + env(safe-area-inset-top)) 0 10px; z-index: 1; }
+h1 { margin: 0 0 10px; font-size: 20px; }
+.tabs, .filt { display: flex; gap: 8px; }
+.filt { margin-top: 8px; }
+.tabs button, .filt button { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text2); font: inherit; }
+.filt button { min-height: 36px; font-size: 14px; }
+.tabs button[aria-pressed="true"], .filt button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.n { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 6px; border-radius: 10px; background: var(--gold); color: #1B1A17; font-size: 13px; font-weight: 700; text-align: center; }
+.n:empty { display: none; }
+main { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.card.done { opacity: .55; }
+.meta { color: var(--text2); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.text { white-space: pre-wrap; word-break: break-word; }
+.contact { font-size: 14px; color: var(--gold); word-break: break-all; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.acts button, .acts a { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: 14px; display: inline-flex; align-items: center; text-decoration: none; }
+.acts .gold { border-color: var(--gold); color: var(--gold); }
+.acts .ng { border-color: var(--ng); color: var(--ng); }
+.tag { font-size: 12px; padding: 1px 8px; border-radius: 8px; border: 1px solid currentColor; }
+.tag.open { color: var(--gold); } .tag.done { color: var(--ok); } .tag.blocked { color: var(--ng); }
+.msg { color: var(--text2); padding: 24px 0; text-align: center; }
+.sub { font-size: 14px; color: var(--text2); border-left: 2px solid var(--line); padding-left: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gomoku Rush 後台</h1>
+  <div class="tabs" role="group" aria-label="切換">
+    <button type="button" data-tab="fb" aria-pressed="true">玩家留言<span class="n" id="nFb"></span></button>
+    <button type="button" data-tab="rp" aria-pressed="false">題目回報<span class="n" id="nRp"></span></button>
+  </div>
+  <div class="filt" role="group" aria-label="篩選">
+    <button type="button" data-f="open" aria-pressed="true">未處理</button>
+    <button type="button" data-f="all" aria-pressed="false">全部</button>
+  </div>
+</header>
+<main id="list" aria-live="polite"><p class="msg">載入中…</p></main>
+<script>
+'use strict';
+const SITE = 'https://rush.hangsau.app';
+const KIND = { answer: '答案有問題', unfair: '題目不合理', other: '其他' };
+const ST = { open: '未處理', done: '已處理', blocked: '已停用' };
+let tab = 'fb', filt = 'open', fb = [], rp = [];
+const $ = (id) => document.getElementById(id);
+const when = (t) => new Date(t).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function btn(label, cls, fn) { const b = el('button', cls, label); b.type = 'button'; b.onclick = async () => { b.disabled = true; try { await fn(); } finally { b.disabled = false; } }; return b; }
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  if (r.status === 403) throw new Error('登入過期，請重新整理頁面');
+  if (!r.ok) throw new Error('伺服器回 ' + r.status);
+  return r.json();
+}
+async function load() {
+  try {
+    const [a, b] = await Promise.all([api('/admin/feedback'), api('/admin/reports')]);
+    fb = a.rows; rp = b.rows; render();
+  } catch (e) { $('list').innerHTML = ''; $('list').appendChild(el('p', 'msg', '讀不到資料：' + e.message)); }
+}
+function groups() {   // 同一題的回報併成一張卡
+  const m = new Map();
+  for (const r of rp) { if (!m.has(r.pid)) m.set(r.pid, []); m.get(r.pid).push(r); }
+  return [...m.values()].map(rs => ({ pid: rs[0].pid, rs, t: Math.max(...rs.map(r => r.t)), status: rs.some(r => r.status === 'blocked') ? 'blocked' : rs.some(r => r.status === 'open') ? 'open' : 'done' }))
+    .sort((x, y) => y.t - x.t);
+}
+function render() {
+  const g = groups();
+  $('nFb').textContent = fb.filter(x => x.status === 'open').length || '';
+  $('nRp').textContent = g.filter(x => x.status === 'open').length || '';
+  const list = $('list'); list.innerHTML = '';
+  if (tab === 'fb') {
+    const rows = fb.filter(x => filt === 'all' || x.status === 'open');
+    if (!rows.length) list.appendChild(el('p', 'msg', filt === 'open' ? '沒有未處理的留言' : '還沒有留言'));
+    for (const x of rows) {
+      const c = el('div', 'card' + (x.status === 'done' ? ' done' : ''));
+      const meta = el('div', 'meta');
+      meta.append(el('span', 'tag ' + x.status, ST[x.status] || x.status), el('span', '', when(x.t)), el('span', '', x.nick ? '暱稱：' + x.nick : '沒填暱稱'), el('span', '', x.lang || ''));
+      c.append(meta, el('div', 'text', x.text));
+      if (x.contact) c.append(el('div', 'contact', '聯絡方式：' + x.contact));
+      const acts = el('div', 'acts');
+      acts.append(x.status === 'open'
+        ? btn('已處理', 'gold', async () => { await api('/admin/feedback', { id: x.id, status: 'done' }); x.status = 'done'; render(); })
+        : btn('重新打開', '', async () => { await api('/admin/feedback', { id: x.id, status: 'open' }); x.status = 'open'; render(); }));
+      c.append(acts); list.appendChild(c);
+    }
+  } else {
+    const rows = g.filter(x => filt === 'all' || x.status === 'open');
+    if (!rows.length) list.appendChild(el('p', 'msg', filt === 'open' ? '沒有未處理的回報' : '還沒有回報'));
+    for (const x of rows) {
+      const c = el('div', 'card' + (x.status !== 'open' ? ' done' : ''));
+      const meta = el('div', 'meta');
+      meta.append(el('span', 'tag ' + x.status, ST[x.status]), el('span', '', '#' + x.pid), el('span', '', x.rs.length + ' 則'), el('span', '', when(x.t)));
+      c.append(meta);
+      for (const r of x.rs) c.append(el('div', 'sub', (KIND[r.kind] || r.kind) + (r.text ? '：' + r.text : '')));
+      const acts = el('div', 'acts'), f = x.rs[0];
+      const a = el('a', '', '在試煉場打開'); a.target = '_blank'; a.rel = 'noopener';
+      a.href = SITE + '/score#b=' + String(f.black || '').split(' ').join(',') + '&w=' + String(f.white || '').split(' ').join(',');
+      acts.append(a);
+      const set = (st) => async () => { await api('/admin/report', { pid: x.pid, status: st }); x.rs.forEach(r => r.status = st); render(); };
+      if (x.status === 'open') acts.append(btn('已處理', 'gold', set('done')), btn('停用這題', 'ng', set('blocked')));
+      else acts.append(btn('重新打開', '', set('open')));
+      c.append(acts); list.appendChild(c);
+    }
+  }
+}
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
+document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
+load();
+</script>
+</body>
+</html>
