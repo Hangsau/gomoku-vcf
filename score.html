@@ -362,7 +362,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107c');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107d');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -519,7 +519,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107c'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107d'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -582,7 +582,7 @@ function stopUsage() { usagePool.forEach(w => w.terminate()); usagePool = []; us
 function startUsage(base) {
   stopUsage();
   const pen = base.balancePenalty || 1;   // 黑白不平衡 ×0.97：比較時用不扣的原始分，最後再乘回去
-  const raw = base.score / pen, L = base.L, det = base.detours, myResult = base;
+  const raw = base.raw != null ? base.raw : base.score / pen, L = base.L, det = base.detours, myResult = base;   // raw：引擎給的未四捨五入原始分（2026-11-07b）
   const list = [...black].map(c => [c, 'b']).concat([...white].map(c => [c, 'w']));
   usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [] };
   renderRate();
@@ -593,10 +593,10 @@ function startUsage(base) {
     const [c, col] = list[next++];
     const B = col === 'b' ? [...black].filter(x => x !== c) : [...black], W = col === 'w' ? [...white].filter(x => x !== c) : [...white];
     w.cur = c;
-    w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale });
+    w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale, anyCount: 1 });   // 拿掉一顆子造成的子數差不算不合法（2026-11-07b）
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107c');
+    const w = new Worker('score-worker.js?v=20261107d');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
@@ -606,8 +606,9 @@ function startUsage(base) {
       if (usage.done === usage.total) {
         // 黑白要平衡（黑先一樣多）：能成對拿掉的才是真廢子，落單的是「平衡子」算必要（跟本機引擎同一套）
         const wB = usage.waste.filter(c => black.has(c)).length, wW = usage.waste.length - wB;
+        const target = myResult.attacker === 'white' ? 1 : 0;   // 黑先一樣多、白先黑多一顆（跟本機 score_api 同一套，2026-11-07b 修）
         const d = black.size - white.size, pairs = Math.min(wB, wW);
-        const extra = d > 0 ? Math.min(wB - pairs, d) : d < 0 ? Math.min(wW - pairs, -d) : 0;
+        const extra = d > target ? Math.min(wB - pairs, d - target) : d < target ? Math.min(wW - pairs, target - d) : 0;
         const trueWaste = 2 * pairs + extra, useful = usage.useful + usage.waste.length - trueWaste;
         const rate = (usage.need + useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
         result.rawScore = raw;
