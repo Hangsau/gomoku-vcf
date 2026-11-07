@@ -155,7 +155,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="bars">
     <div class="bar" role="img" id="rankBarBox"><div id="rankBar" style="width: 0%; background: var(--gold);"></div></div>
     <div class="barrow"><span id="rankTxt"></span><span>可錯 <span class="lives" id="lives"></span></span></div>
-    <div class="bar" role="img" id="ppsBarBox"><div id="ppsBar" style="width: 100%; background: var(--teal);"></div><span class="mark" style="left: 33.3%;" title="標準速度 ×1"></span></div>
+    <div class="bar" role="img" id="ppsBarBox"><div id="ppsBar" style="width: 100%; background: var(--teal);"></div></div>
     <div class="barrow"><span id="ppsTxt"></span><span id="ppsRule"></span></div>
   </div>
   <div class="boardWrap" id="boardWrap">
@@ -175,7 +175,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <section id="sEnd" class="screen" hidden>
   <div class="top pad">
     <span class="muted" id="endWhy" style="font-size: 16px;">時間到</span>
-    <div class="stamp" id="stamp"><span style="font-size: 14px;">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">守住了</span></div>
+    <div class="stamp" id="stamp"><span style="font-size: 14px;">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">升段了</span></div>
     <div class="tiles">
       <div><span>總分</span><b id="eTot">0</b></div>
       <div><span>每秒得分</span><b id="ePps">0</b></div>
@@ -205,18 +205,15 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 <script>
 'use strict';
-// ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題、沒守住起始段位降段不入榜） ----------
+// ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
 const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
 const BANDS = ['入門', '40–70 分', '70–120 分', '120–200 分', '200–315 分', '315–500 分', '500–780 分', '780 分以上'];
-const KEEP = [0, 200, 350, 600, 1000, 1575, 2500, 3900, 6050];   // 累積到這個總分＝到這段（＝該段題目下限 ×5）
+// 段位只看速率累積：每題速率＝題目分 ÷ 秒數（不預設幾秒一手）；累積到 UP[k] 升到第 k 段（暫定值，等真人數據再調）
+const UP = [0, 20, 35, 60, 100, 160, 250, 390, 600];
+const rateOf = (p, sec) => p.score / Math.max(1, sec);   // 秒數至少算 1 秒，避免除到爆
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
-// 得分＝題目分數 × 速度倍率（使用者 2026-11-07：用每題得分累積升段，解太快自然升得快；低於段位的題也照算）
-// 倍率＝標準時間（一手 5 秒）÷ 實際秒數，夾在 ×0.5～×2：一手 2.5 秒內 ×2、5 秒 ×1、10 秒以上 ×0.5
-const STD_PER_MOVE = 5, MULT_MIN = 0.5, MULT_MAX = 2;
-const multOf = (p, sec) => Math.min(MULT_MAX, Math.max(MULT_MIN, STD_PER_MOVE * p.L / Math.max(0.1, sec)));
-const earnOf = (p, sec) => Math.round(p.score * multOf(p, sec));
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
 const COLS = 'ABCDEFGHJKLMNOP', N = 15;
 const ENGINE_V = '20261107b';
@@ -268,7 +265,7 @@ function renderStart() {
   $('rkBand').textContent = BANDS[startRank];
   $('rkDown').disabled = startRank === 0;
   $('rkUp').disabled = startRank === MAX_START;
-  $('rkKeep').textContent = startRank === 0 ? '見習生不會降段。' : `守住${RANKS[startRank]}要拿到 ${KEEP[startRank]} 分；沒守住會降段，不上排行榜。`;
+  $('rkKeep').textContent = startRank === 0 ? `速率累積到 ${UP[1]} 升初段。` : `要升到${RANKS[startRank + 1]}（速率累積 ${UP[startRank + 1]}）才算證明${RANKS[startRank]}；沒升段會降段，不上排行榜。`;
 }
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(MAX_START, startRank + 1); renderStart(); };
@@ -331,7 +328,7 @@ function cellAt(ev) {
 let g = null;
 function newGame(nick) {
   return { nick, start: startRank, cur: startRank, total: 0, left: START_SEC, elapsed: 0, wrong: 0, solved: 0,
-    used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
+    rate: 0, used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
 }
 $('go').onclick = async () => {
   const nick = $('nick').value.trim();
@@ -364,19 +361,18 @@ function renderHud() {
   $('tLeft').textContent = Math.ceil(g.left);
   $('tot').textContent = Math.round(g.total);
   $('curRank').textContent = RANKS[g.cur];
-  // 升段條：還沒守住起始段位時顯示「守住」，之後顯示「升下一段」
-  const keeping = g.start > 0 && g.total < KEEP[g.start];
-  const target = keeping ? KEEP[g.start] : (g.cur < TOP_RANK ? KEEP[g.cur + 1] : null);
-  $('rankBar').style.width = (target ? Math.min(100, g.total / target * 100) : 100) + '%';
-  $('rankTxt').textContent = target ? `${keeping ? '守住' + RANKS[g.start] : '升' + RANKS[g.cur + 1]} ${Math.round(g.total)}／${target}` : '最高段';
+  // 升段條：速率累積離下一段還差多少
+  const target = g.cur < TOP_RANK ? UP[g.cur + 1] : null;
+  $('rankBar').style.width = (target ? Math.min(100, g.rate / target * 100) : 100) + '%';
+  $('rankTxt').textContent = target ? `升${RANKS[g.cur + 1]} 速率 ${g.rate.toFixed(1)}／${target}` : '最高段';
   $('rankBarBox').setAttribute('aria-label', $('rankTxt').textContent);
   $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
-  // 速度條：本題現在解完拿幾分；滿格 ×2，白線 ×1（標準速度），越拖越少，最少 ×0.5
+  // 速率條：這題現在解完能加多少速率；滿格＝這題一解完就升段
   if (g.p) {
-    const m = multOf(g.p, g.psec);
-    $('ppsBar').style.width = ((m - MULT_MIN) / (MULT_MAX - MULT_MIN) * 100) + '%';
-    $('ppsTxt').textContent = `現在解完得 ${earnOf(g.p, g.psec)} 分`;
-    $('ppsRule').textContent = `速度 ×${m.toFixed(1)}`;
+    const r = rateOf(g.p, g.psec), need = target ? Math.max(0.1, target - g.rate) : r;
+    $('ppsBar').style.width = Math.min(100, r / need * 100) + '%';
+    $('ppsTxt').textContent = `這題現在解完 速率 +${r.toFixed(1)}`;
+    $('ppsRule').textContent = target ? `還差 ${need.toFixed(1)} 升段` : '';
     $('ppsBarBox').setAttribute('aria-label', $('ppsTxt').textContent + '，' + $('ppsRule').textContent);
     $('pTime').textContent = `本題 ${Math.floor(g.psec)} 秒`;
   }
@@ -433,15 +429,15 @@ async function placeAt(t) {
 
 async function solved(how) {
   const p = g.p, sec = g.psec;
-  const mult = multOf(p, sec), earn = earnOf(p, sec);
-  g.total += earn; g.left += BONUS_SEC; g.solved++;
+  const rate = rateOf(p, sec);
+  g.total += p.score; g.rate += rate; g.left += BONUS_SEC; g.solved++;
   const from = g.cur;
-  while (g.cur < TOP_RANK && g.total >= KEEP[g.cur + 1]) g.cur++;
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: earn, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
+  while (g.cur < TOP_RANK && g.rate >= UP[g.cur + 1]) g.cur++;
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: +rate.toFixed(1), ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
   const up = g.cur > from ? `<small style="font-size:18px;color:var(--gold)">升${RANKS[g.cur]}</small>` : '';
-  await flash(`+${earn} 分（×${mult.toFixed(1)}）・+${BONUS_SEC} 秒${up}`, 'good', FEED_MS);
+  await flash(`+${p.score} 分・速率 +${rate.toFixed(1)}・+${BONUS_SEC} 秒${up}`, 'good', FEED_MS);
   if (!g.over) nextPuzzle();
 }
 
@@ -471,14 +467,14 @@ let lastRun = null, myId = null;
 function endGame(why) {
   if (g.over) return;
   g.over = true; g.hold = true;
-  const demoted = g.start > 0 && g.total < KEEP[g.start];
+  const demoted = g.start > 0 && g.cur <= g.start;   // 沒升段就沒證明起始段位
   const finalRank = demoted ? g.start - 1 : g.cur;
   const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
   lastRun = { nick: g.nick, startRank: g.start, finalRank, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
   $('endWhy').textContent = why;
   $('endRank').textContent = RANKS[finalRank];
-  $('endNote').textContent = demoted ? `沒守住${RANKS[g.start]}` : finalRank > g.start ? '升段了' : '守住了';
+  $('endNote').textContent = demoted ? `沒升到${RANKS[g.start + 1]}` : finalRank > g.start ? '升段了' : '還沒升段';
   $('stamp').classList.toggle('down', demoted);
   $('eTot').textContent = Math.round(g.total);
   $('ePps').textContent = pps.toFixed(1);
@@ -488,7 +484,7 @@ function endGame(why) {
 }
 async function submit() {
   $('retrySubmit').hidden = true;
-  $('ePlace').textContent = lastRun.demoted ? `守住${RANKS[lastRun.startRank]}要 ${KEEP[lastRun.startRank]} 分，這局不上排行榜。` : '送出成績中…';
+  $('ePlace').textContent = lastRun.demoted ? `要升到${RANKS[lastRun.startRank + 1]}才算證明${RANKS[lastRun.startRank]}，這局降段、不上排行榜。` : '送出成績中…';
   myId = null;
   try {
     const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
@@ -539,7 +535,7 @@ $('openReview').onclick = () => {
     const d = document.createElement('div'); d.className = 'rev';
     const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
     d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? '解開' : '沒解'}</span><span class="tx"></span><a target="_blank" rel="noopener">打開</a>`;
-    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `得 ${x.e} 分（題目 ${x.s}）` : x.why}`;
+    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `題目 ${x.s} 分・速率 ${x.e}` : x.why}`;
     d.querySelector('a').href = href;
     list.appendChild(d);
   }
