@@ -1,13 +1,12 @@
 // score-i18n.js — 詰題試煉場的中英日韓（2026-11-07 使用者）
 // 做法：頁面照原本中文產生，這裡把畫面上的中文換成選的語言（文字節點、title、aria-label、placeholder、文件標題、分享卡）。
 // 每條規則＝[中文樣板, 英, 日, 韓]；樣板裡 {名字} 代表一段不含空白和中文標點的字（座標、數字、清單），譯文用同名 {名字} 放回去。
-// 語言跟 VCF 限時闖關共用（localStorage vcfgame.lang）。規則越長越先套，沒對到的字照原本中文顯示。
+// 語言跟 Gomoku Rush 遊戲共用（localStorage vcfgame.lang）。規則越長越先套，沒對到的字照原本中文顯示。
 (function () {
   const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
   const R = [
     // ---- 標題、按鈕、選單 ----
     ['詰題試煉場', 'VCF Puzzle Lab', '詰題の試練場', 'VCF 묘수 연습장'],
-    ['VCF 限時闖關', 'VCF Time Attack', 'VCF タイムアタック', 'VCF 타임어택'],
     ['從照片匯入', 'Import from photo', '写真から読み込む', '사진에서 가져오기'],
     ['複製這題的連結', 'Copy link to this puzzle', 'この問題のリンクをコピー', '이 문제 링크 복사'],
     ['產生分享卡', 'Make share card', 'シェアカードを作る', '공유 카드 만들기'],
