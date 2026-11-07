@@ -48,6 +48,7 @@ header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px; d
 .frame { padding: 10px; border-radius: 14px; background: #3B2C17; box-shadow: 0 0 0 2px #6B5128, 0 18px 40px rgba(0,0,0,.45); max-width: 100%; }
 #board { display: block; width: min(500px, 100%); height: auto; touch-action: manipulation; cursor: crosshair; }
 .tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tools[hidden] { display: none !important; }
 .tool { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .tool[aria-pressed="true"] { border-color: var(--pass); color: var(--pass); }
 .tool:disabled { opacity: .45; cursor: default; }
@@ -107,18 +108,95 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
 #cardCanvas { width: 100%; height: auto; border-radius: 12px; display: block; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (max-width: 720px) { #stages { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; } .stage { grid-template-columns: 36px 1fr; flex: 1 1 140px; } .stage .dot { width: 36px; height: 36px; } .link { display: none; } }
+
+/* 手機一屏版（2026-11-07 使用者選設計稿 V1 底部工具列；畫布 https://claude.ai/artifact/JmQkHUqn6qt1M38Bvs9Lkt）：720px 以下才生效，桌機不變 */
+.ico { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mOnly { display: none; }
+.icob { width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; }
+.icob.gold { color: var(--gold); }
+#mMenu { position: absolute; right: 8px; top: 52px; z-index: 30; width: 236px; background: var(--panel); border: 1px solid var(--line2); border-radius: 16px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: flex; flex-direction: column; }
+#mMenu[hidden] { display: none; }
+#mMenu button { min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font-size: 15px; text-align: left; cursor: pointer; }
+#mMenu button:disabled { opacity: .4; cursor: default; }
+#mToast { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; max-width: 88vw; background: #232A3A; color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+#mToast[hidden] { display: none; }
+.sheetX { position: absolute; right: 8px; top: 8px; }
+section.panel[aria-label] { position: relative; }
+@media (max-width: 720px) {
+  .mOnly { display: inline-flex; }
+  .wrap { min-height: 100dvh; padding: env(safe-area-inset-top) 8px calc(8px + env(safe-area-inset-bottom)); gap: 4px;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto auto 1fr auto auto auto auto;
+    grid-template-areas: "h h" "b b" "s r" "m m" "n n" "x x" "t t" "g g" "p p" "y y"; position: relative; }
+  .row, #boardPanel { display: contents; }
+  header { grid-area: h; height: 48px; flex-wrap: nowrap; padding-left: 8px; gap: 0; }
+  header h1 { font-size: 17px; letter-spacing: 0; flex: 1; }
+  header h1 svg { width: 22px; height: 22px; }
+  header nav.dNav { display: none !important; }
+  .frame { grid-area: b; padding: 0; border-radius: 10px; box-shadow: none; background: none; justify-self: center; width: min(100%, calc(100dvh - 290px)); }
+  #board { width: 100%; }
+  #stages { grid-area: s; padding: 0 0 0 4px; background: none; border: 0; flex-direction: row; flex-wrap: nowrap; gap: 2px; align-items: center; }
+  #stages .label, #stages .link, #stages small { display: none; }
+  .stage { grid-template-columns: none; display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-width: 0; padding: 0; align-items: center; text-align: center; }
+  .stage .dot { width: 24px; height: 24px; border-width: 1.5px; }
+  .stage .dot svg { width: 14px; height: 14px; }
+  .stage b { font-size: 10.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: var(--text2); }
+  .stage.pass b { color: var(--pass); }
+  #ratePanel:not(.open) { grid-area: r; padding: 0; background: none; border: 0; align-self: center; }
+  #ratePanel:not(.open) > :not(.rank) { display: none; }
+  #ratePanel:not(.open) .rank { padding: 6px 12px; gap: 6px; cursor: pointer; min-height: 44px; }
+  #ratePanel:not(.open) .rank svg { width: 20px; height: 20px; }
+  #ratePanel:not(.open) .rank .t { display: none; }
+  #ratePanel:not(.open) .rank b { font-size: 16px; }
+  #moveInfo { display: none; }
+  #note { grid-area: n; max-width: none; font-size: 13px; line-height: 1.5; padding: 8px 12px; min-height: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+  #note.open { -webkit-line-clamp: unset; position: fixed; left: 8px; right: 8px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 25; max-height: 60dvh; overflow-y: auto; box-shadow: 0 -8px 30px rgba(0,0,0,.6); border: 1px solid var(--line2); }
+  #strip { display: none; }
+  .tools[role="group"] { grid-area: t; flex-wrap: nowrap; gap: 6px; }
+  .tools[role="group"] .tool { flex: 1; justify-content: center; border-radius: 12px; min-height: 48px; padding: 0 6px; }
+  .go { grid-area: g; width: 100%; min-width: 0; border-radius: 16px; min-height: 56px; font-size: 19px; }
+  #play { grid-area: p; flex-wrap: wrap; gap: 6px; }
+  #play .tool { border-radius: 12px; min-height: 48px; padding: 0; flex: 0 0 48px; justify-content: center; }
+  #play #pAuto { flex: 1; background: var(--pass); color: #06231F; border: 0; font-weight: 700; }
+  #play #pTry, #play #pEdit { flex: 1 1 40%; min-height: 44px; padding: 0 10px; justify-content: center; }
+  #play #pEdit { color: var(--gold); }
+  #tryBar { grid-area: y; flex-wrap: nowrap; }
+  #tryBar .tool { flex: 1; justify-content: center; border-radius: 12px; }
+  body.solved:not(.editing) .tools[role="group"], body.solved:not(.editing) .go { display: none; }
+  body.editing #play { display: none; }
+  body.trial #play > :not(#pTry) { display: none; }
+  body.trial #play #pTry { flex: 1 1 100%; }
+  section[aria-label="得分來源"], section[aria-label="輸入題目"] { display: none; }
+  #ratePanel .inSheet { display: block !important; width: 100%; padding: 12px 0 0; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+  #ratePanel .inSheet .sheetX { display: none; }
+  #ratePanel.open, body.showInput section[aria-label="輸入題目"] {
+    display: flex; flex-direction: column; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-height: 82dvh; overflow-y: auto;
+    border-radius: 22px 22px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px rgba(0,0,0,.6); }
+  body.sheetOpen::after { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 15; }
+}
+@media (min-width: 721px) { .mOnly, .sheetX { display: none !important; } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1><svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#F2B544" stroke-width="1.8"><circle cx="9" cy="12" r="5"/><circle cx="16" cy="12" r="5" fill="#F2B544" stroke="none" opacity=".9"/></svg>詰題試煉場</h1>
-    <nav style="display:flex;gap:8px;flex-wrap:wrap">
+    <nav class="dNav" style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="hbtn" href="game.html">VCF 限時闖關</a>
       <button class="hbtn" type="button" id="btnPhoto">從照片匯入</button>
       <button class="hbtn" type="button" id="btnShare">複製這題的連結</button>
       <button class="hbtn" type="button" id="btnCard" disabled>產生分享卡</button>
       <button class="hbtn" type="button" id="btnHelp">規則說明</button>
     </nav>
+    <a class="icob gold mOnly" href="game.html" aria-label="VCF 限時闖關"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="12" r="1" fill="currentColor"/><circle cx="17.5" cy="14" r="1" fill="currentColor"/></svg></a>
+    <button class="icob mOnly" type="button" id="mMore" aria-label="更多" aria-haspopup="true" aria-expanded="false" aria-controls="mMenu"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg></button>
+    <div id="mMenu" role="menu" hidden>
+      <button type="button" role="menuitem" data-m="photo"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l2-2h4l2 2"/></svg>從照片匯入</button>
+      <button type="button" role="menuitem" data-m="input"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6"/></svg>貼上題目座標</button>
+      <button type="button" role="menuitem" data-m="share"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1"/><path d="M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/></svg>複製這題的連結</button>
+      <button type="button" role="menuitem" data-m="card"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>產生分享卡</button>
+      <button type="button" role="menuitem" data-m="rate"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>難度與得分來源</button>
+      <button type="button" role="menuitem" data-m="help"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>規則說明</button>
+    </div>
   </header>
 
   <div class="row">
@@ -140,6 +218,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
         <button class="tool" type="button" id="pNext" aria-label="下一手" title="下一手">▶</button>
         <button class="tool" type="button" id="pEnd" aria-label="到最後一手" title="到最後一手">▶|</button>
         <button class="tool" type="button" id="pTry" aria-pressed="false" title="從現在這一手開始，自己換一條路下下看">試別的走法</button>
+        <button class="tool mOnly" type="button" id="pEdit"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>改題目</button>
       </div>
       <div class="tools" id="tryBar" hidden>
         <button class="tool" type="button" id="tUndo">退一手</button>
@@ -151,6 +230,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
     </section>
 
     <section class="panel" id="ratePanel" aria-label="難度評定">
+      <button class="icob sheetX mOnly" type="button" data-sheet-close aria-label="關閉"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <span class="label" style="align-self:flex-start" id="divLabel">難度評定</span>
       <div class="gauge">
         <svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true">
@@ -165,10 +245,12 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
   </div>
 
   <section class="panel" aria-label="得分來源">
+    <button class="icob sheetX mOnly" type="button" data-sheet-close aria-label="關閉"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div id="src"><span class="label">得分來源</span><span class="hint">評分後顯示每一項加了幾分</span></div>
   </section>
 
   <section class="panel" aria-label="輸入題目">
+    <button class="icob sheetX mOnly" type="button" data-sheet-close aria-label="關閉"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <label for="txt" class="label">貼上題目</label>
     <div class="inputRow" style="margin-top:8px">
       <textarea id="txt" placeholder="黑 H8 G7 J7 ｜ 白 J9 K8　或　文字棋盤（┌┬┐├┼┤ 畫的 15×15，●黑 ○白，貼上就會放上棋盤）　或　題庫 JSON"></textarea>
@@ -182,6 +264,7 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
     <p class="hint" id="status">座標：直行 A–P（沒有 I）、橫列 1–15（下到上）。連珠規則：黑棋有禁手（三三、四四、長連）。</p>
   </section>
 </div>
+<div id="mToast" role="status" hidden></div>
 
 <dialog id="dlgHelp">
   <h2 style="margin-top:0">規則說明</h2>
@@ -733,6 +816,9 @@ const isEv = n => n.lift || (n.traps && n.traps.length) || n.counter || n.counte
 function renderPlay() {
   const ok = result && result.vcf === true;
   $('play').hidden = !ok;
+  document.body.classList.toggle('solved', !!ok);
+  document.body.classList.toggle('trial', !!(ok && trial));
+  if (!ok) document.body.classList.remove('editing');
   const mv = moves();
   $('moveInfo').textContent = ok ? (trial ? `試走中：從第 ${trial.base / 2 + 1} 手開始，自己下了 ${Math.ceil(trial.mv.length / 2)} 手` : step ? `MOVE ${Math.ceil(step / 2)} / ${result.L}　·　${mv[step - 1]}` : `解答 ${result.L} 手`) : '';
   $('tryBar').hidden = !(ok && trial);
@@ -1091,6 +1177,31 @@ $('phApply').onclick = () => {
 };
 
 // ---------- 開場 ----------
+// ---------- 手機一屏版（2026-11-07）：更多選單、底部面板、提示訊息 ----------
+const mobile = () => matchMedia('(max-width: 720px)').matches;
+function mMenu(open) { $('mMenu').hidden = !open; $('mMore').setAttribute('aria-expanded', String(open)); }
+$('mMore').onclick = (e) => { e.stopPropagation(); mMenu($('mMenu').hidden); };
+document.addEventListener('click', (e) => { if (!$('mMenu').hidden && !$('mMenu').contains(e.target)) mMenu(false); });
+const srcSec = document.querySelector('section[aria-label="得分來源"]'), srcHome = srcSec.nextElementSibling;
+function closeSheets() { $('ratePanel').classList.remove('open'); document.body.classList.remove('showInput', 'sheetOpen'); if (srcSec.classList.contains('inSheet')) { srcSec.classList.remove('inSheet'); srcHome.before(srcSec); } }
+function openSheet(k) { closeSheets(); if (k === 'rate') { $('ratePanel').classList.add('open'); srcSec.classList.add('inSheet'); $('ratePanel').appendChild(srcSec); } else document.body.classList.add('showInput'); document.body.classList.add('sheetOpen'); }
+$('mMenu').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-m]'); if (!b || b.disabled) return;
+  mMenu(false);
+  ({ photo: () => $('btnPhoto').click(), share: () => $('btnShare').click(), card: () => $('btnCard').click(), help: () => $('btnHelp').click(), rate: () => openSheet('rate'), input: () => openSheet('input') })[b.dataset.m]();
+});
+$('mMore').addEventListener('click', () => { $('mMenu').querySelector('[data-m="card"]').disabled = $('btnCard').disabled; });
+document.querySelectorAll('[data-sheet-close]').forEach(b => b.onclick = (e) => { e.stopPropagation(); closeSheets(); });
+document.addEventListener('click', (e) => { if (document.body.classList.contains('sheetOpen') && mobile() && !e.target.closest('#ratePanel, section[aria-label], #mMenu, #mMore, dialog')) closeSheets(); });
+document.querySelector('#ratePanel .rank').addEventListener('click', () => { if (mobile() && !$('ratePanel').classList.contains('open')) openSheet('rate'); });
+$('btnLoad').addEventListener('click', () => { if (mobile()) closeSheets(); });
+$('note').addEventListener('click', () => { if (mobile()) $('note').classList.toggle('open'); });
+$('pEdit').onclick = () => { stopAuto(); trial = null; step = 0; document.body.classList.add('editing'); renderAll(); };
+$('btnGo').addEventListener('click', () => document.body.classList.remove('editing'));
+let toastT = 0;
+new MutationObserver(() => { if (!mobile()) return; const t = $('mToast'); t.textContent = $('status').textContent; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }).observe($('status'), { childList: true, characterData: true, subtree: true });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheets(); mMenu(false); $('note').classList.remove('open'); } });
+
 function renderAll() { drawBoard(); renderStages(); renderRate(); renderSrc(); renderPlay(); }
 (function init() {
   const h = new URLSearchParams(location.hash.slice(1));
