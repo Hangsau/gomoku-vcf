@@ -18,6 +18,11 @@ git -c core.autocrlf=false archive HEAD | tar -x -C "$OUT"
 rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/tools"
 find "$OUT" -maxdepth 1 -name '*.md' -delete
 cp "$OUT/game.html" "$OUT/index.html"  # 原 index.html（分析器）使用者 2026-11-07 說不用了，不上傳
+# /analyzer 曾經上線過，Pages 自己的快取會繼續回舊分析器（s-maxage 7 天，清網域快取也清不掉，2026-11-08 踩過），所以明確轉回首頁
+printf '/analyzer / 301
+/analyzer.html / 301
+/analyzer/* / 301
+' > "$OUT/_redirects"
 
 npx --yes wrangler@4.158.0 pages deploy "$OUT" --project-name "$PROJECT" --branch main --commit-hash "$(git rev-parse HEAD)" --commit-message "$(git log -1 --format=%s | cut -c1-80)"
 
