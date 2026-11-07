@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-/* 2026-11-07 設計稿 C 開始＋C 解題（加 A 升段條）＋A 結算；畫布 https://claude.ai/artifact/XqbiqLiesB2sLJxbkw9e9c */
+/* 2026-11-07 設計稿 C 開始＋C 解題（加 A 升段條）＋A 結算；第二輪一屏版選 V1 圖示列（開始右上語言／排行榜 icon，結算底部 icon 列）；畫布 https://claude.ai/artifact/XqbiqLiesB2sLJxbkw9e9c */
 :root {
   --bg: #0F121A; --panel: #161A24; --panel2: #1F2A3D; --line: #252B3A; --line2: #2E3546;
   --text: #EDEFF5; --text2: #B6BCCB; --gold: #F2B544; --goldBg: #3A2F17; --goldInk: #1A1300;
@@ -19,9 +19,19 @@
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
 :lang(ja) body, body:lang(ja) { font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; }
 :lang(ko) body, body:lang(ko) { font-family: 'Noto Sans KR', 'Noto Sans TC', sans-serif; word-break: keep-all; }
-.langs { display: flex; gap: 6px; justify-content: flex-end; padding: calc(10px + env(safe-area-inset-top)) 16px 0; flex-wrap: wrap; }
-.langs button { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line2); background: transparent; color: var(--text2); font-size: 14px; }
-.langs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.topbar { position: relative; display: flex; justify-content: space-between; align-items: center; padding: calc(6px + env(safe-area-inset-top)) 8px 0; }
+.topbar > div { display: flex; }
+.icob { width: 48px; height: 48px; border: 0; border-radius: 14px; background: transparent; color: var(--text); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.icob.gold { color: var(--gold); }
+.ico { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.langs { position: absolute; right: 8px; top: calc(56px + env(safe-area-inset-top)); z-index: 5; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.langs[hidden] { display: none; }
+.langs button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--text); font-size: 16px; text-align: left; }
+.langs button[aria-pressed="true"] { color: var(--gold); font-weight: 700; }
+.sq { width: 64px; height: 60px; flex: none; border: 0; border-radius: 16px; background: var(--panel); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; }
+.sq .ico { width: 22px; height: 22px; }
+.sq.gold { color: var(--gold); }
+.sq span { color: var(--text2); }
 body { min-height: 100dvh; }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .45; }
@@ -39,8 +49,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .thumb { padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
 
 /* 開始 */
-#sStart .hero { padding-top: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-#sStart .big60 { font-family: var(--num); font-size: 120px; font-weight: 700; line-height: 1; color: var(--gold); }
+#sStart .hero { padding-top: 4px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+#sStart .big60 { font-family: var(--num); font-size: clamp(80px, 14dvh, 120px); font-weight: 700; line-height: 1; color: var(--gold); }
 .stepper { display: flex; align-items: center; gap: 12px; }
 .stepper button { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 28px; }
 .stepper .val { flex: 1; height: 56px; border-radius: 16px; background: var(--goldBg); display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--gold); }
@@ -76,8 +86,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .hint { padding: 6px 20px 0; font-size: 15px; color: var(--text2); }
 
 /* 結算 */
-#sEnd .top { padding-top: calc(36px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.stamp { width: 168px; height: 168px; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); }
+#sEnd .top { padding-top: calc(28px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.stamp { width: clamp(140px, 24dvh, 176px); height: clamp(140px, 24dvh, 176px); flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); }
 .stamp.down { border-color: var(--fail); color: var(--fail); }
 .stamp b { font-size: 50px; font-weight: 900; line-height: 1.05; }
 .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
@@ -119,7 +129,14 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 <!-- 開始（設計稿 C1） -->
 <section id="sStart" class="screen">
-  <div class="langs" id="langs" role="group" aria-label="Language"></div>
+  <div class="topbar">
+    <a href="index.html" class="icob" aria-label="回 VCF 分析器" data-i18n-aria="backA"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <div>
+      <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
+      <button type="button" class="icob gold" id="openBoard" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></button>
+    </div>
+    <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
+  </div>
   <div class="hero pad">
     <span class="big60">60</span>
     <span style="font-size: 18px; font-weight: 700;" data-i18n="heroSub">秒・VCF 衝分</span>
@@ -142,8 +159,6 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="thumb" style="flex-direction: column;">
     <span class="muted" id="startMsg" role="status" style="font-size: 14px; text-align: center; min-height: 20px;"></span>
     <button type="button" class="btn gold" id="go" style="height: 64px; font-size: 23px;" data-i18n="go">開始</button>
-    <button type="button" class="btn link" id="openBoard" data-i18n="openBoard">看排行榜</button>
-    <a href="index.html" class="muted" style="text-align: center; font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;" data-i18n="back">← 回 VCF 分析器</a>
   </div>
 </section>
 
@@ -181,28 +196,26 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <div class="tiles">
       <div><span data-i18n="abLbl">能力分</span><b id="eAb">0</b></div>
       <div><span data-i18n="solvedN">答對</span><b id="eSolved">0</b></div>
+      <div><span data-i18n="todayNo">今天第</span><b id="eToday" style="color: var(--gold);">–</b></div>
     </div>
     <span id="ePts" style="font-size: 15px; text-align: center;"></span>
     <span class="muted" id="ePlace" role="status" style="font-size: 15px; text-align: center;"></span>
     <button type="button" class="btn link" id="retrySubmit" hidden data-i18n="retry">重新送出成績</button>
   </div>
-  <div class="sheet">
-    <div class="grip"></div>
-    <div id="endBoard"></div>
-    <div style="flex: 1;"></div>
-    <div style="padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px;">
-      <button type="button" class="btn ghost" id="openReview" style="flex: 1; height: 58px;" data-i18n="review">看我解的題</button>
-      <button type="button" class="btn gold" id="again" style="flex: 1.4; height: 58px; font-size: 19px;" data-i18n="again">再來一局</button>
-    </div>
+  <div style="flex: 1;"></div>
+  <div class="thumb" style="align-items: center; gap: 8px;">
+    <button type="button" class="sq gold" id="endBoardBtn" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg><span data-i18n="boardShort">排行</span></button>
+    <button type="button" class="sq" id="openReview" aria-label="看我解的題" data-i18n-aria="review"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16M15 4v16"/></svg><span data-i18n="revShort">題目</span></button>
+    <button type="button" class="btn gold" id="again" style="flex: 1; font-size: 20px;" data-i18n="again">再來一局</button>
   </div>
 </section>
 </div>
 
 <div class="modal" id="mBoard" hidden role="dialog" aria-modal="true" aria-labelledby="mBoardT">
-  <div class="box"><div class="grip"></div><h2 id="mBoardT" data-i18n="boardT">排行榜</h2><div id="startBoard"></div><button type="button" class="btn ghost" data-close data-i18n="close">關閉</button></div>
+  <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mBoardT" data-i18n="boardT">排行榜</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="startBoard"></div></div>
 </div>
 <div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
-  <div class="box"><div class="grip"></div><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><span class="muted" style="font-size: 14px;" data-i18n="reviewHint">點「打開」會在試煉場看解答、自己試走。</span><div id="revList"></div><button type="button" class="btn ghost" data-close data-i18n="close">關閉</button></div>
+  <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="revList"></div></div>
 </div>
 
 <script>
@@ -246,7 +259,7 @@ const I18N = {
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '段位榜', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '段位榜', backA: '回 VCF 分析器', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -268,7 +281,7 @@ const I18N = {
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Rank', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Rank', backA: 'Back to the VCF analyzer', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
@@ -290,7 +303,7 @@ const I18N = {
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '段位', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '段位', backA: 'VCF 解析ツールへ戻る', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -312,7 +325,7 @@ const I18N = {
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '단', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '단', backA: 'VCF 분석기로 돌아가기', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
@@ -339,8 +352,12 @@ function applyLang() {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
   $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
-  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); applyLang(); renderStart(); });
+  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); renderStart(); });
 }
+
+function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
+$('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
+document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
 
 // ---------- 引擎（score-worker.js：vcf_play2 試下一手、電腦擋） ----------
 const engine = new Worker('score-worker.js?v=' + ENGINE_V);
@@ -602,6 +619,7 @@ function endGame(why) {
 }
 async function submit() {
   $('retrySubmit').hidden = true;
+  $('eToday').textContent = '–';
   $('ePlace').textContent = lastRun.demoted ? T('placeDemoted', { r: rankName(lastRun.startRank) }) : T('sending');
   myId = null;
   try {
@@ -609,18 +627,17 @@ async function submit() {
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
-    if (j.place) $('ePlace').textContent = T('place', { a: j.place.rank.today, b: j.place.rank.all });
+    if (j.place) { $('eToday').textContent = j.place.rank.today; $('ePlace').textContent = T('placeAll', { b: j.place.rank.all }); }
+    else if (!lastRun.demoted) $('ePlace').textContent = T('placeNone');
   } catch {
     if (!lastRun.demoted) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; }
   }
-  boardView($('endBoard'));
 }
 $('retrySubmit').onclick = submit;
 $('again').onclick = () => { g = null; show('sStart'); renderStart(); };
 
 function boardView(el, scope = 'today') {
-  el.innerHTML = `<span class="muted" style="font-size:13px">${T('boardNote')}</span>
-    <div class="scope" style="margin-top:8px">${[['today', 'today'], ['all', 'all']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
+  el.innerHTML = `<div class="scope">${[['today', 'today'], ['all', 'all']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
     <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
   el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, b.dataset.scope));
   const rows = el.querySelector('.rows');
@@ -640,10 +657,10 @@ function boardView(el, scope = 'today') {
 
 function openModal(id) { $(id).hidden = false; $(id).querySelector('[data-close]').focus(); }
 document.querySelectorAll('.modal').forEach(m => {
-  m.addEventListener('click', (e) => { if (e.target === m || e.target.hasAttribute('data-close')) m.hidden = true; });
+  m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.hidden = true; });
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
-$('openBoard').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
+$('openBoard').onclick = $('endBoardBtn').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
 $('openReview').onclick = () => {
   const list = $('revList'); list.innerHTML = '';
   if (!lastRun || !lastRun.detail.length) list.innerHTML = `<span class="muted">${T('noPuzzles')}</span>`;
