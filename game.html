@@ -269,7 +269,7 @@ const I18N = {
     pTime: '本題 {s} 秒', hint: '點一下就下；禁手或不是四的點只會提醒，不算錯', skip: '跳過', pick: '先點棋盤', confirm: '確定下 {t}',
     black: '黑先', white: '白先', ok: '答對・+{b} 秒', leftN: '還能錯 {n} 題',
     why_mustblock: '要先擋對方的四（{at}）', why_forbidden: '這裡是黑棋禁手', why_notfour: '這手不是四', why_lost: '對方擋完反而連成了',
-    why_novcf: '下完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過',
+    why_novcf: '下完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過', why_time: '時間到',
     endTime: '時間到', endWrong: '錯 {n} 題', endNoPuzzle: '題庫讀不到', finalLbl: '結算段位',
     noteUp: '升段了', noteKeep: '維持{r}', noteDown: '掉回{r}', pps: '每秒得分', solvedN: '答對',
     abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
@@ -291,7 +291,7 @@ const I18N = {
     pTime: 'This puzzle {s}s', hint: 'Tap to play. Forbidden or non-four points only warn you; no miss.', skip: 'Skip', pick: 'Tap the board', confirm: 'Play {t}',
     black: 'Black to play', white: 'White to play', ok: 'Solved · +{b}s', leftN: 'Misses left: {n}',
     why_mustblock: "Block the opponent's four first ({at})", why_forbidden: 'Forbidden point for Black', why_notfour: 'That move is not a four', why_lost: 'The block wins for the defender',
-    why_novcf: 'No VCF left after that move', why_bad: "That move doesn't work", why_skip: 'Skipped',
+    why_novcf: 'No VCF left after that move', why_bad: "That move doesn't work", why_skip: 'Skipped', why_time: 'Time up',
     endTime: "Time's up", endWrong: 'Misses: {n}', endNoPuzzle: "Couldn't load puzzles", finalLbl: 'Final rank',
     noteUp: 'Promoted', noteKeep: 'Stayed {r}', noteDown: 'Dropped to {r}', pps: 'Points/sec', solvedN: 'Solved',
     abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
@@ -313,7 +313,7 @@ const I18N = {
     pTime: 'この問題 {s} 秒', hint: 'タップで着手。禁手や四にならない点は警告だけで、ミスになりません', skip: 'スキップ', pick: '盤面をタップ', confirm: '{t} に打つ',
     black: '黒先', white: '白先', ok: '正解・+{b} 秒', leftN: 'あと {n} 回ミスできます',
     why_mustblock: '先に相手の四を止める必要があります（{at}）', why_forbidden: 'ここは黒の禁手です', why_notfour: 'この手は四ではありません', why_lost: '相手の受けで逆に負けます',
-    why_novcf: 'この手のあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ',
+    why_novcf: 'この手のあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ', why_time: '時間切れ',
     endTime: '時間切れ', endWrong: '{n} 回ミス', endNoPuzzle: '問題を読み込めません', finalLbl: '最終段位',
     noteUp: '昇段', noteKeep: '{r}を維持', noteDown: '{r}に降段', pps: '毎秒得点', solvedN: '正解数',
     abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
@@ -335,7 +335,7 @@ const I18N = {
     pTime: '이 문제 {s}초', hint: '탭하면 바로 둡니다. 금수나 4가 아닌 자리는 경고만 하고 실수로 치지 않습니다', skip: '건너뛰기', pick: '판을 탭하세요', confirm: '{t}에 두기',
     black: '흑선', white: '백선', ok: '정답 · +{b}초', leftN: '{n}번 더 틀릴 수 있음',
     why_mustblock: '먼저 상대의 4를 막아야 합니다 ({at})', why_forbidden: '흑의 금수 자리입니다', why_notfour: '이 수는 4가 아닙니다', why_lost: '상대가 막으면서 오히려 이깁니다',
-    why_novcf: '이 수 다음에는 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀',
+    why_novcf: '이 수 다음에는 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀', why_time: '시간 종료',
     endTime: '시간 종료', endWrong: '{n}번 틀림', endNoPuzzle: '문제를 불러올 수 없음', finalLbl: '최종 단',
     noteUp: '승단', noteKeep: '{r} 유지', noteDown: '{r}(으)로 강등', pps: '초당 점수', solvedN: '정답',
     abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
@@ -558,7 +558,7 @@ function tick(t) {
     g.left -= dt; g.elapsed += dt; g.psec += dt;
     const now = Math.ceil(g.left);
     if (now !== before && now >= 1 && now <= 5) beep(now === 1);   // 最後 5 秒每秒一聲
-    if (g.left <= 0) { g.left = 0; renderHud(); endGame(T('endTime')); return; }
+    if (g.left <= 0) { g.left = 0; renderHud(); logTimeUp(); endGame(T('endTime')); return; }
   }
   renderHud();
   requestAnimationFrame(tick);
@@ -654,6 +654,19 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   await flash(whyText(x) + (g.wrong >= MAX_WRONG ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', FEED_MS);
   if (g.wrong >= MAX_WRONG) endGame(T('endWrong', { n: MAX_WRONG }));
   else if (!g.over) nextPuzzle();
+}
+
+// 時間到：正在做的那題也記進覆盤（2026-11-08 玩家回報覆盤少了最後一題）。
+// 使用者 2026-11-08 定：時間到就是錯，扣能力分、算錯一題（會影響結算段位）；wk 'time' 讓覆盤和後台看得出原因。
+// 計時只在 g.hold 為 false 時走，所以時間到時 g.p 一定是還沒記過的那題；最後一筆比對是保險。
+function logTimeUp() {
+  const p = g.p;
+  if (!p) return;
+  const b = p.black.join(' '), w = p.white.join(' '), last = g.log[g.log.length - 1];
+  if (last && last.b === b && last.w === w) return;
+  g.wrong++;
+  const e = updateAbility(false);
+  g.log.push({ b, w, a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e, ok: 0, sec: +g.psec.toFixed(1), wk: 'time', wa: '', m: g.moves.join(' '), wf: g.wf, wn: g.wn });
 }
 
 cv.addEventListener('click', (ev) => {
