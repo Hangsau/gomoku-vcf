@@ -107,7 +107,10 @@ async function adminSetReport(req, env) {
   try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
   const st = ["open", "done", "blocked"].includes(b.status) ? b.status : null;
   if (!st || !b.pid) return json({ error: "bad fields" }, 400);
-  await env.DB.prepare("UPDATE reports SET status = ? WHERE pid = ?").bind(st, String(b.pid)).run();   // 同一題的所有回報一起改
+  const r = await env.DB.prepare("UPDATE reports SET status = ? WHERE pid = ?").bind(st, String(b.pid)).run();   // 同一題的所有回報一起改
+  if (!r.meta.changes && st === "blocked" && b.b)   // 沒人回報過、後台直接停用（從作答統計那裡）：記一筆
+    await env.DB.prepare("INSERT INTO reports(t, pid, black, white, atk, kind, text, status) VALUES (?,?,?,?,?, 'other', '後台直接停用', 'blocked')")
+      .bind(Date.now(), String(b.pid), String(b.b), String(b.w || ""), b.a === "w" ? "w" : "b").run();
   return json({ ok: true });
 }
 
