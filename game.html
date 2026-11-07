@@ -155,8 +155,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="bars">
     <div class="bar" role="img" id="rankBarBox"><div id="rankBar" style="width: 0%; background: var(--gold);"></div></div>
     <div class="barrow"><span id="rankTxt"></span><span>可錯 <span class="lives" id="lives"></span></span></div>
-    <div class="bar" role="img" id="ppsBarBox"><div id="ppsBar" style="width: 100%; background: var(--teal);"></div><span class="mark" id="ppsMark"></span></div>
-    <div class="barrow"><span id="ppsTxt"></span><span id="ppsRule">白線右邊解完直接升段</span></div>
+    <div class="bar" role="img" id="ppsBarBox"><div id="ppsBar" style="width: 100%; background: var(--teal);"></div><span class="mark" style="left: 33.3%;" title="標準速度 ×1"></span></div>
+    <div class="barrow"><span id="ppsTxt"></span><span id="ppsRule"></span></div>
   </div>
   <div class="boardWrap" id="boardWrap">
     <canvas id="board" aria-label="題目棋盤，點一下選位置，同一格再點一下就下"></canvas>
@@ -212,7 +212,11 @@ const BANDS = ['入門', '40–70 分', '70–120 分', '120–200 分', '200–
 const KEEP = [0, 200, 350, 600, 1000, 1575, 2500, 3900, 6050];   // 累積到這個總分＝到這段（＝該段題目下限 ×5）
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
-const FAST_PER_MOVE = 2.5;   // 一手 2.5 秒內解完＝太簡單，直接升段
+// 得分＝題目分數 × 速度倍率（使用者 2026-11-07：用每題得分累積升段，解太快自然升得快；低於段位的題也照算）
+// 倍率＝標準時間（一手 5 秒）÷ 實際秒數，夾在 ×0.5～×2：一手 2.5 秒內 ×2、5 秒 ×1、10 秒以上 ×0.5
+const STD_PER_MOVE = 5, MULT_MIN = 0.5, MULT_MAX = 2;
+const multOf = (p, sec) => Math.min(MULT_MAX, Math.max(MULT_MIN, STD_PER_MOVE * p.L / Math.max(0.1, sec)));
+const earnOf = (p, sec) => Math.round(p.score * multOf(p, sec));
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
 const COLS = 'ABCDEFGHJKLMNOP', N = 15;
 const ENGINE_V = '20261107b';
@@ -367,15 +371,12 @@ function renderHud() {
   $('rankTxt').textContent = target ? `${keeping ? '守住' + RANKS[g.start] : '升' + RANKS[g.cur + 1]} ${Math.round(g.total)}／${target}` : '最高段';
   $('rankBarBox').setAttribute('aria-label', $('rankTxt').textContent);
   $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
-  // 每秒得分條：本題現在解完的每秒得分；白線＝一手 2.5 秒
+  // 速度條：本題現在解完拿幾分；滿格 ×2，白線 ×1（標準速度），越拖越少，最少 ×0.5
   if (g.p) {
-    const pps = g.p.score / Math.max(0.1, g.psec), line = g.p.score / (FAST_PER_MOVE * g.p.L);
-    const counts = g.p.rank >= Math.min(g.cur, FILE_MAX) && g.cur < TOP_RANK;
-    $('ppsBar').style.width = Math.min(100, pps / (line * 1.25) * 100) + '%';
-    $('ppsBar').style.background = counts ? 'var(--teal)' : 'var(--line2)';
-    $('ppsMark').hidden = !counts;
-    $('ppsTxt').textContent = `現在每秒 ${pps >= 100 ? Math.round(pps) : pps.toFixed(1)} 分`;
-    $('ppsRule').textContent = counts ? '白線右邊解完直接升段' : '這題低於你的段位，解快不升段';
+    const m = multOf(g.p, g.psec);
+    $('ppsBar').style.width = ((m - MULT_MIN) / (MULT_MAX - MULT_MIN) * 100) + '%';
+    $('ppsTxt').textContent = `現在解完得 ${earnOf(g.p, g.psec)} 分`;
+    $('ppsRule').textContent = `速度 ×${m.toFixed(1)}`;
     $('ppsBarBox').setAttribute('aria-label', $('ppsTxt').textContent + '，' + $('ppsRule').textContent);
     $('pTime').textContent = `本題 ${Math.floor(g.psec)} 秒`;
   }
@@ -399,7 +400,7 @@ async function nextPuzzle() {
   catch { endGame('題庫讀不到'); return; }
   g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = [];
   setGhost(null);
-  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}・${p.L} 手・${p.score} 分`;
+  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}・題目 ${p.score} 分`;
   renderHud();
   // 每題都閃一下黑先／白先（使用者 2026-11-07：同色也要閃），閃的時候不扣秒
   await flash(`<i class="stone" style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
@@ -432,16 +433,15 @@ async function placeAt(t) {
 
 async function solved(how) {
   const p = g.p, sec = g.psec;
-  const fast = sec <= FAST_PER_MOVE * p.L && p.rank >= Math.min(g.cur, FILE_MAX) && g.cur < TOP_RANK;
-  g.total += p.score; g.left += BONUS_SEC; g.solved++;
+  const mult = multOf(p, sec), earn = earnOf(p, sec);
+  g.total += earn; g.left += BONUS_SEC; g.solved++;
   const from = g.cur;
-  if (fast) g.cur = Math.min(TOP_RANK, g.cur + 1);
   while (g.cur < TOP_RANK && g.total >= KEEP[g.cur + 1]) g.cur++;
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: earn, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
-  const up = g.cur > from ? `<small style="font-size:18px;color:var(--gold)">${fast ? '太快了，' : ''}升${RANKS[g.cur]}</small>` : '';
-  await flash(`+${p.score} 分・+${BONUS_SEC} 秒${up}`, 'good', FEED_MS);
+  const up = g.cur > from ? `<small style="font-size:18px;color:var(--gold)">升${RANKS[g.cur]}</small>` : '';
+  await flash(`+${earn} 分（×${mult.toFixed(1)}）・+${BONUS_SEC} 秒${up}`, 'good', FEED_MS);
   if (!g.over) nextPuzzle();
 }
 
@@ -539,7 +539,7 @@ $('openReview').onclick = () => {
     const d = document.createElement('div'); d.className = 'rev';
     const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
     d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? '解開' : '沒解'}</span><span class="tx"></span><a target="_blank" rel="noopener">打開</a>`;
-    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.s} 分・${x.sec} 秒${x.ok ? '' : '・' + x.why}`;
+    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `得 ${x.e} 分（題目 ${x.s}）` : x.why}`;
     d.querySelector('a').href = href;
     list.appendChild(d);
   }
