@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0F121A">
 <title>VCF 限時闖關</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 /* 2026-11-07 設計稿 C 開始＋C 解題（加 A 升段條）＋A 結算；畫布 https://claude.ai/artifact/XqbiqLiesB2sLJxbkw9e9c */
 :root {
@@ -17,6 +17,11 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
+:lang(ja) body, body:lang(ja) { font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; }
+:lang(ko) body, body:lang(ko) { font-family: 'Noto Sans KR', 'Noto Sans TC', sans-serif; word-break: keep-all; }
+.langs { display: flex; gap: 6px; justify-content: flex-end; padding: calc(10px + env(safe-area-inset-top)) 16px 0; flex-wrap: wrap; }
+.langs button { min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line2); background: transparent; color: var(--text2); font-size: 14px; }
+.langs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 body { min-height: 100dvh; }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .45; }
@@ -34,7 +39,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .thumb { padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
 
 /* 開始 */
-#sStart .hero { padding-top: 48px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+#sStart .hero { padding-top: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 #sStart .big60 { font-family: var(--num); font-size: 120px; font-weight: 700; line-height: 1; color: var(--gold); }
 .stepper { display: flex; align-items: center; gap: 12px; }
 .stepper button { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 28px; }
@@ -91,7 +96,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .row.me { background: var(--tealBg); border-radius: 10px; }
 .row .no { width: 28px; font-family: var(--num); color: var(--text2); }
 .row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .rk { width: 52px; color: var(--gold); font-weight: 700; }
+.row .rk { min-width: 52px; color: var(--gold); font-weight: 700; white-space: nowrap; }
 .row .vl { width: 60px; text-align: right; font-family: var(--num); }
 
 /* 浮層：排行榜、看我解的題 */
@@ -113,30 +118,31 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 <!-- 開始（設計稿 C1） -->
 <section id="sStart" class="screen">
+  <div class="langs" id="langs" role="group" aria-label="Language"></div>
   <div class="hero pad">
     <span class="big60">60</span>
-    <span style="font-size: 18px; font-weight: 700;">秒・VCF 衝分</span>
-    <span class="muted" style="margin-top: 6px; font-size: 15px;">答對 +20 秒・錯 3 題結束</span>
+    <span style="font-size: 18px; font-weight: 700;" data-i18n="heroSub">秒・VCF 衝分</span>
+    <span class="muted" style="margin-top: 6px; font-size: 15px;" data-i18n="heroRule">答對 +20 秒・錯 3 題結束</span>
   </div>
   <div class="pad" style="padding-top: 32px; display: flex; flex-direction: column; gap: 8px;">
-    <span class="muted" style="font-size: 15px;">起始段位</span>
+    <span class="muted" style="font-size: 15px;" data-i18n="startRank">起始段位</span>
     <div class="stepper">
-      <button type="button" id="rkDown" aria-label="降一段">−</button>
+      <button type="button" id="rkDown" aria-label="降一段" data-i18n-aria="rkDown">−</button>
       <div class="val" aria-live="polite"><b id="rkName">三段</b><span id="rkBand" style="font-size: 13px;"></span></div>
-      <button type="button" id="rkUp" aria-label="升一段">+</button>
+      <button type="button" id="rkUp" aria-label="升一段" data-i18n-aria="rkUp">+</button>
     </div>
     <span class="muted" id="rkKeep" style="font-size: 13px; line-height: 1.5;"></span>
   </div>
   <div class="pad" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
-    <label for="nick" class="muted" style="font-size: 15px;">暱稱</label>
-    <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="上排行榜用的名字">
+    <label for="nick" class="muted" style="font-size: 15px;" data-i18n="nick">暱稱</label>
+    <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="上排行榜用的名字" data-i18n-ph="nickPh">
   </div>
   <div style="flex: 1;"></div>
   <div class="thumb" style="flex-direction: column;">
     <span class="muted" id="startMsg" role="status" style="font-size: 14px; text-align: center; min-height: 20px;"></span>
-    <button type="button" class="btn gold" id="go" style="height: 64px; font-size: 23px;">開始</button>
-    <button type="button" class="btn link" id="openBoard">看排行榜</button>
-    <a href="index.html" class="muted" style="text-align: center; font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;">← 回 VCF 分析器</a>
+    <button type="button" class="btn gold" id="go" style="height: 64px; font-size: 23px;" data-i18n="go">開始</button>
+    <button type="button" class="btn link" id="openBoard" data-i18n="openBoard">看排行榜</button>
+    <a href="index.html" class="muted" style="text-align: center; font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;" data-i18n="back">← 回 VCF 分析器</a>
   </div>
 </section>
 
@@ -144,25 +150,25 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <section id="sPlay" class="screen" hidden>
   <div class="hud">
     <div>
-      <div class="lbl">剩餘秒數</div>
+      <div class="lbl" data-i18n="timeLeft">剩餘秒數</div>
       <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" id="tLeft">60</span><span class="plus" id="tPlus">+20</span></div>
     </div>
     <div style="text-align: right;">
-      <div class="lbl">總分</div>
+      <div class="lbl" data-i18n="total">總分</div>
       <div class="n" id="tot" style="color: var(--gold);">0</div>
     </div>
   </div>
   <!-- 能力分與目前段位解題時不顯示，結算才公布（使用者 2026-11-07） -->
-  <div class="bars"><div class="barrow"><span></span><span>可錯 <span class="lives" id="lives"></span></span></div></div>
+  <div class="bars"><div class="barrow"><span></span><span><span data-i18n="lives">可錯</span> <span class="lives" id="lives"></span></span></div></div>
   <div class="boardWrap" id="boardWrap">
-    <canvas id="board" aria-label="題目棋盤，點一下選位置，同一格再點一下就下"></canvas>
+    <canvas id="board" aria-label="題目棋盤，點一下選位置，同一格再點一下就下" data-i18n-aria="boardAria"></canvas>
     <div class="flash" id="flash" hidden></div>
   </div>
   <div class="info"><span class="atk" id="atkInfo"></span><span id="pTime">本題 0 秒</span></div>
-  <div class="hint">同一格點兩下就下，或按確定</div>
+  <div class="hint" data-i18n="hint">同一格點兩下就下，或按確定</div>
   <div style="flex: 1;"></div>
   <div class="thumb">
-    <button type="button" class="btn ghost" id="skip" style="width: 96px; height: 64px; font-size: 15px; color: var(--text2);">跳過</button>
+    <button type="button" class="btn ghost" id="skip" style="width: 96px; height: 64px; font-size: 15px; color: var(--text2);" data-i18n="skip">跳過</button>
     <button type="button" class="btn gold" id="confirm" style="flex: 1; height: 64px; font-size: 21px;" disabled>先點棋盤</button>
   </div>
 </section>
@@ -171,41 +177,39 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <section id="sEnd" class="screen" hidden>
   <div class="top pad">
     <span class="muted" id="endWhy" style="font-size: 16px;">時間到</span>
-    <div class="stamp" id="stamp"><span style="font-size: 14px;">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">升段了</span></div>
+    <div class="stamp" id="stamp"><span style="font-size: 14px;" data-i18n="finalLbl">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">升段了</span></div>
     <div class="tiles">
-      <div><span>總分</span><b id="eTot">0</b></div>
-      <div><span>每秒得分</span><b id="ePps">0</b></div>
-      <div><span>答對</span><b id="eSolved">0</b></div>
+      <div><span data-i18n="total">總分</span><b id="eTot">0</b></div>
+      <div><span data-i18n="pps">每秒得分</span><b id="ePps">0</b></div>
+      <div><span data-i18n="solvedN">答對</span><b id="eSolved">0</b></div>
     </div>
     <span id="ePts" style="font-size: 15px; text-align: center;"></span>
     <span class="muted" id="ePlace" role="status" style="font-size: 15px; text-align: center;"></span>
-    <button type="button" class="btn link" id="retrySubmit" hidden>重新送出成績</button>
+    <button type="button" class="btn link" id="retrySubmit" hidden data-i18n="retry">重新送出成績</button>
   </div>
   <div class="sheet">
     <div class="grip"></div>
     <div id="endBoard"></div>
     <div style="flex: 1;"></div>
     <div style="padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px;">
-      <button type="button" class="btn ghost" id="openReview" style="flex: 1; height: 58px;">看我解的題</button>
-      <button type="button" class="btn gold" id="again" style="flex: 1.4; height: 58px; font-size: 19px;">再來一局</button>
+      <button type="button" class="btn ghost" id="openReview" style="flex: 1; height: 58px;" data-i18n="review">看我解的題</button>
+      <button type="button" class="btn gold" id="again" style="flex: 1.4; height: 58px; font-size: 19px;" data-i18n="again">再來一局</button>
     </div>
   </div>
 </section>
 </div>
 
 <div class="modal" id="mBoard" hidden role="dialog" aria-modal="true" aria-labelledby="mBoardT">
-  <div class="box"><div class="grip"></div><h2 id="mBoardT">排行榜</h2><div id="startBoard"></div><button type="button" class="btn ghost" data-close>關閉</button></div>
+  <div class="box"><div class="grip"></div><h2 id="mBoardT" data-i18n="boardT">排行榜</h2><div id="startBoard"></div><button type="button" class="btn ghost" data-close data-i18n="close">關閉</button></div>
 </div>
 <div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
-  <div class="box"><div class="grip"></div><h2 id="mReviewT">這局的題目</h2><span class="muted" style="font-size: 14px;">點「打開」會在試煉場看解答、自己試走。</span><div id="revList"></div><button type="button" class="btn ghost" data-close>關閉</button></div>
+  <div class="box"><div class="grip"></div><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><span class="muted" style="font-size: 14px;" data-i18n="reviewHint">點「打開」會在試煉場看解答、自己試走。</span><div id="revList"></div><button type="button" class="btn ghost" data-close data-i18n="close">關閉</button></div>
 </div>
 
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
 const API = 'https://vcf-game-api.psyhangsau.workers.dev';
-const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
-const BANDS = ['入門', '40–70 分', '70–120 分', '120–200 分', '200–315 分', '315–500 分', '500–780 分', '780 分以上'];
 // 能力分（2026-11-07，仿 Lichess 解題積分）：人和題目用同一把尺＝題目分。能力分落在哪段的題目分區間就是哪段（沿用網站段位門檻）。
 // 每題先算預期解開機率 P＝1/(1+exp((ln題目分−ln能力分)/SPREAD))；解開 S=1、答錯／跳過 S=0；ln能力分 += K×(S−P)。
 // 解開比自己難的題加得多、簡單題答錯扣得多；可升可降，停在哪個區間就是哪段。時間到時做到一半的題不算。
@@ -223,6 +227,120 @@ const ENGINE_V = '20261107b';
 
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// ---------- 多語（2026-11-07 使用者：中英日韓四種）：瀏覽器語言自動選，開始畫面可切換，記在 localStorage ----------
+const I18N = {
+  zh: {
+    title: 'VCF 限時闖關', heroSub: '秒・VCF 衝分', heroRule: '答對 +{b} 秒・錯 {w} 題結束', startRank: '起始段位',
+    rkDown: '降一段', rkUp: '升一段', nick: '暱稱', nickPh: '上排行榜用的名字', go: '開始', openBoard: '看排行榜', back: '← 回 VCF 分析器',
+    keep: '能力分不公開：解開比你難的題加得多，簡單題答錯扣得多，結算才知道你在哪一段。', keepDemote: '結算低於起始段位不上排行榜。',
+    needNick: '先輸入暱稱', loading: '載入題目中…', loadFail: '題庫讀不到，請重新整理再試',
+    timeLeft: '剩餘秒數', total: '總分', lives: '可錯', boardAria: '題目棋盤，點一下選位置，同一格再點一下就下',
+    pTime: '本題 {s} 秒', hint: '同一格點兩下就下，或按確定', skip: '跳過', pick: '先點棋盤', confirm: '確定下 {t}',
+    black: '黑先', white: '白先', ok: '答對・+{b} 秒', leftN: '還能錯 {n} 題',
+    why_mustblock: '要先擋對方的四（{at}）', why_forbidden: '這裡是黑棋禁手', why_notfour: '這手不是四', why_lost: '對方擋完反而連成了',
+    why_novcf: '下完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過',
+    endTime: '時間到', endWrong: '錯 {n} 題', endNoPuzzle: '題庫讀不到', finalLbl: '結算段位',
+    noteUp: '升段了', noteKeep: '維持{r}', noteDown: '掉回{r}', pps: '每秒得分', solvedN: '答對',
+    abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
+    placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '今天段位榜第 {a}・總分榜第 {b}・每秒榜第 {c}',
+    sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
+    boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
+    tabRank: '段位榜', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
+    moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
+    ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
+    bandFirst: '入門', band: '{lo}–{hi} 分', bandLast: '{lo} 分以上',
+  },
+  en: {
+    title: 'VCF Time Attack', heroSub: 'seconds · VCF score rush', heroRule: 'Solve: +{b}s · {w} misses ends the run', startRank: 'Starting rank',
+    rkDown: 'One rank lower', rkUp: 'One rank higher', nick: 'Nickname', nickPh: 'Name shown on the leaderboard', go: 'Start', openBoard: 'Leaderboard', back: '← Back to the VCF analyzer',
+    keep: 'Your rating stays hidden: solving harder puzzles earns more, missing easy ones costs more. You see your rank at the end.', keepDemote: 'Finishing below your starting rank keeps you off the leaderboard.',
+    needNick: 'Enter a nickname first', loading: 'Loading puzzles…', loadFail: "Couldn't load puzzles. Refresh and try again.",
+    timeLeft: 'Time left', total: 'Score', lives: 'Misses left', boardAria: 'Puzzle board. Tap a point to preview, tap it again to play.',
+    pTime: 'This puzzle {s}s', hint: 'Tap a point twice to play, or press the button', skip: 'Skip', pick: 'Tap the board', confirm: 'Play {t}',
+    black: 'Black to play', white: 'White to play', ok: 'Solved · +{b}s', leftN: 'Misses left: {n}',
+    why_mustblock: "Block the opponent's four first ({at})", why_forbidden: 'Forbidden point for Black', why_notfour: 'That move is not a four', why_lost: 'The block wins for the defender',
+    why_novcf: 'No VCF left after that move', why_bad: "That move doesn't work", why_skip: 'Skipped',
+    endTime: "Time's up", endWrong: 'Misses: {n}', endNoPuzzle: "Couldn't load puzzles", finalLbl: 'Final rank',
+    noteUp: 'Promoted', noteKeep: 'Stayed {r}', noteDown: 'Dropped to {r}', pps: 'Points/sec', solvedN: 'Solved',
+    abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
+    placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Today: #{a} by rank · #{b} by score · #{c} by points/sec',
+    sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
+    boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
+    tabRank: 'Rank', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
+    moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
+    ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
+    bandFirst: 'Beginner', band: '{lo}–{hi} pts', bandLast: '{lo}+ pts',
+  },
+  ja: {
+    title: 'VCF タイムアタック', heroSub: '秒・VCF スコアアタック', heroRule: '正解で +{b} 秒・{w} 回ミスで終了', startRank: '開始段位',
+    rkDown: '一段下げる', rkUp: '一段上げる', nick: 'ニックネーム', nickPh: 'ランキングに表示される名前', go: 'スタート', openBoard: 'ランキングを見る', back: '← VCF 解析ツールへ戻る',
+    keep: 'レーティングは非公開：自分より難しい問題を解くと大きく上がり、易しい問題を間違えると大きく下がります。段位は終了時に発表されます。', keepDemote: '開始段位より下で終わるとランキングに載りません。',
+    needNick: '先にニックネームを入力してください', loading: '問題を読み込み中…', loadFail: '問題を読み込めませんでした。再読み込みしてください',
+    timeLeft: '残り秒数', total: '合計点', lives: '残りミス', boardAria: '問題の盤面。タップで位置を選び、同じ点をもう一度タップすると着手します',
+    pTime: 'この問題 {s} 秒', hint: '同じ点を2回タップで着手、またはボタンを押す', skip: 'スキップ', pick: '盤面をタップ', confirm: '{t} に打つ',
+    black: '黒先', white: '白先', ok: '正解・+{b} 秒', leftN: 'あと {n} 回ミスできます',
+    why_mustblock: '先に相手の四を止める必要があります（{at}）', why_forbidden: 'ここは黒の禁手です', why_notfour: 'この手は四ではありません', why_lost: '相手の受けで逆に負けます',
+    why_novcf: 'この手のあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ',
+    endTime: '時間切れ', endWrong: '{n} 回ミス', endNoPuzzle: '問題を読み込めません', finalLbl: '最終段位',
+    noteUp: '昇段', noteKeep: '{r}を維持', noteDown: '{r}に降段', pps: '毎秒得点', solvedN: '正解数',
+    abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
+    placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '今日の順位：段位 {a} 位・合計 {b} 位・毎秒 {c} 位',
+    sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
+    boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
+    tabRank: '段位', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
+    moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
+    ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
+    bandFirst: '入門', band: '{lo}–{hi} 点', bandLast: '{lo} 点以上',
+  },
+  ko: {
+    title: 'VCF 타임어택', heroSub: '초 · VCF 점수 도전', heroRule: '정답 +{b}초 · {w}번 틀리면 종료', startRank: '시작 단',
+    rkDown: '한 단 낮추기', rkUp: '한 단 높이기', nick: '닉네임', nickPh: '순위표에 표시될 이름', go: '시작', openBoard: '순위표 보기', back: '← VCF 분석기로 돌아가기',
+    keep: '능력 점수는 비공개입니다. 나보다 어려운 문제를 풀면 많이 오르고, 쉬운 문제를 틀리면 많이 내려갑니다. 단은 끝난 뒤에 공개됩니다.', keepDemote: '시작 단보다 낮게 끝나면 순위표에 오르지 않습니다.',
+    needNick: '먼저 닉네임을 입력하세요', loading: '문제를 불러오는 중…', loadFail: '문제를 불러오지 못했습니다. 새로고침 후 다시 시도하세요',
+    timeLeft: '남은 시간', total: '총점', lives: '남은 실수', boardAria: '문제 판. 탭해서 위치를 고르고, 같은 곳을 다시 탭하면 착수합니다',
+    pTime: '이 문제 {s}초', hint: '같은 곳을 두 번 탭하거나 버튼을 누르세요', skip: '건너뛰기', pick: '판을 탭하세요', confirm: '{t}에 두기',
+    black: '흑선', white: '백선', ok: '정답 · +{b}초', leftN: '{n}번 더 틀릴 수 있음',
+    why_mustblock: '먼저 상대의 4를 막아야 합니다 ({at})', why_forbidden: '흑의 금수 자리입니다', why_notfour: '이 수는 4가 아닙니다', why_lost: '상대가 막으면서 오히려 이깁니다',
+    why_novcf: '이 수 다음에는 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀',
+    endTime: '시간 종료', endWrong: '{n}번 틀림', endNoPuzzle: '문제를 불러올 수 없음', finalLbl: '최종 단',
+    noteUp: '승단', noteKeep: '{r} 유지', noteDown: '{r}(으)로 강등', pps: '초당 점수', solvedN: '정답',
+    abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
+    placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '오늘 순위: 단 {a}위 · 총점 {b}위 · 초당 {c}위',
+    sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
+    boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
+    tabRank: '단', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
+    moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
+    ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
+    bandFirst: '입문', band: '{lo}–{hi}점', bandLast: '{lo}점 이상',
+  },
+};
+const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
+function pickLang() {
+  const saved = store.get('vcfgame.lang');
+  if (saved && I18N[saved]) return saved;
+  const nav = (navigator.languages || [navigator.language || 'zh']).join(',').toLowerCase();
+  for (const l of nav.split(',')) { const k = l.slice(0, 2); if (I18N[k]) return k; }
+  return 'zh';
+}
+let lang = pickLang();
+const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
+const rankName = (k) => I18N[lang].ranks[k];
+const bandText = (k) => k === 0 ? T('bandFirst') : k === MAX_START ? T('bandLast', { lo: LOW[k] }) : T('band', { lo: LOW[k], hi: LOW[k + 1] });
+const whyText = (x) => T('why_' + x.wk, { at: x.wa });
+function applyLang() {
+  document.documentElement.lang = LANGS.find(l => l[0] === lang)[2];
+  document.title = T('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n, { b: BONUS_SEC, w: MAX_WRONG }); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
+  $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
+  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); applyLang(); renderStart(); });
+}
 
 // ---------- 引擎（score-worker.js：vcf_play2 試下一手、電腦擋） ----------
 const engine = new Worker('score-worker.js?v=' + ENGINE_V);
@@ -265,14 +383,15 @@ async function pickPuzzle(ab, used) {
 let startRank = Math.min(MAX_START, Math.max(0, Number(store.get('vcfgame.rank') ?? 3)));
 $('nick').value = store.get('vcfgame.nick') || '';
 function renderStart() {
-  $('rkName').textContent = RANKS[startRank];
-  $('rkBand').textContent = BANDS[startRank];
+  $('rkName').textContent = rankName(startRank);
+  $('rkBand').textContent = bandText(startRank);
   $('rkDown').disabled = startRank === 0;
   $('rkUp').disabled = startRank === MAX_START;
-  $('rkKeep').textContent = '能力分不公開：解開比你難的題加得多，簡單題答錯扣得多，結算才知道你在哪一段' + (startRank > 0 ? '。結算低於起始段位不上排行榜。' : '。');
+  $('rkKeep').textContent = T('keep') + (startRank > 0 ? ' ' + T('keepDemote') : '');
 }
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(MAX_START, startRank + 1); renderStart(); };
+applyLang();
 renderStart();
 
 // ---------- 棋盤 ----------
@@ -336,11 +455,11 @@ function newGame(nick) {
 }
 $('go').onclick = async () => {
   const nick = $('nick').value.trim();
-  if (!nick) { $('startMsg').textContent = '先輸入暱稱'; $('nick').focus(); return; }
+  if (!nick) { $('startMsg').textContent = T('needNick'); $('nick').focus(); return; }
   store.set('vcfgame.nick', nick); store.set('vcfgame.rank', String(startRank));
-  $('startMsg').textContent = '載入題目中…'; $('go').disabled = true;
+  $('startMsg').textContent = T('loading'); $('go').disabled = true;
   try { const a = START_AB[startRank]; await Promise.all(filesFor(a / 1.25, a * 1.25).map(loadFile)); }
-  catch { $('startMsg').textContent = '題庫讀不到，請重新整理再試'; $('go').disabled = false; return; }
+  catch { $('startMsg').textContent = T('loadFail'); $('go').disabled = false; return; }
   $('startMsg').textContent = ''; $('go').disabled = false;
   g = newGame(nick);
   show('sPlay'); layout(); renderHud();
@@ -355,24 +474,24 @@ function tick(t) {
   g.lastT = t;
   if (!g.hold) {
     g.left -= dt; g.elapsed += dt; g.psec += dt;
-    if (g.left <= 0) { g.left = 0; renderHud(); endGame('時間到'); return; }
+    if (g.left <= 0) { g.left = 0; renderHud(); endGame(T('endTime')); return; }
   }
   renderHud();
   requestAnimationFrame(tick);
 }
-const atkName = (p) => p.atkWhite ? '白先' : '黑先';
+const atkName = (p) => p.atkWhite ? T('white') : T('black');
 function renderHud() {
   $('tLeft').textContent = Math.ceil(g.left);
   $('tot').textContent = Math.round(g.total);
   $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
   if (g.p) {
-    $('pTime').textContent = `本題 ${Math.floor(g.psec)} 秒`;
+    $('pTime').textContent = T('pTime', { s: Math.floor(g.psec) });
   }
 }
 function setGhost(t) {
   g.ghost = t;
   $('confirm').disabled = !t;
-  $('confirm').textContent = t ? `確定下 ${t}` : '先點棋盤';
+  $('confirm').textContent = t ? T('confirm', { t }) : T('pick');
   draw();
 }
 function flash(html, cls, ms) {
@@ -385,7 +504,7 @@ async function nextPuzzle() {
   g.hold = true;
   let p;
   try { p = await pickPuzzle(g.ab, g.used); }
-  catch { endGame('題庫讀不到'); return; }
+  catch { endGame(T('endNoPuzzle')); return; }
   g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = [];
   setGhost(null);
   $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
@@ -403,20 +522,20 @@ async function placeAt(t) {
   const res = (await play(g.black.join(' '), g.white.join(' '), t, p.atkWhite)).result || { r: 'illegal' };
   g.moves.push(t);
   if (res.r === 'illegal') { g.moves.pop(); g.hold = false; return; }
-  if (res.r === 'mustblock') return wrong(`要先擋對方的四（${res.at}）`);
-  if (res.r === 'forbidden') { atk.push(t); draw(); return wrong('這裡是黑棋禁手'); }
+  if (res.r === 'mustblock') return wrong('mustblock', res.at);
+  if (res.r === 'forbidden') { atk.push(t); draw(); return wrong('forbidden'); }
   atk.push(t);
   if (res.r === 'win') { draw(); return solved(res.how); }
-  if (res.r === 'notfour') { draw(); return wrong('這手不是四'); }
+  if (res.r === 'notfour') { draw(); return wrong('notfour'); }
   if (res.r === 'block') {
     def.push(res.def); g.lastDef = res.def;
     draw();
-    if (res.lost) return wrong('對方擋完反而連成了');
-    if (res.vcf === 0) return wrong('下完就沒有 VCF 了');
+    if (res.lost) return wrong('lost');
+    if (res.vcf === 0) return wrong('novcf');
     g.hold = false;   // vcf>0，或搜太久沒算完（-1）就當還有路，繼續
     return;
   }
-  wrong('這手不行');
+  wrong('bad');
 }
 
 async function solved(how) {
@@ -426,7 +545,7 @@ async function solved(how) {
   g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
   $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
   renderHud();
-  await flash(`答對・+${BONUS_SEC} 秒`, 'good', FEED_MS);
+  await flash(T('ok', { b: BONUS_SEC }), 'good', FEED_MS);
   if (!g.over) nextPuzzle();
 }
 
@@ -436,14 +555,15 @@ function updateAbility(ok) {   // 回傳能力分變化（整數）
   g.cur = rankOf(g.ab);
   return Math.round(g.ab - before);
 }
-async function wrong(why) {
+async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋的點
   const p = g.p;
   g.wrong++;
   const d = updateAbility(false);
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), why, m: g.moves.join(' ') });
+  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' ') };
+  g.log.push(x);
   renderHud();
-  await flash(why + (g.wrong >= MAX_WRONG ? '' : `<br>還能錯 ${MAX_WRONG - g.wrong} 題`), 'bad', FEED_MS);
-  if (g.wrong >= MAX_WRONG) endGame(`錯 ${MAX_WRONG} 題`);
+  await flash(whyText(x) + (g.wrong >= MAX_WRONG ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', FEED_MS);
+  if (g.wrong >= MAX_WRONG) endGame(T('endWrong', { n: MAX_WRONG }));
   else if (!g.over) nextPuzzle();
 }
 
@@ -455,7 +575,7 @@ cv.addEventListener('click', (ev) => {
   else setGhost(t);
 });
 $('confirm').onclick = () => placeAt(g && g.ghost);
-$('skip').onclick = () => { if (g && !g.hold && !g.over) { g.hold = true; setGhost(null); wrong('跳過'); } };
+$('skip').onclick = () => { if (g && !g.hold && !g.over) { g.hold = true; setGhost(null); wrong('skip'); } };
 window.addEventListener('resize', () => { if (!$('sPlay').hidden) layout(); });
 
 // ---------- 結算＋排行榜 ----------
@@ -468,55 +588,56 @@ function endGame(why) {
   lastRun = { nick: g.nick, startRank: g.start, finalRank, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
   $('endWhy').textContent = why;
-  $('endRank').textContent = RANKS[finalRank];
-  $('endNote').textContent = demoted ? `掉回${RANKS[finalRank]}` : finalRank > g.start ? '升段了' : `維持${RANKS[finalRank]}`;
+  $('endRank').textContent = rankName(finalRank);
+  $('endRank').style.fontSize = rankName(finalRank).length > 4 ? '30px' : '';
+  $('endNote').textContent = demoted ? T('noteDown', { r: rankName(finalRank) }) : finalRank > g.start ? T('noteUp') : T('noteKeep', { r: rankName(finalRank) });
   $('stamp').classList.toggle('down', demoted);
   $('eTot').textContent = Math.round(g.total);
   $('ePps').textContent = pps.toFixed(1);
   $('eSolved').textContent = g.solved;
   const top = finalRank < TOP_RANK ? LOW[finalRank + 1] : null;
-  $('ePts').textContent = `能力分 ${Math.round(g.ab)}（${RANKS[finalRank]}題目分 ${LOW[finalRank]}–${top ?? '以上'}${top ? `，到 ${top} 升${RANKS[finalRank + 1]}` : ''}）`;
+  $('ePts').textContent = T('abLine', { a: Math.round(g.ab), r: rankName(finalRank), lo: LOW[finalRank], hi: top ?? '∞', next: top ? T('abNext', { top, r: rankName(finalRank + 1) }) : '' });
   show('sEnd');
   submit();
 }
 async function submit() {
   $('retrySubmit').hidden = true;
-  $('ePlace').textContent = lastRun.demoted ? `能力分掉到${RANKS[lastRun.startRank]}以下，這局不上排行榜。` : '送出成績中…';
+  $('ePlace').textContent = lastRun.demoted ? T('placeDemoted', { r: rankName(lastRun.startRank) }) : T('sending');
   myId = null;
   try {
     const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
-    if (j.place) $('ePlace').innerHTML = `今天段位榜第 <b style="color:var(--gold)">${j.place.rank.today}</b>・總分榜第 ${j.place.total.today}・每秒榜第 ${j.place.pps.today}`;
+    if (j.place) $('ePlace').textContent = T('place', { a: j.place.rank.today, b: j.place.total.today, c: j.place.pps.today });
   } catch {
-    if (!lastRun.demoted) { $('ePlace').textContent = '排行榜連不上，成績還沒送出。'; $('retrySubmit').hidden = false; }
+    if (!lastRun.demoted) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; }
   }
   boardView($('endBoard'));
 }
 $('retrySubmit').onclick = submit;
 $('again').onclick = () => { g = null; show('sStart'); renderStart(); };
 
-const TABS = [['rank', '段位榜'], ['total', '總分榜'], ['pps', '每秒榜']];
+const TABS = [['rank', 'tabRank'], ['total', 'tabTotal'], ['pps', 'tabPps']];
 function boardView(el, by = 'rank', scope = 'today') {
-  el.innerHTML = `<div class="tabs" role="tablist">${TABS.map(([k, n]) => `<button type="button" role="tab" data-by="${k}" aria-selected="${k === by}">${n}</button>`).join('')}</div>
-    <div class="scope" style="margin-top:8px">${[['today', '今天'], ['all', '全部']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div>
-    <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">讀取中…</span></div>`;
+  el.innerHTML = `<div class="tabs" role="tablist">${TABS.map(([k, n]) => `<button type="button" role="tab" data-by="${k}" aria-selected="${k === by}">${T(n)}</button>`).join('')}</div>
+    <div class="scope" style="margin-top:8px">${[['today', 'today'], ['all', 'all']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
+    <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
   el.querySelectorAll('[data-by]').forEach(b => b.onclick = () => boardView(el, b.dataset.by, scope));
   el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, by, b.dataset.scope));
   const rows = el.querySelector('.rows');
   fetch(`${API}/board?by=${by}&scope=${scope}&limit=20`).then(r => r.json()).then(j => {
     rows.innerHTML = '';
-    if (!j.rows || !j.rows.length) { rows.innerHTML = '<span class="muted" style="padding:12px 6px">還沒有人上榜</span>'; return; }
+    if (!j.rows || !j.rows.length) { rows.innerHTML = `<span class="muted" style="padding:12px 6px">${T('empty')}</span>`; return; }
     j.rows.forEach((x, i) => {
       const d = document.createElement('div');
       d.className = 'row' + (x.id === myId ? ' me' : '');
       const val = by === 'pps' ? Number(x.pps).toFixed(1) : Math.round(x.total);
-      d.innerHTML = `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${RANKS[x.final_rank] || ''}</span><span class="vl">${val}</span>`;
+      d.innerHTML = `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${rankName(x.final_rank) || ''}</span><span class="vl">${val}</span>`;
       d.querySelector('.nm').textContent = x.nick;
       rows.appendChild(d);
     });
-  }).catch(() => { rows.innerHTML = '<span class="muted" style="padding:12px 6px">排行榜連不上</span>'; });
+  }).catch(() => { rows.innerHTML = `<span class="muted" style="padding:12px 6px">${T('boardFail')}</span>`; });
 }
 
 function openModal(id) { $(id).hidden = false; $(id).querySelector('[data-close]').focus(); }
@@ -527,12 +648,12 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.q
 $('openBoard').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
 $('openReview').onclick = () => {
   const list = $('revList'); list.innerHTML = '';
-  if (!lastRun || !lastRun.detail.length) list.innerHTML = '<span class="muted">這局沒有題目</span>';
+  if (!lastRun || !lastRun.detail.length) list.innerHTML = `<span class="muted">${T('noPuzzles')}</span>`;
   for (const x of (lastRun ? lastRun.detail : [])) {
     const d = document.createElement('div'); d.className = 'rev';
     const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
-    d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? '解開' : '沒解'}</span><span class="tx"></span><a target="_blank" rel="noopener">打開</a>`;
-    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.sec} 秒・${x.ok ? `題目 ${x.s} 分・能力分 +${x.e}` : `題目 ${x.s} 分・${x.why}・能力分 ${x.e}`}`;
+    d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? T('tagOk') : T('tagNg')}</span><span class="tx"></span><a target="_blank" rel="noopener">${T('open')}</a>`;
+    d.querySelector('.tx').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]), T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })].join(T('sep'));
     d.querySelector('a').href = href;
     list.appendChild(d);
   }
