@@ -2,7 +2,7 @@
 # 把 Gomoku Rush 部署到 Cloudflare Pages（https://rush.hangsau.app）。
 # 只上傳「已 commit 且已推上 GitHub」的檔案（git archive HEAD），跟 GitHub Pages 內容一致；
 # 不上傳說明文件、docs、Worker 原始碼。根網址 / 就是遊戲（index.html＝game.html 的複本），
-# 分析器改放 /analyzer（原 index.html）；game.html、score.html 照舊可開（Pages 會把 .html 轉成無副檔名網址）。
+# 分析器不上傳；game.html、score.html 照舊可開（Pages 會把 .html 轉成無副檔名網址）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PROJECT=gomoku-rush
@@ -17,8 +17,7 @@ trap 'rm -rf "$OUT" .wrangler' EXIT  # .wrangler 是 wrangler 自己留的快取
 git -c core.autocrlf=false archive HEAD | tar -x -C "$OUT"
 rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/tools"
 find "$OUT" -maxdepth 1 -name '*.md' -delete
-mv "$OUT/index.html" "$OUT/analyzer.html"
-cp "$OUT/game.html" "$OUT/index.html"
+cp "$OUT/game.html" "$OUT/index.html"  # 原 index.html（分析器）使用者 2026-11-07 說不用了，不上傳
 
 npx --yes wrangler@4.158.0 pages deploy "$OUT" --project-name "$PROJECT" --branch main --commit-hash "$(git rev-parse HEAD)" --commit-message "$(git log -1 --format=%s | cut -c1-80)"
 
