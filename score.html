@@ -354,7 +354,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107b');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107c');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -511,7 +511,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107b'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107c'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -563,7 +563,7 @@ function onResult(e) {
     : pick.sideLabel ? `自動判斷：這題是<b>${pick.sideLabel}</b>。` : '黑先、白先都不成立，下面顯示黑先的檢查結果。';
   $('status').textContent = `計算時間 ${(totalMs / 1000).toFixed(1)} 秒${curScale > 1 ? `（搜尋量自動加大到 ×${curScale}）` : ''}。`;
   renderAll();
-  if (r.accepted) startUsage(r);
+  if (okOf(pick)) startUsage(pick);   // 2026-11-07 修：原本看的是最後算的那一方（多半是白先），黑先題常常沒算使用率
 }
 
 // ---------- 棋子使用率（2026-11-03）：每顆子拿掉重評，跟本機引擎同一套規則 ----------
@@ -588,7 +588,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale });
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107b');
+    const w = new Worker('score-worker.js?v=20261107c');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;

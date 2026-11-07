@@ -1,6 +1,6 @@
 // score-worker.js — 詰題評分在背景跑（不卡住畫面）；引擎是 vcf-slover 的 C++ 編成的 WebAssembly（vcfscore.js / vcfscore.wasm）
 // 收：{ id, black, white, attackerWhite, scale } → 回：{ id, ok, result | error }
-const V = '20261107b';   // 引擎換版就改這裡，瀏覽器才會重抓（2026-11-07）
+const V = '20261107c';   // 引擎換版就改這裡，瀏覽器才會重抓（2026-11-07）
 importScripts('vcfscore.js?v=' + V);
 let modP = null;
 function mod() {
