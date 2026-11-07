@@ -362,7 +362,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107e');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107f');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -519,7 +519,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107e'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107f'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -596,7 +596,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale, anyCount: 1 });   // 拿掉一顆子造成的子數差不算不合法（2026-11-07b）
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107e');
+    const w = new Worker('score-worker.js?v=20261107f');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
