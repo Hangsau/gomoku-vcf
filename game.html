@@ -244,8 +244,8 @@ const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];   // 各段題目分下�
 const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];  // 起始能力分＝起始段位區間的幾何中點
 const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
 const K_STEP = 0.4;   // 一題最多讓能力分 ×1.5 或 ÷1.5；一局只有幾題，要調得快
-// 起始補正（2026-11-07 使用者：起始段位只是猜的，一開始要快速補正）：每局前 FAST_N 題漲跌放大到 K_FAST，之後回到 K_STEP
-const K_FAST = 0.8, FAST_N = 3;
+// 起始補正（2026-11-07 使用者：起始段位只是猜的，一開始要快速補正；第一題解開就照本段位正常算）：還沒解開任何題之前答錯，漲跌用 K_FAST；解開過（含解開的那一題）一律 K_STEP
+const K_FAST = 0.8;
 const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
@@ -639,7 +639,7 @@ async function solved(how) {
 
 function updateAbility(ok) {   // 回傳能力分變化（整數）
   const before = g.ab, P = expectP(g.ab, g.p.score);
-  const k = g.log.length < FAST_N ? K_FAST : K_STEP;   // 這題之前已判過幾題（log 在這之後才記）
+  const k = !ok && g.solved === 0 ? K_FAST : K_STEP;   // g.solved 在解開後才 +1，所以解開的那一題本身也用正常幅度
   g.ab = Math.exp(Math.log(g.ab) + k * ((ok ? 1 : 0) - P));
   g.cur = rankOf(g.ab);
   return Math.round(g.ab - before);
