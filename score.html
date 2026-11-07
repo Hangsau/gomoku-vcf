@@ -282,7 +282,7 @@ section.panel[aria-label] { position: relative; }
     <li><b>白先 VCF</b>：白棋只用衝四連續取勝；黑棋防守時有禁手，逼黑擋在禁手點（禁手勝）也算白勝。白先的題目黑可以比白多一顆。</li>
     <li><b>自動判斷</b>：每題黑先、白先各算一次。只有一種成立就是那一種；兩種都成立叫<b>雙先</b>，兩個分數都會列出來。</li>
     <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
-    <li><b>沒有繞路</b>：多走幾手也能贏的另一條路叫繞路解；1 個扣 15 分，2 個以上不算詰題。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
+    <li><b>沒有別解</b>：除了解答以外，還有另一條不同的贏法（多走幾手也能贏），就不是唯一解，不算詰題。同一解換走法（兩手先後對調、插一手空四再照答案走）不算別解。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
     <li><b>評定</b>：10 手以內算<b>短篇</b>（看計算量、深誘餌、禁手陷阱、解禁、反四、預備反四、手順），11 手以上算<b>長篇</b>（看手數與解題中的技巧）。兩組各有自己的段位，不互相比較。</li>
   </ol>
   <p class="hint">段位門檻目前是暫定的固定數字，之後會調整。評分引擎跟出題 AI 用的是同一套程式。</p>
@@ -362,7 +362,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107d');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107e');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -519,7 +519,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107d'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107e'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -596,7 +596,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale, anyCount: 1 });   // 拿掉一顆子造成的子數差不算不合法（2026-11-07b）
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107d');
+    const w = new Worker('score-worker.js?v=20261107e');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
@@ -631,7 +631,7 @@ function stageStates() {
     { k: 'shield', t: '合法盤面', d: `黑 ${black.size}・白 ${white.size}`, s: '' },
     { k: 'bolt', t: `${r && r.sideLabel ? r.sideLabel : atkName()} VCF`, d: '連續衝四取勝', s: '' },
     { k: 'key', t: '唯一解', d: '每一手都只有一條路', s: '' },
-    { k: 'route', t: '沒有繞路', d: '多走幾手也能贏的路', s: '' },
+    { k: 'route', t: '沒有別解', d: '沒有另一條不同的贏法', s: '' },
     { k: 'crown', t: '評定難度', d: '', s: '' },
   ];
   if (!r) return S;
@@ -647,9 +647,9 @@ function stageStates() {
     return S;
   }
   S[2].s = 'pass';
-  if (r.detours >= 2) { S[3].s = 'fail'; S[3].d = `繞路解 ${r.detours} 個（2 個以上不算詰題）`; return S; }
+  if (r.detours >= 1) { S[3].s = 'fail'; S[3].d = `還有 ${r.detours >= 2 ? '2 條以上' : '1 條'}不同的贏法，不是唯一解`; return S; }   // 2026-11-07c
   if (r.detours < 0) { S[3].s = 'warn'; S[3].d = '檢查量超過上限，無法確定'; return S; }
-  S[3].s = r.detours === 1 ? 'warn' : 'pass'; S[3].d = r.detours === 1 ? '繞路解 1 個（扣 15 分）' : '繞路解 0 個';
+  S[3].s = 'pass'; S[3].d = '沒有別的贏法';
   S[4].s = 'gold'; S[4].d = r.division === 'short' ? '短篇（10 手以內）' : '長篇（11 手以上）';
   if (!r.accepted && r.division === 'short' && r.L < 4) S[4].d += '・不到 4 手，不評段位';
   return S;
@@ -683,7 +683,7 @@ function rankOf(r) {
   return name;
 }
 function renderRate() {
-  const r = result, ok = r && r.vcf === true && r.unique === true && r.detours >= 0 && r.detours <= 1;
+  const r = result, ok = r && r.vcf === true && r.unique === true && r.detours === 0;   // 2026-11-07c：有別的贏法就不收
   const div = r && r.division;
   const sideTag = r && r.sideLabel ? r.sideLabel + '・' : '';
   $('divLabel').textContent = sideTag + (div === 'short' ? '難度評定・短篇（10 手以內）' : div === 'long' ? '難度評定・長篇（11 手以上）' : '難度評定');
