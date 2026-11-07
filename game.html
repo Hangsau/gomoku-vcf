@@ -244,6 +244,8 @@ const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];   // 各段題目分下�
 const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];  // 起始能力分＝起始段位區間的幾何中點
 const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
 const K_STEP = 0.4;   // 一題最多讓能力分 ×1.5 或 ÷1.5；一局只有幾題，要調得快
+// 起始補正（2026-11-07 使用者：起始段位只是猜的，一開始要快速補正）：每局前 FAST_N 題漲跌放大到 K_FAST，之後回到 K_STEP
+const K_FAST = 0.8, FAST_N = 3;
 const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
 const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
@@ -274,7 +276,7 @@ const I18N = {
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '段位榜', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '段位榜', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -296,7 +298,7 @@ const I18N = {
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Rank', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Rank', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
@@ -318,7 +320,7 @@ const I18N = {
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '段位', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '段位', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
@@ -340,7 +342,7 @@ const I18N = {
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '단', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '단', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
@@ -637,7 +639,8 @@ async function solved(how) {
 
 function updateAbility(ok) {   // 回傳能力分變化（整數）
   const before = g.ab, P = expectP(g.ab, g.p.score);
-  g.ab = Math.exp(Math.log(g.ab) + K_STEP * ((ok ? 1 : 0) - P));
+  const k = g.log.length < FAST_N ? K_FAST : K_STEP;   // 這題之前已判過幾題（log 在這之後才記）
+  g.ab = Math.exp(Math.log(g.ab) + k * ((ok ? 1 : 0) - P));
   g.cur = rankOf(g.ab);
   return Math.round(g.ab - before);
 }
@@ -667,26 +670,30 @@ let lastRun = null, myId = null;
 function endGame(why) {
   if (g.over) return;
   g.over = true; g.hold = true;
-  const finalRank = g.cur, demoted = finalRank < g.start;   // 能力分最後停在哪個區間就是哪段；低於起始段位不入榜
+  // 結算段位（2026-11-07 使用者：沒證明過的段位不能算）＝能力分的段位、這局解開過的最高題目段位，兩者取低；一題都沒解開＝不判段位
+  const proven = g.log.filter(x => x.ok).reduce((m, x) => Math.max(m, x.r), -1);
+  const noRank = proven < 0, capped = !noRank && proven < g.cur;
+  const finalRank = noRank ? 0 : Math.min(g.cur, proven), demoted = noRank || finalRank < g.start;   // 低於起始段位不入榜
   const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
   lastRun = { nick: g.nick, startRank: g.start, finalRank, ab: Math.round(g.ab * 10) / 10, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
   $('endWhy').textContent = why;
-  $('endRank').textContent = rankName(finalRank);
-  $('endRank').style.fontSize = rankName(finalRank).length > 4 ? '30px' : '';
-  $('endNote').textContent = demoted ? T('noteDown', { r: rankName(finalRank) }) : finalRank > g.start ? T('noteUp') : T('noteKeep', { r: rankName(finalRank) });
+  $('endRank').textContent = noRank ? '—' : rankName(finalRank);
+  $('endRank').style.fontSize = !noRank && rankName(finalRank).length > 4 ? '30px' : '';
+  $('endNote').textContent = noRank ? T('noteNone') : demoted ? T('noteDown', { r: rankName(finalRank) }) : finalRank > g.start ? T('noteUp') : T('noteKeep', { r: rankName(finalRank) });
   $('stamp').classList.toggle('down', demoted);
   $('eAb').textContent = Math.round(g.ab);
   $('eSolved').textContent = g.solved;
   const top = finalRank < TOP_RANK ? LOW[finalRank + 1] : null;
-  $('ePts').textContent = T('abLine', { a: Math.round(g.ab), r: rankName(finalRank), lo: LOW[finalRank], hi: top ?? '∞', next: top ? T('abNext', { top, r: rankName(finalRank + 1) }) : '' });
+  $('ePts').textContent = noRank ? T('noRankLine') : capped ? T('capLine', { a: Math.round(g.ab), r: rankName(g.cur), p: rankName(proven) })
+    : T('abLine', { a: Math.round(g.ab), r: rankName(finalRank), lo: LOW[finalRank], hi: top ?? '∞', next: top ? T('abNext', { top, r: rankName(finalRank + 1) }) : '' });
   show('sEnd');
   submit();
 }
 async function submit() {
   $('retrySubmit').hidden = true;
   $('eToday').textContent = '–';
-  $('ePlace').textContent = lastRun.demoted ? T('placeDemoted', { r: rankName(lastRun.startRank) }) : T('sending');
+  $('ePlace').textContent = !lastRun.solved ? T('placeNone') : lastRun.demoted ? T('placeDemoted', { r: rankName(lastRun.startRank) }) : T('sending');
   myId = null;
   try {
     const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
