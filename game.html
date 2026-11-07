@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F121A">
+<title>VCF 限時闖關</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* 2026-11-07 設計稿 C 開始＋C 解題（加 A 升段條）＋A 結算；畫布 https://claude.ai/artifact/8N7yKVQXxGwnF2At727r6y */
+:root {
+  --bg: #0F121A; --panel: #161A24; --panel2: #1F2A3D; --line: #252B3A; --line2: #2E3546;
+  --text: #EDEFF5; --text2: #B6BCCB; --gold: #F2B544; --goldBg: #3A2F17; --goldInk: #1A1300;
+  --teal: #3CC6B4; --tealBg: #1F3B39; --tealInk: #06231F; --fail: #FF7A6B; --failBg: #3D1F1F;
+  --num: 'Chakra Petch', 'Noto Sans TC', sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
+body { min-height: 100dvh; }
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: default; opacity: .45; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+.screen { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+.screen[hidden] { display: none; }
+.pad { padding-left: 20px; padding-right: 20px; }
+.muted { color: var(--text2); }
+.btn { height: 60px; border-radius: 18px; border: 0; font-size: 20px; font-weight: 900; }
+.btn.gold { background: var(--gold); color: var(--goldInk); }
+.btn.teal { background: var(--teal); color: var(--tealInk); }
+.btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--text); font-size: 16px; font-weight: 500; }
+.btn.link { height: 48px; background: transparent; color: var(--gold); font-size: 16px; font-weight: 500; }
+.thumb { padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
+
+/* 開始 */
+#sStart .hero { padding-top: 48px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+#sStart .big60 { font-family: var(--num); font-size: 120px; font-weight: 700; line-height: 1; color: var(--gold); }
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 28px; }
+.stepper .val { flex: 1; height: 56px; border-radius: 16px; background: var(--goldBg); display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--gold); }
+.stepper .val b { font-size: 26px; }
+input.nick { width: 100%; height: 52px; border-radius: 14px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font: inherit; font-size: 18px; padding: 0 16px; }
+
+/* 解題 */
+.hud { padding: calc(14px + env(safe-area-inset-top)) 16px 6px; display: flex; align-items: flex-end; justify-content: space-between; }
+.hud .lbl { font-size: 13px; color: var(--text2); }
+.hud .n { font-family: var(--num); font-size: 52px; font-weight: 700; line-height: 1; }
+.plus { font-family: var(--num); font-size: 18px; font-weight: 700; color: var(--teal); opacity: 0; transition: opacity .2s; }
+.plus.on { opacity: 1; }
+.lives { display: inline-flex; gap: 5px; vertical-align: middle; }
+.lives i { width: 13px; height: 13px; border-radius: 50%; background: var(--fail); display: inline-block; }
+.lives i.off { background: transparent; border: 2px solid var(--failBg); }
+.bars { padding: 4px 16px 8px; display: flex; flex-direction: column; gap: 6px; }
+.bar { position: relative; height: 10px; border-radius: 5px; background: var(--line); }
+.bar > div { height: 100%; border-radius: 5px; transition: width .15s linear; }
+.bar .mark { position: absolute; left: 80%; top: -4px; width: 3px; height: 18px; background: var(--text); border-radius: 2px; }
+.barrow { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text2); }
+.boardWrap { position: relative; align-self: center; touch-action: manipulation; }
+canvas#board { display: block; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.flash[hidden] { display: none; }
+.flash span { padding: 14px 30px; border-radius: 20px; font-size: 44px; font-weight: 900; background: rgba(15,18,26,.9); display: inline-flex; align-items: center; gap: 14px; }
+.flash .stone { width: 36px; height: 36px; border-radius: 50%; display: inline-block; }
+.flash.bad span { font-size: 24px; color: var(--fail); border: 2px solid var(--fail); }
+.flash.good span { font-size: 26px; color: var(--teal); border: 2px solid var(--teal); flex-direction: column; gap: 4px; }
+.info { padding: 10px 20px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text2); }
+.atk { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 700; }
+.atk i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.hint { padding: 6px 20px 0; font-size: 15px; color: var(--text2); }
+
+/* 結算 */
+#sEnd .top { padding-top: calc(36px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.stamp { width: 168px; height: 168px; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); }
+.stamp.down { border-color: var(--fail); color: var(--fail); }
+.stamp b { font-size: 50px; font-weight: 900; line-height: 1.05; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.tiles div { background: var(--panel); border-radius: 14px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; }
+.tiles span { font-size: 13px; color: var(--text2); }
+.tiles b { font-family: var(--num); font-size: 26px; }
+.sheet { margin-top: 16px; flex: 1; border-radius: 24px 24px 0 0; background: var(--panel); border-top: 1px solid var(--line2); padding: 10px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+.grip { align-self: center; width: 44px; height: 5px; border-radius: 3px; background: var(--line2); }
+.tabs { display: flex; gap: 6px; }
+.tabs button { flex: 1; min-height: 44px; border-radius: 12px; border: 0; background: var(--panel2); color: var(--text2); font-size: 15px; }
+.tabs button[aria-selected="true"] { background: var(--gold); color: var(--goldInk); font-weight: 700; }
+.scope { display: flex; gap: 6px; justify-content: flex-end; }
+.scope button { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line2); background: transparent; color: var(--text2); font-size: 14px; }
+.scope button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.rows { display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; gap: 8px; padding: 10px 6px; border-top: 1px solid var(--line); font-size: 16px; }
+.row.me { background: var(--tealBg); border-radius: 10px; }
+.row .no { width: 28px; font-family: var(--num); color: var(--text2); }
+.row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .rk { width: 52px; color: var(--gold); font-weight: 700; }
+.row .vl { width: 60px; text-align: right; font-family: var(--num); }
+
+/* 浮層：排行榜、看我解的題 */
+.modal { position: fixed; inset: 0; background: rgba(5,7,12,.7); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.modal[hidden] { display: none; }
+.modal .box { width: 100%; max-width: 520px; max-height: 88dvh; overflow-y: auto; border-radius: 24px 24px 0 0; background: var(--panel); padding: 10px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.modal h2 { margin: 4px 0 0; font-size: 20px; }
+.rev { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-top: 1px solid var(--line); font-size: 15px; }
+.rev .tag { padding: 2px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+.rev .tag.ok { background: var(--tealBg); color: var(--teal); }
+.rev .tag.ng { background: var(--failBg); color: var(--fail); }
+.rev .tx { flex: 1; min-width: 0; }
+.rev a { color: var(--gold); white-space: nowrap; min-height: 44px; display: inline-flex; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .bar > div, .plus { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- 開始（設計稿 C1） -->
+<section id="sStart" class="screen">
+  <div class="hero pad">
+    <span class="big60">60</span>
+    <span style="font-size: 18px; font-weight: 700;">秒・VCF 衝分</span>
+    <span class="muted" style="margin-top: 6px; font-size: 15px;">答對 +20 秒・錯 3 題結束</span>
+  </div>
+  <div class="pad" style="padding-top: 32px; display: flex; flex-direction: column; gap: 8px;">
+    <span class="muted" style="font-size: 15px;">起始段位</span>
+    <div class="stepper">
+      <button type="button" id="rkDown" aria-label="降一段">−</button>
+      <div class="val" aria-live="polite"><b id="rkName">三段</b><span id="rkBand" style="font-size: 13px;"></span></div>
+      <button type="button" id="rkUp" aria-label="升一段">+</button>
+    </div>
+    <span class="muted" id="rkKeep" style="font-size: 13px; line-height: 1.5;"></span>
+  </div>
+  <div class="pad" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+    <label for="nick" class="muted" style="font-size: 15px;">暱稱</label>
+    <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="上排行榜用的名字">
+  </div>
+  <div style="flex: 1;"></div>
+  <div class="thumb" style="flex-direction: column;">
+    <span class="muted" id="startMsg" role="status" style="font-size: 14px; text-align: center; min-height: 20px;"></span>
+    <button type="button" class="btn gold" id="go" style="height: 64px; font-size: 23px;">開始</button>
+    <button type="button" class="btn link" id="openBoard">看排行榜</button>
+    <a href="index.html" class="muted" style="text-align: center; font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;">← 回 VCF 分析器</a>
+  </div>
+</section>
+
+<!-- 解題（設計稿 C2＋A 升段條） -->
+<section id="sPlay" class="screen" hidden>
+  <div class="hud">
+    <div>
+      <div class="lbl">剩餘秒數</div>
+      <div style="display: flex; align-items: baseline; gap: 8px;"><span class="n" id="tLeft">60</span><span class="plus" id="tPlus">+20</span></div>
+    </div>
+    <div style="text-align: right;">
+      <div class="lbl">總分・<span id="curRank">三段</span></div>
+      <div class="n" id="tot" style="color: var(--gold);">0</div>
+    </div>
+  </div>
+  <div class="bars">
+    <div class="bar" role="img" id="rankBarBox"><div id="rankBar" style="width: 0%; background: var(--gold);"></div></div>
+    <div class="barrow"><span id="rankTxt"></span><span>可錯 <span class="lives" id="lives"></span></span></div>
+    <div class="bar" role="img" id="ppsBarBox"><div id="ppsBar" style="width: 100%; background: var(--teal);"></div><span class="mark" id="ppsMark"></span></div>
+    <div class="barrow"><span id="ppsTxt"></span><span id="ppsRule">白線右邊解完直接升段</span></div>
+  </div>
+  <div class="boardWrap" id="boardWrap">
+    <canvas id="board" aria-label="題目棋盤，點一下選位置，同一格再點一下就下"></canvas>
+    <div class="flash" id="flash" hidden></div>
+  </div>
+  <div class="info"><span class="atk" id="atkInfo"></span><span id="pTime">本題 0 秒</span></div>
+  <div class="hint">同一格點兩下就下，或按確定</div>
+  <div style="flex: 1;"></div>
+  <div class="thumb">
+    <button type="button" class="btn ghost" id="skip" style="width: 96px; height: 64px; font-size: 15px; color: var(--text2);">跳過</button>
+    <button type="button" class="btn gold" id="confirm" style="flex: 1; height: 64px; font-size: 21px;" disabled>先點棋盤</button>
+  </div>
+</section>
+
+<!-- 結算（設計稿 A3） -->
+<section id="sEnd" class="screen" hidden>
+  <div class="top pad">
+    <span class="muted" id="endWhy" style="font-size: 16px;">時間到</span>
+    <div class="stamp" id="stamp"><span style="font-size: 14px;">結算段位</span><b id="endRank">三段</b><span id="endNote" style="font-size: 13px;">守住了</span></div>
+    <div class="tiles">
+      <div><span>總分</span><b id="eTot">0</b></div>
+      <div><span>每秒得分</span><b id="ePps">0</b></div>
+      <div><span>答對</span><b id="eSolved">0</b></div>
+    </div>
+    <span class="muted" id="ePlace" role="status" style="font-size: 15px; text-align: center;"></span>
+    <button type="button" class="btn link" id="retrySubmit" hidden>重新送出成績</button>
+  </div>
+  <div class="sheet">
+    <div class="grip"></div>
+    <div id="endBoard"></div>
+    <div style="flex: 1;"></div>
+    <div style="padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px;">
+      <button type="button" class="btn ghost" id="openReview" style="flex: 1; height: 58px;">看我解的題</button>
+      <button type="button" class="btn gold" id="again" style="flex: 1.4; height: 58px; font-size: 19px;">再來一局</button>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="modal" id="mBoard" hidden role="dialog" aria-modal="true" aria-labelledby="mBoardT">
+  <div class="box"><div class="grip"></div><h2 id="mBoardT">排行榜</h2><div id="startBoard"></div><button type="button" class="btn ghost" data-close>關閉</button></div>
+</div>
+<div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
+  <div class="box"><div class="grip"></div><h2 id="mReviewT">這局的題目</h2><span class="muted" style="font-size: 14px;">點「打開」會在試煉場看解答、自己試走。</span><div id="revList"></div><button type="button" class="btn ghost" data-close>關閉</button></div>
+</div>
+
+<script>
+'use strict';
+// ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題、沒守住起始段位降段不入榜） ----------
+const API = 'https://vcf-game-api.psyhangsau.workers.dev';
+const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
+const BANDS = ['入門', '40–70 分', '70–120 分', '120–200 分', '200–315 分', '315–500 分', '500–780 分', '780 分以上'];
+const KEEP = [0, 200, 350, 600, 1000, 1575, 2500, 3900, 6050];   // 累積到這個總分＝到這段（＝該段題目下限 ×5）
+const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
+const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
+const FAST_PER_MOVE = 2.5;   // 一手 2.5 秒內解完＝太簡單，直接升段
+const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
+const COLS = 'ABCDEFGHJKLMNOP', N = 15;
+const ENGINE_V = '20261107b';
+
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// ---------- 引擎（score-worker.js：vcf_play2 試下一手、電腦擋） ----------
+const engine = new Worker('score-worker.js?v=' + ENGINE_V);
+const pending = new Map();
+let reqId = 0;
+engine.onmessage = (e) => { const p = pending.get(e.data.id); if (p) { pending.delete(e.data.id); p(e.data); } };
+function play(black, white, move, attackerWhite) {
+  return new Promise((resolve) => { const id = ++reqId; pending.set(id, resolve); engine.postMessage({ id, black, white, attackerWhite, play: move }); });
+}
+
+// ---------- 題庫 ----------
+const files = {};
+async function loadFile(k) {
+  if (!files[k]) files[k] = fetch(`game/p/${k}.json?v=20261107`).then(r => { if (!r.ok) throw new Error('題庫讀不到'); return r.json(); });
+  return files[k];
+}
+function bandOf(rank) {   // 目前段位 ±1 抽題；自己這段機率加倍
+  if (rank <= 0) return [[FILE_MIN, 1]];
+  const own = Math.min(FILE_MAX, rank);
+  const out = [];
+  for (let k = Math.max(FILE_MIN, own - 1); k <= Math.min(FILE_MAX, own + 1); k++) out.push([k, k === own ? 2 : 1]);
+  return out;
+}
+async function pickPuzzle(rank, used) {
+  const band = bandOf(rank);
+  const lists = await Promise.all(band.map(([k]) => loadFile(k)));
+  const choices = band.map(([k, w], i) => ({ k, w, list: lists[i] })).filter(c => c.list.some((_, j) => !used.has(c.k + ':' + j)));
+  const total = choices.reduce((s, c) => s + c.w, 0);
+  let x = Math.random() * total, c = choices[0];
+  for (const ch of choices) { x -= ch.w; if (x <= 0) { c = ch; break; } }
+  let j;
+  do { j = Math.floor(Math.random() * c.list.length); } while (used.has(c.k + ':' + j));
+  used.add(c.k + ':' + j);
+  const [black, white, L, score, atk] = c.list[j];
+  return { rank: c.k, black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w' };
+}
+
+// ---------- 開始畫面 ----------
+let startRank = Math.min(MAX_START, Math.max(0, Number(store.get('vcfgame.rank') ?? 3)));
+$('nick').value = store.get('vcfgame.nick') || '';
+function renderStart() {
+  $('rkName').textContent = RANKS[startRank];
+  $('rkBand').textContent = BANDS[startRank];
+  $('rkDown').disabled = startRank === 0;
+  $('rkUp').disabled = startRank === MAX_START;
+  $('rkKeep').textContent = startRank === 0 ? '見習生不會降段。' : `守住${RANKS[startRank]}要拿到 ${KEEP[startRank]} 分；沒守住會降段，不上排行榜。`;
+}
+$('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
+$('rkUp').onclick = () => { startRank = Math.min(MAX_START, startRank + 1); renderStart(); };
+renderStart();
+
+// ---------- 棋盤 ----------
+const cv = $('board'), ctx = cv.getContext('2d');
+let px = 390, cell = 24, pad = 14;
+function layout() {
+  const w = Math.min(document.querySelector('.app').clientWidth, 520);
+  px = Math.max(300, Math.min(w - 16, window.innerHeight - 340));   // 左右各留 8px，邊線的子才點得到
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(px * dpr); cv.height = Math.round(px * dpr);
+  cv.style.width = px + 'px'; cv.style.height = px + 'px';
+  $('boardWrap').style.width = px + 'px'; $('boardWrap').style.height = px + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pad = px * 0.045; cell = (px - 2 * pad) / (N - 1);
+  draw();
+}
+const xy = (t) => [pad + COLS.indexOf(t[0]) * cell, pad + (N - parseInt(t.slice(1), 10)) * cell];
+function stone(t, black, alpha) {
+  const [x, y] = xy(t), r = cell * 0.46;
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = black ? '#1B1A17' : '#FBFAF6'; ctx.fill();
+  if (!black) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#1B1A17'; ctx.stroke(); }
+  ctx.globalAlpha = 1;
+}
+function draw() {
+  ctx.clearRect(0, 0, px, px);
+  ctx.fillStyle = '#E9C98B';
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, px, px, 10) : ctx.rect(0, 0, px, px); ctx.fill();
+  ctx.strokeStyle = '#5B4524'; ctx.lineWidth = 1;
+  for (let i = 0; i < N; i++) {
+    const o = Math.round(pad + i * cell) + 0.5;
+    ctx.beginPath(); ctx.moveTo(pad, o); ctx.lineTo(px - pad, o); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(o, pad); ctx.lineTo(o, px - pad); ctx.stroke();
+  }
+  ctx.fillStyle = '#5B4524';
+  for (const t of ['D4', 'D12', 'L4', 'L12', 'H8']) { const [x, y] = xy(t); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+  if (!g || !g.p) return;
+  for (const t of g.black) stone(t, true);
+  for (const t of g.white) stone(t, false);
+  if (g.lastDef) { const [x, y] = xy(g.lastDef); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  if (g.ghost) {
+    stone(g.ghost, !g.p.atkWhite, 0.55);
+    const [x, y] = xy(g.ghost);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+function cellAt(ev) {
+  const r = cv.getBoundingClientRect();
+  const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);
+  if (c < 0 || c >= N || row < 0 || row >= N) return null;
+  return COLS[c] + (N - row);
+}
+
+// ---------- 一局 ----------
+let g = null;
+function newGame(nick) {
+  return { nick, start: startRank, cur: startRank, total: 0, left: START_SEC, elapsed: 0, wrong: 0, solved: 0,
+    used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
+}
+$('go').onclick = async () => {
+  const nick = $('nick').value.trim();
+  if (!nick) { $('startMsg').textContent = '先輸入暱稱'; $('nick').focus(); return; }
+  store.set('vcfgame.nick', nick); store.set('vcfgame.rank', String(startRank));
+  $('startMsg').textContent = '載入題目中…'; $('go').disabled = true;
+  try { await Promise.all(bandOf(startRank).map(([k]) => loadFile(k))); }
+  catch { $('startMsg').textContent = '題庫讀不到，請重新整理再試'; $('go').disabled = false; return; }
+  $('startMsg').textContent = ''; $('go').disabled = false;
+  g = newGame(nick);
+  show('sPlay'); layout(); renderHud();
+  requestAnimationFrame(tick);
+  nextPuzzle();
+};
+function show(id) { for (const s of ['sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+
+function tick(t) {
+  if (!g || g.over) return;
+  const dt = g.lastT ? Math.min(MAX_DT, (t - g.lastT) / 1000) : 0;
+  g.lastT = t;
+  if (!g.hold) {
+    g.left -= dt; g.elapsed += dt; g.psec += dt;
+    if (g.left <= 0) { g.left = 0; renderHud(); endGame('時間到'); return; }
+  }
+  renderHud();
+  requestAnimationFrame(tick);
+}
+const atkName = (p) => p.atkWhite ? '白先' : '黑先';
+function renderHud() {
+  $('tLeft').textContent = Math.ceil(g.left);
+  $('tot').textContent = Math.round(g.total);
+  $('curRank').textContent = RANKS[g.cur];
+  // 升段條：還沒守住起始段位時顯示「守住」，之後顯示「升下一段」
+  const keeping = g.start > 0 && g.total < KEEP[g.start];
+  const target = keeping ? KEEP[g.start] : (g.cur < TOP_RANK ? KEEP[g.cur + 1] : null);
+  $('rankBar').style.width = (target ? Math.min(100, g.total / target * 100) : 100) + '%';
+  $('rankTxt').textContent = target ? `${keeping ? '守住' + RANKS[g.start] : '升' + RANKS[g.cur + 1]} ${Math.round(g.total)}／${target}` : '最高段';
+  $('rankBarBox').setAttribute('aria-label', $('rankTxt').textContent);
+  $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
+  // 每秒得分條：本題現在解完的每秒得分；白線＝一手 2.5 秒
+  if (g.p) {
+    const pps = g.p.score / Math.max(0.1, g.psec), line = g.p.score / (FAST_PER_MOVE * g.p.L);
+    const counts = g.p.rank >= Math.min(g.cur, FILE_MAX) && g.cur < TOP_RANK;
+    $('ppsBar').style.width = Math.min(100, pps / (line * 1.25) * 100) + '%';
+    $('ppsBar').style.background = counts ? 'var(--teal)' : 'var(--line2)';
+    $('ppsMark').hidden = !counts;
+    $('ppsTxt').textContent = `現在每秒 ${pps >= 100 ? Math.round(pps) : pps.toFixed(1)} 分`;
+    $('ppsRule').textContent = counts ? '白線右邊解完直接升段' : '這題低於你的段位，解快不升段';
+    $('ppsBarBox').setAttribute('aria-label', $('ppsTxt').textContent + '，' + $('ppsRule').textContent);
+    $('pTime').textContent = `本題 ${Math.floor(g.psec)} 秒`;
+  }
+}
+function setGhost(t) {
+  g.ghost = t;
+  $('confirm').disabled = !t;
+  $('confirm').textContent = t ? `確定下 ${t}` : '先點棋盤';
+  draw();
+}
+function flash(html, cls, ms) {
+  const f = $('flash');
+  f.className = 'flash' + (cls ? ' ' + cls : ''); f.innerHTML = `<span>${html}</span>`; f.hidden = false;
+  return new Promise(r => setTimeout(() => { f.hidden = true; r(); }, ms));
+}
+
+async function nextPuzzle() {
+  g.hold = true;
+  let p;
+  try { p = await pickPuzzle(g.cur, g.used); }
+  catch { endGame('題庫讀不到'); return; }
+  g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = [];
+  setGhost(null);
+  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}・${p.L} 手・${p.score} 分`;
+  renderHud();
+  // 每題都閃一下黑先／白先（使用者 2026-11-07：同色也要閃），閃的時候不扣秒
+  await flash(`<i class="stone" style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
+  if (!g.over) g.hold = false;
+}
+
+async function placeAt(t) {
+  if (!g || g.hold || g.over || !t) return;
+  if (g.black.includes(t) || g.white.includes(t)) return;
+  g.hold = true; setGhost(null);
+  const p = g.p, atk = p.atkWhite ? g.white : g.black, def = p.atkWhite ? g.black : g.white;
+  const res = (await play(g.black.join(' '), g.white.join(' '), t, p.atkWhite)).result || { r: 'illegal' };
+  g.moves.push(t);
+  if (res.r === 'illegal') { g.moves.pop(); g.hold = false; return; }
+  if (res.r === 'mustblock') return wrong(`要先擋對方的四（${res.at}）`);
+  if (res.r === 'forbidden') { atk.push(t); draw(); return wrong('這裡是黑棋禁手'); }
+  atk.push(t);
+  if (res.r === 'win') { draw(); return solved(res.how); }
+  if (res.r === 'notfour') { draw(); return wrong('這手不是四'); }
+  if (res.r === 'block') {
+    def.push(res.def); g.lastDef = res.def;
+    draw();
+    if (res.lost) return wrong('對方擋完反而連成了');
+    if (res.vcf === 0) return wrong('下完就沒有 VCF 了');
+    g.hold = false;   // vcf>0，或搜太久沒算完（-1）就當還有路，繼續
+    return;
+  }
+  wrong('這手不行');
+}
+
+async function solved(how) {
+  const p = g.p, sec = g.psec;
+  const fast = sec <= FAST_PER_MOVE * p.L && p.rank >= Math.min(g.cur, FILE_MAX) && g.cur < TOP_RANK;
+  g.total += p.score; g.left += BONUS_SEC; g.solved++;
+  const from = g.cur;
+  if (fast) g.cur = Math.min(TOP_RANK, g.cur + 1);
+  while (g.cur < TOP_RANK && g.total >= KEEP[g.cur + 1]) g.cur++;
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' ') });
+  $('tPlus').classList.add('on'); setTimeout(() => $('tPlus').classList.remove('on'), 1200);
+  renderHud();
+  const up = g.cur > from ? `<small style="font-size:18px;color:var(--gold)">${fast ? '太快了，' : ''}升${RANKS[g.cur]}</small>` : '';
+  await flash(`+${p.score} 分・+${BONUS_SEC} 秒${up}`, 'good', FEED_MS);
+  if (!g.over) nextPuzzle();
+}
+
+async function wrong(why) {
+  const p = g.p;
+  g.wrong++;
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', r: p.rank, L: p.L, s: p.score, ok: 0, sec: +g.psec.toFixed(1), why, m: g.moves.join(' ') });
+  renderHud();
+  await flash(why + (g.wrong >= MAX_WRONG ? '' : `・還能錯 ${MAX_WRONG - g.wrong} 題`), 'bad', FEED_MS);
+  if (g.wrong >= MAX_WRONG) endGame(`錯 ${MAX_WRONG} 題`);
+  else if (!g.over) nextPuzzle();
+}
+
+cv.addEventListener('click', (ev) => {
+  if (!g || g.hold || g.over) return;
+  const t = cellAt(ev);
+  if (!t || g.black.includes(t) || g.white.includes(t)) return;
+  if (g.ghost === t) placeAt(t);   // 同一格點第二下＝下
+  else setGhost(t);
+});
+$('confirm').onclick = () => placeAt(g && g.ghost);
+$('skip').onclick = () => { if (g && !g.hold && !g.over) { g.hold = true; setGhost(null); wrong('跳過'); } };
+window.addEventListener('resize', () => { if (!$('sPlay').hidden) layout(); });
+
+// ---------- 結算＋排行榜 ----------
+let lastRun = null, myId = null;
+function endGame(why) {
+  if (g.over) return;
+  g.over = true; g.hold = true;
+  const demoted = g.start > 0 && g.total < KEEP[g.start];
+  const finalRank = demoted ? g.start - 1 : g.cur;
+  const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
+  lastRun = { nick: g.nick, startRank: g.start, finalRank, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
+    solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
+  $('endWhy').textContent = why;
+  $('endRank').textContent = RANKS[finalRank];
+  $('endNote').textContent = demoted ? `沒守住${RANKS[g.start]}` : finalRank > g.start ? '升段了' : '守住了';
+  $('stamp').classList.toggle('down', demoted);
+  $('eTot').textContent = Math.round(g.total);
+  $('ePps').textContent = pps.toFixed(1);
+  $('eSolved').textContent = g.solved;
+  show('sEnd');
+  submit();
+}
+async function submit() {
+  $('retrySubmit').hidden = true;
+  $('ePlace').textContent = lastRun.demoted ? `守住${RANKS[lastRun.startRank]}要 ${KEEP[lastRun.startRank]} 分，這局不上排行榜。` : '送出成績中…';
+  myId = null;
+  try {
+    const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    myId = j.id;
+    if (j.place) $('ePlace').innerHTML = `今天段位榜第 <b style="color:var(--gold)">${j.place.rank.today}</b>・總分榜第 ${j.place.total.today}・每秒榜第 ${j.place.pps.today}`;
+  } catch {
+    if (!lastRun.demoted) { $('ePlace').textContent = '排行榜連不上，成績還沒送出。'; $('retrySubmit').hidden = false; }
+  }
+  boardView($('endBoard'));
+}
+$('retrySubmit').onclick = submit;
+$('again').onclick = () => { g = null; show('sStart'); renderStart(); };
+
+const TABS = [['rank', '段位榜'], ['total', '總分榜'], ['pps', '每秒榜']];
+function boardView(el, by = 'rank', scope = 'today') {
+  el.innerHTML = `<div class="tabs" role="tablist">${TABS.map(([k, n]) => `<button type="button" role="tab" data-by="${k}" aria-selected="${k === by}">${n}</button>`).join('')}</div>
+    <div class="scope" style="margin-top:8px">${[['today', '今天'], ['all', '全部']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div>
+    <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">讀取中…</span></div>`;
+  el.querySelectorAll('[data-by]').forEach(b => b.onclick = () => boardView(el, b.dataset.by, scope));
+  el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, by, b.dataset.scope));
+  const rows = el.querySelector('.rows');
+  fetch(`${API}/board?by=${by}&scope=${scope}&limit=20`).then(r => r.json()).then(j => {
+    rows.innerHTML = '';
+    if (!j.rows || !j.rows.length) { rows.innerHTML = '<span class="muted" style="padding:12px 6px">還沒有人上榜</span>'; return; }
+    j.rows.forEach((x, i) => {
+      const d = document.createElement('div');
+      d.className = 'row' + (x.id === myId ? ' me' : '');
+      const val = by === 'pps' ? Number(x.pps).toFixed(1) : Math.round(x.total);
+      d.innerHTML = `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${RANKS[x.final_rank] || ''}</span><span class="vl">${val}</span>`;
+      d.querySelector('.nm').textContent = x.nick;
+      rows.appendChild(d);
+    });
+  }).catch(() => { rows.innerHTML = '<span class="muted" style="padding:12px 6px">排行榜連不上</span>'; });
+}
+
+function openModal(id) { $(id).hidden = false; $(id).querySelector('[data-close]').focus(); }
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', (e) => { if (e.target === m || e.target.hasAttribute('data-close')) m.hidden = true; });
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
+$('openBoard').onclick = () => { boardView($('startBoard')); openModal('mBoard'); };
+$('openReview').onclick = () => {
+  const list = $('revList'); list.innerHTML = '';
+  if (!lastRun || !lastRun.detail.length) list.innerHTML = '<span class="muted">這局沒有題目</span>';
+  for (const x of (lastRun ? lastRun.detail : [])) {
+    const d = document.createElement('div'); d.className = 'rev';
+    const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
+    d.innerHTML = `<span class="tag ${x.ok ? 'ok' : 'ng'}">${x.ok ? '解開' : '沒解'}</span><span class="tx"></span><a target="_blank" rel="noopener">打開</a>`;
+    d.querySelector('.tx').textContent = `${RANKS[x.r]}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.s} 分・${x.sec} 秒${x.ok ? '' : '・' + x.why}`;
+    d.querySelector('a').href = href;
+    list.appendChild(d);
+  }
+  openModal('mReview');
+};
+</script>
+</body>
+</html>
