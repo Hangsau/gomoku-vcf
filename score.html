@@ -688,7 +688,7 @@ function renderRate() {
   const tiles = [
     ['steps', '手數', r && r.L ? r.L : '—'],
     ['stones', '子數', r ? `${r.nb}/${r.nw}` : '—'],
-    ['hook', '深誘餌', r.deepLinked ?? '—'],
+    ['hook', '深誘餌', r && r.deepLinked != null ? r.deepLinked : '—'],
     ['unlock', '解禁', f.forbidLift ?? '—'],
     ['ratio', '棋子使用率', usage ? `計算中 ${usage.done}/${usage.total}` : r && r.usage ? `${Math.round(r.usage.rate * 100)}%（×${r.usage.mult.toFixed(2)}）` : '—'],
   ];
