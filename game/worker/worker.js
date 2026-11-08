@@ -5,6 +5,7 @@
 // POST /report {pid, b, w, a, kind, text, run} → 玩家回報某一題有問題（2026-11-07）；GET /blocked → 停用題號清單（遊戲抽題時跳過）
 // GET  /admin/reports、POST /admin/report {id, status: open|done|blocked}（Bearer 管理密碼）
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
+// POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
@@ -169,6 +170,31 @@ async function adminSetFeedback(req, env) {
   await env.DB.prepare("UPDATE feedback SET status = ? WHERE id = ?").bind(st, id).run();
   return json({ ok: true });
 }
+// 練習場（2026-11-08 使用者：練習作答也送後台，分開分析大家怎麼練）：跟 /run 不同表，排行榜永遠讀不到；全站每分鐘最多 60 局防灌
+async function postPractice(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const r = {
+    start_rank: num(b.startRank, 0, 8), final_rank: num(b.finalRank, 0, 8), ab: num(b.ab, 0, 100000), minutes: num(b.minutes, 0, 60),
+    added: num(b.added, 0, 1000), added_sec: num(b.addedSec, 0, 100000), own: num(b.own, 0, 1000), helped: num(b.helped, 0, 1000),
+    wrong: num(b.wrong, 0, 1000), seconds: num(b.seconds, 0, 100000),
+  };
+  if (Object.values(r).some(v => v === null)) return json({ error: "bad fields" }, 400);
+  const now = Date.now();
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM practice WHERE t > ?").bind(now - 60000).first();
+  if (recent.n >= 60) return json({ error: "too many" }, 429);
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 300) : []).slice(0, 90000);
+  const res = await env.DB.prepare(
+    "INSERT INTO practice(t, day, nick, lang, start_rank, final_rank, ab, minutes, added, added_sec, own, helped, wrong, seconds, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+  ).bind(now, taipeiDay(now), nick, lang, r.start_rank, r.final_rank, r.ab, r.minutes, r.added, r.added_sec, r.own, r.helped, r.wrong, r.seconds, detail).run();
+  return json({ ok: true, id: res.meta.last_row_id });
+}
+async function adminPractice(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, lang, start_rank, final_rank, ab, minutes, added, added_sec, own, helped, wrong, seconds, detail FROM practice ORDER BY id").all();
+  return json({ rows: results });
+}
 async function adminPage(req, env) {
   if (!(await accessOk(req, env))) return new Response("forbidden", { status: 403 });
   return new Response(ADMIN_HTML, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
@@ -194,6 +220,8 @@ export default {
       if (req.method === "POST" && url.pathname === "/feedback") return await postFeedback(req, env);
       if (req.method === "GET" && url.pathname === "/admin/feedback") return await adminFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/admin/feedback") return await adminSetFeedback(req, env);
+      if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/practice") return await adminPractice(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);

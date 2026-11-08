@@ -22,3 +22,12 @@ CREATE TABLE IF NOT EXISTS feedback(
   id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, text TEXT NOT NULL, contact TEXT, nick TEXT, lang TEXT,
   status TEXT NOT NULL DEFAULT 'open');
 CREATE INDEX IF NOT EXISTS feedback_t ON feedback(t);
+
+-- 2026-11-08：練習場（不上排行）。minutes 0＝不限時；added／added_sec＝加時次數／秒數；own＝自己解開、helped＝靠悔棋／提示／下錯後解開；
+-- detail 每題比競速多 h（用過幫助）、u（悔棋次數）、hi（提示次數）、mk（下錯次數）；wk 'quit'＝按結束時沒做完的題（不扣分）
+CREATE TABLE IF NOT EXISTS practice(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, nick TEXT, lang TEXT,
+  start_rank INTEGER NOT NULL, final_rank INTEGER NOT NULL, ab REAL NOT NULL, minutes INTEGER NOT NULL,
+  added INTEGER NOT NULL, added_sec INTEGER NOT NULL, own INTEGER NOT NULL, helped INTEGER NOT NULL, wrong INTEGER NOT NULL,
+  seconds REAL NOT NULL, detail TEXT);
+CREATE INDEX IF NOT EXISTS practice_t ON practice(t);
