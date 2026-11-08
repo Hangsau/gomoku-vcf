@@ -895,7 +895,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   g.log.push(x);
   renderHud();
   const end = !g.prac && g.wrong >= MAX_WRONG;   // 練習場錯幾題都不結束
-  await flash(whyHtml(x) + (end || g.prac ? '' : '<small>' + T('leftN', { n: MAX_WRONG - g.wrong }) + '</small>'), 'bad', feedMs(wk));
+  await flash(whyHtml(x), 'bad', feedMs(wk));   // 不再顯示還能錯幾題（2026-11-08 使用者），上方紅點看得到
   if (end) endGame(T('endWrong', { n: MAX_WRONG }));
   else if (!g.over) nextPuzzle();
 }
