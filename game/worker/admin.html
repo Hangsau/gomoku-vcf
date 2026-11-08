@@ -16,7 +16,7 @@
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Noto Sans TC", sans-serif; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
 header { position: sticky; top: 0; background: var(--bg); padding: calc(12px + env(safe-area-inset-top)) 0 10px; z-index: 1; }
 h1 { margin: 0 0 10px; font-size: 20px; }
-.tabs, .filt { display: flex; gap: 8px; }
+.tabs, .filt { display: flex; gap: 8px; flex-wrap: wrap; }
 .filt { margin-top: 8px; }
 .filt[hidden] { display: none; }
 .tabs button, .filt button { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text2); font: inherit; }
@@ -69,6 +69,7 @@ details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; displ
     <button type="button" data-tab="fb" aria-pressed="true">玩家留言<span class="n" id="nFb"></span></button>
     <button type="button" data-tab="rp" aria-pressed="false">題目回報<span class="n" id="nRp"></span></button>
     <button type="button" data-tab="st" aria-pressed="false">數據</button>
+    <button type="button" data-tab="sc" aria-pressed="false">計分</button>
   </div>
   <div class="filt" id="filt" role="group" aria-label="篩選">
     <button type="button" data-f="open" aria-pressed="true">未處理</button>
@@ -105,8 +106,9 @@ function groups() {   // 同一題的回報併成一張卡
     .sort((x, y) => y.t - x.t);
 }
 function render() {
-  $('filt').hidden = tab === 'st';
+  $('filt').hidden = tab === 'st' || tab === 'sc';
   if (tab === 'st') return renderStats();
+  if (tab === 'sc') return renderScoring();
   const g = groups();
   $('nFb').textContent = fb.filter(x => x.status === 'open').length || '';
   $('nRp').textContent = g.filter(x => x.status === 'open').length || '';
@@ -149,14 +151,16 @@ function render() {
 // ---------- 數據分頁（2026-11-08 使用者：後台把數據也接進來）----------
 // 算法照 vcf-slover/engine/game_stats.py（本機指揮台「遊戲」分頁），改那邊的常數這裡要一起改。
 // 資料：/admin/runs（每局＋每題作答，不含暱稱）＋ 網站上的題庫狀態 game/p/index.json；玩家送來的字一律 esc。
-const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'];
-const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];
-const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];
+// 段位尺（2026-11-08a 新評分）：LOW／START_AB 由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
+const RANKS = ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '傳說'];
+const LOW = /*LADDER*/[0, 45, 70, 110, 172, 269, 414, 625, 926, 1347, 1924]/*END*/;
+const START_AB = /*START*/[34, 56, 88, 138, 215, 334, 509, 761]/*END*/;
+const SCORE_VER = '2026-11-08b';   // 競速數據只算這一版評分的局（跟 worker.js CUR_VER 一致）；舊版的局不混進來
 const SPREAD = 0.5, MIN_N = 30;
 const WHY = { novcf: '下完沒 VCF', skip: '跳過', time: '時間到', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
 const CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
+const rankOf = (ab) => { let k = 0; while (k < RANKS.length - 1 && ab >= LOW[k + 1]) k++; return k; };
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(Math.max(1e-6, d)) - Math.log(Math.max(1e-6, ab))) / SPREAD));
 const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const r1 = (x) => Math.round(x * 10) / 10;
@@ -184,6 +188,7 @@ async function loadStats() {
   if (tab === 'st') render();
 }
 async function summarize(rows, bank) {
+  rows = rows.filter(r => (r.ver || '2026-11-07') === SCORE_VER);
   const runs = rows.map(r => { let d = []; try { d = JSON.parse(r.detail || '[]'); } catch {} return { ...r, att: Array.isArray(d) ? d : [] }; });
   const played = runs.filter(r => r.att.length);
   const atts = [];
@@ -282,6 +287,30 @@ function renderPractice(list, head) {
   out.push(`<section class="sec"><h2>練習段位</h2><span class="note">選某個起始段位練習，結束時練習段位到哪。</span>${P.flow.map(f => `<div style="border-top:1px solid var(--line);padding-top:8px;font-size:14px"><b>從${esc(f.start)}起跳</b> <span class="small">${f.n} 局：${f.to.map(t => `${esc(t[0])} ${t[1]}`).join('、')}</span></div>`).join('') || '<span class="small">還沒有資料</span>'}</section>`);
   list.innerHTML = out.join('');
 }
+// ---------- 計分分頁（2026-11-08 使用者：計分方式的看板跟後台都要有；設計稿 vcf-slover docs/design_scoring/ Phone，選 A、不做新舊對照）----------
+// 資料：/admin/scoring（vcf-slover engine/scoring_eval.py 產生，部署時跟 Worker 一起上傳）
+let sc = null, scErr = '';
+async function loadScoring() {
+  sc = null; scErr = '';
+  try { sc = await api('/admin/scoring'); } catch (e) { scErr = e.message; }
+  if (tab === 'sc') render();
+}
+function renderScoring() {
+  const list = $('list');
+  if (!sc) { list.innerHTML = `<p class="msg">${scErr ? '讀不到計分資料：' + esc(scErr) : '載入計分資料中…'}</p>`; return; }
+  const E = sc, F = E.formula, C = E.counts;
+  const col = p => p == null ? '' : p >= 60 ? 'color:var(--ok)' : p >= 30 ? 'color:var(--gold)' : 'color:var(--ng)';
+  const out = [];
+  out.push(`<section class="sec"><h2>怎麼算</h2><div style="font-size:14px;line-height:1.7">分數 =（Σ 每手價值 ＋ 技巧分）× 使用率<br><b style="color:var(--gold)">每手價值 = ${F.base} ＋ ${F.k} × log₂（選擇數）</b><br><span class="note">${esc(F.choice)}。只有一條路的手只拿底分。</span></div>
+    <span class="note">段位：4 手題當尺定初段～四段，五段以上逐段變窄，傳說不分級。評分版本 ${esc(E.version)}・資料 ${esc(E.generated)}・遊戲題 ${C.game.toLocaleString()}・玩家作答 ${C.playerAnswers}</span></section>`);
+  out.push(`<section class="sec"><h2>每一項怎麼算</h2>${(E.rules || []).filter(r => r.key !== '計算量').map(r => `<div style="font-size:13px;line-height:1.5"><b>${esc(r.name)}</b> <span class="note">${esc(r.text)}</span></div>`).join('')}<div style="font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:6px"><b>使用率倍數</b> <span class="note">${esc(E.usageRule || '')}</span></div></section>`);
+  const K = ['計算量', '深誘餌', '禁手陷阱', '解禁', '反四', '預備反四', '手順', '禁手勝'];
+  out.push(`<section class="sec"><h2>各段平均細項</h2><span class="note">每段題目的平均分；各項加起來＝乘使用率之前的分數。</span><div class="scroll"><table><thead><tr><th>段位</th>${K.map(k => `<th class="r">${k === '計算量' ? '每手價值' : k}</th>`).join('')}<th class="r">使用率</th><th class="r">總分</th></tr></thead><tbody>${E.ranks.map(r => { const a = r.avg || {}; return `<tr><td><b>${esc(r.rank)}</b></td>${K.map(k => `<td class="r">${a[k] ? a[k] : '·'}</td>`).join('')}<td class="r">×${a['使用率倍數'] ?? '–'}<span class="small"> ${a['使用率'] ?? ''}%</span></td><td class="r">${a['分數'] ?? '–'}</td></tr>`; }).join('')}</tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>檢查</h2>${(E.checks || []).map(c => `<div style="display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.5;padding:4px 0"><b style="${c.ok ? 'color:var(--ok)' : 'color:var(--gold)'}">${c.ok ? '✓' : '!'}</b><span>${esc(c.text)}</span></div>`).join('')}</section>`);
+  out.push(`<section class="sec"><h2>各段</h2><div class="scroll"><table><thead><tr><th>段位</th><th class="r">分數線</th><th>典型手數</th><th class="r">遊戲題</th><th class="r">有技巧</th><th class="r">玩家答對</th></tr></thead><tbody>${E.ranks.map(r => `<tr><td><b>${esc(r.rank)}</b></td><td class="r">${r.line.toLocaleString()}</td><td>${r.steps ? (r.steps[0] === r.steps[2] ? r.steps[0] : r.steps[0] + '–' + r.steps[2]) + ' 手' : '–'}</td><td class="r">${r.gamePct}%</td><td class="r">${r.techPct == null ? '–' : r.techPct + '%'}</td><td class="r" style="${col(r.player.rate)}">${r.player.rate == null ? '–' : r.player.rate + '%'}<span class="small"> ${r.player.n}</span></td></tr>`).join('')}</tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>幾手的題落在哪</h2><div class="scroll"><table><thead><tr><th>手數</th>${E.ranks.map(r => `<th class="r">${esc(r.rank === '傳說' ? '傳說' : r.rank.slice(0, 1))}</th>`).join('')}</tr></thead><tbody>${Object.entries(E.steps).map(([L, d]) => { const tot = Object.values(d).reduce((a, b) => a + b, 0) || 1; return `<tr><td>${L} 手</td>${E.ranks.map(r => { const p = Math.round(100 * (d[r.rank] || 0) / tot); return `<td class="r small">${p ? p + '%' : ''}</td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div></section>`);
+  list.innerHTML = out.join('');
+}
 function renderStats() {
   const list = $('list');
   const head = `<div class="acts" role="group" aria-label="數據種類"><button type="button" data-stm="rush" class="${stMode === 'rush' ? 'gold' : ''}" aria-pressed="${stMode === 'rush'}">競速</button><button type="button" data-stm="prac" class="${stMode === 'prac' ? 'gold' : ''}" aria-pressed="${stMode === 'prac'}">練習</button></div>`;
@@ -319,7 +348,7 @@ function renderStats() {
     catch (e) { alert('停用失敗：' + e.message); b.disabled = false; }
   });
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') { loadStats(); if (stMode === 'prac') loadPractice(); } render(); });
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') { loadStats(); if (stMode === 'prac') loadPractice(); } if (tab === 'sc' && !sc) loadScoring(); render(); });
 document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
 load();
 </script>

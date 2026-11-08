@@ -1,7 +1,8 @@
 // vcf-game-api：VCF 限時闖關排行榜（Cloudflare Worker＋D1 vcf-game）
 // POST /run  交一局成績 → {id, place:{rank:{today,all}}}（結算低於起始段位 demoted=1 不入榜，place 為 null）
 // GET  /board?by=rank&scope=today|all → {rows:[...]}；只有一個榜，依能力分 ab 排（段位由 ab 決定，2026-11-07 使用者：段位高的要排前面）
-// GET  /admin/runs（Authorization: Bearer <管理密碼>）→ 全部局的段位、能力分、每題作答，不含暱稱（後台用，2026-11-07）
+// GET  /admin/runs（Authorization: Bearer <管理密碼>）→ 全部局的段位、能力分、每題作答、評分版本 ver，不含暱稱（後台用，2026-11-07）
+// GET  /admin/scoring → 計分看板資料（2026-11-08）；排行榜只排評分版本 CUR_VER 的局
 // POST /report {pid, b, w, a, kind, text, run} → 玩家回報某一題有問題（2026-11-07）；GET /blocked → 停用題號清單（遊戲抽題時跳過）
 // GET  /admin/reports、POST /admin/report {id, status: open|done|blocked}（Bearer 管理密碼）
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
@@ -11,6 +12,9 @@
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
 // 後台頁：game/worker/admin.html，部署時以 text 模組一起上傳（tools/deploy_worker.sh）
 import ADMIN_HTML from "./admin.html";
+import SCORING_JSON from "./scoring.json.txt";   // 計分看板資料（vcf-slover engine/scoring_eval.py 產生，部署時一起上傳；後台「計分」分頁讀 /admin/scoring）
+// 評分版本（2026-11-08 使用者：全面換新評分）：排行榜只排這一版的局；舊版的局還在表裡（ver 欄），不刪
+const CUR_VER = "2026-11-08b";
 
 const ORDER = {
   rank: "ab DESC, t ASC",
@@ -30,8 +34,8 @@ const num = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) && n
 
 async function placeOf(env, by, day, r) {
   const [cond, vals] = BETTER[by](r);
-  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 AND solved > 0 ${day ? "AND day = ?" : ""} AND ${cond}`;
-  const row = await env.DB.prepare(sql).bind(...(day ? [day] : []), ...vals).first();
+  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 AND solved > 0 AND ver = ? ${day ? "AND day = ?" : ""} AND ${cond}`;
+  const row = await env.DB.prepare(sql).bind(CUR_VER, ...(day ? [day] : []), ...vals).first();
   return row.n + 1;
 }
 
@@ -40,19 +44,20 @@ async function postRun(req, env) {
   try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
   const nick = String(b.nick || "").trim().slice(0, 12);
   const r = {
-    start_rank: num(b.startRank, 0, 8), final_rank: num(b.finalRank, 0, 8), ab: num(b.ab, 0, 100000),
+    start_rank: num(b.startRank, 0, 10), final_rank: num(b.finalRank, 0, 10), ab: num(b.ab, 0, 1000000),
     total: num(b.total, 0, 200000), pps: num(b.pps, 0, 500),
     solved: num(b.solved, 0, 500), wrong: num(b.wrong, 0, 3), seconds: num(b.seconds, 0, 20000),
   };
   if (!nick || Object.values(r).some(v => v === null)) return json({ error: "bad fields" }, 400);
   const demoted = b.demoted ? 1 : 0;
+  const ver = String(b.ver || "").replace(/[^0-9a-z-]/g, "").slice(0, 20) || "2026-11-07";   // 舊版遊戲沒送 ver
   const now = Date.now(), day = taipeiDay(now);
   const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 200) : []).slice(0, 60000);
   const res = await env.DB.prepare(
-    "INSERT INTO runs(t, day, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
-  ).bind(now, day, nick, r.start_rank, r.final_rank, r.ab, r.total, r.pps, r.solved, r.wrong, r.seconds, demoted, detail).run();
+    "INSERT INTO runs(t, day, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail, ver) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+  ).bind(now, day, nick, r.start_rank, r.final_rank, r.ab, r.total, r.pps, r.solved, r.wrong, r.seconds, demoted, detail, ver).run();
   const id = res.meta.last_row_id;
-  if (demoted || !r.solved) return json({ id, day, place: null });   // 一題都沒解開＝沒證明任何段位，不入榜
+  if (demoted || !r.solved || ver !== CUR_VER) return json({ id, day, place: null });   // 一題都沒解開＝沒證明任何段位，不入榜
   const place = {};
   for (const by of Object.keys(ORDER)) place[by] = { today: await placeOf(env, by, day, r), all: await placeOf(env, by, null, r) };
   return json({ id, day, place });
@@ -63,10 +68,10 @@ async function getBoard(url, env) {
   const today = url.searchParams.get("scope") !== "all";
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
   const day = taipeiDay(Date.now());
-  const sql = `SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, t FROM runs WHERE demoted = 0 AND solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
+  const sql = `SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, t FROM runs WHERE demoted = 0 AND solved > 0 AND ver = ?1 ${today ? "AND day = ?2" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
   const st = env.DB.prepare(sql);
-  const { results } = await (today ? st.bind(day) : st).all();
-  return json({ by, scope: today ? "today" : "all", day, rows: results });
+  const { results } = await (today ? st.bind(CUR_VER, day) : st.bind(CUR_VER)).all();
+  return json({ by, scope: today ? "today" : "all", day, ver: CUR_VER, rows: results });
 }
 
 // 管理密碼只存在本機（vcf-slover out/hub/game_admin_key.txt，不進 git）；這裡只放它的 SHA-256，原始碼公開也不會洩漏
@@ -101,7 +106,7 @@ async function accessOk(req, env) {
 }
 async function adminRuns(req, env) {
   if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
-  const { results } = await env.DB.prepare("SELECT id, t, day, start_rank, final_rank, ab, solved, wrong, seconds, demoted, detail FROM runs ORDER BY id").all();
+  const { results } = await env.DB.prepare("SELECT id, t, day, start_rank, final_rank, ab, solved, wrong, seconds, demoted, detail, ver FROM runs ORDER BY id").all();
   return json({ rows: results });
 }
 
@@ -175,7 +180,7 @@ async function postPractice(req, env) {
   let b;
   try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
   const r = {
-    start_rank: num(b.startRank, 0, 8), final_rank: num(b.finalRank, 0, 8), ab: num(b.ab, 0, 100000), minutes: num(b.minutes, 0, 60),
+    start_rank: num(b.startRank, 0, 10), final_rank: num(b.finalRank, 0, 10), ab: num(b.ab, 0, 1000000), minutes: num(b.minutes, 0, 60),
     added: num(b.added, 0, 1000), added_sec: num(b.addedSec, 0, 100000), own: num(b.own, 0, 1000), helped: num(b.helped, 0, 1000),
     wrong: num(b.wrong, 0, 1000), seconds: num(b.seconds, 0, 100000),
   };
@@ -213,6 +218,7 @@ export default {
       if (req.method === "POST" && url.pathname === "/run") return await postRun(req, env);
       if (req.method === "GET" && url.pathname === "/board") return await getBoard(url, env);
       if (req.method === "GET" && url.pathname === "/admin/runs") return await adminRuns(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/scoring") return (await isAdmin(req, env)) ? new Response(SCORING_JSON, { headers: { "Content-Type": "application/json; charset=utf-8", ...cors } }) : json({ error: "forbidden" }, 403);
       if (req.method === "POST" && url.pathname === "/report") return await postReport(req, env);
       if (req.method === "GET" && url.pathname === "/blocked") return await getBlocked(env);
       if (req.method === "GET" && url.pathname === "/admin/reports") return await adminReports(req, env);

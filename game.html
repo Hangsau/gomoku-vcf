@@ -332,20 +332,22 @@ const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 // 能力分（2026-11-07，仿 Lichess 解題積分）：人和題目用同一把尺＝題目分。能力分落在哪段的題目分區間就是哪段（沿用網站段位門檻）。
 // 每題先算預期解開機率 P＝1/(1+exp((ln題目分−ln能力分)/SPREAD))；解開 S=1、答錯／跳過 S=0；ln能力分 += K×(S−P)。
 // 解開比自己難的題加得多、簡單題答錯扣得多；可升可降，停在哪個區間就是哪段。時間到時做到一半的題不算。
-const LOW = [0, 40, 70, 120, 200, 315, 500, 780, 1210];   // 各段題目分下限（網站段位尺）
-const START_AB = [30, 53, 92, 155, 251, 397, 624, 971];  // 起始能力分＝起始段位區間的幾何中點
+// 段位尺（2026-11-08a 新評分）：下面兩行由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
+const LOW = /*LADDER*/[0, 45, 70, 110, 172, 269, 414, 625, 926, 1347, 1924]/*END*/;   // 各段題目分下限：見習生、初段…九段、傳說
+const SCORE_VER = '2026-11-08b';   // 評分版本：送進 /run，排行榜只排這一版（練習場不記）
+const START_AB = /*START*/[34, 56, 88, 138, 215, 334, 509, 761]/*END*/;  // 起始能力分＝起始段位區間的幾何中點（見習生＝初段線×0.75）
 const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
 const K_STEP = 0.4;   // 一題最多讓能力分 ×1.5 或 ÷1.5；一局只有幾題，要調得快
 // 起始補正（2026-11-07 使用者：起始段位只是猜的，一開始要快速補正；第一題解開就照本段位正常算）：還沒解開任何題之前答錯，漲跌用 K_FAST；解開過（含解開的那一題）一律 K_STEP
 const K_FAST = 0.8;
-const rankOf = (ab) => { let k = 0; while (k < 8 && ab >= LOW[k + 1]) k++; return k; };
+const rankOf = (ab) => { let k = 0; while (k < TOP_RANK && ab >= LOW[k + 1]) k++; return k; };
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
-const MAX_START = 7, TOP_RANK = 8, FILE_MIN = 1, FILE_MAX = 7;    // 題庫檔 game/p/1..7.json ＝ 初段..七段
+const MAX_START = 7, TOP_RANK = 10, FILE_MIN = 1, FILE_MAX = 10;    // 題庫檔 game/p/1..10.json ＝ 初段..九段、傳說（2026-11-08a；見習生併進初段）
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
 const WARN_MS = 800;
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
 const COLS = 'ABCDEFGHJKLMNOP', N = 15;
-const ENGINE_V = '20261107f';
+const ENGINE_V = '20261108a';
 
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
@@ -371,7 +373,7 @@ const I18N = {
     tabRank: '段位榜', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
-    ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
+    ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '傳說'],
     bandFirst: '入門', band: '{lo}–{hi} 分', bandLast: '{lo} 分以上',
     modeRush: '競速', modePrac: '練習', pSub: '分鐘・練習', pSubInf: '不限時・練習', pRule1: '抽題、計分跟競速一樣・可悔棋、提示、加時', pRule2: '錯題不會結束・成績不上排行',
     pTimeLbl: '練習時間', pMinBtn: '{n} 分', pInf: '不限', goPrac: '開始練習', pNoBoard: '不計排行', pEnd: '結束練習', pHint: '下錯可以悔棋再試；用了悔棋或提示，這題不加分、只扣一半',
@@ -398,7 +400,7 @@ const I18N = {
     tabRank: 'Rank', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
-    ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan'],
+    ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan', '9 dan', 'Legend'],
     bandFirst: 'Beginner', band: '{lo}–{hi} pts', bandLast: '{lo}+ pts',
     modeRush: 'Rush', modePrac: 'Practice', pSub: 'min · Practice', pSubInf: 'No time limit · Practice', pRule1: 'Same puzzles and scoring as Rush · Undo, hints, extra time', pRule2: 'Misses never end the run · Not on the leaderboard',
     pTimeLbl: 'Practice time', pMinBtn: '{n} min', pInf: 'No limit', goPrac: 'Start practice', pNoBoard: 'not ranked', pEnd: 'End practice', pHint: 'Missed? Undo and try again. Using undo or a hint gives no gain and half the loss for that puzzle.',
@@ -425,7 +427,7 @@ const I18N = {
     tabRank: '段位', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
-    ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段'],
+    ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '伝説'],
     bandFirst: '入門', band: '{lo}–{hi} 点', bandLast: '{lo} 点以上',
     modeRush: 'タイムアタック', modePrac: '練習', pSub: '分・練習', pSubInf: '時間無制限・練習', pRule1: '出題と採点はタイムアタックと同じ・待った、ヒント、時間追加あり', pRule2: 'ミスしても終わらない・ランキング対象外',
     pTimeLbl: '練習時間', pMinBtn: '{n} 分', pInf: '無制限', goPrac: '練習開始', pNoBoard: 'ランキング対象外', pEnd: '練習終了', pHint: '間違えたら待ったでやり直せます。待ったやヒントを使った問題は加点なし・減点は半分',
@@ -452,7 +454,7 @@ const I18N = {
     tabRank: '단', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
-    ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단'],
+    ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단', '9단', '전설'],
     bandFirst: '입문', band: '{lo}–{hi}점', bandLast: '{lo}점 이상',
     modeRush: '타임어택', modePrac: '연습', pSub: '분 · 연습', pSubInf: '시간 제한 없음 · 연습', pRule1: '출제와 채점은 타임어택과 같음 · 무르기, 힌트, 시간 추가 가능', pRule2: '틀려도 끝나지 않음 · 순위표에 오르지 않음',
     pTimeLbl: '연습 시간', pMinBtn: '{n}분', pInf: '무제한', goPrac: '연습 시작', pNoBoard: '순위 미반영', pEnd: '연습 끝내기', pHint: '틀리면 무르고 다시 둘 수 있습니다. 무르기나 힌트를 쓴 문제는 점수가 오르지 않고 절반만 깎입니다',
@@ -539,7 +541,7 @@ function solveFrom(black, white, attackerWhite) {
 // ---------- 題庫 ----------
 const files = {};
 async function loadFile(k) {
-  if (!files[k]) files[k] = fetch(`game/p/${k}.json?v=20261107`).then(r => { if (!r.ok) throw new Error('題庫讀不到'); return r.json(); });
+  if (!files[k]) files[k] = fetch(`game/p/${k}.json?v=20261108a`).then(r => { if (!r.ok) throw new Error('題庫讀不到'); return r.json(); });
   return files[k];
 }
 // 從能力分附近抽題（題目分在能力分 ÷1.25～×1.25；不夠就放寬），難度剛好在解開一半左右時量得最準
@@ -925,7 +927,7 @@ function endGame(why) {
   const noRank = proven < 0, capped = !noRank && proven < g.cur;
   const finalRank = noRank ? 0 : Math.min(g.cur, proven), demoted = noRank || finalRank < g.start;   // 低於起始段位不入榜
   const pps = g.elapsed > 0 ? g.total / g.elapsed : 0;
-  lastRun = { nick: g.nick, startRank: g.start, finalRank, ab: Math.round(g.ab * 10) / 10, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
+  lastRun = { ver: SCORE_VER, nick: g.nick, startRank: g.start, finalRank, ab: Math.round(g.ab * 10) / 10, total: Math.round(g.total * 10) / 10, pps: Math.round(pps * 100) / 100,
     solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, demoted, detail: g.log };
   $('endWhy').textContent = why;
   $('endRank').textContent = noRank ? '—' : rankName(finalRank);

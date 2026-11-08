@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>詰題試煉場</title>
 <script src="score-i18n.js?v=2" defer></script>
+<script src="score_rules.js?v=20261108a"></script><!-- 給分規則（跟本機題庫同一份，vcf-slover web/score_rules.js 複製來的；2026-11-08） -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0F121A">
 <link rel="icon" type="image/png" sizes="192x192" href="app/icon-192.png">
@@ -285,9 +286,9 @@ section.panel[aria-label] { position: relative; }
     <li><b>自動判斷</b>：每題黑先、白先各算一次。只有一種成立就是那一種；兩種都成立叫<b>雙先</b>，兩個分數都會列出來。</li>
     <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
     <li><b>沒有別解</b>：除了解答以外，還有另一條不同的贏法（多走幾手也能贏），就不是唯一解，不算詰題。同一解換走法（兩手先後對調、插一手空四再照答案走）不算別解。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
-    <li><b>評定</b>：10 手以內算<b>短篇</b>（看計算量、深誘餌、禁手陷阱、解禁、反四、預備反四、手順），11 手以上算<b>長篇</b>（看手數與解題中的技巧）。兩組各有自己的段位，不互相比較。</li>
+    <li><b>評定</b>：長短篇共用一套分數。每一手各值多少分再加總（底分 20，這一手能下的衝四越多越高），加上深誘餌、禁手陷阱、解禁、反四、預備反四、手順這些技巧分，再乘上棋子使用率。</li>
   </ol>
-  <p class="hint">段位門檻目前是暫定的固定數字，之後會調整。評分引擎跟出題 AI 用的是同一套程式。</p>
+  <p class="hint">段位：用 4 手題當尺定初段到四段，五段以上一段比一段窄，傳說不再細分。分數線照玩家實際解題的結果校準過。評分引擎跟出題 AI 用的是同一套程式。</p>
   <form method="dialog"><button class="tool" type="submit">知道了</button></form>
 </dialog>
 
@@ -364,7 +365,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261107f');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261108a');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -521,7 +522,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261107f'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261108a'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -586,7 +587,7 @@ function startUsage(base) {
   const pen = base.balancePenalty || 1;   // 黑白不平衡 ×0.97：比較時用不扣的原始分，最後再乘回去
   const raw = base.raw != null ? base.raw : base.score / pen, L = base.L, det = base.detours, myResult = base;   // raw：引擎給的未四捨五入原始分（2026-11-07b）
   const list = [...black].map(c => [c, 'b']).concat([...white].map(c => [c, 'w']));
-  usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [] };
+  usage = { done: 0, total: list.length, need: 0, useful: 0, waste: [], removals: [] };
   renderRate();
   const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 4) - 1));
   let next = 0, rid = 0;
@@ -598,14 +599,22 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale, anyCount: 1 });   // 拿掉一顆子造成的子數差不算不合法（2026-11-07b）
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261107f');
+    const w = new Worker('score-worker.js?v=20261108a');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;
+      usage.removals.push({ q: w.cur, c: black.has(w.cur) ? 'b' : 'w', f: v && v.vcf === true && v.facts ? v.facts : null });   // 2026-11-08：拿掉這顆後的盤面事實，最後交給 score_rules.js
       const broken = !(v && v.vcf === true && v.L === L && v.unique === true && v.detours >= 0 && v.detours <= det);
-      if (broken) usage.need++; else if (v.score / (v.balancePenalty || 1) < raw * 0.9) usage.useful++; else usage.waste.push(w.cur);
+      if (broken) usage.need++; else if (v.score / (v.balancePenalty || 1) < raw * 0.9) usage.useful++; else usage.waste.push(w.cur);   // 只給「計算中」進度看，正式結果由 score_rules.js 算
       usage.done++;
-      if (usage.done === usage.total) {
+      if (usage.done === usage.total && myResult.facts && self.ScoreRules) {   // 給分規則跟本機題庫同一份（web/score_rules.js，2026-11-08）
+        const S = ScoreRules.score({ facts: myResult.facts, removals: usage.removals });
+        result.rawScore = S.raw;
+        result.usage = S.usage;
+        result.score = S.score;
+        usagePool.forEach(x => x.terminate()); usagePool = []; usage = null;
+        renderAll();
+      } else if (usage.done === usage.total) {
         // 黑白要平衡（黑先一樣多）：能成對拿掉的才是真廢子，落單的是「平衡子」算必要（跟本機引擎同一套）
         const wB = usage.waste.filter(c => black.has(c)).length, wW = usage.waste.length - wB;
         const target = myResult.attacker === 'white' ? 1 : 0;   // 黑先一樣多、白先黑多一顆（跟本機 score_api 同一套，2026-11-07b 修）
@@ -668,10 +677,11 @@ function renderStages(running) {
 
 // ---------- 評定 ----------
 // 段位（使用者 2026-11-03：真正段位有九段；跟出題 AI 的訓練等級同一套，vcf-slover engine/actions.hpp ACT_LEVELS）
-// 段位（2026-11-04 定案）：統一難度、長短篇共用一張表；傳說＝日本題庫前 1%，往下逐級打折、越高段級距越窄
-const LADDER = [[0, '見習生'], [40, '初段'], [70, '二段'], [120, '三段'], [200, '四段'], [315, '五段'], [500, '六段'], [780, '七段'], [1210, '八段'], [1855, '九段'], [2800, '傳說']];
+// 段位（2026-11-08a）：長短篇共用一張表；4 手題當尺定初段～四段，五段以上逐段變窄，傳說不分級
+// 2026-11-08a 新評分：分數線由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
+const LADDER = /*LADDER*/[[0, '見習生'], [45, '初段'], [70, '二段'], [110, '三段'], [172, '四段'], [269, '五段'], [414, '六段'], [625, '七段'], [926, '八段'], [1347, '九段'], [1924, '傳說']]/*END*/;
 const RANKS = { long: LADDER, short: LADDER };
-const SCALE = { long: 2800, short: 2800 };   // 儀表滿格＝傳說
+const SCALE = { long: LADDER[LADDER.length - 1][0], short: LADDER[LADDER.length - 1][0] };   // 儀表滿格＝傳說
 function arc(f) {
   f = Math.max(0, Math.min(1, f));
   const a0 = 135 * Math.PI / 180, a1 = (135 + 270 * f) * Math.PI / 180;
@@ -716,7 +726,7 @@ const PART = {   // 長篇各項（引擎的英文名 → 中文＋圖示）
 const SPART = { '計算量': 'brain', '深誘餌': 'hook', '禁手陷阱': 'x', '解禁': 'unlock', '反四': 'zig', '預備反四': 'zig', '手順': 'order', '繞路': 'route', '禁手勝': 'x' };
 const fmtPt = v => { const x = Math.round(v * 10) / 10; return (x > 0 ? '+' : '') + x; };
 const PART_RULE = {
-  '計算量': r => `解題的人要讀多少局面，才能確定別的走法都不行。全題共讀 ${(r.readNodes || 0).toLocaleString()} 個局面，算法是 20 × log₂(1 + 局面數)，所以讀得越多分越高，但越往上越難漲。分數算在全題，不分到單手。`,
+  '計算量': () => '每一手各值多少分，全題加總：底分 20，再加 20 × log₂(這一手能下的衝四數 ÷ 2)。只有一條路的手只拿底分；能下的衝四越多、要排除的假路越多，這一手越值錢。',
   '深誘餌': () => '錯的第一手要能連走至少 4 手、後一手用到這條路下過的子，而且連到解答用的棋，才算深誘餌。每條得 6 × 手數，走到被白反擊才斷再 +10，全部最多 120 分。太淺又單獨一區、不影響解答的錯路，每條扣 2 分，最多扣 20。',
   '禁手陷阱': () => '看起來能衝四，其實是禁手的點。同一點只算一次；第 k 個得 3 × (1 − 0.5^k)。',
   '解禁': () => '這一點原本是禁手，黑自己下的子讓它變可以下，解答又真的下在那裡。每次 30 分。',
@@ -732,7 +742,7 @@ function liftHands(r) {   // 真的算分的解禁手（features.liftAt 是引�
 // 每一項分數的來源。pts 加總要等於引擎的分數，對不上就在畫面上標出來（audit 也用同一份）
 function sources(r) {
   const S = r.steps || [], R = { 計算量: [], 深誘餌: [], 禁手陷阱: [], 解禁: [], 反四: [], 預備反四: [], 手順: [] };
-  (r.stepReads || []).forEach((v, i) => { if (S[i]) R.計算量.push({ t: `第 ${i + 1} 手 ${S[i].atk}：讀 ${v.toLocaleString()} 個局面`, go: 2 * i + 1 }); });
+  (r.stepValues || []).forEach((v, i) => { if (S[i]) R.計算量.push({ t: `第 ${i + 1} 手 ${S[i].atk}：${(r.stepFours || [])[i] ?? 0} 個衝四可下`, pts: v, go: 2 * i + 1 }); });   // 2026-11-08a 每手價值
   (r.decoyLines || []).filter(d => d.counted).sort((a, b) => b.len - a.len).forEach(d => R.深誘餌.push({ t: `先走 ${d.at}：連走 ${d.len} 手${d.counter ? '，被白反擊才斷' : ''}`, pts: 6 * d.len + (d.counter ? 10 : 0), line: d.moves, len: d.len, at: d.at, counter: d.counter }));
   (r.decoyLines || []).filter(d => d.iso).forEach((d, i) => R.深誘餌.push({ t: `先走 ${d.at}：只有 ${d.len} 手，單獨一區`, pts: i < 10 ? -2 : 0, line: d.moves, len: d.len, at: d.at, iso: true }));
   const seen = new Set(), lifts = liftHands(r);
