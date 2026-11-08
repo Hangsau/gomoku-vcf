@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS blitz(
 CREATE INDEX IF NOT EXISTS blitz_rank ON blitz(total DESC, seconds ASC);
 CREATE INDEX IF NOT EXISTS blitz_day ON blitz(day);
 
--- 2026-11-09：象牙塔。tower_days＝每天 100 題（tools/tower_schedule.py 排好寫入；puzzles 是 JSON 陣列，每題跟題庫同格式 [黑, 白, 手數, 題目分, 攻方, 題號]）
+-- 2026-11-09：象牙塔。tower_days＝每天 100 題（當天第一次有人要題目時 Worker 自己從 tower_pool 排；puzzles 是 JSON 陣列，每題跟題庫同格式 [黑, 白, 手數, 題目分, 攻方, 題號]）
 CREATE TABLE IF NOT EXISTS tower_days(day TEXT PRIMARY KEY, puzzles TEXT NOT NULL, t INTEGER NOT NULL);
 -- tower＝每人每天一列（vid＝瀏覽器隨機 ID，只有第一輪算）。n＝已交幾題（下一題的索引）；open_i／open_t＝目前這題開題時間（伺服器記時）；
 -- score＝解開題目的題目分÷10 加總；iph＝IP＋日期的雜湊（只給後台看分身，不擋人）；detail 每題 {i,id,s,ok,sec,hi,u,wk,m}
@@ -51,3 +51,9 @@ CREATE TABLE IF NOT EXISTS tower(
   open_i INTEGER NOT NULL DEFAULT -1, open_t INTEGER NOT NULL DEFAULT 0, ended INTEGER NOT NULL DEFAULT 0, detail TEXT);
 CREATE UNIQUE INDEX IF NOT EXISTS tower_dayvid ON tower(day, vid);
 CREATE INDEX IF NOT EXISTS tower_rank ON tower(day, score DESC);
+-- tower_pool＝出題候選（tools/tower_pool.py 從題庫 game/p/1..10.json 載入；dan＝題庫檔號 1 初段..10 傳說；p＝題目 JSON）
+CREATE TABLE IF NOT EXISTS tower_pool(id TEXT PRIMARY KEY, dan INTEGER NOT NULL, score REAL NOT NULL, white INTEGER NOT NULL, p TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS tower_pool_dan ON tower_pool(dan, score);
+-- tower_used＝哪題哪天出過（90 天內不重複用）
+CREATE TABLE IF NOT EXISTS tower_used(id TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY(id, day));
+CREATE INDEX IF NOT EXISTS tower_used_day ON tower_used(day);

@@ -116,15 +116,52 @@ async function getBoard(url, env) {
 }
 
 // ---------- 象牙塔（2026-11-09 使用者定） ----------
-// 每天一組 100 題，所有人同一組、由易到難（tools/tower_schedule.py 預先排好存 tower_days，不放公開檔案）。
+// 每天一組 100 題，所有人同一組、由易到難（當天第一次有人要題目時伺服器自己排，存 tower_days，不放公開檔案）。
 // 每題：開題時伺服器記時間（/tower/open），交題時用伺服器時間算這題秒數（/tower/step）；答錯這題就結束、看回放答案時不計時。
 // 分數＝解開題目的題目分÷10 加總；排名：分數 → 正確率 → 累積秒數。提示一天共 3 次。每人（vid＝瀏覽器隨機 ID）每天只有第一輪算排行。
 // 00:00（台北）換題，前一天沒做完的照現有成績結算。
 const TOWER_N = 100, TOWER_HINTS = 3;
 const vidOk = (v) => typeof v === "string" && /^[0-9a-f-]{16,40}$/i.test(v);
+// 每段題數（題庫檔 1..10 ＝ 初段..傳說，越高段越少題，合計 100）
+const TOWER_PLAN = [[1, 17], [2, 15], [3, 13], [4, 12], [5, 10], [6, 9], [7, 8], [8, 7], [9, 5], [10, 4]];
+const TOWER_GAPS = [90, 30, 7, 0];   // 同一題幾天內不重複；候選不夠就逐步放寬
 async function towerPuzzles(env, day) {
   const row = await env.DB.prepare("SELECT puzzles FROM tower_days WHERE day = ?1").bind(day).first();
-  return row ? JSON.parse(row.puzzles) : null;
+  if (row) return JSON.parse(row.puzzles);
+  return towerGenerate(env, day);
+}
+// 伺服器自己出題（使用者 2026-11-09：要伺服器每天自己出，不靠人跑腳本）：當天第一次有人要題目時現排。
+// 候選題在 tower_pool（tools/tower_pool.py 從題庫載入）。每段把候選依題目分切成 N 層、每層抽一題（段內也由易到難）；
+// 有白方題的段每 10 題放 1 題白方題；被回報停用的題不選；同一題 90 天內不重複（不夠就放寬到 30、7、0 天）。
+async function towerGenerate(env, day) {
+  const out = [];
+  for (const [dan, cnt] of TOWER_PLAN) {
+    const whites = [];
+    const nWhite = Math.round(cnt / 10);
+    while (whites.length < nWhite) { const t = 1 + Math.floor(Math.random() * cnt); if (!whites.includes(t)) whites.push(t); }
+    let picked = [];
+    for (const gap of TOWER_GAPS) {
+      const { results } = await env.DB.prepare(
+        `SELECT p FROM (
+           SELECT p, t, ROW_NUMBER() OVER (PARTITION BY t ORDER BY (white = 1 AND t IN (SELECT value FROM json_each(?3))) DESC, random()) AS k
+           FROM (SELECT p, white, NTILE(?2) OVER (ORDER BY score) AS t FROM tower_pool
+                 WHERE dan = ?1 AND id NOT IN (SELECT pid FROM reports WHERE status = 'blocked')
+                   AND id NOT IN (SELECT id FROM tower_used WHERE day > date(?4, ?5) AND day < date(?4, ?6))))
+         WHERE k = 1 ORDER BY t`
+      ).bind(dan, cnt, JSON.stringify(whites), day, `-${gap} days`, `+${gap} days`).all();
+      picked = results.map(r => JSON.parse(r.p));
+      if (picked.length >= cnt || gap === 0) break;
+    }
+    out.push(...picked.sort((a, b) => a[3] - b[3]));
+  }
+  if (!out.length) return null;
+  const ins = await env.DB.prepare("INSERT OR IGNORE INTO tower_days(day, puzzles, t) VALUES (?1, ?2, ?3)").bind(day, JSON.stringify(out), Date.now()).run();
+  if (!ins.meta.changes) {   // 同時有別人也在排：用先寫進去的那一份
+    const row = await env.DB.prepare("SELECT puzzles FROM tower_days WHERE day = ?1").bind(day).first();
+    return row ? JSON.parse(row.puzzles) : null;
+  }
+  await env.DB.batch(out.map(x => env.DB.prepare("INSERT OR IGNORE INTO tower_used(id, day) VALUES (?1, ?2)").bind(x[5], day)));
+  return out;
 }
 const towerRun = (r) => r && { n: r.n, score: r.score, solved: r.solved, wrong: r.wrong, hints: r.hints, seconds: r.seconds, ended: r.ended, open_i: r.open_i, open_ms: r.open_i === r.n && r.open_t ? Date.now() - r.open_t : 0, detail: JSON.parse(r.detail || "[]") };
 async function towerPlace(env, day, r) {
