@@ -193,13 +193,36 @@ body.tw .not-t, body:not(.tw) .only-t { display: none !important; }
 .trev .ctl .st { min-width: 64px; text-align: center; font-family: var(--num); font-size: 18px; font-weight: 700; }
 .trev .ctl .ans { flex: 1; min-height: 48px; border-radius: 14px; border: 1px solid var(--teal); background: var(--tealBg); color: var(--text); font-size: 16px; }
 .trev .bt { display: flex; gap: 8px; }
-.twcard { margin: 14px 20px 0; padding: 14px 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line2); display: flex; flex-direction: column; gap: 8px; }
+.twcard { margin: 10px 20px 0; padding: 12px 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line2); display: flex; flex-direction: column; gap: 8px; }
 .twcard .r { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--text2); }
-.twcard .big { font-family: var(--num); font-size: 32px; font-weight: 700; line-height: 1; color: var(--text); }
+.twcard .big { font-family: var(--num); font-size: 28px; font-weight: 700; line-height: 1; color: var(--text); }
 .twcard .sc { font-family: var(--num); font-size: 26px; font-weight: 700; line-height: 1; color: var(--gold); }
 .twcard .pb { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
 .twcard .pb > div { height: 100%; background: var(--gold); }
-.twrules { margin: 12px 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--text2); line-height: 1.45; }
+.twrules { margin: 10px 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font-size: 14.5px; color: var(--text2); line-height: 1.45; }
+/* 象牙塔開始畫面一屏放得下：圖示縮小、卡片與規則收緊、暱稱標籤放輸入框左邊、開始鈕略矮；矮螢幕再藏圖示、縮字 */
+body.tw #sStart .hero svg { width: 40px; height: 40px; }
+body.tw #sStart .nickrow { padding-top: 12px !important; flex-direction: row !important; align-items: center; gap: 10px !important; }
+body.tw #sStart .nickrow input.nick { flex: 1; height: 46px; }
+body.tw #sStart #go { height: 56px !important; font-size: 21px !important; }
+body.tw #sStart .thumb { padding-top: 6px; }
+@media (max-height: 640px) {
+  body.tw #sStart .hero svg { display: none; }
+  .twcard { margin-top: 8px; padding: 10px 14px; gap: 6px; }
+  .twcard .big { font-size: 26px; } .twcard .sc { font-size: 22px; }
+  .twrules { margin-top: 8px; font-size: 14px; gap: 2px; }
+}
+.trev .hd b, .trev .hd span { min-height: 1.3em; }
+@media (max-height: 640px) {   /* 矮螢幕：解題畫面上方數字、研究盤按鈕收小，棋盤才不會縮太多 */
+  .twhud { padding-top: calc(4px + env(safe-area-inset-top)); padding-bottom: 2px; }
+  .twhud b { font-size: 24px; }
+  .twbar { padding-bottom: 4px; }
+  .trev { padding-top: 4px; gap: 6px; }
+  .trev .hd b { font-size: 17px; } .trev .hd span { font-size: 13px; }
+  .trev .ctl .icob { width: 44px; height: 44px; } .trev .ctl .ans { min-height: 44px; }
+  .trev .bt .btn { height: 48px !important; }
+  #sPlay .info { padding-top: 4px; }
+}
 .twrules li::before { content: '・'; }
 @media (prefers-reduced-motion: reduce) { .bar > div, .plus, .pbar > div { transition: none; } }
 </style>
@@ -315,7 +338,7 @@ body.tw .not-t, body:not(.tw) .only-t { display: none !important; }
     </div>
     <span class="muted" id="rkKeep" hidden style="font-size: 13px; line-height: 1.5;"></span>
   </div>
-  <div class="pad only-r" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+  <div class="pad only-r nickrow" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
     <label for="nick" class="muted" style="font-size: 15px;" data-i18n="nick">暱稱</label>
     <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="上排行榜用的名字" data-i18n-ph="nickPh">
   </div>
@@ -790,7 +813,17 @@ const cv = $('board'), ctx = cv.getContext('2d');
 let px = 390, cell = 24, pad = 14;
 function layout() {
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
-  px = Math.max(300, Math.min(w - 16, window.innerHeight - 340));   // 左右各留 8px，邊線的子才點得到
+  setBoardPx(Math.max(300, Math.min(w - 16, window.innerHeight - 340)));   // 左右各留 8px，邊線的子才點得到
+  // 一屏放得下（使用者 2026-11-09）：量整頁有沒有超出視窗，超出多少就把棋盤縮多少（最小 240）
+  if ($('sPlay').hidden) return;
+  const tw = g && g.tw && !g.rev;
+  if (tw) { $('twRev').hidden = false; $('twTools').hidden = true; }   // 象牙塔照研究盤（比較高）的版面量
+  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if (tw) { $('twRev').hidden = true; $('twTools').hidden = false; }
+  if (over > 0) setBoardPx(Math.max(240, px - over));
+}
+function setBoardPx(v) {
+  px = v;
   const dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(px * dpr); cv.height = Math.round(px * dpr);
   cv.style.width = px + 'px'; cv.style.height = px + 'px';
@@ -1399,6 +1432,7 @@ async function twMiss(wk, wa) {
 function twShowRev(on) {
   $('twRev').hidden = !on; $('twTools').hidden = on;
   if (!on) return;
+  setTimeout(layout);   // 研究盤文字填好後再量一次，超出就把棋盤再縮一點
   $('twRevT').textContent = g.rev.ok ? T('twOkT', { n: g.n, p: twSc(g.rev.pts) }) : T('twMissT', { n: g.n });
   $('twRevT').classList.toggle('ok', !!g.rev.ok);
   $('twRevWhy').textContent = g.rev.ok ? T('twRevHint') : g.rev.why + T('sep') + T('twRevHint');
