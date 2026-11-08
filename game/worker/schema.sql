@@ -39,3 +39,15 @@ CREATE TABLE IF NOT EXISTS blitz(
   total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL, seconds REAL NOT NULL, detail TEXT);
 CREATE INDEX IF NOT EXISTS blitz_rank ON blitz(total DESC, seconds ASC);
 CREATE INDEX IF NOT EXISTS blitz_day ON blitz(day);
+
+-- 2026-11-09：象牙塔。tower_days＝每天 100 題（tools/tower_schedule.py 排好寫入；puzzles 是 JSON 陣列，每題跟題庫同格式 [黑, 白, 手數, 題目分, 攻方, 題號]）
+CREATE TABLE IF NOT EXISTS tower_days(day TEXT PRIMARY KEY, puzzles TEXT NOT NULL, t INTEGER NOT NULL);
+-- tower＝每人每天一列（vid＝瀏覽器隨機 ID，只有第一輪算）。n＝已交幾題（下一題的索引）；open_i／open_t＝目前這題開題時間（伺服器記時）；
+-- score＝解開題目的題目分÷10 加總；iph＝IP＋日期的雜湊（只給後台看分身，不擋人）；detail 每題 {i,id,s,ok,sec,hi,u,wk,m}
+CREATE TABLE IF NOT EXISTS tower(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, tu INTEGER NOT NULL, day TEXT NOT NULL, vid TEXT NOT NULL,
+  nick TEXT NOT NULL, lang TEXT, iph TEXT, n INTEGER NOT NULL DEFAULT 0, score REAL NOT NULL DEFAULT 0,
+  solved INTEGER NOT NULL DEFAULT 0, wrong INTEGER NOT NULL DEFAULT 0, hints INTEGER NOT NULL DEFAULT 0, seconds REAL NOT NULL DEFAULT 0,
+  open_i INTEGER NOT NULL DEFAULT -1, open_t INTEGER NOT NULL DEFAULT 0, ended INTEGER NOT NULL DEFAULT 0, detail TEXT);
+CREATE UNIQUE INDEX IF NOT EXISTS tower_dayvid ON tower(day, vid);
+CREATE INDEX IF NOT EXISTS tower_rank ON tower(day, score DESC);

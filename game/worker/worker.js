@@ -8,6 +8,8 @@
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
+// 象牙塔（2026-11-09）：GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
+//      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
@@ -102,6 +104,7 @@ async function adminBlitz(req, env) {
 
 async function getBoard(url, env) {
   if (url.searchParams.get("by") === "b4") return getBlitzBoard(url, env);
+  if (url.searchParams.get("by") === "tower") return getTowerBoard(url, env);
   const by = ORDER[url.searchParams.get("by")] ? url.searchParams.get("by") : "rank";
   const today = url.searchParams.get("scope") !== "all";
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
@@ -110,6 +113,115 @@ async function getBoard(url, env) {
   const st = env.DB.prepare(sql);
   const { results } = await (today ? st.bind(CUR_VER, day) : st.bind(CUR_VER)).all();
   return json({ by, scope: today ? "today" : "all", day, ver: CUR_VER, rows: results });
+}
+
+// ---------- 象牙塔（2026-11-09 使用者定） ----------
+// 每天一組 100 題，所有人同一組、由易到難（tools/tower_schedule.py 預先排好存 tower_days，不放公開檔案）。
+// 每題：開題時伺服器記時間（/tower/open），交題時用伺服器時間算這題秒數（/tower/step）；答錯這題就結束、看回放答案時不計時。
+// 分數＝解開題目的題目分÷10 加總；排名：分數 → 正確率 → 累積秒數。提示一天共 3 次。每人（vid＝瀏覽器隨機 ID）每天只有第一輪算排行。
+// 00:00（台北）換題，前一天沒做完的照現有成績結算。
+const TOWER_N = 100, TOWER_HINTS = 3;
+const vidOk = (v) => typeof v === "string" && /^[0-9a-f-]{16,40}$/i.test(v);
+async function towerPuzzles(env, day) {
+  const row = await env.DB.prepare("SELECT puzzles FROM tower_days WHERE day = ?1").bind(day).first();
+  return row ? JSON.parse(row.puzzles) : null;
+}
+const towerRun = (r) => r && { n: r.n, score: r.score, solved: r.solved, wrong: r.wrong, hints: r.hints, seconds: r.seconds, ended: r.ended, open_i: r.open_i, open_ms: r.open_i === r.n && r.open_t ? Date.now() - r.open_t : 0, detail: JSON.parse(r.detail || "[]") };
+async function towerPlace(env, day, r) {
+  const acc = r.solved / Math.max(1, r.solved + r.wrong);
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM tower WHERE day = ?1 AND n > 0 AND (score > ?2 OR (score = ?2 AND (solved * 1.0 / (solved + wrong) > ?3 OR (solved * 1.0 / (solved + wrong) = ?3 AND seconds < ?4))))"
+  ).bind(day, r.score, acc, r.seconds).first();
+  return row.n + 1;
+}
+async function getTower(url, env) {
+  const day = taipeiDay(Date.now()), vid = url.searchParams.get("vid");
+  const puzzles = await towerPuzzles(env, day);
+  if (!puzzles) return json({ error: "no puzzles", day }, 404);
+  const r = vidOk(vid) ? await env.DB.prepare("SELECT * FROM tower WHERE day = ?1 AND vid = ?2").bind(day, vid).first() : null;
+  return json({ day, puzzles, run: towerRun(r), place: r && r.n > 0 ? await towerPlace(env, day, r) : null });
+}
+async function postTowerOpen(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const now = Date.now(), day = taipeiDay(now);
+  if (b.day !== day) return json({ error: "day over", day }, 409);
+  if (!vidOk(b.vid)) return json({ error: "bad vid" }, 400);
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  if (!nick) return json({ error: "bad nick" }, 400);
+  let r = await env.DB.prepare("SELECT * FROM tower WHERE day = ?1 AND vid = ?2").bind(day, b.vid).first();
+  if (!r) {
+    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM tower WHERE t > ?").bind(now - 60000).first();
+    if (recent.n >= 60) return json({ error: "too many" }, 429);
+    const ip = req.headers.get("CF-Connecting-IP") || "";
+    const iph = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip + "|" + day)))].slice(0, 8).map(x => x.toString(16).padStart(2, "0")).join("");
+    await env.DB.prepare("INSERT INTO tower(t, tu, day, vid, nick, lang, iph) VALUES (?1, ?1, ?2, ?3, ?4, ?5, ?6)").bind(now, day, b.vid, nick, lang, iph).run();
+    r = await env.DB.prepare("SELECT * FROM tower WHERE day = ?1 AND vid = ?2").bind(day, b.vid).first();
+  }
+  if (r.ended) return json({ error: "ended", run: towerRun(r) }, 409);
+  if (b.i !== r.n) return json({ error: "wrong index", run: towerRun(r) }, 409);
+  if (r.open_i !== r.n) {   // 第一次開這題才記時間；關掉網頁再回來，時鐘照算（不重設）
+    await env.DB.prepare("UPDATE tower SET open_i = ?1, open_t = ?2, nick = ?3, tu = ?2 WHERE id = ?4").bind(r.n, now, nick, r.id).run();
+    r.open_i = r.n; r.open_t = now;
+  }
+  return json({ run: towerRun(r) });
+}
+async function postTowerStep(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const now = Date.now(), day = taipeiDay(now);
+  if (b.day !== day) return json({ error: "day over", day }, 409);
+  if (!vidOk(b.vid)) return json({ error: "bad vid" }, 400);
+  const r = await env.DB.prepare("SELECT * FROM tower WHERE day = ?1 AND vid = ?2").bind(day, b.vid).first();
+  if (!r) return json({ error: "no run" }, 404);
+  if (r.ended) return json({ error: "ended", run: towerRun(r) }, 409);
+  if (b.i !== r.n || r.open_i !== r.n) return json({ error: "wrong index", run: towerRun(r) }, 409);
+  const puzzles = await towerPuzzles(env, day);
+  const p = puzzles && puzzles[r.n];
+  if (!p) return json({ error: "no puzzle" }, 404);
+  const ok = b.ok ? 1 : 0, hint = Math.max(0, Math.min(TOWER_HINTS, Math.floor(Number(b.hints) || 0)));
+  if (r.hints + hint > TOWER_HINTS) return json({ error: "no hints left", run: towerRun(r) }, 409);
+  const sec = Math.round((now - r.open_t) / 100) / 10;
+  const pts = ok ? Math.round(p[3]) / 10 : 0;
+  const detail = JSON.parse(r.detail || "[]");
+  detail.push({ i: r.n, id: p[5] || "", s: p[3], ok, sec, hi: hint, u: Math.max(0, Math.floor(Number(b.undos) || 0)), wk: ok ? "" : String(b.wk || "").slice(0, 12), m: String(b.m || "").slice(0, 400) });
+  const n = r.n + 1, ended = n >= TOWER_N ? 1 : 0;
+  await env.DB.prepare("UPDATE tower SET n = ?1, score = score + ?2, solved = solved + ?3, wrong = wrong + ?4, hints = hints + ?5, seconds = seconds + ?6, ended = ?7, detail = ?8, tu = ?9 WHERE id = ?10")
+    .bind(n, pts, ok, 1 - ok, hint, sec, ended, JSON.stringify(detail), now, r.id).run();
+  const nr = await env.DB.prepare("SELECT * FROM tower WHERE id = ?1").bind(r.id).first();
+  return json({ pts, sec, run: towerRun(nr), place: await towerPlace(env, day, nr) });
+}
+async function postTowerEnd(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const day = taipeiDay(Date.now());
+  if (!vidOk(b.vid)) return json({ error: "bad vid" }, 400);
+  const r = await env.DB.prepare("SELECT * FROM tower WHERE day = ?1 AND vid = ?2").bind(day, b.vid).first();
+  if (!r) return json({ error: "no run" }, 404);
+  if (!r.ended) await env.DB.prepare("UPDATE tower SET ended = 1, tu = ?1 WHERE id = ?2").bind(Date.now(), r.id).run();
+  return json({ run: towerRun({ ...r, ended: 1 }), place: r.n > 0 ? await towerPlace(env, day, r) : null });
+}
+async function getTowerBoard(url, env) {
+  const today = taipeiDay(Date.now());
+  const q = url.searchParams.get("day");
+  const day = q && /^\d{4}-\d{2}-\d{2}$/.test(q) && q <= today ? q : today;
+  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 50));
+  const { results } = await env.DB.prepare(
+    `SELECT id, nick, score, solved, wrong, hints, seconds, n, ended FROM tower WHERE day = ?1 AND n > 0
+     ORDER BY score DESC, solved * 1.0 / (solved + wrong) DESC, seconds ASC, t ASC LIMIT ${limit}`
+  ).bind(day).all();
+  const vid = url.searchParams.get("vid");
+  let me = null;
+  if (vidOk(vid)) {
+    const r = await env.DB.prepare("SELECT id, nick, score, solved, wrong, hints, seconds, n, ended FROM tower WHERE day = ?1 AND vid = ?2 AND n > 0").bind(day, vid).first();
+    if (r) me = { ...r, place: await towerPlace(env, day, r) };
+  }
+  return json({ by: "tower", day, rows: results, me });
+}
+async function adminTower(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, tu, day, lang, iph, n, score, solved, wrong, hints, seconds, ended, detail FROM tower ORDER BY id").all();
+  return json({ rows: results });
 }
 
 // 管理密碼只存在本機（vcf-slover out/hub/game_admin_key.txt，不進 git）；這裡只放它的 SHA-256，原始碼公開也不會洩漏
@@ -268,6 +380,11 @@ export default {
       if (req.method === "GET" && url.pathname === "/admin/blitz") return await adminBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);
       if (req.method === "GET" && url.pathname === "/admin/practice") return await adminPractice(req, env);
+      if (req.method === "GET" && url.pathname === "/tower") return await getTower(url, env);
+      if (req.method === "POST" && url.pathname === "/tower/open") return await postTowerOpen(req, env);
+      if (req.method === "POST" && url.pathname === "/tower/step") return await postTowerStep(req, env);
+      if (req.method === "POST" && url.pathname === "/tower/end") return await postTowerEnd(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/tower") return await adminTower(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);
