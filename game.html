@@ -243,10 +243,6 @@ body.tw .not-t, body:not(.tw) .only-t { display: none !important; }
     <div><button type="button" class="icob gold" id="pickBoard" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></button></div>
   </div>
   <div class="pad" style="padding-top: 24px; display: flex; flex-direction: column; gap: 14px;">
-    <button type="button" class="mode r slim" id="modeR">
-      <span class="big">60</span>
-      <span class="tx"><b data-i18n="modeHell">煉獄六十秒</b></span>
-    </button>
     <button type="button" class="mode r slim" id="modeB">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21h12M8 21V9h8v12M7 9l1-4h8l1 4M10 3h4v2h-4zM11 13h2M11 17h2"/></svg></span>
       <span class="tx"><b data-i18n="modeB4">無限之塔</b></span>
@@ -254,6 +250,10 @@ body.tw .not-t, body:not(.tw) .only-t { display: none !important; }
     <button type="button" class="mode r slim" id="modeT">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21V8l3-5 3 5v13M9 12h6M9 16h6M6 21h12"/></svg></span>
       <span class="tx"><b data-i18n="modeTower">象牙塔</b></span>
+    </button>
+    <button type="button" class="mode r slim" id="modeR">
+      <span class="big">60</span>
+      <span class="tx"><b data-i18n="modeHell">煉獄六十秒</b></span>
     </button>
   </div>
   <div style="flex: 1;"></div>
@@ -1205,7 +1205,7 @@ function endPractice(why) {
 function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段位榜（挑戰）、b4＝無限之塔、tower＝象牙塔（今天／昨天）
   if (kind === 'tower' && scope === 'all') scope = 'today';
   if (kind !== 'tower' && scope === 'yday') scope = 'today';
-  el.innerHTML = `<div class="tabs">${[['rank', 'tabRank'], ['b4', 'tabB4'], ['tower', 'tabTower']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-selected="${k === kind}">${T(n)}</button>`).join('')}</div>
+  el.innerHTML = `<div class="tabs">${[['b4', 'tabB4'], ['tower', 'tabTower'], ['rank', 'tabRank']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-selected="${k === kind}">${T(n)}</button>`).join('')}</div>
     <div class="scope">${(kind === 'tower' ? [['today', 'today'], ['yday', 'yday']] : [['today', 'today'], ['all', 'all']]).map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
     <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
   el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, b.dataset.scope, kind));
