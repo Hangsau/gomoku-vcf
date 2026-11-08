@@ -5,7 +5,7 @@
 之後題庫長大了（訓練入庫）想讓新題也能被抽到，再跑一次即可（已在 pool 的題不重複寫）。
 
 每段最多放 MAX_PER_DAN 題（D1 免費方案每天寫入上限 10 萬列，題庫全部 13 萬多題放不進去）；
-白方題全部放進去（題數少）。段內隨機抽樣，題目分高低都有。
+段內隨機抽樣（黑白照題庫比例），題目分高低都有。
 
 用法（在 VCF 專案根目錄）：
   python tools/tower_pool.py            # 載入
@@ -50,12 +50,11 @@ def main():
         with open(os.path.join(ROOT, "game", "p", f"{dan}.json"), encoding="utf-8") as f:
             bank = [x for x in json.load(f) if x[5]]
         in_pool = sum(1 for x in bank if x[5] in have)
-        whites = [x for x in bank if x[4] == "w" and x[5] not in have]
-        blacks = [x for x in bank if x[4] != "w" and x[5] not in have]
-        room = max(0, MAX_PER_DAN - in_pool - len(whites))
-        add = whites + (rng.sample(blacks, room) if len(blacks) > room else blacks)
+        rest = [x for x in bank if x[5] not in have]
+        room = max(0, MAX_PER_DAN - in_pool)
+        add = rng.sample(rest, room) if len(rest) > room else rest   # 黑白不刻意配比（使用者 2026-11-09），照題庫比例
         rows += [(x[5], dan, x[3], 1 if x[4] == "w" else 0, json.dumps(x, ensure_ascii=False, separators=(",", ":"))) for x in add]
-        print(f"段 {dan}：題庫 {len(bank)}、已在 pool {in_pool}、新加 {len(add)}（白方 {len(whites)}）")
+        print(f"段 {dan}：題庫 {len(bank)}、已在 pool {in_pool}、新加 {len(add)}（白方 {sum(1 for x in add if x[4] == 'w')}）")
     print(f"共新加 {len(rows)} 題")
     if a.dry_run or not rows:
         return
