@@ -142,7 +142,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 /* 練習場（2026-11-08 使用者選設計稿 A 開始＋C 練習中）：同一個開始畫面分競速／練習；body.prac 時只顯示 .only-p，否則只顯示 .only-r */
 body.prac .only-r, body:not(.prac) .only-p { display: none !important; }
-/* 4 手無限（2026-11-08）：body.b4 時藏 .not-b、只在 b4 顯示 .only-b；其他跟競速一樣 */
+/* 無限之塔（原名 4 手無限，2026-11-08）：body.b4 時藏 .not-b、只在 b4 顯示 .only-b；其他跟競速一樣 */
 body.b4 .not-b, body:not(.b4) .only-b { display: none !important; }
 .mode { display: flex; align-items: center; gap: 16px; min-height: 128px; padding: 18px 18px; border-radius: 22px; border: 2px solid var(--line2); background: var(--panel); color: var(--text); text-align: left; }
 .mode.r { border-color: var(--gold); } .mode.p { border-color: var(--teal); }
@@ -190,17 +190,33 @@ body.prac #sStart .big60 { color: var(--teal); }
     <span class="muted" style="font-size: 15px;" data-i18n="homeSub">五子棋 VCF 解題</span>
   </div>
   <div class="pad" style="padding-top: 28px; display: flex; flex-direction: column; gap: 14px;">
-    <button type="button" class="mode r" id="modeR">
+    <button type="button" class="mode r" id="toPick">
       <span class="big">60</span>
-      <span class="tx"><b data-i18n="modeRush">競速</b><span data-i18n="heroRule">答對 +20 秒・錯 3 題結束</span><span data-i18n="cardRush">成績上排行榜</span></span>
+      <span class="tx"><b data-i18n="modeRush">競速</b><span data-i18n="cardRushSub">地獄模式・無限之塔</span><span data-i18n="cardRush">成績上排行榜</span></span>
     </button>
     <button type="button" class="mode p" id="modeP">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
       <span class="tx"><b data-i18n="modePrac">練習</b><span data-i18n="cardPrac">自己選時間・可悔棋、提示、加時</span><span data-i18n="cardPrac2">錯題不會結束・不上排行榜</span></span>
     </button>
+  </div>
+  <div style="flex: 1;"></div>
+</section>
+
+<!-- 競速選模式（2026-11-08 使用者：地獄模式、無限之塔都包在競速裡） -->
+<section id="sPick" class="screen" hidden>
+  <div class="topbar">
+    <button type="button" class="icob" id="pickBack" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <b style="font-size: 18px;" data-i18n="modeRush">競速</b>
+    <div><button type="button" class="icob gold" id="pickBoard" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></button></div>
+  </div>
+  <div class="pad" style="padding-top: 24px; display: flex; flex-direction: column; gap: 14px;">
+    <button type="button" class="mode r" id="modeR">
+      <span class="big">60</span>
+      <span class="tx"><b data-i18n="modeHell">地獄模式</b><span data-i18n="cardHell">選起始段位，答完看結算段位</span><span data-i18n="heroRule">答對 +20 秒・錯 3 題結束</span></span>
+    </button>
     <button type="button" class="mode r" id="modeB">
-      <span class="big">4</span>
-      <span class="tx"><b data-i18n="modeB4">4 手無限</b><span data-i18n="heroRule">答對 +20 秒・錯 3 題結束</span><span data-i18n="cardB4">累積每手分數・有排行榜</span></span>
+      <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21h12M8 21V9h8v12M7 9l1-4h8l1 4M10 3h4v2h-4zM11 13h2M11 17h2"/></svg></span>
+      <span class="tx"><b data-i18n="modeB4">無限之塔</b><span data-i18n="cardB4">全是 4 手題：做出活四、雙四或抓禁</span><span data-i18n="cardB4b">答對往上爬、答錯往下掉・累積每手分數</span></span>
     </button>
   </div>
   <div style="flex: 1;"></div>
@@ -215,9 +231,10 @@ body.prac #sStart .big60 { color: var(--teal); }
   </div>
   <div class="hero pad only-b" style="padding-top: 14px;">
     <span class="big60">4</span>
-    <span style="font-size: 18px; font-weight: 700;" data-i18n="b4Sub">手 VCF・無限</span>
+    <span style="font-size: 18px; font-weight: 700;" data-i18n="b4Sub">手・無限之塔</span>
     <span class="muted" style="margin-top: 6px; font-size: 15px;" data-i18n="b4Rule">60 秒・答對 +20 秒・錯 3 題結束</span>
-    <span class="muted" style="margin-top: 2px; font-size: 15px;" data-i18n="cardB4">累積每手分數・有排行榜</span>
+    <span class="muted" style="margin-top: 2px; font-size: 15px;" data-i18n="cardB4">全是 4 手題：做出活四、雙四或抓禁</span>
+    <span class="muted" style="margin-top: 2px; font-size: 15px;" data-i18n="cardB4b">答對往上爬、答錯往下掉・累積每手分數</span>
   </div>
   <div class="hero pad only-r not-b" style="padding-top: 14px;">
     <span class="big60">60</span>
@@ -388,12 +405,12 @@ const I18N = {
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', msgBtn: '給作者留言', msgT: '給作者留言', msgHint: '建議、遇到的問題、想要的功能都可以寫，只有作者看得到。', msgPh: '想說的話', msgContactPh: '聯絡方式（選填，想收到回覆再填，例如 IG 或 email）', msgSend: '送出', msgOk: '收到了，謝謝！', msgFail: '沒送出去，請稍後再試。', msgEmpty: '請先寫點什麼。', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '段位榜', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '地獄模式', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', todayNo: '今天第', boardShort: '排行', revShort: '題目', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '傳說'],
     bandFirst: '入門', band: '{lo}–{hi} 分', bandLast: '{lo} 分以上',
-    modeB4: '4 手無限', cardB4: '累積每手分數・有排行榜', b4Sub: '手 VCF・無限', b4Rule: '60 秒・答對 +20 秒・錯 3 題結束', b4Score: '分數', b4Secs: '解開 {n} 題', b4Time: '用時', b4Avg: '平均每題', tabB4: '4 手無限', modeRush: '競速', modePrac: '練習', pSub: '分鐘・練習', pSubInf: '不限時・練習', pRule1: '抽題、計分跟競速一樣・可悔棋、提示、加時', pRule2: '錯題不會結束・成績不上排行',
+    modeHell: '地獄模式', cardHell: '選起始段位，答完看結算段位', cardB4b: '答對往上爬、答錯往下掉・累積每手分數', cardRushSub: '地獄模式・無限之塔', modeB4: '無限之塔', cardB4: '全是 4 手題：做出活四、雙四或抓禁', b4Sub: '手・無限之塔', b4Rule: '60 秒・答對 +20 秒・錯 3 題結束', b4Score: '分數', b4Secs: '解開 {n} 題', b4Time: '用時', b4Avg: '平均每題', tabB4: '無限之塔', modeRush: '競速', modePrac: '練習', pSub: '分鐘・練習', pSubInf: '不限時・練習', pRule1: '抽題、計分跟競速一樣・可悔棋、提示、加時', pRule2: '錯題不會結束・成績不上排行',
     pTimeLbl: '練習時間', pMinBtn: '{n} 分', pInf: '不限', goPrac: '開始練習', pNoBoard: '不計排行', pEnd: '結束練習', pHint: '下錯可以悔棋再試；用了悔棋或提示，這題不加分、只扣一半',
     undo: '悔棋', hintBtn: '提示', unitSec: '秒', unitMin: '分', timeLeft2: '剩餘時間', elapsed: '已練習', ownN: '自己解開', helpN: '靠提示／悔棋', missN: '錯／跳過',
     pRankLbl: '練習段位', pNext: '→ {r}', pTop: '最高段', pMissed: '按悔棋退回去再試', pRetry: '再試一次', pDead: '先按悔棋退回去', hintWait: '找提示中…', hintNone: '找不到提示',
@@ -415,12 +432,12 @@ const I18N = {
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', msgBtn: 'Message the developer', msgT: 'Message the developer', msgHint: 'Suggestions, problems, feature ideas: only the developer can read this.', msgPh: 'Your message', msgContactPh: 'Contact (optional, only if you want a reply, e.g. Instagram or email)', msgSend: 'Send', msgOk: 'Got it, thank you!', msgFail: "Couldn't send. Please try again later.", msgEmpty: 'Please write something first.', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Rank', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Hell Mode', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan', '9 dan', 'Legend'],
     bandFirst: 'Beginner', band: '{lo}–{hi} pts', bandLast: '{lo}+ pts',
-    modeB4: '4-move Endless', cardB4: 'Score adds up points per move · leaderboard', b4Sub: 'move VCF · endless', b4Rule: '60s · solve +20s · 3 misses ends', b4Score: 'Score', b4Secs: '{n} solved', b4Time: 'Time', b4Avg: 'Avg/puzzle', tabB4: '4-move', modeRush: 'Rush', modePrac: 'Practice', pSub: 'min · Practice', pSubInf: 'No time limit · Practice', pRule1: 'Same puzzles and scoring as Rush · Undo, hints, extra time', pRule2: 'Misses never end the run · Not on the leaderboard',
+    modeHell: 'Hell Mode', cardHell: 'Pick a starting rank, get your rank at the end', cardB4b: 'Solve to climb, miss to drop · points per move add up', cardRushSub: 'Hell Mode · Endless Tower', modeB4: 'Endless Tower', cardB4: 'All 4-move puzzles: make an open four, a double four, or a forbidden trap', b4Sub: 'moves · Endless Tower', b4Rule: '60s · solve +20s · 3 misses ends', b4Score: 'Score', b4Secs: '{n} solved', b4Time: 'Time', b4Avg: 'Avg/puzzle', tabB4: 'Tower', modeRush: 'Rush', modePrac: 'Practice', pSub: 'min · Practice', pSubInf: 'No time limit · Practice', pRule1: 'Same puzzles and scoring as Rush · Undo, hints, extra time', pRule2: 'Misses never end the run · Not on the leaderboard',
     pTimeLbl: 'Practice time', pMinBtn: '{n} min', pInf: 'No limit', goPrac: 'Start practice', pNoBoard: 'not ranked', pEnd: 'End practice', pHint: 'Missed? Undo and try again. Using undo or a hint gives no gain and half the loss for that puzzle.',
     undo: 'Undo', hintBtn: 'Hint', unitSec: 'sec', unitMin: 'min', timeLeft2: 'Time left', elapsed: 'Practiced', ownN: 'Solved alone', helpN: 'With help', missN: 'Missed',
     pRankLbl: 'Practice rank', pNext: '→ {r}', pTop: 'Top rank', pMissed: 'Undo and try again', pRetry: 'Try again', pDead: 'Undo first', hintWait: 'Finding a hint…', hintNone: 'No hint found',
@@ -442,12 +459,12 @@ const I18N = {
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', msgBtn: '作者にメッセージ', msgT: '作者にメッセージ', msgHint: '提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。', msgPh: 'メッセージ', msgContactPh: '連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）', msgSend: '送信', msgOk: '受け取りました。ありがとうございます！', msgFail: '送信できませんでした。しばらくしてからもう一度お試しください。', msgEmpty: 'まず何か書いてください。', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '段位', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '地獄モード', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '伝説'],
     bandFirst: '入門', band: '{lo}–{hi} 点', bandLast: '{lo} 点以上',
-    modeB4: '4手エンドレス', cardB4: '1手あたりの点数を積み上げ・ランキングあり', b4Sub: '手 VCF・エンドレス', b4Rule: '60 秒・正解で +20 秒・3 回ミスで終了', b4Score: 'スコア', b4Secs: '{n} 問正解', b4Time: '時間', b4Avg: '1問平均', tabB4: '4手', modeRush: 'タイムアタック', modePrac: '練習', pSub: '分・練習', pSubInf: '時間無制限・練習', pRule1: '出題と採点はタイムアタックと同じ・待った、ヒント、時間追加あり', pRule2: 'ミスしても終わらない・ランキング対象外',
+    modeHell: '地獄モード', cardHell: '開始段位を選び、終わったら最終段位', cardB4b: '正解で上へ、ミスで下へ・1手あたりの点数を積み上げ', cardRushSub: '地獄モード・無限の塔', modeB4: '無限の塔', cardB4: '全部 4 手題：活四、四四、または禁手で勝つ', b4Sub: '手・無限の塔', b4Rule: '60 秒・正解で +20 秒・3 回ミスで終了', b4Score: 'スコア', b4Secs: '{n} 問正解', b4Time: '時間', b4Avg: '1問平均', tabB4: '無限の塔', modeRush: 'タイムアタック', modePrac: '練習', pSub: '分・練習', pSubInf: '時間無制限・練習', pRule1: '出題と採点はタイムアタックと同じ・待った、ヒント、時間追加あり', pRule2: 'ミスしても終わらない・ランキング対象外',
     pTimeLbl: '練習時間', pMinBtn: '{n} 分', pInf: '無制限', goPrac: '練習開始', pNoBoard: 'ランキング対象外', pEnd: '練習終了', pHint: '間違えたら待ったでやり直せます。待ったやヒントを使った問題は加点なし・減点は半分',
     undo: '待った', hintBtn: 'ヒント', unitSec: '秒', unitMin: '分', timeLeft2: '残り時間', elapsed: '練習時間', ownN: '自力で正解', helpN: 'ヒント等で正解', missN: 'ミス／スキップ',
     pRankLbl: '練習段位', pNext: '→ {r}', pTop: '最高段位', pMissed: '待ったで戻ってやり直し', pRetry: 'もう一度', pDead: '先に待ったで戻してください', hintWait: 'ヒントを探しています…', hintNone: 'ヒントが見つかりません',
@@ -469,12 +486,12 @@ const I18N = {
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', msgBtn: '개발자에게 메시지', msgT: '개발자에게 메시지', msgHint: '제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.', msgPh: '메시지', msgContactPh: '연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)', msgSend: '보내기', msgOk: '잘 받았습니다. 감사합니다!', msgFail: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.', msgEmpty: '먼저 내용을 적어 주세요.', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '단', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '지옥 모드', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단', '9단', '전설'],
     bandFirst: '입문', band: '{lo}–{hi}점', bandLast: '{lo}점 이상',
-    modeB4: '4수 무한', cardB4: '수당 점수 누적 · 순위표', b4Sub: '수 VCF · 무한', b4Rule: '60초 · 정답 +20초 · 3번 틀리면 종료', b4Score: '점수', b4Secs: '{n}문제 해결', b4Time: '시간', b4Avg: '문제당 평균', tabB4: '4수', modeRush: '타임어택', modePrac: '연습', pSub: '분 · 연습', pSubInf: '시간 제한 없음 · 연습', pRule1: '출제와 채점은 타임어택과 같음 · 무르기, 힌트, 시간 추가 가능', pRule2: '틀려도 끝나지 않음 · 순위표에 오르지 않음',
+    modeHell: '지옥 모드', cardHell: '시작 단을 고르고 끝나면 최종 단', cardB4b: '맞히면 위로, 틀리면 아래로 · 수당 점수 누적', cardRushSub: '지옥 모드 · 무한의 탑', modeB4: '무한의 탑', cardB4: '모두 4수 문제: 열린 4, 쌍4, 또는 금수 유도', b4Sub: '수 · 무한의 탑', b4Rule: '60초 · 정답 +20초 · 3번 틀리면 종료', b4Score: '점수', b4Secs: '{n}문제 해결', b4Time: '시간', b4Avg: '문제당 평균', tabB4: '무한의 탑', modeRush: '타임어택', modePrac: '연습', pSub: '분 · 연습', pSubInf: '시간 제한 없음 · 연습', pRule1: '출제와 채점은 타임어택과 같음 · 무르기, 힌트, 시간 추가 가능', pRule2: '틀려도 끝나지 않음 · 순위표에 오르지 않음',
     pTimeLbl: '연습 시간', pMinBtn: '{n}분', pInf: '무제한', goPrac: '연습 시작', pNoBoard: '순위 미반영', pEnd: '연습 끝내기', pHint: '틀리면 무르고 다시 둘 수 있습니다. 무르기나 힌트를 쓴 문제는 점수가 오르지 않고 절반만 깎입니다',
     undo: '무르기', hintBtn: '힌트', unitSec: '초', unitMin: '분', timeLeft2: '남은 시간', elapsed: '연습한 시간', ownN: '혼자 풂', helpN: '도움 받아 풂', missN: '실패/건너뜀',
     pRankLbl: '연습 단', pNext: '→ {r}', pTop: '최고 단', pMissed: '무르고 다시 두세요', pRetry: '다시 두세요', pDead: '먼저 무르기를 누르세요', hintWait: '힌트 찾는 중…', hintNone: '힌트를 찾지 못했습니다',
@@ -584,7 +601,7 @@ async function puzzleId(b, w, a) {
   let out = ''; for (let i = 0; i < 8; i++) out += CROCK[Number((n >> BigInt(35 - 5 * i)) & 31n)];
   return out;
 }
-// 4 手無限（2026-11-08 使用者）：只出 4 手題、不重複；題池在初段～五段的題庫檔
+// 無限之塔（2026-11-08 使用者；原名 4 手無限）：只出 4 手題、不重複；題池在初段～五段的題庫檔
 // 抽題（使用者 2026-11-08）：答對抽「題目分比這題高 5–20%」的題，答錯（含跳過）抽「低 5–20%」的題；第一題從題池中位數附近抽。
 // 範圍內沒題就逐步放寬（同方向 0–40%，再同方向不限），都沒有才抽最接近的。
 const B4_FILES = [1, 2, 3, 4, 5];
@@ -639,7 +656,7 @@ function renderStart() {
   const prac = mode === 'prac';
   document.body.classList.toggle('prac', prac);
   document.body.classList.toggle('b4', mode === 'b4');
-  $('startTitle').textContent = T(prac ? 'modePrac' : mode === 'b4' ? 'modeB4' : 'modeRush');
+  $('startTitle').textContent = T(prac ? 'modePrac' : mode === 'b4' ? 'modeB4' : 'modeHell');
   $('rkName').textContent = rankName(startRank);
   $('rkBand').textContent = bandText(startRank);
   $('rkDown').disabled = startRank === 0;
@@ -655,7 +672,7 @@ function renderStart() {
 }
 function setMode(m) {
   if (m === mode) return;
-  if (mode !== 'b4') store.set(mode === 'prac' ? 'vcfgame.prank' : 'vcfgame.rank', String(startRank));   // 切換前記住這個模式的段位（4 手無限沒有段位）
+  if (mode !== 'b4') store.set(mode === 'prac' ? 'vcfgame.prank' : 'vcfgame.rank', String(startRank));   // 切換前記住這個模式的段位（無限之塔沒有段位）
   mode = m; store.set('vcfgame.mode', m);
   startRank = m === 'prac' ? clampRank(store.get('vcfgame.prank'), clampRank(store.get('vcfgame.rank'), 3), TOP_RANK) : clampRank(store.get('vcfgame.rank'), 3);
   renderStart();
@@ -663,7 +680,10 @@ function setMode(m) {
 $('modeR').onclick = () => { setMode('rush'); show('sStart'); };
 $('modeP').onclick = () => { setMode('prac'); show('sStart'); };
 $('modeB').onclick = () => { setMode('b4'); show('sStart'); };
-$('toHome').onclick = () => show('sHome');
+$('toHome').onclick = () => show(mode === 'prac' ? 'sHome' : 'sPick');   // 地獄模式／無限之塔回競速選模式頁
+$('toPick').onclick = () => show('sPick');
+$('pickBack').onclick = () => show('sHome');
+$('pickBoard').onclick = () => { boardView($('startBoard'), 'today', 'rank'); openModal('mBoard'); };
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(maxStart(), startRank + 1); renderStart(); };
 applyLang();
@@ -754,7 +774,7 @@ $('go').onclick = async () => {
   requestAnimationFrame(tick);
   nextPuzzle();
 };
-function show(id) { for (const s of ['sHome', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+function show(id) { for (const s of ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 
 function tick(t) {
   if (!g || g.over) return;
@@ -904,7 +924,7 @@ function addTime(sec) {
 async function solved(how) {
   const p = g.p, sec = g.psec, helped = g.prac && g.helped;
   const d = updateAbility(helped ? 'half' : true);
-  g.total += g.b4 ? p.score / p.L : p.score; g.left += BONUS_SEC; g.solved++; g.b4Dir = 1;   // 4 手無限累積單手分數（題目分÷手數，使用者 2026-11-08）
+  g.total += g.b4 ? p.score / p.L : p.score; g.left += BONUS_SEC; g.solved++; g.b4Dir = 1;   // 無限之塔累積單手分數（題目分÷手數，使用者 2026-11-08）
   if (g.prac) { if (helped) g.helpedN++; else g.own++; }
   g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields() });
   plusFx('+' + BONUS_SEC);
@@ -916,7 +936,7 @@ async function solved(how) {
 const pracFields = () => g.prac ? { h: g.helped ? 1 : 0, u: g.undos, hi: g.hints, mk: g.mist } : {};
 
 function updateAbility(ok) {   // 回傳能力分變化（整數）；ok＝true 解開、false 答錯、'half' 練習場靠幫助解開（答錯幅度的一半）
-  if (g.b4) return 0;   // 4 手無限只算題數，沒有能力分
+  if (g.b4) return 0;   // 無限之塔沒有能力分
   const before = g.ab, P = expectP(g.ab, g.p.score);
   if (ok === 'half') {
     const k = g.solved === 0 ? K_FAST : K_STEP;   // 跟這時答錯會用的幅度一樣，再打對折
@@ -930,7 +950,7 @@ function updateAbility(ok) {   // 回傳能力分變化（整數）；ok＝true 
 }
 async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋的點
   const p = g.p;
-  g.wrong++; g.b4Dir = -1;   // 4 手無限：下一題抽簡單一點
+  g.wrong++; g.b4Dir = -1;   // 無限之塔：下一題抽簡單一點
   const d = updateAbility(false);
   const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields() };
   g.log.push(x);
@@ -1017,7 +1037,7 @@ async function submit() {
     if (!lastRun.demoted) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; }
   }
 }
-// 4 手無限結算：分數＝解開題目的單手分數（題目分÷手數）加總（使用者 2026-11-08）；同分用時短的在前；送 Worker /blitz（獨立排行榜）
+// 無限之塔結算：分數＝解開題目的單手分數（題目分÷手數）加總（使用者 2026-11-08）；同分用時短的在前；送 Worker /blitz（獨立排行榜）
 function endBlitz(why) {
   lastRun = { mode: 'b4', nick: g.nick, lang, total: Math.round(g.total), solved: g.solved, wrong: g.wrong, seconds: Math.round(g.elapsed * 10) / 10, detail: g.log };
   $('endWhy').textContent = why;
@@ -1046,7 +1066,7 @@ async function submitBlitz() {
 }
 $('retrySubmit').onclick = () => (lastRun && lastRun.mode === 'b4' ? submitBlitz() : submit());
 $('again').onclick = () => { g = null; show('sStart'); renderStart(); };
-$('toRush').onclick = () => { g = null; setMode('rush'); show('sStart'); renderStart(); };
+$('toRush').onclick = () => { g = null; show('sPick'); };   // 練習結算的「去競速」→ 競速選模式頁
 
 // 練習結算：段位直接看能力分（練習段位），不上排行；作答資料送後台 /practice（跟 /run 分開，排行榜讀不到）
 function endPractice(why) {
@@ -1069,7 +1089,7 @@ function endPractice(why) {
   if (g.log.length) fetch(API + '/practice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) }).catch(() => {});
 }
 
-function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段位榜（競速）、b4＝4 手無限
+function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段位榜（競速）、b4＝無限之塔
   el.innerHTML = `<div class="tabs">${[['rank', 'tabRank'], ['b4', 'tabB4']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-selected="${k === kind}">${T(n)}</button>`).join('')}</div>
     <div class="scope">${[['today', 'today'], ['all', 'all']].map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
     <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
@@ -1136,7 +1156,7 @@ $('openReview').onclick = () => {
     const tag = x.ok && x.h ? ['hp', T('tagHelp')] : x.ok ? ['ok', T('tagOk')] : ['ng', T('tagNg')];
     d.innerHTML = `<span class="tag ${tag[0]}">${tag[1]}</span><span class="tx"><span class="info"></span><span class="pid"></span></span><a target="_blank" rel="noopener">${T('open')}</a><button type="button" class="rpt">${T('report')}</button>`;
     d.querySelector('.info').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]),
-      ...(x.h ? [T('helpInfo', { u: x.u || 0, h: x.hi || 0, m: x.mk || 0 })] : []), ...(lastRun.mode === 'b4' ? [] : [T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })])].join(T('sep'));   // 4 手無限沒有能力分
+      ...(x.h ? [T('helpInfo', { u: x.u || 0, h: x.hi || 0, m: x.mk || 0 })] : []), ...(lastRun.mode === 'b4' ? [] : [T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })])].join(T('sep'));   // 無限之塔沒有能力分
     d.querySelector('a').href = href;
     (x.id ? Promise.resolve(x.id) : puzzleId(x.b, x.w, x.a)).then(id => { x.id = id; d.querySelector('.pid').textContent = '#' + id; });
     d.querySelector('.rpt').onclick = () => reportForm(d, x);
