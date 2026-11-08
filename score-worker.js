@@ -1,6 +1,6 @@
 // score-worker.js — 詰題評分在背景跑（不卡住畫面）；引擎是 vcf-slover 的 C++ 編成的 WebAssembly（vcfscore.js / vcfscore.wasm）
 // 收：{ id, black, white, attackerWhite, scale, anyCount } → 回：{ id, ok, result | error }（anyCount＝算使用率時不檢查黑白子數，2026-11-07b）
-const V = '20261108a-m';   // -m（2026-11-08）：多了 vcf_move，評分不變   // 引擎換版就改這裡，瀏覽器才會重抓（2026-11-08a 每手價值）
+const V = '20261108a-m-r1109';   // -m（2026-11-08）：多了 vcf_move，評分不變   // 引擎換版就改這裡，瀏覽器才會重抓（2026-11-08a 每手價值）
 importScripts('vcfscore.js?v=' + V, 'score_rules.js?v=' + V);   // score_rules.js：給分規則（引擎只量測盤面事實，分數照規則算，跟本機題庫同一份，2026-11-08）
 let modP = null;
 function mod() {
