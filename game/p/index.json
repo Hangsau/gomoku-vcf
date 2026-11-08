@@ -1,86 +1,86 @@
 {
  "ver": "2026-11-08b",
- "at": "2026-11-09 00:17",
+ "at": "2026-11-09 01:22",
  "blocked": 0,
  "dans": [
   {
    "dan": "初段",
    "file": "1.json",
-   "n": 4577,
-   "white": 372,
-   "trained": 764,
-   "bank": 3813,
-   "pool": 4463,
+   "n": 4709,
+   "white": 441,
+   "trained": 868,
+   "bank": 3841,
+   "pool": 4497,
    "blocked": 0
   },
   {
    "dan": "二段",
    "file": "2.json",
-   "n": 57547,
-   "white": 694,
-   "trained": 1725,
-   "bank": 55822,
-   "pool": 57001,
+   "n": 57703,
+   "white": 756,
+   "trained": 1823,
+   "bank": 55880,
+   "pool": 57066,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 34241,
-   "white": 1519,
-   "trained": 4515,
-   "bank": 29726,
-   "pool": 33006,
+   "n": 34500,
+   "white": 1604,
+   "trained": 4700,
+   "bank": 29800,
+   "pool": 33086,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 21105,
-   "white": 1014,
-   "trained": 2888,
-   "bank": 18217,
-   "pool": 20335,
+   "n": 21577,
+   "white": 1091,
+   "trained": 3233,
+   "bank": 18344,
+   "pool": 20463,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 10878,
-   "white": 394,
-   "trained": 799,
-   "bank": 10079,
-   "pool": 10531,
+   "n": 11285,
+   "white": 510,
+   "trained": 1071,
+   "bank": 10214,
+   "pool": 10670,
    "blocked": 0
   },
   {
    "dan": "六段",
    "file": "6.json",
-   "n": 5888,
-   "white": 140,
-   "trained": 503,
-   "bank": 5385,
-   "pool": 5812,
+   "n": 6075,
+   "white": 164,
+   "trained": 634,
+   "bank": 5441,
+   "pool": 5868,
    "blocked": 0
   },
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 1892,
+   "n": 1975,
    "white": 19,
-   "trained": 90,
-   "bank": 1802,
-   "pool": 2127,
+   "trained": 158,
+   "bank": 1817,
+   "pool": 2142,
    "blocked": 0
   },
   {
    "dan": "八段",
    "file": "8.json",
-   "n": 687,
+   "n": 689,
    "white": 0,
-   "trained": 4,
-   "bank": 683,
-   "pool": 879,
+   "trained": 5,
+   "bank": 684,
+   "pool": 880,
    "blocked": 0
   },
   {
@@ -104,5 +104,5 @@
    "blocked": 0
   }
  ],
- "total": 137639
+ "total": 139337
 }
