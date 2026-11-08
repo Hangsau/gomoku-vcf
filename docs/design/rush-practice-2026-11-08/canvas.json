@@ -1,0 +1,9 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-08T10:00:00Z"},"title":"Gomoku Rush 練習場","launch":{"view":"canvas"},"pages":[],"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":375,"h":667,"title":"A 開始：上方切換＋設定直接攤開"},
+"APlay.dc.html":{"x":455,"y":0,"w":375,"h":667,"title":"A 練習中：底部四顆大鈕"},
+"BStart.dc.html":{"x":0,"y":787,"w":375,"h":667,"title":"B 開始：兩張模式卡"},
+"BPlay.dc.html":{"x":455,"y":787,"w":375,"h":667,"title":"B 練習中：計時旁加時選單"},
+"CStart.dc.html":{"x":0,"y":1574,"w":375,"h":667,"title":"C 開始：跟競速同版面，設定收成一行"},
+"CPlay.dc.html":{"x":455,"y":1574,"w":375,"h":667,"title":"C 練習中：段位條＋圖示工具列"},
+"End.dc.html":{"x":910,"y":0,"w":375,"h":667,"title":"三版共用：練習結算"}
+},"order":["Main.dc.html","APlay.dc.html","BStart.dc.html","BPlay.dc.html","CStart.dc.html","CPlay.dc.html","End.dc.html"],"notes":{},"designSystems":[]}

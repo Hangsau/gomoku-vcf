@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>B 練習中</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+.bd{position:relative;width:343px;height:343px;border-radius:6px;background-color:#D9B57A;background-image:linear-gradient(#6B4E1F 1px,transparent 1px),linear-gradient(90deg,#6B4E1F 1px,transparent 1px);background-size:22px 22px;background-position:17px 17px}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; position: relative">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 4px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="font-family: 'Chakra Petch', sans-serif; font-size: 40px; font-weight: 700; line-height: 1">4:12</span>
+      <button type="button" aria-expanded="true" style="height: 44px; padding: 0 12px; border-radius: 999px; border: 2px solid #3CC6B4; background: #1F3B39; color: #EDEFF5; font-size: 15px; font-weight: 700">＋時間</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end">
+      <span style="font-size: 13px; color: #B6BCCB">練習段位</span>
+      <span style="font-size: 20px; font-weight: 700; color: #3CC6B4">四段</span>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 16px; top: 62px; z-index: 2; display: flex; gap: 6px; padding: 6px; border-radius: 14px; background: #1F2A3D; border: 1px solid #2E3546; box-shadow: 0 8px 24px rgba(0,0,0,.5)">
+    <button type="button" style="width: 72px; height: 48px; border-radius: 10px; border: 0; background: #161A24; color: #EDEFF5; font-size: 16px">+30 秒</button>
+    <button type="button" style="width: 72px; height: 48px; border-radius: 10px; border: 0; background: #3CC6B4; color: #06231F; font-size: 16px; font-weight: 700">+1 分</button>
+    <button type="button" style="width: 72px; height: 48px; border-radius: 10px; border: 0; background: #161A24; color: #EDEFF5; font-size: 16px">+2 分</button>
+  </div>
+
+  <div style="display: flex; gap: 8px; padding: 6px 16px 8px; align-items: center">
+    <span style="font-size: 13px; color: #3CC6B4; background: #1F3B39; padding: 4px 10px; border-radius: 999px">練習・不計排行</span>
+    <span style="font-size: 13px; color: #B6BCCB">自己解開 <b style="color: #F2B544">3</b>・靠提示 <b>1</b>・錯 <b>1</b></span>
+  </div>
+  <div style="display: flex; justify-content: center">
+    <div class="bd" role="img" aria-label="題目棋盤">
+      <sc-for list="{{stones}}" as="s" hint-placeholder-count="8">
+        <div style="{{s.style}}"></div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 0">
+    <span style="font-size: 15px; font-weight: 700">黑先・本題 18 秒</span>
+    <div style="display: flex; gap: 8px">
+      <button type="button" aria-label="悔棋" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; display: flex; align-items: center; gap: 6px; font-size: 14px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg>悔棋</button>
+      <button type="button" aria-label="提示" style="height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; display: flex; align-items: center; gap: 6px; font-size: 14px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"></path><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"></path></svg>提示</button>
+    </div>
+  </div>
+  <div style="flex: 1"></div>
+  <div style="display: flex; gap: 8px; padding: 0 16px 20px">
+    <button type="button" style="flex: 1; height: 56px; border-radius: 12px; border: 1px solid #2E3546; background: none; color: #B6BCCB; font-size: 16px">結束練習</button>
+    <button type="button" style="flex: 2; height: 56px; border-radius: 12px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; font-size: 16px">跳過這題</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = (c, r, color, extra) => ({ style: 'position:absolute;width:20px;height:20px;border-radius:50%;left:' + (17 + c * 22 - 10) + 'px;top:' + (17 + r * 22 - 10) + 'px;' + (color === 'b' ? 'background:#15171C;' : color === 'w' ? 'background:#F4F1EA;box-shadow:inset 0 0 0 1px #8a7a5a;' : '') + (extra || '') });
+    return { stones: [
+      st(7, 7, 'b'), st(8, 6, 'b'), st(6, 8, 'b'), st(9, 8, 'b'),
+      st(8, 7, 'w'), st(6, 6, 'w'), st(9, 9, 'w'), st(5, 9, 'w')
+    ] };
+  }
+}
+</script>
+</body>
+</html>

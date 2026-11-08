@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>C 開始畫面</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px">
+    <button type="button" aria-label="詰題試煉場" style="width: 44px; height: 44px; background: none; border: 0; color: #B6BCCB"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg></button>
+    <div style="display: flex">
+      <button type="button" aria-label="聲音" style="width: 44px; height: 44px; background: none; border: 0; color: #B6BCCB"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"></path><path d="M16 9a4 4 0 0 1 0 6"></path></svg></button>
+      <button type="button" aria-label="語言" style="width: 44px; height: 44px; background: none; border: 0; color: #B6BCCB"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"></path></svg></button>
+      <button type="button" aria-label="留言" style="width: 44px; height: 44px; background: none; border: 0; color: #B6BCCB"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"></path></svg></button>
+      <button type="button" aria-label="排行榜" style="width: 44px; height: 44px; background: none; border: 0; color: #F2B544"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"></path></svg></button>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: center; padding: 28px 16px 0">
+    <span style="font-family: 'Chakra Petch', sans-serif; font-size: 84px; font-weight: 700; line-height: 1; color: #3CC6B4">5:00</span>
+    <span style="margin-top: 6px; font-size: 18px; font-weight: 700">練習・VCF</span>
+    <span style="margin-top: 6px; font-size: 14px; color: #B6BCCB">可悔棋、提示、加時・不上排行</span>
+  </div>
+
+  <div style="padding: 22px 16px 0">
+    <button type="button" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 12px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; text-align: left">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color: #3CC6B4"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2M9 2h6"></path></svg>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; color: #B6BCCB">練習設定</span><span style="font-size: 16px">5 分鐘・每次加時 +1 分</span></span>
+      <span style="font-size: 14px; color: #3CC6B4">改</span>
+    </button>
+  </div>
+
+  <div style="padding: 14px 16px 0; display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 14px; color: #B6BCCB">起始段位</span>
+    <div style="display: flex; align-items: center; height: 52px; border-radius: 12px; background: #161A24; border: 1px solid #252B3A">
+      <button type="button" aria-label="降一段" style="width: 56px; height: 52px; border: 0; background: none; color: #EDEFF5; font-size: 24px">−</button>
+      <b style="flex: 1; text-align: center; font-size: 19px">三段</b>
+      <button type="button" aria-label="升一段" style="width: 56px; height: 52px; border: 0; background: none; color: #EDEFF5; font-size: 24px">+</button>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="padding: 12px 16px 20px; display: flex; gap: 8px">
+    <button type="button" style="flex: 1; height: 60px; border-radius: 14px; border: 1px solid #F2B544; background: none; color: #F2B544; font-size: 17px; font-weight: 700">改玩競速</button>
+    <button type="button" style="flex: 2; height: 60px; border: 0; border-radius: 14px; background: #3CC6B4; color: #06231F; font-size: 22px; font-weight: 700">開始練習</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

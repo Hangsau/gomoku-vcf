@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>練習結算</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 36px 16px 0">
+    <span style="font-size: 16px; color: #B6BCCB">練習結束・5 分鐘＋加時 2 次</span>
+    <div style="width: 170px; height: 170px; border-radius: 50%; border: 4px solid #3CC6B4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transform: rotate(-6deg)">
+      <span style="font-size: 14px; color: #B6BCCB">練習段位</span>
+      <b style="font-size: 40px; color: #3CC6B4">四段</b>
+      <span style="font-size: 13px; color: #B6BCCB">從三段升上來</span>
+    </div>
+    <div style="width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <div style="display: flex; flex-direction: column; align-items: center; padding: 12px 0; border-radius: 12px; background: #161A24"><span style="font-size: 13px; color: #B6BCCB">自己解開</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 30px; color: #F2B544">5</b></div>
+      <div style="display: flex; flex-direction: column; align-items: center; padding: 12px 0; border-radius: 12px; background: #161A24"><span style="font-size: 13px; color: #B6BCCB">靠提示／悔棋</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 30px">2</b></div>
+      <div style="display: flex; flex-direction: column; align-items: center; padding: 12px 0; border-radius: 12px; background: #161A24"><span style="font-size: 13px; color: #B6BCCB">錯／跳過</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 30px">1</b></div>
+    </div>
+    <span style="font-size: 14px; color: #B6BCCB; text-align: center">能力分 412・練習成績不上排行</span>
+  </div>
+  <div style="flex: 1"></div>
+  <div style="display: flex; align-items: center; gap: 8px; padding: 0 16px 20px">
+    <button type="button" aria-label="看我解的題" style="width: 64px; height: 60px; border-radius: 12px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16M4 15h16M10 4v16M15 4v16"></path></svg>題目</button>
+    <button type="button" style="width: 88px; height: 60px; border-radius: 12px; border: 1px solid #F2B544; background: none; color: #F2B544; font-size: 15px; font-weight: 700">去競速</button>
+    <button type="button" style="flex: 1; height: 60px; border: 0; border-radius: 12px; background: #3CC6B4; color: #06231F; font-size: 19px; font-weight: 700">再練一局</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
