@@ -132,7 +132,7 @@ async function towerPuzzles(env, day) {
 }
 // 伺服器自己出題（使用者 2026-11-09：要伺服器每天自己出，不靠人跑腳本）：當天第一次有人要題目時現排。
 // 候選題在 tower_pool（tools/tower_pool.py 從題庫載入）。每段把候選依題目分切成 N 層、每層抽一題（段內也由易到難）；
-// 有白方題的段每 10 題放 1 題白方題；被回報停用的題不選；同一題 90 天內不重複（不夠就放寬到 30、7、0 天）。
+// 有白方題的段每 10 題放 1 題白方題（指定層優先白方、其他層優先黑方）；被回報停用的題不選；同一題 90 天內不重複（不夠就放寬到 30、7、0 天）。
 async function towerGenerate(env, day) {
   const out = [];
   for (const [dan, cnt] of TOWER_PLAN) {
@@ -143,7 +143,7 @@ async function towerGenerate(env, day) {
     for (const gap of TOWER_GAPS) {
       const { results } = await env.DB.prepare(
         `SELECT p FROM (
-           SELECT p, t, ROW_NUMBER() OVER (PARTITION BY t ORDER BY (white = 1 AND t IN (SELECT value FROM json_each(?3))) DESC, random()) AS k
+           SELECT p, t, ROW_NUMBER() OVER (PARTITION BY t ORDER BY CASE WHEN t IN (SELECT value FROM json_each(?3)) THEN white ELSE 1 - white END DESC, random()) AS k
            FROM (SELECT p, white, NTILE(?2) OVER (ORDER BY score) AS t FROM tower_pool
                  WHERE dan = ?1 AND id NOT IN (SELECT pid FROM reports WHERE status = 'blocked')
                    AND id NOT IN (SELECT id FROM tower_used WHERE day > date(?4, ?5) AND day < date(?4, ?6))))
