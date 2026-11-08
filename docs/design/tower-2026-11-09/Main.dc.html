@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>象牙塔 開始</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button,input{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 0">
+    <button type="button" aria-label="回競速" style="width: 48px; height: 48px; border: 0; background: transparent; color: #EDEFF5; display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <button type="button" aria-label="象牙塔榜" style="width: 48px; height: 48px; border: 0; background: transparent; color: #F2B544; display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"></path></svg></button>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4px 20px 0; gap: 6px">
+    <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true" style="fill: none; stroke: #F2B544; stroke-width: 2.5; stroke-linejoin: round"><path d="M24 58V20l8-12 8 12v38z"></path><path d="M24 30h16M24 42h16M18 58h28"></path></svg>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 900; letter-spacing: 2px">象牙塔</h1>
+    <span style="font-size: 15px; color: #B6BCCB">11 月 9 日・今天 100 題・大家同一組</span>
+  </div>
+  <div style="margin: 16px 20px 0; padding: 14px 16px; border-radius: 16px; background: #161A24; border: 1px solid #2E3546; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <span style="font-size: 14px; color: #B6BCCB">今天已爬到</span>
+      <span style="font-size: 14px; color: #B6BCCB">目前第 <b style="color: #EDEFF5">12</b> 名</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <span style="font-family: 'Chakra Petch', sans-serif; font-size: 36px; font-weight: 700; line-height: 1">第 23 題</span>
+      <span style="font-family: 'Chakra Petch', sans-serif; font-size: 28px; font-weight: 700; color: #F2B544; line-height: 1">812.4<small style="font-size: 14px; color: #B6BCCB; font-family: 'Noto Sans TC', sans-serif"> 分</small></span>
+    </div>
+    <div style="height: 8px; border-radius: 999px; background: #252B3A; overflow: hidden"><div style="width: 22%; height: 8px; background: #F2B544"></div></div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #B6BCCB"><span>正確率 86%・提示剩 2 次</span><span>累積 6:41</span></div>
+  </div>
+  <ul style="margin: 14px 20px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 15px; color: #B6BCCB">
+    <li>・由易到難，越高段題目越少</li>
+    <li>・答錯這題就結束，可以看回放和答案，時間暫停</li>
+    <li>・可以悔棋；提示一天 3 次，只提示下一手</li>
+    <li>・分數＝解開題目的題目分 ÷ 10，只有第一輪算排行</li>
+  </ul>
+  <div style="flex: 1"></div>
+  <div style="padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px">
+    <label style="display: flex; align-items: center; gap: 10px; font-size: 15px; color: #B6BCCB">暱稱<input value="小棋" style="flex: 1; height: 44px; border-radius: 12px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; padding: 0 12px; font-size: 16px"></label>
+    <button type="button" style="height: 60px; border-radius: 18px; border: 0; background: #F2B544; color: #1A1300; font-size: 20px; font-weight: 900">繼續爬塔</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

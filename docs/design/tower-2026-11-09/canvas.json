@@ -1,0 +1,14 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-09T12:00:00Z"},"title":"Gomoku Rush 象牙塔","launch":{"view":"canvas"},"pages":[],
+"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":375,"h":667,"title":"共用：象牙塔開始畫面"},
+"Board.dc.html":{"x":455,"y":0,"w":375,"h":667,"title":"共用：象牙塔榜"},
+"APlay.dc.html":{"x":0,"y":787,"w":375,"h":667,"title":"A 解題中：上方三個大數字＋段位進度條"},
+"AReview.dc.html":{"x":455,"y":787,"w":375,"h":667,"title":"A 答錯後：底部抽屜（回放／答案／下一題）"},
+"BPlay.dc.html":{"x":0,"y":1574,"w":375,"h":667,"title":"B 解題中：大樓層數＋工具收在上方"},
+"BReview.dc.html":{"x":455,"y":1574,"w":375,"h":667,"title":"B 答錯後：棋盤直接切成回放，下方逐手播放"},
+"CPlay.dc.html":{"x":0,"y":2361,"w":375,"h":667,"title":"C 解題中：一行資訊條，棋盤最大"},
+"CReview.dc.html":{"x":455,"y":2361,"w":375,"h":667,"title":"C 答錯後：結果卡片＋小棋盤"},
+"Goban.dc.html":{"x":910,"y":0,"w":343,"h":343,"title":"元件：棋盤"}
+},
+"order":["Main.dc.html","Board.dc.html","APlay.dc.html","AReview.dc.html","BPlay.dc.html","BReview.dc.html","CPlay.dc.html","CReview.dc.html","Goban.dc.html"],
+"notes":{},"designSystems":[]}

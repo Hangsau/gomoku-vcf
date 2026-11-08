@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>C 答錯後</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; padding: 16px 16px 20px; gap: 14px">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px">
+    <span style="width: 56px; height: 56px; border-radius: 50%; background: #3D1F1F; color: #FF7A6B; display: flex; align-items: center; justify-content: center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    <span style="font-size: 24px; font-weight: 900">第 23 題沒解開</span>
+    <span style="font-size: 14px; color: #B6BCCB">第 3 手後沒有四了（L8）・時間暫停中</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+    <div style="padding: 10px; border-radius: 14px; background: #161A24; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: #B6BCCB">這題</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 22px">+0</b></div>
+    <div style="padding: 10px; border-radius: 14px; background: #161A24; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: #B6BCCB">總分</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 22px; color: #F2B544">812.4</b></div>
+    <div style="padding: 10px; border-radius: 14px; background: #161A24; display: flex; flex-direction: column; align-items: center"><span style="font-size: 12px; color: #B6BCCB">正確率</span><b style="font-family: 'Chakra Petch', sans-serif; font-size: 22px">83%</b></div>
+  </div>
+  <div style="display: flex; gap: 12px; align-items: center">
+    <dc-import name="Goban" size="{{168}}" set="answer" hint-size="168px,168px"></dc-import>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+      <button type="button" style="height: 52px; border-radius: 14px; border: 1px solid #3CC6B4; background: #1F3B39; color: #EDEFF5; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 6px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>看答案</button>
+      <button type="button" style="height: 52px; border-radius: 14px; border: 1px solid #2E3546; background: transparent; color: #EDEFF5; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 6px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l12 8-12 8z"></path></svg>回放我的</button>
+      <span style="font-size: 12px; color: #B6BCCB; text-align: center">點了會放大棋盤逐手播放</span>
+    </div>
+  </div>
+  <div style="flex: 1"></div>
+  <button type="button" style="height: 60px; border-radius: 18px; border: 0; background: #F2B544; color: #1A1300; font-size: 20px; font-weight: 900">下一題</button>
+  <button type="button" style="height: 44px; border: 0; background: transparent; color: #B6BCCB; font-size: 15px">今天到這裡</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

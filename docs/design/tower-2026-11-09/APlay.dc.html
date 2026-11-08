@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>A 解題中</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap">
+<style>
+body{margin:0;background:#0F121A}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column">
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 16px 6px">
+    <div style="display: flex; flex-direction: column"><span style="font-size: 13px; color: #B6BCCB">分數</span><span style="font-family: 'Chakra Petch', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1; color: #F2B544">812.4</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center"><span style="font-size: 13px; color: #B6BCCB">第幾題</span><span style="font-family: 'Chakra Petch', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1">23<small style="font-size: 15px; color: #B6BCCB">/100</small></span></div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end"><span style="font-size: 13px; color: #B6BCCB">累積時間</span><span style="font-family: 'Chakra Petch', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1">6:41</span></div>
+  </div>
+  <div style="padding: 0 16px 8px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #3CC6B4; font-weight: 700">二段・這題 9.8 分</span><span style="color: #B6BCCB">正確率 86%</span></div>
+    <div style="display: flex; gap: 2px; height: 8px">
+      <div style="flex: 17; background: #F2B544; border-radius: 4px 0 0 4px"></div>
+      <div style="flex: 15; background: linear-gradient(90deg, #F2B544 40%, #252B3A 40%)"></div>
+      <div style="flex: 13; background: #252B3A"></div><div style="flex: 12; background: #252B3A"></div><div style="flex: 10; background: #252B3A"></div><div style="flex: 9; background: #252B3A"></div><div style="flex: 8; background: #252B3A"></div><div style="flex: 7; background: #252B3A"></div><div style="flex: 5; background: #252B3A"></div><div style="flex: 4; background: #252B3A; border-radius: 0 4px 4px 0"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #B6BCCB"><span>初段</span><span>五段</span><span>傳說</span></div>
+  </div>
+  <div style="display: flex; justify-content: center">
+    <dc-import name="Goban" size="{{343}}" set="play" hint="{{true}}" hint-size="343px,343px"></dc-import>
+  </div>
+  <div style="display: flex; justify-content: space-between; padding: 10px 16px 0; font-size: 15px">
+    <span style="font-weight: 700">黑先・VCF</span>
+    <span style="color: #B6BCCB">本題 0:18</span>
+  </div>
+  <div style="flex: 1"></div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 12px 20px">
+    <button type="button" style="height: 60px; border-radius: 14px; border: 1px solid #2E3546; background: #161A24; color: #EDEFF5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 13px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h11a5 5 0 0 1 0 10h-3"></path></svg>悔棋</button>
+    <button type="button" style="height: 60px; border-radius: 14px; border: 1px solid #3CC6B4; background: #1F3B39; color: #EDEFF5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px"><span style="display: flex; gap: 5px" aria-hidden="true"><i style="width: 9px; height: 9px; border-radius: 50%; background: #3CC6B4"></i><i style="width: 9px; height: 9px; border-radius: 50%; background: #3CC6B4"></i><i style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #3CC6B4; box-sizing: border-box"></i></span>提示（剩 2）</button>
+    <button type="button" style="height: 60px; border-radius: 14px; border: 1px solid #2E3546; background: #161A24; color: #B6BCCB; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 13px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4h11l-1 4 4 1v8H9"></path></svg>結束今天</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
