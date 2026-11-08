@@ -1,16 +1,16 @@
 {
  "ver": "2026-11-08b",
- "at": "2026-11-08 15:49",
+ "at": "2026-11-08 15:52",
  "blocked": 0,
  "dans": [
   {
    "dan": "初段",
    "file": "1.json",
-   "n": 1999,
+   "n": 2115,
    "white": 148,
    "trained": 367,
-   "bank": 1632,
-   "pool": 1851,
+   "bank": 1748,
+   "pool": 1967,
    "blocked": 0
   },
   {
@@ -20,7 +20,7 @@
    "white": 354,
    "trained": 967,
    "bank": 3000,
-   "pool": 4366,
+   "pool": 4844,
    "blocked": 0
   },
   {
@@ -30,7 +30,7 @@
    "white": 785,
    "trained": 2599,
    "bank": 3000,
-   "pool": 5528,
+   "pool": 6028,
    "blocked": 0
   },
   {
@@ -40,7 +40,7 @@
    "white": 367,
    "trained": 1308,
    "bank": 3000,
-   "pool": 9366,
+   "pool": 9736,
    "blocked": 0
   },
   {
@@ -50,7 +50,7 @@
    "white": 114,
    "trained": 205,
    "bank": 3000,
-   "pool": 9533,
+   "pool": 9569,
    "blocked": 0
   },
   {
@@ -104,5 +104,5 @@
    "blocked": 0
   }
  ],
- "total": 26172
+ "total": 26288
 }
