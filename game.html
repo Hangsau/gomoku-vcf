@@ -791,7 +791,7 @@ async function placeAt(t) {
   if (res.r === 'illegal') { g.moves.pop(); g.hold = false; return; }
   if (res.r === 'mustblock') return miss('mustblock', res.at);
   if (res.r === 'forbidden' || res.r === 'notfour') return warn(res.r);
-  atk.push(t); stoneSound(); g.hintPt = null; g.counterAt = null;
+  atk.push(t); stoneSound(); g.hintPt = null;
   if (res.r === 'win') { draw(); return solved(res.how); }
   if (res.r === 'block') {
     def.push(res.def); g.lastDef = res.def; setTimeout(() => stoneSound(true), 160);   // 電腦擋，晚一點、小聲一點
@@ -804,11 +804,7 @@ async function placeAt(t) {
     }
     if (res.vcf === 0) return miss('novcf');
     if (g.prac) { g.hist.push(snap); renderHud(); }
-    if (res.defFour) {   // 被反四但還能連（使用者 2026-11-08：反四就提醒被反四，還能連就讓他繼續下）：提醒一下、紅圈標著，玩家自己擋
-      g.counterAt = res.defFour; draw();
-      await flash(T('why_counter_nf', { at: res.defFour }), 'warn', WARN_MS * 1.5);
-    }
-    if (!g.over) g.hold = false;   // vcf>0，或搜太久沒算完（-1）就當還有路，繼續
+    g.hold = false;   // vcf>0，或搜太久沒算完（-1）就當還有路，繼續
     return;
   }
   miss('bad');
