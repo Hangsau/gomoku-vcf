@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS practice(
   added INTEGER NOT NULL, added_sec INTEGER NOT NULL, own INTEGER NOT NULL, helped INTEGER NOT NULL, wrong INTEGER NOT NULL,
   seconds REAL NOT NULL, detail TEXT);
 CREATE INDEX IF NOT EXISTS practice_t ON practice(t);
+
+-- 2026-11-08：4 手無限（只出 4 手題、60 秒＋每題 20 秒、錯 3 題結束）；分數＝total（解開題目的單手分數＝題目分÷手數，加總），同分 seconds 小的在前；detail 每題作答（跟 runs 同格式，e 一律 0）
+CREATE TABLE IF NOT EXISTS blitz(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, nick TEXT NOT NULL, lang TEXT,
+  total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL, seconds REAL NOT NULL, detail TEXT);
+CREATE INDEX IF NOT EXISTS blitz_rank ON blitz(total DESC, seconds ASC);
+CREATE INDEX IF NOT EXISTS blitz_day ON blitz(day);

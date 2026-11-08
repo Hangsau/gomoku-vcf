@@ -7,6 +7,7 @@
 // GET  /admin/reports、POST /admin/report {id, status: open|done|blocked}（Bearer 管理密碼）
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
+// POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
@@ -63,7 +64,44 @@ async function postRun(req, env) {
   return json({ id, day, place });
 }
 
+// 4 手無限（2026-11-08 使用者：4 手 VCF、1 分鐘、答對 +20 秒、錯 3 題結束、只算分數、有排名）：獨立的 blitz 表
+async function postBlitz(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  const solved = num(b.solved, 0, 1000), wrong = num(b.wrong, 0, 3), seconds = num(b.seconds, 0, 20000), total = num(b.total, 0, 1000000);
+  if (!nick || solved === null || wrong === null || seconds === null || total === null) return json({ error: "bad fields" }, 400);
+  if (total > solved * 120) return json({ error: "bad total" }, 400);   // 單手分數＝題目分÷4，4 手題最高約 100
+  if (seconds > 60 + 20 * solved + 5) return json({ error: "bad time" }, 400);   // 60 秒＋每題 20 秒是上限
+  const now = Date.now(), day = taipeiDay(now);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM blitz WHERE t > ?").bind(now - 60000).first();
+  if (recent.n >= 60) return json({ error: "too many" }, 429);
+  const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 1000) : []).slice(0, 200000);
+  const res = await env.DB.prepare("INSERT INTO blitz(t, day, nick, lang, total, solved, wrong, seconds, detail) VALUES (?,?,?,?,?,?,?,?,?)")
+    .bind(now, day, nick, lang, total, solved, wrong, seconds, detail).run();
+  const id = res.meta.last_row_id;
+  if (!solved) return json({ id, day, place: null });
+  const better = "solved > 0 AND (total > ? OR (total = ? AND seconds < ?))";
+  const today = await env.DB.prepare(`SELECT COUNT(*) AS n FROM blitz WHERE day = ? AND ${better}`).bind(day, total, total, seconds).first();
+  const all = await env.DB.prepare(`SELECT COUNT(*) AS n FROM blitz WHERE ${better}`).bind(total, total, seconds).first();
+  return json({ id, day, place: { today: today.n + 1, all: all.n + 1 } });
+}
+async function getBlitzBoard(url, env) {
+  const today = url.searchParams.get("scope") !== "all";
+  const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
+  const day = taipeiDay(Date.now());
+  const st = env.DB.prepare(`SELECT id, nick, total, solved, wrong, seconds, t FROM blitz WHERE solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY total DESC, seconds ASC, t ASC LIMIT ${limit}`);
+  const { results } = await (today ? st.bind(day) : st).all();
+  return json({ by: "b4", scope: today ? "today" : "all", day, rows: results });
+}
+async function adminBlitz(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, lang, total, solved, wrong, seconds, detail FROM blitz ORDER BY id").all();
+  return json({ rows: results });
+}
+
 async function getBoard(url, env) {
+  if (url.searchParams.get("by") === "b4") return getBlitzBoard(url, env);
   const by = ORDER[url.searchParams.get("by")] ? url.searchParams.get("by") : "rank";
   const today = url.searchParams.get("scope") !== "all";
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
@@ -226,6 +264,8 @@ export default {
       if (req.method === "POST" && url.pathname === "/feedback") return await postFeedback(req, env);
       if (req.method === "GET" && url.pathname === "/admin/feedback") return await adminFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/admin/feedback") return await adminSetFeedback(req, env);
+      if (req.method === "POST" && url.pathname === "/blitz") return await postBlitz(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/blitz") return await adminBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);
       if (req.method === "GET" && url.pathname === "/admin/practice") return await adminPractice(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
