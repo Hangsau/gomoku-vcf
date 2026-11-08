@@ -157,7 +157,7 @@ const LOW = /*LADDER*/[0, 45, 70, 110, 172, 270, 415, 627, 929, 1352, 1932]/*END
 const START_AB = /*START*/[34, 56, 88, 138, 215, 335, 510, 763, 1121, 1616, 2415]/*END*/;
 const SCORE_VER = '2026-11-08b';   // 競速數據只算這一版評分的局（跟 worker.js CUR_VER 一致）；舊版的局不混進來
 const SPREAD = 0.5, MIN_N = 30;
-const WHY = { novcf: '下完沒 VCF', counter_nf: '被反四', counter_fb: '被反四', counter_nv: '被反四', skip: '跳過', time: '時間到', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
+const WHY = { five: '對方連五', forbid: '被禁手', nofour: '沒四了', novcf: '下完沒 VCF（舊判定）', counter_nf: '被反四', counter_fb: '被反四', counter_nv: '被反四', skip: '跳過', time: '時間到', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
 const CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rankOf = (ab) => { let k = 0; while (k < RANKS.length - 1 && ab >= LOW[k + 1]) k++; return k; };
