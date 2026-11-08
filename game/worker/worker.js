@@ -17,7 +17,7 @@
 import ADMIN_HTML from "./admin.html";
 import SCORING_JSON from "./scoring.json.txt";   // 計分看板資料（vcf-slover engine/scoring_eval.py 產生，部署時一起上傳；後台「計分」分頁讀 /admin/scoring）
 // 評分版本（2026-11-08 使用者：全面換新評分）：排行榜只排這一版的局；舊版的局還在表裡（ver 欄），不刪
-const CUR_VER = "2026-11-08b";
+const CUR_VER = "2026-11-09a";
 
 const ORDER = {
   rank: "ab DESC, t ASC",

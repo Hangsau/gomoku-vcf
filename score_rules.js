@@ -6,7 +6,7 @@
 //   lifts[{at,past,shape,newFour,over44}]、decoys[[手數,反擊,算深誘餌,單獨一區]]；removals[{q,c,f}]＝拿掉每顆子後的 facts（不合格時 f＝null）
 (function (root) {
   'use strict';
-  const RULES_VER = '2026-11-08b';   // b：解禁分種類（使用者 2026-11-08 定案）
+  const RULES_VER = '2026-11-09a';   // 2026-11-09a：白先判斷 +45（使用者定案）；2026-11-08b：解禁分種類
 
   // ---- 參數（改規則就改這裡；說明文字在下面 RULES，跟著改）----
   const P = {
@@ -15,6 +15,7 @@
     trapEach: 3, counterEach: 8,      // 第 k 個 each×(1−0.5^k)
     liftTrue: 60, liftPass: 15, liftFourThree: 0,   // 解禁（使用者 2026-11-08 定案）：真解禁 60、路過解禁 15、二二三三變四三 0
     prep: 30, order: 15, forbidWin: 30, detour: 15,
+    whiteJudge: 45,                   // 白先判斷（使用者 2026-11-09）：白先一開始要判斷是逼黑下禁手還是自己下四三；競速數據同分同能力白先約難 ×1.3（95% ×0.98～×1.72，54 次作答），中位分 156 ×0.3≈45
     minLen: 4,
     usefulDrop: 0.9,                   // 拿掉後分數 < 原始分×0.9＝有用
     usageMid: 0.75, usageLo: 0.7, usageHi: 1.25, balance: 0.97,
@@ -51,7 +52,7 @@
       '手順': P.order * (f.order || 0),
       '繞路': -P.detour * Math.max(0, f.det),
     };
-    if (f.atk === 'w') out['禁手勝'] = f.finish ? P.forbidWin : 0;
+    if (f.atk === 'w') { out['禁手勝'] = f.finish ? P.forbidWin : 0; out['白先判斷'] = P.whiteJudge; }
     return { parts: out, steps };
   }
   // 沒乘使用率的原始分（引擎的 raw）。加總順序照引擎，浮點數才會一模一樣
@@ -88,8 +89,10 @@
     const f = rec && rec.facts;
     if (!f) return { accepted: false, score: 0 };
     const raw = rawScore(f), acc = accepted(f);
-    let fin = raw, u = null, balance = false;
-    if (acc && Array.isArray(rec.removals)) { u = usage(f, rec.removals, raw); fin = raw * u.mult; }
+    // 白先判斷加在使用率之前、但不進 raw：判斷每顆子必要／有用／廢子時照舊只看盤面技巧分，固定加分不影響分類
+    const judge = f.atk === 'w' ? P.whiteJudge : 0;
+    let fin = raw + judge, u = null, balance = false;
+    if (acc && Array.isArray(rec.removals)) { u = usage(f, rec.removals, raw); fin = (raw + judge) * u.mult; }
     const dd = f.nb - f.nw;
     if (acc && (f.atk === 'b' ? dd !== 0 : dd < 0)) { fin *= P.balance; balance = true; }
     const { parts: p, steps } = parts(f);
@@ -106,6 +109,7 @@
     { name: '預備反四', key: '預備反四', text: `黑擋回去的四用到更早佈好、之前沒用過的子：每次 ${P.prep}。` },
     { name: '手順', key: '手順', text: `後面才該下的四現在先衝就贏不了：每手最多算 2 個，每個 ${P.order}。` },
     { name: '禁手勝', key: '禁手勝', text: `白先最後一手逼黑擋在禁手點（黑擋不了）：+${P.forbidWin}，只有白先題。` },
+    { name: '白先判斷', key: '白先判斷', text: `白先題每題 +${P.whiteJudge}：一開始要先判斷是逼黑下禁手、還是自己下四三。` },
     { name: '繞路', key: '繞路', text: `多走幾手也能贏的另一條路每條 −${P.detour}；合格題一定是 0（有就不收）。` },
   ];
   const USAGE_RULE = `使用率＝（必要的子＋有用的子）÷ 全部子。必要＝拿掉這顆題目就壞了（沒 VCF、手數變、不唯一、繞路變多）；有用＝拿掉後分數掉到 ${Math.round(P.usefulDrop * 100)}% 以下（佈假路、陷阱）；其他是廢子，黑白要成對拿掉才算真廢子。倍數＝1 ＋（使用率 − ${P.usageMid}），最低 ×${P.usageLo}、最高 ×${P.usageHi}。黑先黑白不一樣多、白先白比黑多，再 ×${P.balance}。`;
