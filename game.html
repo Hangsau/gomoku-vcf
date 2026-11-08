@@ -363,7 +363,7 @@ const I18N = {
     pTime: '本題 {s} 秒', hint: '點一下就下；禁手或不是四的點只會提醒，不算錯', skip: '跳過', pick: '先點棋盤', confirm: '確定下 {t}',
     black: '黑先', white: '白先', ok: '答對・+{b} 秒', leftN: '還能錯 {n} 題',
     why_mustblock: '要先擋對方的四（{at}）', why_forbidden: '這裡是黑棋禁手', why_notfour: '這手不是四', why_lost: '對方擋完反而連成了',
-    why_novcf: '下完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過', why_time: '時間到',
+    why_novcf: '下完就沒有 VCF 了', why_counter_nf: '對方擋的同時反四（{at}），你得先擋，但擋的那手不是四', why_counter_fb: '對方擋的同時反四（{at}），擋點是黑棋禁手', why_counter_nv: '對方擋的同時反四（{at}），擋完就沒有 VCF 了', why_bad: '這手不行', why_skip: '跳過', why_time: '時間到',
     endTime: '時間到', endWrong: '錯 {n} 題', endNoPuzzle: '題庫讀不到', finalLbl: '結算段位',
     noteUp: '升段了', noteKeep: '維持{r}', noteDown: '掉回{r}', pps: '每秒得分', solvedN: '答對',
     abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
@@ -390,7 +390,7 @@ const I18N = {
     pTime: 'This puzzle {s}s', hint: 'Tap to play. Forbidden or non-four points only warn you; no miss.', skip: 'Skip', pick: 'Tap the board', confirm: 'Play {t}',
     black: 'Black to play', white: 'White to play', ok: 'Solved · +{b}s', leftN: 'Misses left: {n}',
     why_mustblock: "Block the opponent's four first ({at})", why_forbidden: 'Forbidden point for Black', why_notfour: 'That move is not a four', why_lost: 'The block wins for the defender',
-    why_novcf: 'No VCF left after that move', why_bad: "That move doesn't work", why_skip: 'Skipped', why_time: 'Time up',
+    why_novcf: 'No VCF left after that move', why_counter_nf: "The block made a four ({at}). You must block it, but that move isn't a four", why_counter_fb: 'The block made a four ({at}), and the blocking point is forbidden for Black', why_counter_nv: 'The block made a four ({at}). After you block it, no VCF is left', why_bad: "That move doesn't work", why_skip: 'Skipped', why_time: 'Time up',
     endTime: "Time's up", endWrong: 'Misses: {n}', endNoPuzzle: "Couldn't load puzzles", finalLbl: 'Final rank',
     noteUp: 'Promoted', noteKeep: 'Stayed {r}', noteDown: 'Dropped to {r}', pps: 'Points/sec', solvedN: 'Solved',
     abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
@@ -417,7 +417,7 @@ const I18N = {
     pTime: 'この問題 {s} 秒', hint: 'タップで着手。禁手や四にならない点は警告だけで、ミスになりません', skip: 'スキップ', pick: '盤面をタップ', confirm: '{t} に打つ',
     black: '黒先', white: '白先', ok: '正解・+{b} 秒', leftN: 'あと {n} 回ミスできます',
     why_mustblock: '先に相手の四を止める必要があります（{at}）', why_forbidden: 'ここは黒の禁手です', why_notfour: 'この手は四ではありません', why_lost: '相手の受けで逆に負けます',
-    why_novcf: 'この手のあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ', why_time: '時間切れ',
+    why_novcf: 'この手のあと VCF がありません', why_counter_fb: '相手の受けが四になりました（{at}）。止める点は黒の禁手です', why_counter_nf: '相手の受けが四になりました（{at}）。先に止める必要がありますが、その手は四ではありません', why_counter_nv: '相手の受けが四になりました（{at}）。止めたあと VCF がありません', why_bad: 'この手はだめです', why_skip: 'スキップ', why_time: '時間切れ',
     endTime: '時間切れ', endWrong: '{n} 回ミス', endNoPuzzle: '問題を読み込めません', finalLbl: '最終段位',
     noteUp: '昇段', noteKeep: '{r}を維持', noteDown: '{r}に降段', pps: '毎秒得点', solvedN: '正解数',
     abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
@@ -444,7 +444,7 @@ const I18N = {
     pTime: '이 문제 {s}초', hint: '탭하면 바로 둡니다. 금수나 4가 아닌 자리는 경고만 하고 실수로 치지 않습니다', skip: '건너뛰기', pick: '판을 탭하세요', confirm: '{t}에 두기',
     black: '흑선', white: '백선', ok: '정답 · +{b}초', leftN: '{n}번 더 틀릴 수 있음',
     why_mustblock: '먼저 상대의 4를 막아야 합니다 ({at})', why_forbidden: '흑의 금수 자리입니다', why_notfour: '이 수는 4가 아닙니다', why_lost: '상대가 막으면서 오히려 이깁니다',
-    why_novcf: '이 수 다음에는 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀', why_time: '시간 종료',
+    why_novcf: '이 수 다음에는 VCF가 없습니다', why_counter_nf: '상대가 막으면서 4를 만들었습니다 ({at}). 먼저 막아야 하는데 그 수는 4가 아닙니다', why_counter_fb: '상대가 막으면서 4를 만들었습니다 ({at}). 막는 자리가 흑의 금수입니다', why_counter_nv: '상대가 막으면서 4를 만들었습니다 ({at}). 막고 나면 VCF가 없습니다', why_bad: '이 수는 안 됩니다', why_skip: '건너뜀', why_time: '시간 종료',
     endTime: '시간 종료', endWrong: '{n}번 틀림', endNoPuzzle: '문제를 불러올 수 없음', finalLbl: '최종 단',
     noteUp: '승단', noteKeep: '{r} 유지', noteDown: '{r}(으)로 강등', pps: '초당 점수', solvedN: '정답',
     abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
@@ -658,6 +658,11 @@ function draw() {
   for (const t of g.black) stone(t, true);
   for (const t of g.white) stone(t, false);
   if (g.lastDef) { const [x, y] = xy(g.lastDef); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  if (g.counterAt) {   // 被反四：標出對方的成五點（你非擋不可的地方）
+    const [x, y] = xy(g.counterAt);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B'; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.42, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
   if (g.ghost) {
     stone(g.ghost, !g.p.atkWhite, 0.55);
     const [x, y] = xy(g.ghost);
@@ -763,6 +768,7 @@ async function nextPuzzle() {
   try { p = await pickPuzzle(g.ab, g.used); }
   catch { endGame(T('endNoPuzzle')); return; }
   g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.wf = 0; g.wn = 0;
+  g.counterAt = null;
   g.hist = []; g.helped = false; g.undos = 0; g.hints = 0; g.mist = 0; g.dead = false; g.hintPt = null;   // 練習場每題重設
   setGhost(null);
   $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
@@ -790,6 +796,11 @@ async function placeAt(t) {
     def.push(res.def); g.lastDef = res.def; setTimeout(() => stoneSound(true), 160);   // 電腦擋，晚一點、小聲一點
     draw();
     if (res.lost) return miss('lost');
+    if (res.vcf === 0 && res.defFour) {   // 被反四（2026-11-08 使用者：讓玩家知道怎麼輸的）：電腦擋的那手自己成四，你得先擋；再試擋那一手看是哪種斷法
+      g.counterAt = res.defFour; draw();
+      const r2 = (await play(g.black.join(' '), g.white.join(' '), res.defFour, p.atkWhite)).result || {};
+      return miss(r2.r === 'forbidden' ? 'counter_fb' : r2.r === 'notfour' ? 'counter_nf' : 'counter_nv', res.defFour);
+    }
     if (res.vcf === 0) return miss('novcf');
     if (g.prac) { g.hist.push(snap); renderHud(); }
     g.hold = false;   // vcf>0，或搜太久沒算完（-1）就當還有路，繼續
@@ -798,6 +809,7 @@ async function placeAt(t) {
   miss('bad');
 }
 
+const feedMs = (wk) => String(wk).startsWith('counter') ? FEED_MS * 2.5 : FEED_MS;   // 被反四要看一下盤面才懂
 async function warn(k) {   // 禁手／不是四：提醒一下，棋子不留、不扣可錯次數、不動能力分
   g.moves.pop(); draw();
   if (k === 'forbidden') g.wf++; else g.wn++;   // 後台統計用（2026-11-07）
@@ -811,14 +823,14 @@ async function pracMiss(wk, wa, snap) {
   const changed = g.black.length !== snap.black.length || g.white.length !== snap.white.length;
   if (changed) { g.hist.push(snap); g.dead = true; } else g.moves.length = snap.n;
   renderHud();
-  await flash(whyText({ wk, wa: wa || '' }) + '<br><small>' + T(changed ? 'pMissed' : 'pRetry') + '</small>', 'bad', FEED_MS);
+  await flash(whyText({ wk, wa: wa || '' }) + '<br><small>' + T(changed ? 'pMissed' : 'pRetry') + '</small>', 'bad', feedMs(wk));
   if (!g.over) g.hold = false;
 }
 function undo() {
   if (!g || !g.prac || g.hold || g.over || !g.hist.length) return false;
   const s = g.hist.pop();
   g.black = s.black; g.white = s.white; g.lastDef = s.lastDef; g.moves.length = s.n;
-  g.dead = false; g.helped = true; g.undos++; g.hintPt = null;
+  g.dead = false; g.helped = true; g.undos++; g.hintPt = null; g.counterAt = null;
   setGhost(null); renderHud();
   return true;
 }
@@ -879,7 +891,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   g.log.push(x);
   renderHud();
   const end = !g.prac && g.wrong >= MAX_WRONG;   // 練習場錯幾題都不結束
-  await flash(whyText(x) + (end || g.prac ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', FEED_MS);
+  await flash(whyText(x) + (end || g.prac ? '' : '<br>' + T('leftN', { n: MAX_WRONG - g.wrong })), 'bad', feedMs(wk));
   if (end) endGame(T('endWrong', { n: MAX_WRONG }));
   else if (!g.over) nextPuzzle();
 }
