@@ -679,7 +679,7 @@ function renderStages(running) {
 // 段位（使用者 2026-11-03：真正段位有九段；跟出題 AI 的訓練等級同一套，vcf-slover engine/actions.hpp ACT_LEVELS）
 // 段位（2026-11-08a）：長短篇共用一張表；4 手題當尺定初段～四段，五段以上逐段變窄，傳說不分級
 // 2026-11-08a 新評分：分數線由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
-const LADDER = /*LADDER*/[[0, '見習生'], [45, '初段'], [70, '二段'], [110, '三段'], [172, '四段'], [269, '五段'], [414, '六段'], [625, '七段'], [926, '八段'], [1347, '九段'], [1924, '傳說']]/*END*/;
+const LADDER = /*LADDER*/[[0, '見習生'], [45, '初段'], [70, '二段'], [110, '三段'], [172, '四段'], [270, '五段'], [415, '六段'], [626, '七段'], [928, '八段'], [1350, '九段'], [1929, '傳說']]/*END*/;
 const RANKS = { long: LADDER, short: LADDER };
 const SCALE = { long: LADDER[LADDER.length - 1][0], short: LADDER[LADDER.length - 1][0] };   // 儀表滿格＝傳說
 function arc(f) {
