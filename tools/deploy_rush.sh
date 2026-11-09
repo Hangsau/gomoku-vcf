@@ -17,6 +17,11 @@ trap 'rm -rf "$OUT" .wrangler' EXIT  # .wrangler 是 wrangler 自己留的快取
 git -c core.autocrlf=false archive HEAD | tar -x -C "$OUT"
 rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/tools"
 find "$OUT" -maxdepth 1 -name '*.md' -delete
+# 自動更新（2026-11-09）：頁面裡的 BUILD 換成這次的 commit 短碼，version.txt 寫同一個；開著的 App 比對到不同就會在選單畫面重新整理
+BUILD="$(git rev-parse --short HEAD)"
+sed -i "s/const BUILD = 'dev';/const BUILD = '$BUILD';/" "$OUT/game.html"
+grep -q "const BUILD = '$BUILD';" "$OUT/game.html" || { echo "✘ game.html 找不到 const BUILD = 'dev';，自動更新會失效"; exit 1; }
+echo "$BUILD" > "$OUT/version.txt"
 cp "$OUT/game.html" "$OUT/index.html"  # 原 index.html（分析器）使用者 2026-11-07 說不用了，不上傳
 # /analyzer 曾經上線過，Pages 自己的快取會繼續回舊分析器（s-maxage 7 天，清網域快取也清不掉，2026-11-08 踩過），所以明確轉回首頁
 printf '/analyzer / 301
@@ -26,8 +31,8 @@ printf '/analyzer / 301
 
 npx --yes wrangler@4.158.0 pages deploy "$OUT" --project-name "$PROJECT" --branch main --commit-hash "$(git rev-parse HEAD)" --commit-message "$(git log -1 --format=%s | cut -c1-80)"
 
-# 確認線上換成這一版的 game.html
-want="$(git show HEAD:game.html | sha256sum | cut -c1-16)"
+# 確認線上換成這一版的 game.html（比對實際上傳、已換 BUILD 的那份）
+want="$(sha256sum < "$OUT/index.html" | cut -c1-16)"
 for i in 1 2 3 4 5 6; do
   got="$(curl -sL "$SITE/?nocache=$RANDOM" | sha256sum | cut -c1-16)"
   [ "$got" = "$want" ] && { echo "✔ 已部署 $(git rev-parse --short HEAD) → $SITE"; exit 0; }

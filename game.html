@@ -481,6 +481,9 @@ const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 // 解開比自己難的題加得多、簡單題答錯扣得多；可升可降，停在哪個區間就是哪段。時間到時做到一半的題不算。
 // 段位尺（2026-11-08a 新評分）：下面兩行由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
 const LOW = /*LADDER*/[0, 45, 70, 110, 172, 270, 415, 627, 929, 1352, 1932]/*END*/;   // 各段題目分下限：見習生、初段…九段、傳說
+const BUILD = 'dev';   // 部署時 tools/deploy_rush.sh 換成 commit 短碼，並寫 version.txt；dev＝本機，不檢查更新
+const SAFE_SCREENS = ['sHome', 'sPick', 'sStart'];   // 有新版時可以重新整理的畫面（見「自動更新」）
+let updPending = false;
 const SCORE_VER = '2026-11-09a';   // 評分版本：送進 /run，排行榜只排這一版（練習場不記）
 const START_AB = /*START*/[34, 56, 88, 138, 215, 335, 510, 763, 1121, 1616, 2415]/*END*/;  // 起始能力分＝起始段位區間的幾何中點（見習生＝初段線×0.75）
 const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
@@ -806,7 +809,13 @@ $('pickBoard').onclick = () => { boardView($('startBoard'), 'today', 'rank'); op
 $('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(maxStart(), startRank + 1); renderStart(); };
 applyLang();
-renderStart();
+(() => {   // 自動更新後回到原本的畫面（設定畫面連同段位）
+  let r = null;
+  try { r = JSON.parse(sessionStorage.getItem('vcfgame.resume') || 'null'); sessionStorage.removeItem('vcfgame.resume'); } catch {}
+  if (r && Number.isFinite(r.rank)) startRank = clampRank(r.rank, startRank, mode === 'prac' ? TOP_RANK : MAX_START);
+  renderStart();
+  if (r && SAFE_SCREENS.includes(r.id) && r.id !== 'sHome') show(r.id);
+})();
 
 // ---------- 棋盤 ----------
 const cv = $('board'), ctx = cv.getContext('2d');
@@ -917,7 +926,31 @@ $('go').onclick = async () => {
   requestAnimationFrame(tick);
   nextPuzzle();
 };
-function show(id) { for (const s of ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+function show(id) {
+  if (updPending && SAFE_SCREENS.includes(id)) { updReload(id); return; }   // 有新版：在選單畫面換頁時重新整理，不打斷解題
+  for (const s of ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0);
+  if (SAFE_SCREENS.includes(id)) updCheck();
+}
+// ---------- 自動更新（2026-11-09 使用者：放桌面當 App 時改版要關掉重開才會換）----------
+// 切回 App、回到選單畫面、每 10 分鐘問一次 version.txt；有新版只在首頁／選模式頁／設定畫面重新整理，解題中和結算畫面不動。
+const curScreen = () => ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd'].find(s => !$(s).hidden);
+function updReload(id) {
+  try { sessionStorage.setItem('vcfgame.resume', JSON.stringify({ id, rank: startRank })); } catch {}
+  location.reload();
+}
+function updCheck() {
+  if (BUILD === 'dev' || updPending) return;
+  fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
+    v = v.trim();
+    if (!/^[0-9a-f]{7,40}$/.test(v) || v === BUILD) return;
+    try { if (sessionStorage.getItem('vcfgame.updTried') === v) return; sessionStorage.setItem('vcfgame.updTried', v); } catch {}   // 同一版只自動重整一次：快取還給舊頁時不會一直重整
+    updPending = true;
+    const cur = curScreen();
+    if (cur === 'sHome' || cur === 'sPick') updReload(cur);   // 設定畫面可能正在打暱稱，等下次換頁
+  }).catch(() => {});
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') updCheck(); });
+setInterval(updCheck, 10 * 60 * 1000);
 
 function tick(t) {
   if (!g || g.over) return;
