@@ -2,7 +2,7 @@
 // POST /run  交一局成績 → {id, place:{rank:{today,all}}}（結算低於起始段位 demoted=1 不入榜，place 為 null）
 // GET  /board?by=rank&scope=today|all → {rows:[...]}；只有一個榜，依能力分 ab 排（段位由 ab 決定，2026-11-07 使用者：段位高的要排前面）
 // GET  /admin/runs（Authorization: Bearer <管理密碼>）→ 全部局的段位、能力分、每題作答、評分版本 ver，不含暱稱（後台用，2026-11-07）
-// GET  /admin/scoring → 計分看板資料（2026-11-08）；排行榜只排評分版本 CUR_VER 的局
+// GET  /admin/scoring → 計分看板資料（2026-11-08）；排行榜收 BOARD_FROM_VER 之後各版的局
 // POST /report {pid, b, w, a, kind, text, run} → 玩家回報某一題有問題（2026-11-07）；GET /blocked → 停用題號清單（遊戲抽題時跳過）
 // GET  /admin/reports、POST /admin/report {id, status: open|done|blocked}（Bearer 管理密碼）
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
@@ -18,6 +18,9 @@ import ADMIN_HTML from "./admin.html";
 import SCORING_JSON from "./scoring.json.txt";   // 計分看板資料（vcf-slover engine/scoring_eval.py 產生，部署時一起上傳；後台「計分」分頁讀 /admin/scoring）
 // 評分版本（2026-11-08 使用者：全面換新評分）：排行榜只排這一版的局；舊版的局還在表裡（ver 欄），不刪
 const CUR_VER = "2026-11-09a";
+// 段位榜收的最舊評分版本（2026-11-09 使用者：換版不要把榜清空）。11-08b 起是 10 級段位制，能力分可比；之前的局不收。
+// 只有能力分尺度真的變了才往後調。版本字串格式 YYYY-MM-DDx，可直接字串比大小。
+const BOARD_FROM_VER = "2026-11-08b";
 
 const ORDER = {
   rank: "ab DESC, t ASC",
@@ -37,8 +40,8 @@ const num = (v, lo, hi) => { const n = Number(v); return Number.isFinite(n) && n
 
 async function placeOf(env, by, day, r) {
   const [cond, vals] = BETTER[by](r);
-  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 AND solved > 0 AND ver = ? ${day ? "AND day = ?" : ""} AND ${cond}`;
-  const row = await env.DB.prepare(sql).bind(CUR_VER, ...(day ? [day] : []), ...vals).first();
+  const sql = `SELECT COUNT(*) AS n FROM runs WHERE demoted = 0 AND solved > 0 AND ver >= ? ${day ? "AND day = ?" : ""} AND ${cond}`;
+  const row = await env.DB.prepare(sql).bind(BOARD_FROM_VER, ...(day ? [day] : []), ...vals).first();
   return row.n + 1;
 }
 
@@ -60,7 +63,7 @@ async function postRun(req, env) {
     "INSERT INTO runs(t, day, nick, start_rank, final_rank, ab, total, pps, solved, wrong, seconds, demoted, detail, ver) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
   ).bind(now, day, nick, r.start_rank, r.final_rank, r.ab, r.total, r.pps, r.solved, r.wrong, r.seconds, demoted, detail, ver).run();
   const id = res.meta.last_row_id;
-  if (demoted || !r.solved || ver !== CUR_VER) return json({ id, day, place: null });   // 一題都沒解開＝沒證明任何段位，不入榜
+  if (demoted || !r.solved || ver < BOARD_FROM_VER) return json({ id, day, place: null });   // 一題都沒解開＝沒證明任何段位，不入榜
   const place = {};
   for (const by of Object.keys(ORDER)) place[by] = { today: await placeOf(env, by, day, r), all: await placeOf(env, by, null, r) };
   return json({ id, day, place });
@@ -109,9 +112,9 @@ async function getBoard(url, env) {
   const today = url.searchParams.get("scope") !== "all";
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
   const day = taipeiDay(Date.now());
-  const sql = `SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, t FROM runs WHERE demoted = 0 AND solved > 0 AND ver = ?1 ${today ? "AND day = ?2" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
+  const sql = `SELECT id, nick, start_rank, final_rank, ab, total, pps, solved, t FROM runs WHERE demoted = 0 AND solved > 0 AND ver >= ?1 ${today ? "AND day = ?2" : ""} ORDER BY ${ORDER[by]} LIMIT ${limit}`;
   const st = env.DB.prepare(sql);
-  const { results } = await (today ? st.bind(CUR_VER, day) : st.bind(CUR_VER)).all();
+  const { results } = await (today ? st.bind(BOARD_FROM_VER, day) : st.bind(BOARD_FROM_VER)).all();
   return json({ by, scope: today ? "today" : "all", day, ver: CUR_VER, rows: results });
 }
 
