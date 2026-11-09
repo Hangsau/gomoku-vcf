@@ -1233,5 +1233,12 @@ function renderAll() { drawBoard(); renderStages(); renderRate(); renderSrc(); r
 })();
 </script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+<script>
+// 從 Gomoku Rush 覆盤打開時，試煉場是蓋在遊戲上的一層：回 Gomoku Rush 的鈕改成收起這層（2026-11-10）
+try {
+  if (window.parent !== window && typeof parent.closeLab === 'function')
+    document.querySelectorAll('a[href="game.html"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); parent.closeLab(); }));
+} catch (e) {}
+</script>
 </body>
 </html>
