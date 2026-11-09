@@ -1126,9 +1126,19 @@ function addTime(sec) {
   plusFx('+' + sec); renderHud();
 }
 
+// 邪修煉丹爐（alchemy.hangsau.app，獨立專案 xiexiu-alchemy）的修為：解開一題就把題目分加進 .hangsau.app 共用 cookie。
+// 只寫這一個 cookie，不碰遊戲自己的資料；失敗就略過（使用者 2026-11-09）
+function xiexiuXP(pts) {
+  try {
+    const m = document.cookie.match(/(?:^|; )xiexiu_xp=(\d+)/), v = (m ? +m[1] : 0) + Math.round(pts);
+    document.cookie = 'xiexiu_xp=' + v + '; max-age=34560000; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '') + (/hangsau\.app$/.test(location.hostname) ? '; domain=.hangsau.app' : '');
+  } catch {}
+}
+
 async function solved(how) {
   if (g.tw) return twSolved();
   const p = g.p, sec = g.psec, helped = g.prac && g.helped;
+  xiexiuXP(helped ? p.score / 2 : p.score);   // 練習用過提示／悔棋只算一半
   const d = updateAbility(helped ? 'half' : true);
   g.total += g.b4 ? p.score / p.L : p.score; g.left += BONUS_SEC; g.solved++; g.b4Dir = 1;   // 無限之塔累積單手分數（題目分÷手數，使用者 2026-11-08）
   if (g.prac) { if (helped) g.helpedN++; else g.own++; }
@@ -1455,6 +1465,7 @@ async function twStep(ok, wk, wa) {   // 交這一題；回傳這題得分
   const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: ok ? 1 : 0, sec: +g.psec.toFixed(1),
     wk: wk || '', wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, h: g.hints || g.undos ? 1 : 0, u: g.undos, hi: g.hints, mk: 0 };
   let pts = ok ? Math.round(p.score) / 10 : 0;
+  if (ok && !g.twPrac) xiexiuXP(p.score);   // 今天結算後重爬（練習）不加修為：題目一樣、答案已知
   if (g.twPrac) {
     g.n++; g.score += pts; if (ok) g.solved++; else g.wrong++; g.secBase += g.psec;
   } else {
