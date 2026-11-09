@@ -932,7 +932,7 @@ function show(id) {
   if (SAFE_SCREENS.includes(id)) updCheck();
 }
 // ---------- 自動更新（2026-11-09 使用者：放桌面當 App 時改版要關掉重開才會換）----------
-// 切回 App、回到選單畫面、超過 5 分鐘沒碰畫面後第一次碰時，問一次 version.txt（2026-11-09 使用者：不要定時問）；有新版只在首頁／選模式頁／設定畫面重新整理，解題中和結算畫面不動。
+// 切回 App（真的離開過）、回到選單畫面時問一次 version.txt（2026-11-09 使用者：不要定時問；也不能用多久沒碰畫面判斷離開，想棋超過五分鐘很正常）；有新版只在首頁／選模式頁／設定畫面重新整理，解題中和結算畫面不動。
 const curScreen = () => ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd'].find(s => !$(s).hidden);
 function updReload(id) {
   try { sessionStorage.setItem('vcfgame.resume', JSON.stringify({ id, rank: startRank })); } catch {}
@@ -950,9 +950,7 @@ function updCheck() {
   }).catch(() => {});
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') updCheck(); });
-const IDLE_MS = 5 * 60 * 1000;   // 多久沒碰畫面算離開
-let lastTouch = Date.now();
-addEventListener('pointerdown', () => { const now = Date.now(); if (now - lastTouch > IDLE_MS) updCheck(); lastTouch = now; }, { capture: true, passive: true });
+
 
 function tick(t) {
   if (!g || g.over) return;
