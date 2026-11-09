@@ -8,7 +8,7 @@
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
-// 象牙塔（2026-11-09）：GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
+// 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
@@ -163,7 +163,9 @@ async function towerGenerate(env, day) {
   await env.DB.batch(out.map(x => env.DB.prepare("INSERT OR IGNORE INTO tower_used(id, day) VALUES (?1, ?2)").bind(x[5], day)));
   return out;
 }
-const towerRun = (r) => r && { n: r.n, score: r.score, solved: r.solved, wrong: r.wrong, hints: r.hints, seconds: r.seconds, ended: r.ended, open_i: r.open_i, open_ms: r.open_i === r.n && r.open_t ? Date.now() - r.open_t : 0, detail: JSON.parse(r.detail || "[]") };
+// 暫停（2026-11-09 使用者：象牙塔暫時離開時間要停）：open_t > 0＝計時中（開題時間）；open_t < 0＝暫停中，−open_t＝這題已用的毫秒。
+const towerUsedMs = (open_t, now) => open_t < 0 ? -open_t : now - open_t;
+const towerRun = (r) => r && { n: r.n, score: r.score, solved: r.solved, wrong: r.wrong, hints: r.hints, seconds: r.seconds, ended: r.ended, open_i: r.open_i, open_ms: r.open_i === r.n && r.open_t ? towerUsedMs(r.open_t, Date.now()) : 0, detail: JSON.parse(r.detail || "[]") };
 async function towerPlace(env, day, r) {
   const acc = r.solved / Math.max(1, r.solved + r.wrong);
   const row = await env.DB.prepare(
@@ -197,9 +199,13 @@ async function postTowerOpen(req, env) {
   }
   if (r.ended) return json({ error: "ended", run: towerRun(r) }, 409);
   if (b.i !== r.n) return json({ error: "wrong index", run: towerRun(r) }, 409);
-  if (r.open_i !== r.n) {   // 第一次開這題才記時間；關掉網頁再回來，時鐘照算（不重設）
+  if (r.open_i !== r.n) {   // 第一次開這題才記時間
     await env.DB.prepare("UPDATE tower SET open_i = ?1, open_t = ?2, nick = ?3, tu = ?2 WHERE id = ?4").bind(r.n, now, nick, r.id).run();
     r.open_i = r.n; r.open_t = now;
+  } else if (r.open_t < 0) {   // 暫停後回來：從已用的時間接著算
+    const t = now + r.open_t;
+    await env.DB.prepare("UPDATE tower SET open_t = ?1, nick = ?2, tu = ?3 WHERE id = ?4").bind(t, nick, now, r.id).run();
+    r.open_t = t;
   }
   return json({ run: towerRun(r) });
 }
@@ -218,7 +224,7 @@ async function postTowerStep(req, env) {
   if (!p) return json({ error: "no puzzle" }, 404);
   const ok = b.ok ? 1 : 0, hint = Math.max(0, Math.min(TOWER_HINTS, Math.floor(Number(b.hints) || 0)));
   if (r.hints + hint > TOWER_HINTS) return json({ error: "no hints left", run: towerRun(r) }, 409);
-  const sec = Math.round((now - r.open_t) / 100) / 10;
+  const sec = Math.round(towerUsedMs(r.open_t, now) / 100) / 10;
   const pts = ok ? Math.round(p[3]) / 10 : 0;
   const detail = JSON.parse(r.detail || "[]");
   detail.push({ i: r.n, id: p[5] || "", s: p[3], ok, sec, hi: hint, u: Math.max(0, Math.floor(Number(b.undos) || 0)), wk: ok ? "" : String(b.wk || "").slice(0, 12), m: String(b.m || "").slice(0, 400) });
@@ -227,6 +233,18 @@ async function postTowerStep(req, env) {
     .bind(n, pts, ok, 1 - ok, hint, sec, ended, JSON.stringify(detail), now, r.id).run();
   const nr = await env.DB.prepare("SELECT * FROM tower WHERE id = ?1").bind(r.id).first();
   return json({ pts, sec, run: towerRun(nr), place: await towerPlace(env, day, nr) });
+}
+// POST /tower/pause {day,vid,i}：離開（按先離開、切走 App、鎖螢幕、關掉）時停錶，記下這題已用時間
+async function postTowerPause(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const now = Date.now(), day = taipeiDay(now);
+  if (b.day !== day || !vidOk(b.vid)) return json({ ok: false });
+  const r = await env.DB.prepare("SELECT id, n, open_i, open_t, ended FROM tower WHERE day = ?1 AND vid = ?2").bind(day, b.vid).first();
+  if (!r || r.ended || b.i !== r.n || r.open_i !== r.n || !(r.open_t > 0)) return json({ ok: false });
+  const used = Math.max(1, now - r.open_t);
+  await env.DB.prepare("UPDATE tower SET open_t = ?1, tu = ?2 WHERE id = ?3 AND open_t = ?4").bind(-used, now, r.id, r.open_t).run();
+  return json({ ok: true, open_ms: used });
 }
 async function postTowerEnd(req, env) {
   let b;
@@ -421,6 +439,7 @@ export default {
       if (req.method === "POST" && url.pathname === "/tower/open") return await postTowerOpen(req, env);
       if (req.method === "POST" && url.pathname === "/tower/step") return await postTowerStep(req, env);
       if (req.method === "POST" && url.pathname === "/tower/end") return await postTowerEnd(req, env);
+      if (req.method === "POST" && url.pathname === "/tower/pause") return await postTowerPause(req, env);
       if (req.method === "GET" && url.pathname === "/admin/tower") return await adminTower(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
