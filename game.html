@@ -930,6 +930,7 @@ function show(id) {
   if (updPending && SAFE_SCREENS.includes(id)) { updReload(id); return; }   // 有新版：在選單畫面換頁時重新整理，不打斷解題
   for (const s of ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0);
   if (SAFE_SCREENS.includes(id)) updCheck();
+  wakeSync();
 }
 // ---------- 自動更新（2026-11-09 使用者：放桌面當 App 時改版要關掉重開才會換）----------
 // 切回 App（真的離開過）、回到選單畫面時問一次 version.txt（2026-11-09 使用者：不要定時問；也不能用多久沒碰畫面判斷離開，想棋超過五分鐘很正常）；有新版只在首頁／選模式頁／設定畫面重新整理，解題中和結算畫面不動。
@@ -949,7 +950,16 @@ function updCheck() {
     if (cur === 'sHome' || cur === 'sPick') updReload(cur);   // 設定畫面可能正在打暱稱，等下次換頁
   }).catch(() => {});
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') updCheck(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { updCheck(); wakeSync(); } });
+// ---------- 解題時螢幕不關（2026-11-09 使用者：想棋時手機會自動鎖定）----------
+// 只在解題畫面要求螢幕常亮，其他畫面放掉、照手機設定；切走 App 時系統會自動放掉，切回來重新要。瀏覽器不支援就算了。
+let wakeLock = null;
+async function wakeSync() {
+  const want = curScreen() === 'sPlay' && document.visibilityState === 'visible';
+  if (!want) { if (wakeLock) { const w = wakeLock; wakeLock = null; w.release().catch(() => {}); } return; }
+  if (wakeLock || !('wakeLock' in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch { wakeLock = null; }
+}
 
 
 function tick(t) {
