@@ -481,12 +481,12 @@ const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 // 每題先算預期解開機率 P＝1/(1+exp((ln題目分−ln能力分)/SPREAD))；解開 S=1、答錯／跳過 S=0；ln能力分 += K×(S−P)。
 // 解開比自己難的題加得多、簡單題答錯扣得多；可升可降，停在哪個區間就是哪段。時間到時做到一半的題不算。
 // 段位尺（2026-11-08a 新評分）：下面兩行由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
-const LOW = /*LADDER*/[0, 45, 70, 110, 172, 270, 415, 627, 929, 1352, 1932]/*END*/;   // 各段題目分下限：見習生、初段…九段、傳說
+const LOW = /*LADDER*/[0, 60, 86, 122, 175, 249, 349, 480, 649, 860, 1120]/*END*/;   // 各段題目分下限：見習生、初段…九段、傳說
 const BUILD = 'dev';   // 部署時 tools/deploy_rush.sh 換成 commit 短碼，並寫 version.txt；dev＝本機，不檢查更新
 const SAFE_SCREENS = ['sHome', 'sPick', 'sStart'];   // 有新版時可以重新整理的畫面（見「自動更新」）
 let updPending = false;
-const SCORE_VER = '2026-11-09a';   // 評分版本：送進 /run，排行榜只排這一版（練習場不記）
-const START_AB = /*START*/[34, 56, 88, 138, 215, 335, 510, 763, 1121, 1616, 2415]/*END*/;  // 起始能力分＝起始段位區間的幾何中點（見習生＝初段線×0.75）
+const SCORE_VER = '2026-11-09b';   // 評分版本：送進 /run，排行榜只排這一版（練習場不記）
+const START_AB = /*START*/[45, 72, 102, 146, 209, 295, 409, 558, 747, 981, 1400]/*END*/;  // 起始能力分＝起始段位區間的幾何中點（見習生＝初段線×0.75）
 const SPREAD = 0.5;   // 難一段（約 ×1.65）時預期解開率約 27%
 const K_STEP = 0.4;   // 一題最多讓能力分 ×1.5 或 ÷1.5；一局只有幾題，要調得快
 // 起始補正（2026-11-07 使用者：起始段位只是猜的，一開始要快速補正；第一題解開就照本段位正常算）：還沒解開任何題之前答錯，漲跌用 K_FAST；解開過（含解開的那一題）一律 K_STEP

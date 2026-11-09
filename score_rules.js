@@ -6,7 +6,7 @@
 //   lifts[{at,past,shape,newFour,over44}]、decoys[[手數,反擊,算深誘餌,單獨一區]]；removals[{q,c,f}]＝拿掉每顆子後的 facts（不合格時 f＝null）
 (function (root) {
   'use strict';
-  const RULES_VER = '2026-11-09a';   // 2026-11-09a：白先判斷 +45（使用者定案）；2026-11-08b：解禁分種類
+  const RULES_VER = '2026-11-09b';   // 2026-11-09b：使用率不進分數（只當題目品質，使用者 2026-11-09）；2026-11-09a：白先判斷 +45（使用者定案）；2026-11-08b：解禁分種類
 
   // ---- 參數（改規則就改這裡；說明文字在下面 RULES，跟著改）----
   const P = {
@@ -92,7 +92,9 @@
     // 白先判斷加在使用率之前、但不進 raw：判斷每顆子必要／有用／廢子時照舊只看盤面技巧分，固定加分不影響分類
     const judge = f.atk === 'w' ? P.whiteJudge : 0;
     let fin = raw + judge, u = null, balance = false;
-    if (acc && Array.isArray(rec.removals)) { u = usage(f, rec.removals, raw); fin = (raw + judge) * u.mult; }
+    // 2026-11-09b（使用者）：使用率是題目好壞（品質），不是難度 → 照算、照回傳（usage.rate／mult），但不乘進分數。
+    //   乾淨題最好解卻 ×1.25 被排到後面（象牙塔）；克洛摩庫要獎勵乾淨題時自己乘 usage.mult。
+    if (acc && Array.isArray(rec.removals)) u = usage(f, rec.removals, raw);
     const dd = f.nb - f.nw;
     if (acc && (f.atk === 'b' ? dd !== 0 : dd < 0)) { fin *= P.balance; balance = true; }
     const { parts: p, steps } = parts(f);
@@ -112,7 +114,7 @@
     { name: '白先判斷', key: '白先判斷', text: `白先題每題 +${P.whiteJudge}：一開始要先判斷是逼黑下禁手、還是自己下四三。` },
     { name: '繞路', key: '繞路', text: `多走幾手也能贏的另一條路每條 −${P.detour}；合格題一定是 0（有就不收）。` },
   ];
-  const USAGE_RULE = `使用率＝（必要的子＋有用的子）÷ 全部子。必要＝拿掉這顆題目就壞了（沒 VCF、手數變、不唯一、繞路變多）；有用＝拿掉後分數掉到 ${Math.round(P.usefulDrop * 100)}% 以下（佈假路、陷阱）；其他是廢子，黑白要成對拿掉才算真廢子。倍數＝1 ＋（使用率 − ${P.usageMid}），最低 ×${P.usageLo}、最高 ×${P.usageHi}。黑先黑白不一樣多、白先白比黑多，再 ×${P.balance}。`;
+  const USAGE_RULE = `使用率＝（必要的子＋有用的子）÷ 全部子。必要＝拿掉這顆題目就壞了（沒 VCF、手數變、不唯一、繞路變多）；有用＝拿掉後分數掉到 ${Math.round(P.usefulDrop * 100)}% 以下（佈假路、陷阱）；其他是廢子，黑白要成對拿掉才算真廢子。使用率是題目品質（乾淨不乾淨），不進分數（2026-11-09b 起）；品質倍數＝1 ＋（使用率 − ${P.usageMid}），最低 ×${P.usageLo}、最高 ×${P.usageHi}，只給出題 AI 挑乾淨題用。分數另外：黑先黑白不一樣多、白先白比黑多 ×${P.balance}。`;
 
   const api = { RULES_VER, P, liftKind, parts, rawScore, accepted, usage, score, RULES, USAGE_RULE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

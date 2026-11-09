@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>詰題試煉場</title>
 <script src="score-i18n.js?v=2" defer></script>
-<script src="score_rules.js?v=20261109a"></script><!-- 給分規則（跟本機題庫同一份，vcf-slover web/score_rules.js 複製來的；2026-11-08） -->
+<script src="score_rules.js?v=20261109b"></script><!-- 給分規則（跟本機題庫同一份，vcf-slover web/score_rules.js 複製來的；2026-11-08） -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0F121A">
 <link rel="icon" type="image/png" sizes="192x192" href="app/icon-192.png">
@@ -286,7 +286,7 @@ section.panel[aria-label] { position: relative; }
     <li><b>自動判斷</b>：每題黑先、白先各算一次。只有一種成立就是那一種；兩種都成立叫<b>雙先</b>，兩個分數都會列出來。</li>
     <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
     <li><b>沒有別解</b>：除了解答以外，還有另一條不同的贏法（多走幾手也能贏），就不是唯一解，不算詰題。同一解換走法（兩手先後對調、插一手空四再照答案走）不算別解。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
-    <li><b>評定</b>：長短篇共用一套分數。每一手各值多少分再加總（底分 20，這一手能下的衝四越多越高），加上深誘餌、禁手陷阱、解禁、反四、預備反四、手順這些技巧分，再乘上棋子使用率。</li>
+    <li><b>評定</b>：長短篇共用一套分數。每一手各值多少分再加總（底分 20，這一手能下的衝四越多越高），加上深誘餌、禁手陷阱、解禁、反四、預備反四、手順這些技巧分。棋子使用率另外顯示，代表題目乾不乾淨，不影響分數。</li>
   </ol>
   <p class="hint">段位：用 4 手題當尺定初段到四段，五段以上一段比一段窄，傳說不再細分。分數線照玩家實際解題的結果校準過。評分引擎跟出題 AI 用的是同一套程式。</p>
   <form method="dialog"><button class="tool" type="submit">知道了</button></form>
@@ -579,7 +579,7 @@ function onResult(e) {
 
 // ---------- 棋子使用率（2026-11-03）：每顆子拿掉重評，跟本機引擎同一套規則 ----------
 //   壞掉（沒 VCF／手數變／不唯一／繞路變多）＝必要；分數掉 ≥10%＝有用（佈假路、陷阱）；其他＝廢子
-//   分數 × clamp(1 + (使用率 − 0.75), 0.7, 1.25)；先秀原始分數，背景用多個 worker 平行算完再套上
+//   2026-11-09b 起使用率只當題目品質，不乘進分數；背景用多個 worker 平行算完再顯示
 let usage = null, usagePool = [];
 function stopUsage() { usagePool.forEach(w => w.terminate()); usagePool = []; usage = null; }
 function startUsage(base) {
@@ -624,7 +624,7 @@ function startUsage(base) {
         const rate = (usage.need + useful) / usage.total, mult = Math.max(0.7, Math.min(1.25, 1 + (rate - 0.75)));
         result.rawScore = raw;
         result.usage = { rate, mult, need: usage.need, useful, waste: trueWaste, wasteAt: usage.waste.join(' ') };
-        result.score = Math.round(raw * mult * pen * 10) / 10;
+        // 2026-11-09b：使用率不乘進分數，分數維持原本
         usagePool.forEach(x => x.terminate()); usagePool = []; usage = null;
         renderAll();
       } else { renderRate(); feed(w); }
@@ -679,7 +679,7 @@ function renderStages(running) {
 // 段位（使用者 2026-11-03：真正段位有九段；跟出題 AI 的訓練等級同一套，vcf-slover engine/actions.hpp ACT_LEVELS）
 // 段位（2026-11-08a）：長短篇共用一張表；4 手題當尺定初段～四段，五段以上逐段變窄，傳說不分級
 // 2026-11-08a 新評分：分數線由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
-const LADDER = /*LADDER*/[[0, '見習生'], [45, '初段'], [70, '二段'], [110, '三段'], [172, '四段'], [270, '五段'], [415, '六段'], [627, '七段'], [929, '八段'], [1352, '九段'], [1932, '傳說']]/*END*/;
+const LADDER = /*LADDER*/[[0, '見習生'], [60, '初段'], [86, '二段'], [122, '三段'], [175, '四段'], [249, '五段'], [349, '六段'], [480, '七段'], [649, '八段'], [860, '九段'], [1120, '傳說']]/*END*/;
 const RANKS = { long: LADDER, short: LADDER };
 const SCALE = { long: LADDER[LADDER.length - 1][0], short: LADDER[LADDER.length - 1][0] };   // 儀表滿格＝傳說
 function arc(f) {
@@ -711,7 +711,7 @@ function renderRate() {
     ['stones', '子數', r ? `${r.nb}/${r.nw}` : '—'],
     ['hook', '深誘餌', r && r.deepLinked != null ? r.deepLinked : '—'],
     ['unlock', '解禁', f.forbidLift ?? '—'],
-    ['ratio', '棋子使用率', usage ? `計算中 ${usage.done}/${usage.total}` : r && r.usage ? `${Math.round(r.usage.rate * 100)}%（×${r.usage.mult.toFixed(2)}）` : '—'],
+    ['ratio', '棋子使用率', usage ? `計算中 ${usage.done}/${usage.total}` : r && r.usage ? `${Math.round(r.usage.rate * 100)}%` : '—'],
   ];
   $('tiles').innerHTML = tiles.map(([k, n, v]) => `<div class="tile">${ico(k, 20)}<div><div class="k">${n}</div><b>${esc(v)}</b></div></div>`).join('');
   $('btnCard').disabled = !ok;
@@ -788,9 +788,9 @@ function renderSrc() {
   let extra = '';
   if (r.usage) {
     const U = r.usage, W = String(U.wasteAt || '').split(/\s+/).filter(Boolean);
-    const body = `棋盤上每顆子都拿掉重算一次：拿掉就解不開的 ${U.need} 顆、有用的 ${U.useful} 顆（拿掉分數掉 10% 以上，或要留著補黑白一樣多）、廢子 ${U.waste} 顆。總分乘上 1 +（使用率 − 75%），範圍 ×0.7 到 ×1.25。`
+    const body = `棋盤上每顆子都拿掉重算一次：拿掉就解不開的 ${U.need} 顆、有用的 ${U.useful} 顆（拿掉分數掉 10% 以上，或要留著補黑白一樣多）、廢子 ${U.waste} 顆。使用率代表題目乾不乾淨（品質），不影響分數。`
       + (W.length ? `<div class="srcRows">${rowBtn({ t: `看拿掉也沒差的子（${W.length} 顆）`, mark: W, note: `<b>拿掉也沒差的子</b>（虛線框）：${W.map(esc).join('、')}。其中要留著補黑白一樣多的不算廢子。` })}</div>` : '');
-    extra += detail('棋子使用率', `棋子使用率 ${Math.round(U.rate * 100)}%`, 'ratio', '×' + U.mult.toFixed(2), U.mult < 1 ? 'neg' : '', body);
+    extra += detail('棋子使用率', `棋子使用率 ${Math.round(U.rate * 100)}%`, 'ratio', '品質', '', body);
   }
   if (r.balancePenalty) extra += detail('黑白不一樣多', '黑白不一樣多', 'stones', '×' + r.balancePenalty, 'neg', r.attacker === 'white' ? '白先的題目黑要比白多一顆，不是的話扣一點。' : '黑先的題目黑白要一樣多，不一樣就扣一點。');
   $('src').innerHTML = '<span class="label">得分來源</span><span class="hint">點開看每一項從哪裡來</span>' + `<div class="parts">${items.map(row).join('')}${extra}</div>`;

@@ -17,7 +17,7 @@
 import ADMIN_HTML from "./admin.html";
 import SCORING_JSON from "./scoring.json.txt";   // 計分看板資料（vcf-slover engine/scoring_eval.py 產生，部署時一起上傳；後台「計分」分頁讀 /admin/scoring）
 // 評分版本（2026-11-08 使用者：全面換新評分）：排行榜只排這一版的局；舊版的局還在表裡（ver 欄），不刪
-const CUR_VER = "2026-11-09a";
+const CUR_VER = "2026-11-09b";
 // 段位榜收的最舊評分版本（2026-11-09 使用者：換版不要把榜清空）。11-08b 起是 10 級段位制，能力分可比；之前的局不收。
 // 只有能力分尺度真的變了才往後調。版本字串格式 YYYY-MM-DDx，可直接字串比大小。
 const BOARD_FROM_VER = "2026-11-08b";
