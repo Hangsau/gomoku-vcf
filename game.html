@@ -656,9 +656,17 @@ const SND_ON = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d=
 let soundOn = store.get('vcfgame.sound') !== '0', actx = null;
 function audio() {   // 手機要在使用者點擊時才能開聲音，所以第一次點按鈕／棋盤時建立
   if (!soundOn) return null;
-  try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch { actx = null; }
+  try {
+    if (actx && actx.state === 'closed') actx = null;
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state !== 'running') actx.resume().catch(() => {});   // iPhone 被電話／切 App／鎖螢幕打斷後是 'interrupted'，不是 'suspended'（2026-11-09 聲音常突然不見）
+  } catch { actx = null; }
   return actx;
 }
+// 聲音被系統暫停或打斷後，玩家下一次碰畫面、或切回 App 時接回來（手機要在使用者操作時才能恢復）
+function audioWake() { if (soundOn && actx && actx.state !== 'running') actx.resume().catch(() => {}); }
+addEventListener('pointerdown', audioWake, { capture: true, passive: true });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWake(); });
 function stoneSound(soft) {   // 落子：短促的木頭「叩」聲（帶通雜訊＋低頻敲擊）；電腦擋的那手小聲一點
   const a = audio(); if (!a) return;
   const t = a.currentTime, vol = soft ? 0.35 : 0.6;
