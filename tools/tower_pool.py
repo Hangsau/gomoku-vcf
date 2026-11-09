@@ -10,6 +10,7 @@
 用法（在 VCF 專案根目錄）：
   python tools/tower_pool.py            # 載入
   python tools/tower_pool.py --dry-run  # 只印統計
+  python tools/tower_pool.py --reload   # 換評分版本後：清空 pool 重新載入（分數、段位跟著新題庫；tower_used 保留，90 天不重複照舊）
 需要 npx wrangler 已登入（跟 tools/deploy_worker.sh 同一個帳號）。
 """
 import argparse
@@ -40,8 +41,12 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")   # Windows 主控台預設 cp950
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--reload", action="store_true")
     a = ap.parse_args()
 
+    if a.reload and not a.dry_run:   # 2026-11-09b 評分換版（使用率不進分數）：舊 pool 的分數／段位是舊版的
+        wrangler(["d1", "execute", DB, "--remote", "--yes", "--command", "DELETE FROM tower_pool"])
+        print("已清空 tower_pool")
     out = wrangler(["d1", "execute", DB, "--remote", "--json", "--command", "SELECT id FROM tower_pool"])
     have = {r["id"] for r in json.loads(out[out.index("["):])[0]["results"]}
     rng = random.Random(20261109)
