@@ -1,76 +1,76 @@
 {
  "ver": "2026-11-09a",
- "at": "2026-11-09 18:43",
+ "at": "2026-11-09 19:16",
  "blocked": 0,
  "dans": [
   {
    "dan": "初段",
    "file": "1.json",
-   "n": 5806,
+   "n": 5854,
    "white": 0,
-   "trained": 1416,
-   "bank": 4390,
-   "pool": 5092,
+   "trained": 1449,
+   "bank": 4405,
+   "pool": 5107,
    "blocked": 0
   },
   {
    "dan": "二段",
    "file": "2.json",
-   "n": 60251,
-   "white": 881,
-   "trained": 2945,
-   "bank": 57306,
-   "pool": 58543,
+   "n": 60360,
+   "white": 912,
+   "trained": 3018,
+   "bank": 57342,
+   "pool": 58581,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 40309,
-   "white": 3184,
-   "trained": 8548,
-   "bank": 31761,
-   "pool": 35113,
+   "n": 40553,
+   "white": 3281,
+   "trained": 8738,
+   "bank": 31815,
+   "pool": 35170,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 31413,
-   "white": 4385,
-   "trained": 10029,
-   "bank": 21384,
-   "pool": 23558,
+   "n": 31801,
+   "white": 4520,
+   "trained": 10314,
+   "bank": 21487,
+   "pool": 23664,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 21246,
-   "white": 3503,
-   "trained": 7750,
-   "bank": 13496,
-   "pool": 13999,
+   "n": 21746,
+   "white": 3682,
+   "trained": 8146,
+   "bank": 13600,
+   "pool": 14104,
    "blocked": 0
   },
   {
    "dan": "六段",
    "file": "6.json",
-   "n": 10944,
-   "white": 1455,
-   "trained": 3820,
-   "bank": 7124,
-   "pool": 7556,
+   "n": 11169,
+   "white": 1537,
+   "trained": 4001,
+   "bank": 7168,
+   "pool": 7600,
    "blocked": 0
   },
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 2601,
-   "white": 156,
-   "trained": 500,
-   "bank": 2101,
-   "pool": 2426,
+   "n": 2632,
+   "white": 162,
+   "trained": 521,
+   "bank": 2111,
+   "pool": 2436,
    "blocked": 0
   },
   {
@@ -104,5 +104,5 @@
    "blocked": 0
   }
  ],
- "total": 174089
+ "total": 175634
 }
