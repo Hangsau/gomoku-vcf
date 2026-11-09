@@ -1,84 +1,84 @@
 {
  "ver": "2026-11-09a",
- "at": "2026-11-09 20:56",
+ "at": "2026-11-09 21:29",
  "blocked": 0,
  "dans": [
   {
    "dan": "初段",
    "file": "1.json",
-   "n": 6041,
+   "n": 6112,
    "white": 0,
-   "trained": 1581,
-   "bank": 4460,
-   "pool": 5172,
+   "trained": 1636,
+   "bank": 4476,
+   "pool": 5194,
    "blocked": 0
   },
   {
    "dan": "二段",
    "file": "2.json",
-   "n": 60734,
-   "white": 990,
-   "trained": 3254,
-   "bank": 57480,
-   "pool": 58725,
+   "n": 60827,
+   "white": 999,
+   "trained": 3309,
+   "bank": 57518,
+   "pool": 58763,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 41171,
-   "white": 3494,
-   "trained": 9172,
-   "bank": 31999,
-   "pool": 35359,
+   "n": 41403,
+   "white": 3540,
+   "trained": 9351,
+   "bank": 32052,
+   "pool": 35416,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 32721,
-   "white": 4780,
-   "trained": 10975,
-   "bank": 21746,
-   "pool": 23927,
+   "n": 33012,
+   "white": 4841,
+   "trained": 11201,
+   "bank": 21811,
+   "pool": 23993,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 22850,
-   "white": 4043,
-   "trained": 8973,
-   "bank": 13877,
-   "pool": 14384,
+   "n": 23274,
+   "white": 4126,
+   "trained": 9322,
+   "bank": 13952,
+   "pool": 14459,
    "blocked": 0
   },
   {
    "dan": "六段",
    "file": "6.json",
-   "n": 11747,
-   "white": 1718,
-   "trained": 4406,
-   "bank": 7341,
-   "pool": 7773,
+   "n": 11923,
+   "white": 1747,
+   "trained": 4531,
+   "bank": 7392,
+   "pool": 7824,
    "blocked": 0
   },
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 2684,
-   "white": 189,
-   "trained": 562,
-   "bank": 2122,
-   "pool": 2447,
+   "n": 2709,
+   "white": 203,
+   "trained": 584,
+   "bank": 2125,
+   "pool": 2450,
    "blocked": 0
   },
   {
    "dan": "八段",
    "file": "8.json",
-   "n": 695,
+   "n": 696,
    "white": 3,
-   "trained": 8,
+   "trained": 9,
    "bank": 687,
    "pool": 883,
    "blocked": 0
@@ -104,5 +104,5 @@
    "blocked": 0
   }
  ],
- "total": 179467
+ "total": 180780
 }
