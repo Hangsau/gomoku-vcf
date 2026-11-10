@@ -1771,9 +1771,8 @@ function twBoard(rows, scope) {
 }
 // ---------- 覆盤（2026-11-10 使用者：打開解答另開視窗，手機上一滑就消失、回不去）----------
 // 最近一局的題目存在本機，頁面被重新整理也能從首頁再打開；只存一局，跟成績、排行榜無關。
-function keepRev() {
-  try { if (lastRun && lastRun.detail && lastRun.detail.length) localStorage.setItem('vcfgame.lastRev', JSON.stringify({ mode: lastRun.mode || '', detail: lastRun.detail })); } catch {}
-}
+function saveRev(run) { try { localStorage.setItem('vcfgame.lastRev', JSON.stringify({ mode: run.mode || '', detail: run.detail })); } catch {} }
+function keepRev() { if (lastRun && lastRun.detail && lastRun.detail.length) saveRev(lastRun); }
 function savedRev() { try { const r = JSON.parse(localStorage.getItem('vcfgame.lastRev')); return r && r.detail && r.detail.length ? r : null; } catch { return null; } }
 function homeRevSync() { $('homeRev').hidden = !savedRev(); }
 homeRevSync();
@@ -1812,6 +1811,16 @@ function openRv(run, i) {
   rvw = { run, i, p: { black: x.b.split(' ').filter(Boolean), white: x.w.split(' ').filter(Boolean), atkWhite: x.a === 'w' },
     r: { seq: (x.q || '').split(' ').filter(Boolean), cur: 0, mine: null, ans: false, sol: null } };
   rvw.r.cur = rvw.r.seq.length;
+  if (!x.q && x.m) {   // 改版前的舊紀錄只有 m（攻方自己點過的子）：用引擎重放重建完整手順，建好寫回該筆紀錄
+    const mine = rvw;
+    $('twStep').textContent = '…';
+    rebuildSeq(x).then(seq => {
+      if (!seq.length) return;
+      x.q = seq.join(' '); if (run === lastRun) keepRev(); else saveRev(run);
+      if (rvw !== mine || mine.r.seq.length || mine.r.ans) { if (rvw === mine) twRenderRev(); return; }   // 等的時候已經換題／離開／動過棋盤：不蓋掉
+      mine.r.seq = seq; mine.r.cur = seq.length; draw(); twRenderRev();
+    }).catch(() => { if (rvw === mine) twRenderRev(); });
+  }
   const hd = $('twRevT'), tag = revTag(x), head = () => `${tag[1]}　${x.id ? '#' + x.id : ''}　${i + 1}/${run.detail.length}`;
   hd.textContent = head();
   hd.classList.toggle('ok', !!x.ok);
@@ -1822,6 +1831,22 @@ function openRv(run, i) {
   twRenderRev();
   layout(); setTimeout(layout);
   if (first) wakeSync();
+}
+// 照 placeAt 同樣的規則重放 m：不合法／禁手／不是四／被迫禁手的點不落子；win 落子後結束；defFive 落攻方子＋電腦的五後結束；block 落攻方子＋電腦的擋（輪到你沒四就結束）；其他（bad）落子後結束
+async function rebuildSeq(x) {
+  const atkWhite = x.a === 'w', black = x.b.split(' ').filter(Boolean), white = x.w.split(' ').filter(Boolean), seq = [];
+  for (const t of x.m.split(' ').filter(Boolean)) {
+    if (black.includes(t) || white.includes(t)) continue;
+    const atk = atkWhite ? white : black, def = atkWhite ? black : white;
+    const res = (await move(black.join(' '), white.join(' '), t, atkWhite)).result || { r: 'illegal' };
+    if (['illegal', 'forbidden', 'notfour', 'forcedForbidden'].includes(res.r)) continue;
+    atk.push(t); seq.push(t);
+    if (res.r === 'win') break;
+    if (res.r === 'defFive') { def.push(res.at); seq.push(res.at); break; }
+    if (res.r === 'block') { def.push(res.def); seq.push(res.def); if (res.nofour) break; continue; }
+    break;
+  }
+  return seq;
 }
 function closeRv(fromPop) {
   if (!rvw) return;
