@@ -1,56 +1,56 @@
 {
  "ver": "2026-11-09b",
- "at": "2026-11-11 01:20",
+ "at": "2026-11-11 01:54",
  "blocked": 0,
  "dans": [
   {
    "dan": "初段",
    "file": "1.json",
-   "n": 61020,
+   "n": 61021,
    "white": 0,
    "trained": 2761,
-   "bank": 58259,
-   "pool": 59391,
+   "bank": 58260,
+   "pool": 59392,
    "blocked": 0
   },
   {
    "dan": "二段",
    "file": "2.json",
-   "n": 31413,
+   "n": 31414,
    "white": 1874,
    "trained": 5643,
-   "bank": 25770,
-   "pool": 27198,
+   "bank": 25771,
+   "pool": 27199,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 23949,
+   "n": 23950,
    "white": 3537,
    "trained": 8253,
-   "bank": 15696,
-   "pool": 18945,
+   "bank": 15697,
+   "pool": 18946,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 29664,
+   "n": 29665,
    "white": 4878,
    "trained": 11771,
-   "bank": 17893,
-   "pool": 20326,
+   "bank": 17894,
+   "pool": 20327,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 20912,
+   "n": 20913,
    "white": 4221,
    "trained": 9536,
-   "bank": 11376,
-   "pool": 12352,
+   "bank": 11377,
+   "pool": 12353,
    "blocked": 0
   },
   {
@@ -66,43 +66,43 @@
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 5709,
+   "n": 5711,
    "white": 689,
    "trained": 2631,
-   "bank": 3078,
-   "pool": 4018,
+   "bank": 3080,
+   "pool": 4020,
    "blocked": 0
   },
   {
    "dan": "八段",
    "file": "8.json",
-   "n": 1919,
+   "n": 1921,
    "white": 80,
    "trained": 1064,
-   "bank": 855,
-   "pool": 1617,
+   "bank": 857,
+   "pool": 1619,
    "blocked": 0
   },
   {
    "dan": "九段",
    "file": "9.json",
-   "n": 1010,
+   "n": 1015,
    "white": 22,
    "trained": 791,
-   "bank": 219,
-   "pool": 889,
+   "bank": 224,
+   "pool": 895,
    "blocked": 0
   },
   {
    "dan": "傳說",
    "file": "10.json",
-   "n": 1289,
+   "n": 1304,
    "white": 1,
    "trained": 701,
-   "bank": 588,
-   "pool": 1192,
+   "bank": 603,
+   "pool": 1207,
    "blocked": 0
   }
  ],
- "total": 191039
+ "total": 191068
 }
