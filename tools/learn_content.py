@@ -114,5 +114,23 @@ C['4-4'] = [
 D = json.loads(DATA.read_text(encoding='utf-8'))
 for l in D['lessons']:
     if l['id'] in C: l['steps'] = C[l['id']]
+# 套翻譯：game/learn/i18n.json 以中文原文為鍵（中文沒改的句子不用重翻；新句子要再跑翻譯）
+I18N = ROOT / 'game' / 'learn' / 'i18n.json'
+TR = json.loads(I18N.read_text(encoding='utf-8')) if I18N.exists() else {}
+missing = set()
+def tr(o):
+    if not isinstance(o, dict) or not o.get('zh'): return
+    t = TR.get(o['zh'])
+    if not t: missing.add(o['zh']); return
+    for k in ('en', 'ja', 'ko'):
+        if t.get(k): o[k] = t[k]
+tr(D['opening'].get('text'))
+for l in D['lessons']:
+    tr(l.get('title'))
+    for st in l.get('steps', []):
+        tr(st.get('text'))
+        for o in st.get('options', []): tr(o)
+if missing:
+    print('還沒翻譯的句子', len(missing), '句：要把它們加進 game/learn/i18n.json 再派翻譯')
 DATA.write_text(json.dumps(D, ensure_ascii=False, indent=1), encoding='utf-8')
 print('寫入', sum(len(v) for v in C.values()), '步，', len(C), '課')
