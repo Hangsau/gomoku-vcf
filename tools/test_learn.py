@@ -29,7 +29,7 @@ def btn(pg, timeout=8000):
 try:
     with sync_playwright() as pw:
         br = pw.chromium.launch(); ctx = br.new_context(viewport={'width': vp[0], 'height': vp[1]})
-        ctx.add_init_script(f"try{{localStorage.setItem('vcfgame.lang','{lang}');localStorage.removeItem('vcfgame.learn')}}catch(e){{}}")
+        ctx.add_init_script(f"try{{localStorage.setItem('vcfgame.lang','{lang}');localStorage.removeItem('vcfgame.learn2')}}catch(e){{}}")
         pg = ctx.new_page()
         pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
         pg.on('pageerror', lambda e: errs.append('PAGEERR ' + str(e)))
@@ -74,15 +74,16 @@ try:
                         pg.wait_for_timeout(300); tap(pg, st['line'][j]); pg.wait_for_timeout(1600)
                     pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)   # 解完才只剩「下一步」；別按到退一手
                     overflow(pg, where + ' 解完'); btn(pg, timeout=12000)
-                elif T == 'rewind':
-                    ln = st['line'] + [st['five'][0], st['five'][1]]
+                elif T == 'rewind':   # v2：先退成五那手，之後每次退兩手，每關點一個可接受點；最後自己往前下
                     btn(pg)                       # 倒帶一手
-                    for j in range(len(ln) - 1, -1, -1):
-                        pg.wait_for_timeout(750); overflow(pg, where + f' 倒帶到第 {j + 1} 手')
-                        tap(pg, ln[j] if j % 2 == 0 else ln[j - 1]); pg.wait_for_timeout(400)
+                    for sg in st['stages']:
+                        pg.wait_for_timeout(500 + 260 * 2 + 400); overflow(pg, where + f" 倒帶到保留 {sg['keep']} 手")
+                        tap(pg, sg['accept'][0]); pg.wait_for_timeout(900)
                         btn(pg)
-                    for j in range(0, len(ln), 2):
-                        pg.wait_for_timeout(300); tap(pg, ln[j]); pg.wait_for_timeout(1400)
+                    pg.wait_for_timeout(600)
+                    for j in range(0, len(st['line']), 2):
+                        tap(pg, st['line'][j]); pg.wait_for_timeout(2200)
+                    pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)
                     overflow(pg, where + ' 正著下完'); btn(pg)
             pg.wait_for_timeout(700); overflow(pg, f"{l['id']} 完成後回教學盤")
             done += 1
@@ -94,9 +95,9 @@ try:
                 tap(pg, sol[j]); pg.wait_for_timeout(2200)
             pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)
             grad = pg.evaluate("(document.querySelector('#learn .lmsg .tag')||{}).textContent")
-            if not pg.evaluate("JSON.parse(localStorage.getItem('vcfgame.learn')).graduated === true"): issues.append(f'畢業考沒有過關（訊息：{grad}）')
+            if not pg.evaluate("JSON.parse(localStorage.getItem('vcfgame.learn2')).graduated === true"): issues.append(f'畢業考沒有過關（訊息：{grad}）')
             overflow(pg, '畢業')
-        prog = pg.evaluate("localStorage.getItem('vcfgame.learn')")
+        prog = pg.evaluate("localStorage.getItem('vcfgame.learn2')")
         print(f'{lang} {vp}：做完 {done} 課，教學盤子數 {stones}，進度 {prog}')
         br.close()
 finally:

@@ -763,5 +763,60 @@
   "en": "No demo this time. Plan your move order first. If you go wrong, we’ll show which blocking stone made a counter-four.",
   "ja": "今回はお手本なし。順番を考えてから打とう。間違えたら、相手のどの石で逆四ができたか教えるよ。",
   "ko": "이번엔 시범이 없어요. 순서를 생각하고 두세요. 틀리면 상대가 막은 어느 돌이 역사를 만들었는지 알려 줄게요."
+ },
+ "這點能不能下": {
+  "en": "Can you play here?",
+  "ja": "ここに打てる？",
+  "ko": "여기에 둬도 될까요?"
+ },
+ "黑棋每一手都要先問：這點能不能下？下面幾題自己判斷（金圈是黑要下的點）。": {
+  "en": "Before each Black move, ask: can you play here? Try these puzzles. The gold circle marks Black’s move.",
+  "ja": "黒は一手ごとに「ここに打てる？」と考えよう。次の問題で判断してね（金の丸が黒の打つ点）。",
+  "ko": "흑은 매 수 ‘여기에 둬도 될까?’를 먼저 생각해요. 직접 판단해 봐요(금색 원이 흑이 둘 곳이에요)."
+ },
+ "黑下在金圈，剛好連成五顆。": {
+  "en": "Black plays at the gold circle and makes exactly five.",
+  "ja": "黒が金の丸に打つと、ちょうど五連になるよ。",
+  "ko": "흑이 금색 원에 두면 정확히 5목이 돼요."
+ },
+ "黑下在金圈：直的是活三，橫的那條三左邊被白擋住。": {
+  "en": "Black plays at the gold circle. The vertical three is open; White blocks the horizontal three on the left.",
+  "ja": "黒が金の丸に打つと、縦は活三。横の三は左を白に止められているよ。",
+  "ko": "흑이 금색 원에 두면 세로는 열린 삼, 가로 삼은 왼쪽이 백에게 막혀 있어요."
+ },
+ "黑下在金圈：直的四加斜的四。": {
+  "en": "Black plays at the gold circle: a vertical four and a diagonal four.",
+  "ja": "黒が金の丸に打つと、縦の四と斜めの四ができるよ。",
+  "ko": "흑이 금색 원에 두면 세로 사와 대각선 사가 생겨요."
+ },
+ "判斷禁手的順序：先看會不會成五（成五就贏）；再數這一手同時做出幾個四、幾條活三。兩個以上就是禁手。": {
+  "en": "First, check if you make five (you win). Then count the fours and open threes this move makes. Two or more of either is a forbidden move.",
+  "ja": "まず五連になるか確認（五連なら勝ち）。次に、この一手でできる四と活三を数えよう。どちらかが2つ以上なら禁手だよ。",
+  "ko": "먼저 오목 완성인지 봐요(완성하면 승리). 그다음 이 수로 생기는 사와 열린 삼을 세어 봐요. 어느 한쪽이 2개 이상이면 금수예요."
+ },
+ "從這單元開始用「倒帶」：先看結局，再一次退兩手，每退一層就找「下一手下哪」。": {
+  "en": "From this Unit on, “rewind”: see the ending, then go back two moves at a time. Each time, find where to play next.",
+  "ja": "この単元からは「巻き戻し」。まず結末を見て、2手ずつ戻ろう。戻るたびに「次はどこに打つ？」と考えてね。",
+  "ko": "이 단원부터는 ‘되감기’예요. 결말을 먼저 보고 두 수씩 되돌려요. 되돌릴 때마다 다음에 둘 곳을 찾아봐요."
+ },
+ "四四：白可以、黑不行": {
+  "en": "Double four: White can, Black can’t",
+  "ja": "四々：白はOK、黒はダメ",
+  "ko": "쌍사: 백은 가능, 흑은 금지"
+ },
+ "一顆子同時做出兩個四，叫「四四」，對方只擋得了一個。白棋可以這樣贏；黑棋四四是禁手（上一單元教過）。": {
+  "en": "One stone making two fours is a “double four”. Only one can be blocked. White can win this way. For Black, it’s a forbidden move (see the last Unit).",
+  "ja": "1個の石で四を2つ作るのが「四々」。相手は片方しか止められないよ。白はこれで勝てるけど、黒は禁手（前の単元で習ったね）。",
+  "ko": "한 돌로 사 두 개를 만들면 ‘쌍사’예요. 상대는 하나만 막을 수 있어요. 백은 이렇게 이길 수 있지만 흑은 금수예요(지난 단원에서 배웠죠)."
+ },
+ "黑棋不能四四，收尾只能四三或活四。這題盤上有禁點，倒回去看黑怎麼避開。": {
+  "en": "Black can’t make a double four, so finish with a four-three or open four. Rewind to see how Black avoids this puzzle’s forbidden points.",
+  "ja": "黒は四々が禁手だから、最後は四三か達四。盤の禁手の点をどう避けるか、戻って見てみよう。",
+  "ko": "흑은 쌍사를 둘 수 없어 사삼이나 열린 사로 마무리해요. 이 문제의 금수 자리를 어떻게 피하는지 되돌려 봐요."
+ },
+ "一顆子同時做出四和三，叫「四三」：對方擋了四，三就變成活四。": {
+  "en": "One stone makes a four and a three: a “four-three”. They block the four, then you turn the three into an open four.",
+  "ja": "1個の石で四と三を作るのが「四三」。相手が四を止めたら、三を達四にしよう。",
+  "ko": "한 돌로 사와 삼을 만들면 ‘사삼’이에요. 상대가 사를 막으면 삼을 열린 사로 만들어요."
  }
 }

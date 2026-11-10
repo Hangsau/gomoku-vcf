@@ -114,7 +114,7 @@ def check_line(E, where, pos, step):
             if set(accepts[str(i // 2)]) != okset: err(where, f'第 {i // 2 + 1} 手可接受點宣告 {sorted(accepts[str(i // 2)])}，引擎 {sorted(okset)}')
         bb, ww = (d, a) if aw else (a, d)
         m = E.move(bb, ww, mv, aw)
-        if '禁' in (m.get('how') or '') or m.get('forcedForbidden'): uses_forbid.append(f'第 {i // 2 + 1} 手 {mv} 是禁手相關的贏法（{m.get("how") or "逼禁"}）')
+        if '禁' in (m.get('how') or '') or m.get('forcedForbidden'): uses_forbid.append((8, f'第 {i // 2 + 1} 手 {mv} 靠逼禁贏（{m.get("how") or "逼禁"}），逼禁第 8 單元才教'))
         a.append(mv)
         if last:
             if m.get('r') != 'win': err(where, f'最後一手 {mv} 引擎回 {m.get("r")}，不是 win')
@@ -124,8 +124,31 @@ def check_line(E, where, pos, step):
     fv = fives(a, d, not aw)
     if step.get('five') and set(step['five']) != fv: err(where, f'成五點宣告 {step["five"]}，算出 {sorted(fv)}')
     in_window(where, B + W + sol + sorted(fv), pos.get('win'))
-    if r.get('forbidden') and not aw: uses_forbid.append('你下黑，盤上卻有黑棋禁點 ' + ' '.join(r['forbidden']))   # 白先題：黑的禁點不影響玩家，只管贏法有沒有逼禁
+    if r.get('forbidden') and not aw: uses_forbid.append((4, '你下黑，盤上有黑棋禁點 ' + ' '.join(r['forbidden']) + '，禁手第 4 單元才教'))   # 白先題：黑的禁點不影響玩家
+    if (r.get('facts') or {}).get('lifts') and not aw: uses_forbid.append((9, '解法裡有解禁，解禁第 9 單元才教'))
     return uses_forbid
+
+def check_stages(E, where, pos, st):
+    """倒帶 v2：每一關（輪攻方下）宣告的可接受點＝引擎算的「下了還能贏」的所有點；關卡要從成五那手一路退到開頭"""
+    aw = pos.get('atk') == 'w'
+    full = st['line'] + [st['five'][0], st['five'][1]]
+    want_keeps = list(range(len(full) - 1, -1, -2))
+    got_keeps = [sg.get('keep') for sg in st.get('stages') or []]
+    if got_keeps != want_keeps: err(where, f'倒帶關卡應為保留 {want_keeps} 手，寫的是 {got_keeps}'); return
+    for sg in st['stages']:
+        keep = sg['keep']
+        a = list(pos['w'] if aw else pos['b']) + full[0:keep:2]; d = list(pos['b'] if aw else pos['w']) + full[1:keep:2]
+        bb, ww = (d, a) if aw else (a, d)
+        acc = set()
+        for t in window_points(pos.get('win')):
+            if t in a or t in d: continue
+            m = E.move(bb, ww, t, aw)
+            if m.get('r') == 'win': acc.add(t)
+            elif m.get('r') == 'block' and not m.get('nofour'):
+                b2, w2 = (d + [m['def']], a + [t]) if aw else (a + [t], d + [m['def']])
+                if E.solve(b2, w2, aw).get('vcf'): acc.add(t)
+        acc.add(full[keep])   # 正解本身由 check_line 逐手重放驗證過
+        if acc != set(sg.get('accept') or []): err(where, f'倒帶保留 {keep} 手那一關：可接受點寫 {sorted(sg.get("accept") or [])}，引擎 {sorted(acc)}')
 
 def window_points(win):
     if not win: return [COLS[x] + str(y + 1) for x in range(15) for y in range(15)]
@@ -139,6 +162,7 @@ def check_step(E, where, st, unit=9):
     if typ in ('solve', 'rewind', 'opening'):
         if not pos: err(where, '缺 pos'); return
         if typ == 'solve' and st.get('finish') == 'forbid':   # 逼禁收尾：最後一手引擎要回「禁手」勝
+            if unit < 8: err(where, '用到還沒教的東西：逼禁第 8 單元才教')
             r = E.solve(pos['b'], pos['w'], pos.get('atk') == 'w')
             if not (r.get('vcf') and r.get('unique') and r.get('L') == st.get('L')): err(where, f'逼禁題：引擎 vcf={r.get("vcf")} unique={r.get("unique")} L={r.get("L")}'); return
             sol = r['solution'].split('(')[0].split()
@@ -152,7 +176,9 @@ def check_step(E, where, st, unit=9):
             if pos.get('win'): in_window(where, list(pos['b']) + list(pos['w']) + sol, pos['win'])
             return
         used = check_line(E, where, pos, st)
-        if used and unit < 7: err(where, '禁手第 7 單元才教，這題卻用到：' + '；'.join(used))
+        for need, why_ in used:   # 只用教過的東西（v2 規則 1）
+            if unit < need: err(where, '用到還沒教的東西：' + why_)
+        if typ == 'rewind': check_stages(E, where, pos, st)
         return
     if typ in ('tap', 'predict'):
         if not pos: err(where, '缺 pos'); return
@@ -237,6 +263,8 @@ def main():
         r = E.solve(B, W, False)
         if not (r.get('vcf') and r.get('unique') and r.get('legal')): err('教學盤', f'引擎驗證失敗：vcf={r.get("vcf")} unique={r.get("unique")} legal={r.get("legal")}')
         if bd.get('L') and r.get('L') != bd['L']: err('教學盤', f'手數宣告 {bd["L"]}，引擎 {r.get("L")}')
+        # 開場（第 0 單元：什麼都還沒教，不能用到禁手）
+        if D.get('opening'): check_step(E, '開場', D['opening'], 0)
         # 每課
         for l in lessons:
             lw = f'課 {l.get("id")}'

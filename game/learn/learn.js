@@ -5,7 +5,7 @@
 (() => {
   'use strict';
   const COLS = 'ABCDEFGHJKLMNOP';
-  const KEY = 'vcfgame.learn';
+  const KEY = 'vcfgame.learn2';   // v2（2026-11-10 課程重排：禁手提前）換新存檔，v1 的課程編號對不上新順序
   const DEV = /[?&]dev=1\b/.test(location.search);   // 測試模式（網址加 ?dev=1）：教學盤每課都能直接上、可重置進度
   const UI = {
     zh: { playAs: '你下{c}', black: '黑', white: '白', blackFirst: '黑先', whiteFirst: '白先', undo: '退一手', reset: '重來', entry: 'VCF 教學', entrySub: '新手從這裡開始', board: '教學盤', placed: '已落 {n} 子・還有 {m} 子', exam: '畢業考', next: '下一子', start: '落下這一子', again: '再上一次這課', soon: '即將推出', soonSub: '這一課還在準備中。', cont: '繼續', nextStep: '下一步', tapBoard: '點棋盤作答', ok: '答對了', no: '再想想', done: '完成', back: '返回', close: '關閉', rewindOne: '倒帶一手', rewindMore: '再倒一手', playFwd: '倒帶完成，正著下一遍', drop: '落下這一子', you: '你', cpu: '電腦', youDef: '你：白（防守）', youAtk: '你：黑（進攻）', lostT: '你輸了', wonT: '你贏了', rw: '倒帶看看', go: '開始', enter: '進入教學盤', firstStone: '這局，是你的第一顆子', firstSub: '每學會一件事，這張棋盤就多一顆子。全部落完的時候，你會看懂它在說什麼。', hint: '提示', unit: '第 {u} 單元', end: '結局', q: '第 {n} 手是什麼？', fwd: '正著下', forced: '它只能擋那裡……', examT: '畢業考', examSub: '這盤棋，是你一路學過來的。現在把它下完。', grad: '畢業了！', gradSub: '你自己解開了一道真正的 VCF。去無限之塔、火眼金睛、明鏡台試試身手吧。', locked: '先完成前面的課' },
@@ -600,10 +600,13 @@
     msg(f.body, '', text); return new Promise(res => button(f.foot, U('cont'), '', res));
   }
 
-  // ---------- 倒帶課：先看結局、倒帶一手答一題、最後正著下 ----------
+  // ---------- 倒帶課 v2（2026-11-10 使用者：倒帶問「上一顆在哪」答案不唯一 → 一次退兩顆，讓他找下一顆）----------
+  // 先看結局 → 拿掉最後連成五那手，問「哪裡連成五」→ 之後每次退兩顆（對方擋子＋你那手），問「下一手下哪」
+  // 每題的可接受點（下了還能贏的所有點）由 tools/learn_content.py 用引擎算好存在 st.stages，check_lessons 驗證
+  // 退到開頭後，用「自己解」從第一手往前下到贏
   async function rewindStep(l, st, i, f, alive) {
     const pos = st.pos, atkC = pos.atk === 'w' ? 'w' : 'b', defC = atkC === 'b' ? 'w' : 'b';
-    const line = [...st.line, st.five[0], st.five[1]];   // 攻、擋、攻、擋……、最後擋一頭、攻方成五
+    const line = [...st.line, st.five[0], st.five[1]];   // 攻、擋、……、攻（活四）、擋一頭、攻方成五
     const colorAt = (k) => (k % 2 === 0 ? atkC : defC);
     const tape = document.createElement('div'); tape.className = 'tape'; f.body.appendChild(tape);
     const B = makeBoard(f.body, pos.win, 9); B.fit(boardSize(50));
@@ -617,73 +620,43 @@
     B.five(fiveLine(atkSet, line[line.length - 1]), true, { keepNumbers: true });
     msg(f.body, U('end'), TX(st.text));
     await new Promise(res => button(f.foot, U('rewindOne'), '', res, IC.rew));
-    // 倒帶：從最後一手往回，每退一手問一題
-    for (let k = line.length - 1; k >= 0; k--) {
+    let have = line.length;
+    for (const sg of st.stages) {   // sg.keep：退到剩幾手（都是輪攻方下）；sg.accept：這時下了還能贏的點
       if (!alive()) return 'quit';
-      button(f.foot, '');
+      button(f.foot, ''); B.clearMarks(); B.unfive();
       const scan = sprite(B.el, 'rewind_fx', 0, 0, 0, { full: true, loop: true, z: 6 }) || Object.assign(document.createElement('div'), { className: 'lscan' });
       if (!scan.parentNode) B.el.appendChild(scan);
-      B.take(line[k]); layoutTape(k);
-      await sleep(620); scan._stop ? scan._stop() : scan.remove(); if (!alive()) return 'quit';
-      B.unfive();
-      const isAtk = k % 2 === 0, t0 = line[k];
-      let ans, q, hint, stoneQ = false;
-      if (isAtk) {
-        ans = (k === line.length - 1) ? [t0] : (k === st.line.length - 1 && st.accept && st.accept[String(st.L - 1)]) ? st.accept[String(st.L - 1)] : [t0];
-        q = k === line.length - 1 ? TX({ zh: '最後一手在哪裡連成五？', en: 'Where did the last move make five?', ja: '最後の一手はどこで五に？', ko: '마지막 수는 어디서 오목이 됐나요?' })
-          : k === st.line.length - 1 ? TX({ zh: '這一手做出兩頭都能成五的活四（或兩個四）。下哪？', en: 'This move made an open four (or two fours). Where?', ja: 'この一手で活四（または四四）。どこ？', ko: '이 수로 활사(또는 쌍사)를 만들었습니다. 어디?' })
-          : TX({ zh: '這一手衝四，逼對方只能擋。下哪？想想它跟後面的手怎麼接。', en: 'This move made a four and forced a block. Where? Think how it links to what came next.', ja: 'この一手で四を作り、止めさせた。どこ？後の手とのつながりを考えて。', ko: '이 수로 사를 만들어 막게 했습니다. 어디? 다음 수와 어떻게 이어지는지 생각해 보세요.' });
-        hint = TX({ zh: '找一條再一顆就成四（或成五）的線，答案在它的空點上。', en: 'Find a line that needs one more stone to make a four (or five). The answer is on its empty point.', ja: 'あと一つで四（または五）になる線を探して。答えはその空点。', ko: '한 개만 더 놓으면 사(또는 오목)가 되는 줄을 찾으세요.' });
-      } else {
-        stoneQ = true; B.mark('ring', t0);
-        // 逼它擋那裡的四：上一手攻方的子，跟它同一條線上的攻方子都算
-        const prev = line[k - 1], [px, py] = xy(prev), [bx, by] = xy(t0), dx = Math.sign(px - bx), dy = Math.sign(py - by);
-        ans = [];
-        for (let s = -5; s <= 5; s++) { const p = nm(bx + dx * s, by + dy * s); if (B.has(p) && B.stones.get(p).color === atkC) ans.push(p); }
-        if (!ans.includes(prev)) ans.push(prev);
-        q = TX({ zh: '虛線圈是對方擋過的地方。是哪顆子逼它擋那裡？點那條四上的子。', en: 'The dashed ring is where the opponent blocked. Which stone forced it? Tap a stone of that four.', ja: '点線の輪は相手が止めた所。どの石がそうさせた？その四の石をタップ。', ko: '점선 원은 상대가 막은 자리. 어느 돌이 그렇게 만들었나요? 그 사의 돌을 누르세요.' });
-        hint = TX({ zh: '虛線圈在一條「再一顆就成五」的線的盡頭。', en: 'The ring sits at the end of a line that was one stone from five.', ja: '点線の輪は「あと一つで五」の線の端にある。', ko: '점선 원은 "한 개만 더면 오목"인 줄의 끝에 있습니다.' });
-      }
-      msg(f.body, U('q', { n: k + 1 }), q);
-      let miss = 0;
-      while (true) {
-        const t = await new Promise(res => { B.onTap = (p) => { if (stoneQ ? B.has(p) : !B.has(p)) res(p); }; });
-        if (!alive()) return 'quit';
-        if (ans.includes(t)) break;
-        miss++; B.shake(); msg(f.body, U('no'), hint, 'bad');
-        if (miss >= 2) ans.forEach(a => B.glow(a, '#3CC6B4'));
-      }
-      B.onTap = null; B.clearMarks();
-      if (!stoneQ) { const g = B.put(ans.includes(t0) ? t0 : ans[0], atkC, { cls: '' }); g.style.opacity = .55; setTimeout(() => B.take(ans.includes(t0) ? t0 : ans[0], true), 700); }
-      msg(f.body, U('ok'), k === 0 ? TX({ zh: '倒帶完成。現在不看數字，自己正著下一遍。', en: 'Rewind complete. Now play it forward yourself, no numbers.', ja: '巻き戻し完了。今度は数字なしで、順に打ってみよう。', ko: '되감기 완료. 이제 숫자 없이 순서대로 두어 보세요.' }) : '', 'good');
-      if (k > 0) await new Promise(res => button(f.foot, U('rewindMore'), '', res, IC.rew));
-      else await new Promise(res => button(f.foot, U('playFwd'), 'teal', res, IC.play));
-    }
-    // 正著下：攻方每手只接受驗證過的點，對方被木偶線拖去擋
-    button(f.foot, '');
-    const atkMoves = line.filter((_, k) => k % 2 === 0), defMoves = line.filter((_, k) => k % 2 === 1);
-    const placed = new Set(atkC === 'b' ? pos.b : pos.w);
-    for (let m = 0; m < atkMoves.length; m++) {
-      layoutTape(m * 2);
-      const ok = (m === st.L - 1 && st.accept && st.accept[String(st.L - 1)]) ? st.accept[String(st.L - 1)] : [atkMoves[m]];   // 活四那手：引擎驗證過的所有點都算對
-      msg(f.body, U('fwd'), m === atkMoves.length - 1 ? TX({ zh: '連成五！', en: 'Make five!', ja: '五を作れ！', ko: '오목을 만드세요!' }) : TX({ zh: '下一手？', en: 'Next move?', ja: '次の一手は？', ko: '다음 수는?' }));
+      while (have > sg.keep) { have--; B.take(line[have]); await sleep(260); }
+      layoutTape(have);
+      await sleep(360); scan._stop ? scan._stop() : scan.remove(); if (!alive()) return 'quit';
+      const q = have === line.length - 1 ? TX({ zh: '最後一手：哪裡連成五？', en: 'The last move: where does it make five?', ja: '最後の一手：どこで五になる？', ko: '마지막 수: 어디서 오목이 되나요?' })
+        : have === 0 ? TX({ zh: '回到一開始了。第一手下哪？', en: 'Back to the start. Where is the first move?', ja: '最初に戻った。一手目はどこ？', ko: '처음으로 돌아왔어요. 첫 수는 어디?' })
+        : TX({ zh: '再往前一步，現在輪你下。下一手下哪？（要逼對方只能擋）', en: 'One more step back. Your move: where next? (Force the opponent to block.)', ja: 'もう一歩前。あなたの番：次はどこ？（相手に止めさせる手）', ko: '한 걸음 더 앞으로. 당신 차례: 다음 수는? (상대가 막을 수밖에 없게)' });
+      msg(f.body, U('q', { n: have + 1 }), q);
       let miss = 0, t;
       while (true) {
         t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p)) res(p); }; });
         if (!alive()) return 'quit';
-        if (ok.includes(t)) break;
-        miss++; B.shake(); msg(f.body, U('no'), TX({ zh: '照剛才倒帶看到的順序下。', en: 'Follow the order you just rewound.', ja: 'さっき巻き戻した順に。', ko: '방금 되감아 본 순서대로.' }), 'bad');
-        if (miss >= 2) ok.forEach(a => B.glow(a, '#3CC6B4'));
+        if (sg.accept.includes(t)) break;
+        miss++; B.shake(); B.cross(t);
+        msg(f.body, U('no'), have === line.length - 1 ? TX({ zh: '找那條四：差的是哪一點？', en: 'Find the four: which point is missing?', ja: '四を探して。足りない点は？', ko: '사를 찾으세요. 빠진 점은?' })
+          : TX({ zh: '下了要是四，而且對方擋完之後你還接得下去。', en: 'It must make a four, and after the block you must still be able to go on.', ja: '四になり、止められた後も続けられる手。', ko: '사가 되고, 상대가 막은 뒤에도 이어갈 수 있어야 해요.' }), 'bad');
+        if (miss >= 2) sg.accept.forEach(a => B.glow(a, '#3CC6B4'));
       }
-      B.onTap = null; B.clearMarks(); B.put(t, atkC); placed.add(t);
-      if (m === atkMoves.length - 1) { B.five(fiveLine(placed, t), true); break; }
-      await sleep(450); if (!alive()) return 'quit';
-      msg(f.body, '', U('forced'));
-      await B.thread(defMoves[m], defC); if (!alive()) return 'quit';
+      B.onTap = null; B.clearMarks();
+      const g = B.put(t, atkC, { anim: false, num: have + 1 }); g.style.opacity = .55;   // 答對：半透明顯示一下
+      await sleep(700); B.take(t, true); if (!alive()) return 'quit';
+      msg(f.body, U('ok'), have === 0 ? TX({ zh: '倒帶完成。現在從第一手往前下，自己下到贏。', en: 'Rewind complete. Now play forward from the first move all the way to the win.', ja: '巻き戻し完了。一手目から勝ちまで打ってみよう。', ko: '되감기 완료. 이제 첫 수부터 이길 때까지 두어 보세요.' }) : '', 'good');
+      if (have > 0) await new Promise(res => button(f.foot, U('rewindMore'), '', res, IC.rew));
+      else await new Promise(res => button(f.foot, U('playFwd'), 'teal', res, IC.play));
     }
-    layoutTape(line.length);
-    if (!sprite(B.el, 'stamp_ok', B.size - 46, 40, 76, { keep: true, z: 7 })) { const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B.el.appendChild(stamp); }
-    msg(f.body, U('done'), TX({ zh: '你先倒著想了一次，又正著下了一次。找 VCF 就是這樣：先看終點，再往回接。', en: 'You thought it through backward, then played it forward. That is how to find a VCF: see the end, then link back.', ja: '逆にたどって、順に打った。VCF の探し方はこれ：終点を見て、逆につなぐ。', ko: '거꾸로 생각하고, 순서대로 두었습니다. VCF 찾는 법: 끝을 보고, 거꾸로 잇기.' }), 'good');
+    // 往前下：跟「自己解」同一套（引擎判定、走錯有說明、可退一手／重來／提示）
+    if (!alive()) return 'quit';
+    f.body.innerHTML = '';
+    const B2 = await solveCore({ pos: st.pos, text: { zh: '從第一手往前下到贏。', en: 'Play forward from the first move to the win.', ja: '一手目から勝ちまで打とう。', ko: '첫 수부터 이길 때까지 두세요.' }, line: st.line }, f, alive);
+    if (!B2 || !alive()) return 'quit';
+    if (!sprite(B2.el, 'stamp_ok', B2.size - 46, 40, 76, { keep: true, z: 7 })) { const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B2.el.appendChild(stamp); }
+    msg(f.body, U('done'), TX({ zh: '從快贏的局面一層一層往回想下一手，再從頭下一遍。找 VCF 就是這樣想的。', en: 'You worked back layer by layer from the winning position, then played it from the start. That is how to think about VCF.', ja: '勝ちの局面から一層ずつ次の一手を考え、最初から打ち直した。VCF の考え方はこれ。', ko: '이기기 직전 국면부터 한 층씩 다음 수를 생각하고, 처음부터 다시 두었습니다. VCF는 이렇게 생각합니다.' }), 'good');
     return new Promise(res => button(f.foot, U('nextStep'), '', res));
   }
 
@@ -745,7 +718,8 @@
           msg(f.body, '', U('forced')); await B.thread(r.def, defC); theirs.push(r.def); hist.push([t, r.def]);
           if (!alive()) return;
           // 這一擋之後還有沒有 VCF？沒有＝走進死路：標出擋子、說明、退回這一手
-          const v = r.nofour ? null : ((await solveFrom(b.join(' '), w.join(' '), aw)) || {}).result;
+          // 還走在驗證過的正解上就不必再問引擎（對方已有四時，引擎單獨解題看不到「擋四同時做活四」的贏法，會誤判成死路）
+          const v = r.nofour ? null : onLine() ? { vcf: true } : ((await solveFrom(b.join(' '), w.join(' '), aw)) || {}).result;
           if (!alive()) return;
           if (!v || !v.vcf) {
             miss++; B.shake(); B.glow(r.def, '#FF7A6B');

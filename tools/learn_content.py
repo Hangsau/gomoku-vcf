@@ -98,24 +98,25 @@ C['3-3'] = [
     choose('衝四之前，要先想什麼？', ['衝完之後，還有沒有下一個四可以接', '先衝再說，反正對方一定要擋'], 0),
     say('衝了卻接不下去，只是幫對方多放一顆子，還可能擋掉你自己的線。'),
 ]
-C['4-1'] = [
-    say('從這課開始，每題先看結局，再一手一手倒回去。'),
+C['5-1'] = [
+    say('從這單元開始用「倒帶」：先看結局，再一次退兩手，每退一層就找「下一手下哪」。'),
     rewind('黑一手做出活四，兩頭都能成五。', P('G7 H7 J7', 'L7'), 'F7', 'E7 K7', 'F7', 1, '手擺'),
     rewind('直的也一樣。', P('H5 H6 H7', 'H9'), 'H4', 'H3 H8', 'H4', 1, '手擺'),
 ]
-C['4-2'] = [
-    say('白棋沒有禁手。一顆子同時做出兩個四，叫「四四」，對方只擋得了一個。（黑棋四四是禁手，第 7 單元會講。）'),
+C['5-2'] = [
+    say('一顆子同時做出兩個四，叫「四四」，對方只擋得了一個。白棋可以這樣贏；黑棋四四是禁手（上一單元教過）。'),
     rewind('白一手做出兩個四。', P('F7 K3', 'G7 H7 J7 K4 K5 K6', 'w'), 'K7', 'K8 L7', 'K7', 1, '手擺'),
+    'M73',
 ]
 p43a, s43a, f43a = from_bank('005RSGY4', 2)
 p43b, s43b, f43b = from_bank('0068WG80', 2)
-C['4-3'] = [
-    rewind('先看結局，再一手一手倒回去：一顆子同時做出四和三。', p43a, s43a, f43a, s43a[-1], 2, '005RSGY4（截短 2 手）'),
+C['5-3'] = [
+    rewind('一顆子同時做出四和三，叫「四三」：對方擋了四，三就變成活四。', p43a, s43a, f43a, s43a[-1], 2, '005RSGY4（截短 2 手）'),
     rewind('再一題四三。', p43b, s43b, f43b, s43b[-1], 2, '0068WG80（截短 2 手）'),
 ]
 p44a, s44a, f44a = from_bank('0047T2SY', 3)
 p44b, s44b, f44b = from_bank('00BBJ3T2', 3)
-C['4-4'] = [
+C['5-4'] = [
     rewind('先衝一個四，讓子到位，再做四三。', p44a, s44a, f44a, s44a[-1], 3, '0047T2SY（截短 1 手）'),
     rewind('再一題。', p44b, s44b, f44b, s44b[-1], 3, '00BBJ3T2（截短 1 手）'),
 ]
@@ -161,19 +162,19 @@ def tap_all(t, pos):
 
 m51 = [m for m in pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 6)]
 m51 = [m for m in m51 if len(four_points(mpos(m))) <= 6][:2]
-C['5-1'] = [
+C['6-1'] = [
     say('從這單元開始，自己找 VCF。第一步：找材料。VCF 每一手都要是四，所以能下的點，只有「下了會變成四」的那些。'),
     tap_all('把所有下了會變成四的點都找出來。', mpos(m51[0])),
     tap_all('再一題，全部找出來。', mpos(m51[1])),
 ]
 m52 = pick(lambda m: m['atk'] == 'b' and m['L'] == 2 and plain(m), 2)
-C['5-2'] = [
+C['6-2'] = [
     say('第二步：找終點。終點就是能一手做出「四三」或活四的那一點，通常在兩條線交會的地方。'),
     {'type': 'tap', 'kind': 'first', 'text': zh('找出終點：哪一點能同時做出四和三？'), 'pos': mpos(m52[0]), 'ans': [m52[0]['sol'][0]]},
     {'type': 'tap', 'kind': 'first', 'text': zh('再找一次終點。'), 'pos': mpos(m52[1]), 'ans': [m52[1]['sol'][0]]},
 ]
 m53 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 2)
-C['5-3'] = [
+C['6-3'] = [
     say('第三步：往回接。終點還缺哪顆子？就找一個衝四，把那顆子放上去。'),
     m_rewind('先看結局，倒回去看看：第一個四是怎麼替終點鋪路的。', m53[0]),
     m_rewind('再倒一題。', m53[1]),
@@ -189,14 +190,14 @@ def trap_demo(m):
         if r.get('r') == 'block' and r.get('def') in atk_pts: return t, r['def']
     raise SystemExit(f'{m["src"]} 找不到示範陷阱的那一手')
 wrong, hit = trap_demo(m54[0])
-C['5-4'] = [
+C['6-4'] = [
     say('第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。'),
     predict(f'先看一個錯誤示範：如果黑先下 {wrong}，白會擋哪？', mpos(m54[0]), wrong, hit),
     say(f'白擋在 {hit}，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。'),
     m_solve('現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。', m54[0]),
 ]
 m55 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 3)
-C['5-5'] = [
+C['6-6'] = [
     say('四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。'),
     m_solve('自己解。', m55[0]), m_solve('再一題。', m55[1]), m_solve('最後一題。', m55[2]),
 ]
@@ -221,10 +222,9 @@ WO = json.loads((VD / 'counter_order.json').read_text(encoding='utf-8'))
 for h in WO:
     if 'b' not in h: m = _MI[(h['src'], h['L'])]; h['b'], h['w'] = m['b'], m['w']
 def no_forbid(h):
-    """第 6 單元還沒教禁手（2026-11-10 使用者：6-3 莫名其妙四四禁贏）：黑先題盤上不能有黑禁點；任何題的贏法不能靠禁手／逼禁"""
+    """反四單元（第 7）贏法不能靠逼禁（2026-11-10 使用者：6-3 莫名其妙四四禁贏；逼禁 8-2 才教）"""
     four_points(c_pos(h))   # 確保引擎已開
-    aw = h['atk'] == 'w'; r = _E.solve(h['b'], h['w'], aw)
-    if r.get('forbidden') and not aw: return False
+    aw = h['atk'] == 'w'
     a, d = list(h['w'] if aw else h['b']), list(h['b'] if aw else h['w'])
     for i in range(0, len(h['sol']), 2):
         bb, ww = (d, a) if aw else (a, d)
@@ -248,40 +248,44 @@ def c_predict(h):
 def c_solve(t, h): return {'type': 'solve', 'text': zh(t), 'src': f"{h['src']}（截短）", 'pos': c_pos(h), 'L': h['L'], 'line': h['sol'], 'five': c_full(h)}
 def c_rewind(t, h): return rewind(t, c_pos(h), h['sol'], c_full(h), h['sol'][-1], h['L'], f"{h['src']}（截短）")
 h1, h2, h3 = CO6[0], CO6[1], CO6[2]
-C['6-1'] = [
+C['7-1'] = [
     say('對方擋你的時候，那顆擋子留在盤上。如果它剛好讓對方自己也連成四，就叫「反四」。'),
     c_predict(h1),
     c_rewind('現在看正確的順序：先下哪一手，對方的擋子才不會變成四。', h1),
 ]
-C['6-2'] = [
+C['7-2'] = [
     say('對方一有四，你就得先擋他，不能再衝自己的四。反四一出現，你的先手就沒了。'),
     c_predict(h2),
     c_solve('換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。', h2),
 ]
-C['6-3'] = [
+C['7-3'] = [
     say('衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。'),
     c_solve('這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
 ]
 # 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
 FB = ['是禁手', '不是禁手']
-C['7-1'] = [
+C['4-1'] = [
     say('黑棋有三種禁手：長連（六子以上）、四四（一子做出兩個四）、三三（一子做出兩個活三）。白棋沒有禁手。'),
     {'type': 'choose', 'text': zh('黑下在金圈，同時做出橫的四和直的四。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'L8', 'pos': P('H8 J8 K8 L5 L6 L7', '')},
     {'type': 'choose', 'text': zh('黑下在金圈，同時做出兩條活三。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'H6', 'pos': P('J6 K6 H7 H8', '')},
     {'type': 'choose', 'text': zh('黑下在金圈，會連成六顆。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'J7', 'pos': P('E7 F7 G7 H7 K7', '')},
     {'type': 'choose', 'text': zh('黑下在金圈，做出一個四和一條活三。'), 'options': [zh(o) for o in FB], 'ans': 1, 'probe': 'L8', 'pos': P('H8 J8 K8 L6 L7', '')},
 ]
-C['7-2'] = [
+C['4-2'] = [
     say('黑棋這一手如果同時連成五，就算形狀看起來像禁手，也是黑贏。成五最優先。'),
     tap('five', '這一點看起來會做出兩個四，可是它直接連成五。點下去！', P('F7 G7 H7 J7 K4 K5 K6', 'E7'), 'K7'),
 ]
-m73 = pick(lambda m: m['atk'] == 'b' and m['L'] == 2 and m['forb'] and not m['lifts'] and not m['counter'], 1)
-C['7-3'] = [
-    say('黑棋不能用四四贏，所以黑先的題，收尾一定是四三或活四。'),
-    m_rewind('這題有禁點。倒回去看：黑是怎麼避開禁點收尾的。', m73[0]),
+C['4-3'] = [
+    say('黑棋每一手都要先問：這點能不能下？下面幾題自己判斷（金圈是黑要下的點）。'),
+    {'type': 'choose', 'text': zh('黑下在金圈，剛好連成五顆。'), 'options': [zh(o) for o in FB], 'ans': 1, 'probe': 'J7', 'pos': P('E7 F7 G7 H7', '')},
+    {'type': 'choose', 'text': zh('黑下在金圈：直的是活三，橫的那條三左邊被白擋住。'), 'options': [zh(o) for o in FB], 'ans': 1, 'probe': 'H6', 'pos': P('J6 K6 H7 H8', 'G6')},
+    {'type': 'choose', 'text': zh('黑下在金圈：直的四加斜的四。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'K7', 'pos': P('K4 K5 K6 J6 H5 G4', '')},
+    say('判斷禁手的順序：先看會不會成五（成五就贏）；再數這一手同時做出幾個四、幾條活三。兩個以上就是禁手。'),
 ]
+m73 = pick(lambda m: m['atk'] == 'b' and m['L'] == 2 and m['forb'] and not m['lifts'] and not m['counter'], 1)
+C['5-2'][-1] = m_rewind('黑棋不能四四，收尾只能四三或活四。這題盤上有禁點，倒回去看黑怎麼避開。', m73[0])
 m74 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and m['forb'] and not m['lifts'] and not m['counter'], 1)
-C['7-4'] = [
+C['6-5'] = [
     say('黑棋路上某一手如果是禁手，那手就不能下，要換一條路。'),
     m_solve('盤上有禁點（下了會被判負的點）。避開它，自己解。', m74[0]),
 ]
@@ -319,9 +323,58 @@ C['9-2'] = [
     bank_solve('再一題 4 手題。', 'KPPVPBY9'),
 ]
 
+# ---------- 課程表（v2 順序：禁手提前到第 4 單元）＋倒帶每一關的可接受點＋教學盤對應 ----------
+TITLES = [
+ ('1-1', 1, '棋盤和輪流'), ('1-2', 1, '連成五就贏'), ('1-3', 1, '座標'),
+ ('2-1', 2, '什麼是四'), ('2-2', 2, '擋四'), ('2-3', 2, '活四和衝四'), ('2-4', 2, '做一個四'),
+ ('3-1', 3, '衝四是絕對先手'), ('3-2', 3, '擋點是確定的'), ('3-3', 3, '亂衝會浪費'),
+ ('4-1', 4, '三種禁手'), ('4-2', 4, '成五最優先'), ('4-3', 4, '這點能不能下'),
+ ('5-1', 5, '活四'), ('5-2', 5, '四四：白可以、黑不行'), ('5-3', 5, '四三'), ('5-4', 5, '先衝一個四，再做四三'),
+ ('6-1', 6, '找材料'), ('6-2', 6, '找終點'), ('6-3', 6, '往回接'), ('6-4', 6, '對方的擋子也是棋子'), ('6-5', 6, '路上的禁手'), ('6-6', 6, '四步驟一起用'),
+ ('7-1', 7, '擋子變成四'), ('7-2', 7, '反四之後你就沒有先手'), ('7-3', 7, '換手順躲開反四'),
+ ('8-1', 8, '白棋可以四四、長連'), ('8-2', 8, '逼黑擋在禁點'), ('8-3', 8, '白先綜合'),
+ ('9-1', 9, '解禁'), ('9-2', 9, '長的 VCF'), ('9-3', 9, '畢業考'),
+]
+def stages_of(st):
+    """倒帶 v2：先拿掉成五那手，之後每次退兩手；每關（輪攻方下）算出所有「下了還能贏」的點"""
+    four_points(st['pos'])   # 確保引擎已開
+    from check_lessons import window_points
+    pos = st['pos']; aw = pos['atk'] == 'w'
+    full = st['line'] + [st['five'][0], st['five'][1]]
+    out = []
+    for keep in range(len(full) - 1, -1, -2):
+        a = list(pos['w'] if aw else pos['b']) + full[0:keep:2]; d = list(pos['b'] if aw else pos['w']) + full[1:keep:2]
+        bb, ww = (d, a) if aw else (a, d)
+        acc = []
+        for t in window_points(pos['win']):
+            if t in a or t in d: continue
+            m = _E.move(bb, ww, t, aw)
+            if m.get('r') == 'win': acc.append(t)
+            elif m.get('r') == 'block' and not m.get('nofour'):
+                b2, w2 = (d + [m['def']], a + [t]) if aw else (a + [t], d + [m['def']])
+                if _E.solve(b2, w2, aw).get('vcf'): acc.append(t)
+        if full[keep] not in acc: acc.append(full[keep])   # 正解本身由逐手重放驗證（對方已有四時，引擎單獨解題看不到「擋四同時做活四」的贏法）
+        out.append({'keep': keep, 'accept': sorted(acc)})
+    return out
 D = json.loads(DATA.read_text(encoding='utf-8'))
-for l in D['lessons']:
-    if l['id'] in C: l['steps'] = C[l['id']]
+lessons = []
+for lid, u, title in TITLES:
+    L = {'id': lid, 'unit': u, 'title': {'zh': title}, 'steps': C.get(lid, [])}
+    if lid == '9-3': L['noStone'] = True
+    for st in L['steps']:
+        if st.get('type') == 'rewind': st['stages'] = stages_of(st)
+    lessons.append(L)
+D['lessons'] = lessons
+# 教學盤：32 子黑白輪流、由中心往外，依新課程順序對應（盤面不變）
+import math
+bd = D['board']; xy2 = lambda t: (COLS.index(t[0]), int(t[1:]) - 1)
+cx = sum(xy2(t)[0] for t in bd['b'] + bd['w']) / 32; cy = sum(xy2(t)[1] for t in bd['b'] + bd['w']) / 32
+key = lambda t: math.hypot(xy2(t)[0] - cx, xy2(t)[1] - cy)
+Bs, Ws = sorted(bd['b'], key=key), sorted(bd['w'], key=key)
+seq = ['opening'] + [lid for lid, _, _ in TITLES if lid != '9-3']
+bd['order'] = [{'lesson': lid, 't': (Bs if k % 2 == 0 else Ws)[k // 2], 'c': 'b' if k % 2 == 0 else 'w'} for k, lid in enumerate(seq)]
+missing_steps = [lid for lid, _, _ in TITLES if lid != '9-3' and not C.get(lid)]
+if missing_steps: raise SystemExit(f'這些課沒有內容：{missing_steps}')
 if _E: _E.close()
 # 套翻譯：game/learn/i18n.json 以中文原文為鍵（中文沒改的句子不用重翻；新句子要再跑翻譯）
 I18N = ROOT / 'game' / 'learn' / 'i18n.json'

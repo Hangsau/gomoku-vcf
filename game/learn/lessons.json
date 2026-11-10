@@ -171,67 +171,67 @@
     "c": "w"
    },
    {
-    "lesson": "4-4",
+    "lesson": "5-1",
     "t": "D8",
     "c": "b"
    },
    {
-    "lesson": "5-1",
+    "lesson": "5-2",
     "t": "J9",
     "c": "w"
    },
    {
-    "lesson": "5-2",
+    "lesson": "5-3",
     "t": "E6",
     "c": "b"
    },
    {
-    "lesson": "5-3",
+    "lesson": "5-4",
     "t": "H6",
     "c": "w"
    },
    {
-    "lesson": "5-4",
+    "lesson": "6-1",
     "t": "G11",
     "c": "b"
    },
    {
-    "lesson": "5-5",
+    "lesson": "6-2",
     "t": "D9",
     "c": "w"
    },
    {
-    "lesson": "6-1",
+    "lesson": "6-3",
     "t": "J6",
     "c": "b"
    },
    {
-    "lesson": "6-2",
+    "lesson": "6-4",
     "t": "F11",
     "c": "w"
    },
    {
-    "lesson": "6-3",
+    "lesson": "6-5",
     "t": "D10",
     "c": "b"
    },
    {
-    "lesson": "7-1",
+    "lesson": "6-6",
     "t": "H11",
     "c": "w"
    },
    {
-    "lesson": "7-2",
+    "lesson": "7-1",
     "t": "E11",
     "c": "b"
    },
    {
-    "lesson": "7-3",
+    "lesson": "7-2",
     "t": "F5",
     "c": "w"
    },
    {
-    "lesson": "7-4",
+    "lesson": "7-3",
     "t": "E5",
     "c": "b"
    },
@@ -272,7 +272,6 @@
     "ja": "盤と打つ順番",
     "ko": "판과 번갈아 두기"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "say",
@@ -326,7 +325,6 @@
     "ja": "五連を作れば勝ち",
     "ko": "오목을 완성하면 승리"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "tap",
@@ -443,7 +441,6 @@
     "ja": "座標",
     "ko": "좌표"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "say",
@@ -547,7 +544,6 @@
     "ja": "四って何？",
     "ko": "사가 뭘까요?"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "say",
@@ -760,7 +756,6 @@
     "ja": "四を止める",
     "ko": "사 막기"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "say",
@@ -858,7 +853,6 @@
     "ja": "達四と四",
     "ko": "열린 사와 사"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "choose",
@@ -952,7 +946,6 @@
     "ja": "四を作ろう",
     "ko": "사 만들기"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "tap",
@@ -1028,7 +1021,6 @@
     "ja": "四を打てば絶対先手",
     "ko": "사를 두면 절대 선수"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "predict",
@@ -1108,7 +1100,6 @@
     "ja": "止める点は決まっている",
     "ko": "막을 곳은 정해져 있어요"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "predict",
@@ -1190,7 +1181,6 @@
     "ja": "むやみに四を打つと損",
     "ko": "마구 사를 두면 낭비"
    },
-   "style": "forward",
    "steps": [
     {
      "type": "say",
@@ -1240,1338 +1230,11 @@
    "id": "4-1",
    "unit": 4,
    "title": {
-    "zh": "活四",
-    "en": "Open four",
-    "ja": "達四",
-    "ko": "열린 사"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "從這課開始，每題先看結局，再一手一手倒回去。",
-      "en": "From this lesson on, see the ending first, then go back one move at a time.",
-      "ja": "この課からは、どの問題も結末を先に見て、一手ずつ戻っていこう。",
-      "ko": "이번 수업부터는 각 문제의 결말을 먼저 보고, 한 수씩 거슬러 올라가요."
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "黑一手做出活四，兩頭都能成五。",
-      "en": "Black makes an open four in one move. Either end can make five.",
-      "ja": "黒が一手で達四を作るよ。両端どちらでも五連にできる。",
-      "ko": "흑이 한 수로 열린 사를 만들어요. 양 끝에서 오목을 완성할 수 있어요."
-     },
-     "src": "手擺",
-     "pos": {
-      "b": [
-       "G7",
-       "H7",
-       "J7"
-      ],
-      "w": [
-       "L7"
-      ],
-      "atk": "b",
-      "win": "D3"
-     },
-     "L": 1,
-     "line": [
-      "F7"
-     ],
-     "five": [
-      "E7",
-      "K7"
-     ],
-     "accept": {
-      "0": [
-       "F7"
-      ]
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "直的也一樣。",
-      "en": "Vertical works the same way.",
-      "ja": "縦でも同じだよ。",
-      "ko": "세로도 마찬가지예요."
-     },
-     "src": "手擺",
-     "pos": {
-      "b": [
-       "H5",
-       "H6",
-       "H7"
-      ],
-      "w": [
-       "H9"
-      ],
-      "atk": "b",
-      "win": "D3"
-     },
-     "L": 1,
-     "line": [
-      "H4"
-     ],
-     "five": [
-      "H3",
-      "H8"
-     ],
-     "accept": {
-      "0": [
-       "H4"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "4-2",
-   "unit": 4,
-   "title": {
-    "zh": "四四",
-    "en": "Double four",
-    "ja": "四々",
-    "ko": "쌍사"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "白棋沒有禁手。一顆子同時做出兩個四，叫「四四」，對方只擋得了一個。（黑棋四四是禁手，第 7 單元會講。）",
-      "en": "White has no forbidden moves. One stone making two fours is a “double four”. Only one can be blocked. (For Black, it’s forbidden. See Unit 7.)",
-      "ja": "白に禁手はないよ。1個の石で同時に四を2つ作るのが「四々」。相手は片方しか止められない。（黒の四々は禁手。第7単元で説明するよ。）",
-      "ko": "백은 금수가 없어요. 한 돌로 사 두 개를 만들면 ‘쌍사’예요. 상대는 하나만 막을 수 있죠. (흑의 쌍사는 금수예요. 7단원에서 배워요.)"
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "白一手做出兩個四。",
-      "en": "White makes two fours in one move.",
-      "ja": "白が一手で四を2つ作るよ。",
-      "ko": "백이 한 수로 사 두 개를 만들어요."
-     },
-     "src": "手擺",
-     "pos": {
-      "b": [
-       "F7",
-       "K3"
-      ],
-      "w": [
-       "G7",
-       "H7",
-       "J7",
-       "K4",
-       "K5",
-       "K6"
-      ],
-      "atk": "w",
-      "win": "D3"
-     },
-     "L": 1,
-     "line": [
-      "K7"
-     ],
-     "five": [
-      "K8",
-      "L7"
-     ],
-     "accept": {
-      "0": [
-       "K7"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "4-3",
-   "unit": 4,
-   "title": {
-    "zh": "四三",
-    "en": "Four-three",
-    "ja": "四三",
-    "ko": "사삼"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "先看結局，再一手一手倒回去：一顆子同時做出四和三。",
-      "en": "See the ending first, then go back move by move: one stone makes a four and a three.",
-      "ja": "まず結末を見て、一手ずつ戻ろう。1個の石で四と三を同時に作るよ。",
-      "ko": "결말부터 보고 한 수씩 거슬러 올라가요. 한 돌로 사와 삼을 동시에 만들어요."
-     },
-     "src": "005RSGY4（截短 2 手）",
-     "pos": {
-      "b": [
-       "G9",
-       "H8",
-       "L6",
-       "L5",
-       "H4",
-       "F2",
-       "K6",
-       "J5"
-      ],
-      "w": [
-       "L9",
-       "J8",
-       "N5",
-       "M3",
-       "N3",
-       "E2",
-       "J7",
-       "G3"
-      ],
-      "atk": "b",
-      "win": "E2"
-     },
-     "L": 2,
-     "line": [
-      "L7",
-      "M8",
-      "L4"
-     ],
-     "five": [
-      "L3",
-      "L8"
-     ],
-     "accept": {
-      "1": [
-       "L4"
-      ]
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "再一題四三。",
-      "en": "Another four-three.",
-      "ja": "もう1問、四三だよ。",
-      "ko": "사삼 문제 하나 더예요."
-     },
-     "src": "0068WG80（截短 2 手）",
-     "pos": {
-      "b": [
-       "D12",
-       "G9",
-       "D8",
-       "G8",
-       "H8",
-       "B6",
-       "F10",
-       "E9"
-      ],
-      "w": [
-       "F8",
-       "D7",
-       "H7",
-       "J7",
-       "E5",
-       "H5",
-       "E11",
-       "C7"
-      ],
-      "atk": "b",
-      "win": "B5"
-     },
-     "L": 2,
-     "line": [
-      "G11",
-      "H12",
-      "G10"
-     ],
-     "five": [
-      "G12",
-      "G7"
-     ],
-     "accept": {
-      "1": [
-       "G10"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "4-4",
-   "unit": 4,
-   "title": {
-    "zh": "先衝一個四，再做四三",
-    "en": "Make a four, then a four-three",
-    "ja": "まず四を打って、次に四三",
-    "ko": "먼저 사를 두고, 그다음 사삼"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "先衝一個四，讓子到位，再做四三。",
-      "en": "Make a four to get your stone in place, then make a four-three.",
-      "ja": "まず四を打って石を必要な場所に置き、その後で四三を作ろう。",
-      "ko": "먼저 사를 두어 돌을 제자리에 놓고, 그다음 사삼을 만들어요."
-     },
-     "src": "0047T2SY（截短 1 手）",
-     "pos": {
-      "b": [
-       "D11",
-       "E11",
-       "D8",
-       "E8",
-       "H8",
-       "A7",
-       "F8"
-      ],
-      "w": [
-       "G13",
-       "F11",
-       "C10",
-       "H10",
-       "E9",
-       "E7",
-       "G8"
-      ],
-      "atk": "b",
-      "win": "A6"
-     },
-     "L": 3,
-     "line": [
-      "B8",
-      "C8",
-      "D10",
-      "C9",
-      "D9"
-     ],
-     "five": [
-      "D12",
-      "D7"
-     ],
-     "accept": {
-      "2": [
-       "D9"
-      ]
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "再一題。",
-      "en": "One more.",
-      "ja": "もう1問。",
-      "ko": "한 문제 더요."
-     },
-     "src": "00BBJ3T2（截短 1 手）",
-     "pos": {
-      "b": [
-       "E9",
-       "H8",
-       "K8",
-       "M8",
-       "H7",
-       "J5",
-       "J8"
-      ],
-      "w": [
-       "H10",
-       "J9",
-       "K9",
-       "F7",
-       "M7",
-       "G6",
-       "L8"
-      ],
-      "atk": "b",
-      "win": "E3"
-     },
-     "L": 3,
-     "line": [
-      "F8",
-      "G8",
-      "H6",
-      "G7",
-      "H5"
-     ],
-     "five": [
-      "H4",
-      "H9"
-     ],
-     "accept": {
-      "2": [
-       "H5"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "5-1",
-   "unit": 5,
-   "title": {
-    "zh": "找材料",
-    "en": "Find your options",
-    "ja": "材料を探そう",
-    "ko": "재료 찾기"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "從這單元開始，自己找 VCF。第一步：找材料。VCF 每一手都要是四，所以能下的點，只有「下了會變成四」的那些。",
-      "en": "From this Unit on, find a VCF yourself. Step 1: find your options. Every VCF move must make a four, so only those spots will work.",
-      "ja": "この単元からは自分でVCFを探そう。ステップ1：材料探し。VCFは毎手、四を打つから、四になる点だけが候補だよ。",
-      "ko": "이 단원부터는 직접 VCF를 찾아봐요. 1단계는 재료 찾기. VCF는 매 수 사를 둬야 하니, 사가 되는 자리만 고를 수 있어요."
-     }
-    },
-    {
-     "type": "tap",
-     "kind": "four",
-     "all": true,
-     "text": {
-      "zh": "把所有下了會變成四的點都找出來。",
-      "en": "Find every spot where you can make a four.",
-      "ja": "打つと四になる点を全部見つけよう。",
-      "ko": "두면 사가 되는 자리를 모두 찾아봐요."
-     },
-     "pos": {
-      "b": [
-       "D12",
-       "G9",
-       "H9",
-       "L9",
-       "H8",
-       "H5",
-       "F10"
-      ],
-      "w": [
-       "F12",
-       "F11",
-       "L10",
-       "K9",
-       "J6",
-       "J5",
-       "E11"
-      ],
-      "atk": "b",
-      "win": "D5"
-     },
-     "ans": [
-      "H6",
-      "H7",
-      "J7",
-      "K6"
-     ]
-    },
-    {
-     "type": "tap",
-     "kind": "four",
-     "all": true,
-     "text": {
-      "zh": "再一題，全部找出來。",
-      "en": "One more. Find them all.",
-      "ja": "もう1問。全部見つけよう。",
-      "ko": "한 문제 더요. 모두 찾아봐요."
-     },
-     "pos": {
-      "b": [
-       "H10",
-       "H8",
-       "E7",
-       "G6",
-       "H6",
-       "J3",
-       "H7"
-      ],
-      "w": [
-       "E9",
-       "D6",
-       "M6",
-       "E5",
-       "D4",
-       "K4",
-       "H9"
-      ],
-      "atk": "b",
-      "win": "D3"
-     },
-     "ans": [
-      "H4",
-      "H5"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "5-2",
-   "unit": 5,
-   "title": {
-    "zh": "找終點",
-    "en": "Find the finish",
-    "ja": "最後の形を探そう",
-    "ko": "마무리 찾기"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "第二步：找終點。終點就是能一手做出「四三」或活四的那一點，通常在兩條線交會的地方。",
-      "en": "Step 2: find the finish. Look for a spot that makes a four-three or open four in one move, often where two lines meet.",
-      "ja": "ステップ2：最後の形探し。一手で四三か達四を作れる点で、たいてい2本の線が交わる所だよ。",
-      "ko": "2단계는 마무리 찾기. 한 수로 사삼이나 열린 사를 만드는 자리예요. 보통 두 줄이 만나는 곳에 있어요."
-     }
-    },
-    {
-     "type": "tap",
-     "kind": "first",
-     "text": {
-      "zh": "找出終點：哪一點能同時做出四和三？",
-      "en": "Find the finish: where can you make a four and a three at once?",
-      "ja": "最後の点を探そう。四と三を同時に作れるのはどこ？",
-      "ko": "마무리 자리를 찾아봐요. 어디에 두면 사와 삼을 동시에 만들까요?"
-     },
-     "pos": {
-      "b": [
-       "G13",
-       "L13",
-       "H10",
-       "L9",
-       "H8",
-       "H6",
-       "H9",
-       "H12"
-      ],
-      "w": [
-       "E11",
-       "E10",
-       "N10",
-       "J9",
-       "F8",
-       "J8",
-       "H7",
-       "H11"
-      ],
-      "atk": "b",
-      "win": "E6"
-     },
-     "ans": [
-      "J11"
-     ]
-    },
-    {
-     "type": "tap",
-     "kind": "first",
-     "text": {
-      "zh": "再找一次終點。",
-      "en": "Find the finish again.",
-      "ja": "もう一度、最後の点を探そう。",
-      "ko": "다시 마무리 자리를 찾아봐요."
-     },
-     "pos": {
-      "b": [
-       "C11",
-       "E9",
-       "H8",
-       "H7",
-       "E5",
-       "D4",
-       "G7",
-       "F8"
-      ],
-      "w": [
-       "H10",
-       "C7",
-       "D7",
-       "B6",
-       "D6",
-       "K6",
-       "F6",
-       "D10"
-      ],
-      "atk": "b",
-      "win": "B4"
-     },
-     "ans": [
-      "H6"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "5-3",
-   "unit": 5,
-   "title": {
-    "zh": "往回接",
-    "en": "Work backward",
-    "ja": "逆にたどってつなごう",
-    "ko": "거꾸로 연결하기"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "第三步：往回接。終點還缺哪顆子？就找一個衝四，把那顆子放上去。",
-      "en": "Step 3: work backward. Which stone is missing for the finish? Find a four that puts it in place.",
-      "ja": "ステップ3：逆につなごう。最後の形には、どの石が足りない？四を打って、その石を置こう。",
-      "ko": "3단계는 거꾸로 연결하기. 마무리에 어떤 돌이 더 필요할까요? 사를 두며 그 돌을 놓을 방법을 찾아봐요."
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "先看結局，倒回去看看：第一個四是怎麼替終點鋪路的。",
-      "en": "See the ending, then go back: how did the first four set up the finish?",
-      "ja": "結末を見てから戻ろう。最初の四が、どう最後の形につながったかな？",
-      "ko": "결말부터 보고 거슬러 올라가요. 첫 사가 어떻게 마무리를 준비했는지 살펴봐요."
-     },
-     "src": "5W3TEA5K（截短）",
-     "pos": {
-      "b": [
-       "H11",
-       "E8",
-       "H8",
-       "H7",
-       "F5",
-       "J4",
-       "H9"
-      ],
-      "w": [
-       "L11",
-       "K9",
-       "F8",
-       "D7",
-       "C5",
-       "D5",
-       "H10"
-      ],
-      "atk": "b",
-      "win": "C3"
-     },
-     "L": 3,
-     "line": [
-      "H5",
-      "H6",
-      "G6",
-      "F7",
-      "E4"
-     ],
-     "five": [
-      "D3",
-      "J8"
-     ],
-     "accept": {
-      "2": [
-       "E4"
-      ]
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "再倒一題。",
-      "en": "Work backward on one more.",
-      "ja": "もう1問、逆にたどろう。",
-      "ko": "한 문제 더 거슬러 올라가요."
-     },
-     "src": "668HY1C6（截短）",
-     "pos": {
-      "b": [
-       "H8",
-       "F6",
-       "D5",
-       "D4",
-       "G3",
-       "J1",
-       "E5"
-      ],
-      "w": [
-       "D8",
-       "F7",
-       "C5",
-       "F5",
-       "H4",
-       "C2",
-       "G7"
-      ],
-      "atk": "b",
-      "win": "B1"
-     },
-     "L": 3,
-     "line": [
-      "F4",
-      "H2",
-      "D6",
-      "C7",
-      "D3"
-     ],
-     "five": [
-      "D2",
-      "D7"
-     ],
-     "accept": {
-      "2": [
-       "D3"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "5-4",
-   "unit": 5,
-   "title": {
-    "zh": "對方的擋子也是棋子",
-    "en": "Their blocking stones count too",
-    "ja": "相手が止めるために置いた石も働く",
-    "ko": "상대가 막으려고 둔 돌도 돌이에요"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。",
-      "en": "Step 4: check. Each blocking stone stays on the board. It may take a spot you need.",
-      "ja": "ステップ4：確認しよう。相手が止めるために置いた石は盤に残るよ。あなたが打ちたい点をふさぐかもしれない。",
-      "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 두려던 자리를 막을 수도 있어요."
-     }
-    },
-    {
-     "type": "predict",
-     "text": {
-      "zh": "先看一個錯誤示範：如果黑先下 E8，白會擋哪？",
-      "en": "First, a wrong move: if Black plays E8, where will White block?",
-      "ja": "まずは失敗例。黒が先にE8に打つと、白はどこを止める？",
-      "ko": "먼저 틀린 예를 볼게요. 흑이 E8부터 두면 백은 어디를 막을까요?"
-     },
-     "pos": {
-      "b": [
-       "F12",
-       "C9",
-       "F9",
-       "F8",
-       "H8",
-       "K8",
-       "G5",
-       "G8"
-      ],
-      "w": [
-       "E12",
-       "J11",
-       "K7",
-       "E6",
-       "G6",
-       "D5",
-       "H4",
-       "J8"
-      ],
-      "atk": "b",
-      "win": "C4"
-     },
-     "play": "E8",
-     "ans": [
-      "D8"
-     ]
-    },
-    {
-     "type": "say",
-     "text": {
-      "zh": "白擋在 D8，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。",
-      "en": "White blocks D8, where you needed to play. Get the order wrong, and their blocking stone cuts off your path.",
-      "ja": "白が止めるD8は、正解で打つはずの点。順番を間違えると、相手が止めた石で先に進めなくなるよ。",
-      "ko": "백이 막은 D8이 바로 둬야 했던 자리예요. 순서가 틀리면 상대가 막은 돌에 길이 막혀요."
-     }
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。",
-      "en": "Now solve it yourself. Plan the order first. If you go wrong, we’ll show which blocking stone stopped you.",
-      "ja": "今度は自分で解こう。順番を考えてから打ってね。間違えたら、相手のどの石が道をふさいだか教えるよ。",
-      "ko": "이제 직접 풀어 봐요. 순서를 생각하고 두세요. 틀리면 상대의 어느 돌이 길을 막았는지 알려 줄게요."
-     },
-     "src": "34P6T1MP（截短）",
-     "pos": {
-      "b": [
-       "F12",
-       "C9",
-       "F9",
-       "F8",
-       "H8",
-       "K8",
-       "G5",
-       "G8"
-      ],
-      "w": [
-       "E12",
-       "J11",
-       "K7",
-       "E6",
-       "G6",
-       "D5",
-       "H4",
-       "J8"
-      ],
-      "atk": "b",
-      "win": "C4"
-     },
-     "L": 3,
-     "line": [
-      "D8",
-      "E8",
-      "F6",
-      "E7",
-      "F7"
-     ],
-     "five": [
-      "F10",
-      "F5"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "5-5",
-   "unit": 5,
-   "title": {
-    "zh": "四步驟一起用",
-    "en": "Use all four steps",
-    "ja": "4つの手順をまとめて使おう",
-    "ko": "네 단계를 함께 쓰기"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。",
-      "en": "Use all four steps: find your options, find the finish, work backward, and check. No hints this time.",
-      "ja": "材料探し、最後の形探し、逆につなぐ、確認する。4つのステップを使おう。今度はヒントなしだよ。",
-      "ko": "재료 찾기, 마무리 찾기, 거꾸로 연결하기, 확인하기. 네 단계를 함께 써 봐요. 이번엔 힌트가 없어요."
-     }
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "自己解。",
-      "en": "Solve it yourself.",
-      "ja": "自分で解いてみよう。",
-      "ko": "직접 풀어 봐요."
-     },
-     "src": "69B4BZW0（截短）",
-     "pos": {
-      "b": [
-       "H11",
-       "G8",
-       "H8",
-       "L8",
-       "D7",
-       "J6",
-       "J8"
-      ],
-      "w": [
-       "G7",
-       "F6",
-       "L6",
-       "F4",
-       "K4",
-       "D3",
-       "K8"
-      ],
-      "atk": "b",
-      "win": "D3"
-     },
-     "L": 3,
-     "line": [
-      "E8",
-      "F8",
-      "F9",
-      "G10",
-      "H7"
-     ],
-     "five": [
-      "E10",
-      "K5"
-     ]
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "再一題。",
-      "en": "One more.",
-      "ja": "もう1問。",
-      "ko": "한 문제 더요."
-     },
-     "src": "6GS8W62K（截短）",
-     "pos": {
-      "b": [
-       "O10",
-       "G9",
-       "H8",
-       "M8",
-       "L5",
-       "M5",
-       "K6"
-      ],
-      "w": [
-       "M11",
-       "J9",
-       "M9",
-       "H6",
-       "L6",
-       "M4",
-       "J7"
-      ],
-      "atk": "b",
-      "win": "G4"
-     },
-     "L": 3,
-     "line": [
-      "L7",
-      "N9",
-      "J5",
-      "H4",
-      "K5"
-     ],
-     "five": [
-      "H5",
-      "N5"
-     ]
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "最後一題。",
-      "en": "Last one.",
-      "ja": "最後の1問。",
-      "ko": "마지막 문제예요."
-     },
-     "src": "6TWH5CV0（截短）",
-     "pos": {
-      "b": [
-       "E8",
-       "H8",
-       "E5",
-       "D4",
-       "H4",
-       "K2",
-       "F6"
-      ],
-      "w": [
-       "H9",
-       "B8",
-       "K5",
-       "G4",
-       "J4",
-       "J2",
-       "G7"
-      ],
-      "atk": "b",
-      "win": "B2"
-     },
-     "L": 3,
-     "line": [
-      "G5",
-      "J3",
-      "E7",
-      "D8",
-      "E6"
-     ],
-     "five": [
-      "E4",
-      "E9"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "6-1",
-   "unit": 6,
-   "title": {
-    "zh": "擋子變成四",
-    "en": "A blocking stone makes a four",
-    "ja": "止めた石が四になる",
-    "ko": "막은 돌이 사가 돼요"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "對方擋你的時候，那顆擋子留在盤上。如果它剛好讓對方自己也連成四，就叫「反四」。",
-      "en": "When they block you, the stone stays on the board. If it also makes their four, that’s a “counter-four”.",
-      "ja": "相手があなたを止めた石は盤に残るよ。その石で相手の四もできたら「逆四」だよ。",
-      "ko": "상대가 막으려고 둔 돌은 판에 남아요. 그 돌로 상대의 사도 생기면 ‘역사’예요."
-     }
-    },
-    {
-     "type": "predict",
-     "text": {
-      "zh": "先看錯誤示範：黑如果先下 L7（正解其實是第二手才下），白會擋哪？",
-      "en": "First, a wrong move: Black plays L7 first (it should be second). Where does White block?",
-      "ja": "まずは失敗例。黒が先にL7に打つと、白はどこを止める？（正解では2手目だよ。）",
-      "ko": "먼저 틀린 예예요. 흑이 L7부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
-     },
-     "pos": {
-      "b": [
-       "L6",
-       "J6",
-       "K4",
-       "L3",
-       "F7",
-       "G4",
-       "K5",
-       "J5",
-       "M3",
-       "H5",
-       "G8",
-       "F5",
-       "F6",
-       "L4"
-      ],
-      "w": [
-       "H6",
-       "F3",
-       "H8",
-       "M7",
-       "J7",
-       "M9",
-       "H3",
-       "H7",
-       "M4",
-       "G5",
-       "M6",
-       "F8",
-       "K3",
-       "N2"
-      ],
-      "atk": "b",
-      "win": "F2"
-     },
-     "play": "L7",
-     "ans": [
-      "L5"
-     ],
-     "counter": [
-      "K6"
-     ],
-     "counterText": {
-      "zh": "白擋在 L5，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。",
-      "en": "White blocks L5 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
-      "ja": "白がL5を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
-      "ko": "백이 L5를 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
-     }
-    },
-    {
-     "type": "rewind",
-     "text": {
-      "zh": "現在看正確的順序：先下哪一手，對方的擋子才不會變成四。",
-      "en": "Now the right order: which move comes first so their blocking stone won’t make a four?",
-      "ja": "今度は正しい順番。どの手から打てば、相手が止めた石で四ができないかな？",
-      "ko": "이제 올바른 순서예요. 어디부터 둬야 상대가 막은 돌이 사가 되지 않을까요?"
-     },
-     "src": "BBE9H52Y（截短）",
-     "pos": {
-      "b": [
-       "L6",
-       "J6",
-       "K4",
-       "L3",
-       "F7",
-       "G4",
-       "K5",
-       "J5",
-       "M3",
-       "H5",
-       "G8",
-       "F5",
-       "F6",
-       "L4"
-      ],
-      "w": [
-       "H6",
-       "F3",
-       "H8",
-       "M7",
-       "J7",
-       "M9",
-       "H3",
-       "H7",
-       "M4",
-       "G5",
-       "M6",
-       "F8",
-       "K3",
-       "N2"
-      ],
-      "atk": "b",
-      "win": "F2"
-     },
-     "L": 3,
-     "line": [
-      "H4",
-      "J4",
-      "L7",
-      "L5",
-      "K6"
-     ],
-     "five": [
-      "G3",
-      "M8"
-     ],
-     "accept": {
-      "2": [
-       "K6"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "6-2",
-   "unit": 6,
-   "title": {
-    "zh": "反四之後你就沒有先手",
-    "en": "A counter-four takes your initiative",
-    "ja": "逆四で先手を失う",
-    "ko": "역사를 당하면 선수를 잃어요"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "對方一有四，你就得先擋他，不能再衝自己的四。反四一出現，你的先手就沒了。",
-      "en": "Once they have a four, you must block. You can’t make your own four. A counter-four takes your initiative.",
-      "ja": "相手に四ができたら、まず止めよう。自分の四は打てないよ。逆四ができると、あなたの先手はなくなるよ。",
-      "ko": "상대에게 사가 생기면 먼저 막아야 해요. 자기 사를 또 둘 수는 없어요. 역사가 나오면 선수를 잃어요."
-     }
-    },
-    {
-     "type": "predict",
-     "text": {
-      "zh": "先看錯誤示範：黑如果先下 L10（正解其實是第二手才下），白會擋哪？",
-      "en": "First, a wrong move: Black plays L10 first (it should be second). Where does White block?",
-      "ja": "まずは失敗例。黒が先にL10に打つと、白はどこを止める？（正解では2手目だよ。）",
-      "ko": "먼저 틀린 예예요. 흑이 L10부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
-     },
-     "pos": {
-      "b": [
-       "H8",
-       "K7",
-       "M10",
-       "M8",
-       "N11",
-       "O10",
-       "H10",
-       "N12",
-       "H11",
-       "O7",
-       "N8",
-       "P7",
-       "L7",
-       "P10",
-       "K10",
-       "K12",
-       "K14",
-       "H12"
-      ],
-      "w": [
-       "M11",
-       "J8",
-       "J12",
-       "P12",
-       "L13",
-       "L12",
-       "L8",
-       "L11",
-       "J7",
-       "H7",
-       "H13",
-       "N13",
-       "J14",
-       "J13",
-       "H14",
-       "N14",
-       "M14",
-       "H9"
-      ],
-      "atk": "b",
-      "win": "G6"
-     },
-     "play": "L10",
-     "ans": [
-      "J10"
-     ],
-     "counter": [
-      "J11"
-     ],
-     "counterText": {
-      "zh": "白擋在 J10，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。",
-      "en": "White blocks J10 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
-      "ja": "白がJ10を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
-      "ko": "백이 J10을 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
-     }
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。",
-      "en": "Change the order and solve it yourself. Your first move must stop their blocking stone from making a four.",
-      "ja": "順番を変えて自分で解こう。最初の一手は、相手が止めた石で四ができないように選んでね。",
-      "ko": "순서를 바꿔 직접 풀어 봐요. 첫 수는 상대가 막은 돌로 사가 생기지 않게 골라요."
-     },
-     "src": "A5C3XXH0（截短）",
-     "pos": {
-      "b": [
-       "H8",
-       "K7",
-       "M10",
-       "M8",
-       "N11",
-       "O10",
-       "H10",
-       "N12",
-       "H11",
-       "O7",
-       "N8",
-       "P7",
-       "L7",
-       "P10",
-       "K10",
-       "K12",
-       "K14",
-       "H12"
-      ],
-      "w": [
-       "M11",
-       "J8",
-       "J12",
-       "P12",
-       "L13",
-       "L12",
-       "L8",
-       "L11",
-       "J7",
-       "H7",
-       "H13",
-       "N13",
-       "J14",
-       "J13",
-       "H14",
-       "N14",
-       "M14",
-       "H9"
-      ],
-      "atk": "b",
-      "win": "G6"
-     },
-     "L": 3,
-     "line": [
-      "J11",
-      "L9",
-      "L10",
-      "J10",
-      "M9"
-     ],
-     "five": [
-      "K11",
-      "P6"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "6-3",
-   "unit": 6,
-   "title": {
-    "zh": "換手順躲開反四",
-    "en": "Change move order to avoid a counter-four",
-    "ja": "手順を変えて逆四を避けよう",
-    "ko": "수순을 바꿔 역사 피하기"
-   },
-   "style": "rewind",
-   "steps": [
-    {
-     "type": "say",
-     "text": {
-      "zh": "衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。",
-      "en": "Before making a four, ask: will their blocking stone make a four too? If so, change the order.",
-      "ja": "四を打つ前にもう1つ確認。相手が止める石で、相手の四もできないかな？できるなら順番を変えよう。",
-      "ko": "사를 두기 전에 한 번 더 생각해 봐요. 상대가 막은 돌로 상대의 사도 생길까요? 그렇다면 순서를 바꿔요."
-     }
-    },
-    {
-     "type": "solve",
-     "text": {
-      "zh": "這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。",
-      "en": "No demo this time. Plan your move order first. If you go wrong, we’ll show which blocking stone made a counter-four.",
-      "ja": "今回はお手本なし。順番を考えてから打とう。間違えたら、相手のどの石で逆四ができたか教えるよ。",
-      "ko": "이번엔 시범이 없어요. 순서를 생각하고 두세요. 틀리면 상대가 막은 어느 돌이 역사를 만들었는지 알려 줄게요."
-     },
-     "src": "3TADFNHY（截短）",
-     "pos": {
-      "b": [
-       "H8",
-       "K10",
-       "K7",
-       "K8",
-       "J8",
-       "H9",
-       "H7",
-       "N11",
-       "N10",
-       "J13",
-       "M12",
-       "H12"
-      ],
-      "w": [
-       "L9",
-       "M8",
-       "N7",
-       "L8",
-       "J10",
-       "N12",
-       "M13",
-       "K12",
-       "J12",
-       "L12",
-       "G12"
-      ],
-      "atk": "w",
-      "win": "F6"
-     },
-     "L": 2,
-     "line": [
-      "L11",
-      "L10",
-      "H11"
-     ],
-     "five": [
-      "K9"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "7-1",
-   "unit": 7,
-   "title": {
     "zh": "三種禁手",
     "en": "3 types of forbidden moves",
     "ja": "3つの禁手",
     "ko": "세 가지 금수"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -2733,15 +1396,14 @@
    ]
   },
   {
-   "id": "7-2",
-   "unit": 7,
+   "id": "4-2",
+   "unit": 4,
    "title": {
     "zh": "成五最優先",
     "en": "Making five comes first",
     "ja": "五連が最優先",
     "ko": "오목 완성이 최우선"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -2784,32 +1446,345 @@
    ]
   },
   {
-   "id": "7-3",
-   "unit": 7,
+   "id": "4-3",
+   "unit": 4,
    "title": {
-    "zh": "黑棋要用四三收尾",
-    "en": "Black must finish with a four-three",
-    "ja": "黒は四三で決めよう",
-    "ko": "흑은 사삼으로 마무리"
+    "zh": "這點能不能下",
+    "en": "Can you play here?",
+    "ja": "ここに打てる？",
+    "ko": "여기에 둬도 될까요?"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
      "text": {
-      "zh": "黑棋不能用四四贏，所以黑先的題，收尾一定是四三或活四。",
-      "en": "Black can’t win with a double four. In Black-to-move puzzles, you must finish with a four-three or open four.",
-      "ja": "黒は四々では勝てないよ。だから黒先の問題は、必ず四三か達四で終わるよ。",
-      "ko": "흑은 쌍사로 이길 수 없어요. 흑이 먼저 두는 문제는 꼭 사삼이나 열린 사로 마무리해요."
+      "zh": "黑棋每一手都要先問：這點能不能下？下面幾題自己判斷（金圈是黑要下的點）。",
+      "en": "Before each Black move, ask: can you play here? Try these puzzles. The gold circle marks Black’s move.",
+      "ja": "黒は一手ごとに「ここに打てる？」と考えよう。次の問題で判断してね（金の丸が黒の打つ点）。",
+      "ko": "흑은 매 수 ‘여기에 둬도 될까?’를 먼저 생각해요. 직접 판단해 봐요(금색 원이 흑이 둘 곳이에요)."
+     }
+    },
+    {
+     "type": "choose",
+     "text": {
+      "zh": "黑下在金圈，剛好連成五顆。",
+      "en": "Black plays at the gold circle and makes exactly five.",
+      "ja": "黒が金の丸に打つと、ちょうど五連になるよ。",
+      "ko": "흑이 금색 원에 두면 정확히 5목이 돼요."
+     },
+     "options": [
+      {
+       "zh": "是禁手",
+       "en": "Forbidden move",
+       "ja": "禁手だよ",
+       "ko": "금수예요"
+      },
+      {
+       "zh": "不是禁手",
+       "en": "Not a forbidden move",
+       "ja": "禁手ではないよ",
+       "ko": "금수가 아니에요"
+      }
+     ],
+     "ans": 1,
+     "probe": "J7",
+     "pos": {
+      "b": [
+       "E7",
+       "F7",
+       "G7",
+       "H7"
+      ],
+      "w": [],
+      "atk": "b",
+      "win": "D3"
+     }
+    },
+    {
+     "type": "choose",
+     "text": {
+      "zh": "黑下在金圈：直的是活三，橫的那條三左邊被白擋住。",
+      "en": "Black plays at the gold circle. The vertical three is open; White blocks the horizontal three on the left.",
+      "ja": "黒が金の丸に打つと、縦は活三。横の三は左を白に止められているよ。",
+      "ko": "흑이 금색 원에 두면 세로는 열린 삼, 가로 삼은 왼쪽이 백에게 막혀 있어요."
+     },
+     "options": [
+      {
+       "zh": "是禁手",
+       "en": "Forbidden move",
+       "ja": "禁手だよ",
+       "ko": "금수예요"
+      },
+      {
+       "zh": "不是禁手",
+       "en": "Not a forbidden move",
+       "ja": "禁手ではないよ",
+       "ko": "금수가 아니에요"
+      }
+     ],
+     "ans": 1,
+     "probe": "H6",
+     "pos": {
+      "b": [
+       "J6",
+       "K6",
+       "H7",
+       "H8"
+      ],
+      "w": [
+       "G6"
+      ],
+      "atk": "b",
+      "win": "D3"
+     }
+    },
+    {
+     "type": "choose",
+     "text": {
+      "zh": "黑下在金圈：直的四加斜的四。",
+      "en": "Black plays at the gold circle: a vertical four and a diagonal four.",
+      "ja": "黒が金の丸に打つと、縦の四と斜めの四ができるよ。",
+      "ko": "흑이 금색 원에 두면 세로 사와 대각선 사가 생겨요."
+     },
+     "options": [
+      {
+       "zh": "是禁手",
+       "en": "Forbidden move",
+       "ja": "禁手だよ",
+       "ko": "금수예요"
+      },
+      {
+       "zh": "不是禁手",
+       "en": "Not a forbidden move",
+       "ja": "禁手ではないよ",
+       "ko": "금수가 아니에요"
+      }
+     ],
+     "ans": 0,
+     "probe": "K7",
+     "pos": {
+      "b": [
+       "K4",
+       "K5",
+       "K6",
+       "J6",
+       "H5",
+       "G4"
+      ],
+      "w": [],
+      "atk": "b",
+      "win": "D3"
+     }
+    },
+    {
+     "type": "say",
+     "text": {
+      "zh": "判斷禁手的順序：先看會不會成五（成五就贏）；再數這一手同時做出幾個四、幾條活三。兩個以上就是禁手。",
+      "en": "First, check if you make five (you win). Then count the fours and open threes this move makes. Two or more of either is a forbidden move.",
+      "ja": "まず五連になるか確認（五連なら勝ち）。次に、この一手でできる四と活三を数えよう。どちらかが2つ以上なら禁手だよ。",
+      "ko": "먼저 오목 완성인지 봐요(완성하면 승리). 그다음 이 수로 생기는 사와 열린 삼을 세어 봐요. 어느 한쪽이 2개 이상이면 금수예요."
+     }
+    }
+   ]
+  },
+  {
+   "id": "5-1",
+   "unit": 5,
+   "title": {
+    "zh": "活四",
+    "en": "Open four",
+    "ja": "達四",
+    "ko": "열린 사"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "從這單元開始用「倒帶」：先看結局，再一次退兩手，每退一層就找「下一手下哪」。",
+      "en": "From this Unit on, “rewind”: see the ending, then go back two moves at a time. Each time, find where to play next.",
+      "ja": "この単元からは「巻き戻し」。まず結末を見て、2手ずつ戻ろう。戻るたびに「次はどこに打つ？」と考えてね。",
+      "ko": "이 단원부터는 ‘되감기’예요. 결말을 먼저 보고 두 수씩 되돌려요. 되돌릴 때마다 다음에 둘 곳을 찾아봐요."
      }
     },
     {
      "type": "rewind",
      "text": {
-      "zh": "這題有禁點。倒回去看：黑是怎麼避開禁點收尾的。",
-      "en": "There’s a forbidden point here. Go back and see how Black avoids it to finish.",
-      "ja": "禁手になる点があるよ。戻って、黒がどう避けて決めたか見てみよう。",
-      "ko": "금수 자리가 있어요. 거슬러 올라가서 흑이 어떻게 피하며 마무리했는지 봐요."
+      "zh": "黑一手做出活四，兩頭都能成五。",
+      "en": "Black makes an open four in one move. Either end can make five.",
+      "ja": "黒が一手で達四を作るよ。両端どちらでも五連にできる。",
+      "ko": "흑이 한 수로 열린 사를 만들어요. 양 끝에서 오목을 완성할 수 있어요."
+     },
+     "src": "手擺",
+     "pos": {
+      "b": [
+       "G7",
+       "H7",
+       "J7"
+      ],
+      "w": [
+       "L7"
+      ],
+      "atk": "b",
+      "win": "D3"
+     },
+     "L": 1,
+     "line": [
+      "F7"
+     ],
+     "five": [
+      "E7",
+      "K7"
+     ],
+     "accept": {
+      "0": [
+       "F7"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 2,
+       "accept": [
+        "K7"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "F7"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "直的也一樣。",
+      "en": "Vertical works the same way.",
+      "ja": "縦でも同じだよ。",
+      "ko": "세로도 마찬가지예요."
+     },
+     "src": "手擺",
+     "pos": {
+      "b": [
+       "H5",
+       "H6",
+       "H7"
+      ],
+      "w": [
+       "H9"
+      ],
+      "atk": "b",
+      "win": "D3"
+     },
+     "L": 1,
+     "line": [
+      "H4"
+     ],
+     "five": [
+      "H3",
+      "H8"
+     ],
+     "accept": {
+      "0": [
+       "H4"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 2,
+       "accept": [
+        "H8"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "H4"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "5-2",
+   "unit": 5,
+   "title": {
+    "zh": "四四：白可以、黑不行",
+    "en": "Double four: White can, Black can’t",
+    "ja": "四々：白はOK、黒はダメ",
+    "ko": "쌍사: 백은 가능, 흑은 금지"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "一顆子同時做出兩個四，叫「四四」，對方只擋得了一個。白棋可以這樣贏；黑棋四四是禁手（上一單元教過）。",
+      "en": "One stone making two fours is a “double four”. Only one can be blocked. White can win this way. For Black, it’s a forbidden move (see the last Unit).",
+      "ja": "1個の石で四を2つ作るのが「四々」。相手は片方しか止められないよ。白はこれで勝てるけど、黒は禁手（前の単元で習ったね）。",
+      "ko": "한 돌로 사 두 개를 만들면 ‘쌍사’예요. 상대는 하나만 막을 수 있어요. 백은 이렇게 이길 수 있지만 흑은 금수예요(지난 단원에서 배웠죠)."
+     }
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "白一手做出兩個四。",
+      "en": "White makes two fours in one move.",
+      "ja": "白が一手で四を2つ作るよ。",
+      "ko": "백이 한 수로 사 두 개를 만들어요."
+     },
+     "src": "手擺",
+     "pos": {
+      "b": [
+       "F7",
+       "K3"
+      ],
+      "w": [
+       "G7",
+       "H7",
+       "J7",
+       "K4",
+       "K5",
+       "K6"
+      ],
+      "atk": "w",
+      "win": "D3"
+     },
+     "L": 1,
+     "line": [
+      "K7"
+     ],
+     "five": [
+      "K8",
+      "L7"
+     ],
+     "accept": {
+      "0": [
+       "K7"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 2,
+       "accept": [
+        "L7"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "K7"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "黑棋不能四四，收尾只能四三或活四。這題盤上有禁點，倒回去看黑怎麼避開。",
+      "en": "Black can’t make a double four, so finish with a four-three or open four. Rewind to see how Black avoids this puzzle’s forbidden points.",
+      "ja": "黒は四々が禁手だから、最後は四三か達四。盤の禁手の点をどう避けるか、戻って見てみよう。",
+      "ko": "흑은 쌍사를 둘 수 없어 사삼이나 열린 사로 마무리해요. 이 문제의 금수 자리를 어떻게 피하는지 되돌려 봐요."
      },
      "src": "3YM2S94J（截短）",
      "pos": {
@@ -2850,20 +1825,834 @@
       "1": [
        "K2"
       ]
-     }
+     },
+     "stages": [
+      {
+       "keep": 4,
+       "accept": [
+        "L1"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "K2"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "J3"
+       ]
+      }
+     ]
     }
    ]
   },
   {
-   "id": "7-4",
-   "unit": 7,
+   "id": "5-3",
+   "unit": 5,
+   "title": {
+    "zh": "四三",
+    "en": "Four-three",
+    "ja": "四三",
+    "ko": "사삼"
+   },
+   "steps": [
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "一顆子同時做出四和三，叫「四三」：對方擋了四，三就變成活四。",
+      "en": "One stone makes a four and a three: a “four-three”. They block the four, then you turn the three into an open four.",
+      "ja": "1個の石で四と三を作るのが「四三」。相手が四を止めたら、三を達四にしよう。",
+      "ko": "한 돌로 사와 삼을 만들면 ‘사삼’이에요. 상대가 사를 막으면 삼을 열린 사로 만들어요."
+     },
+     "src": "005RSGY4（截短 2 手）",
+     "pos": {
+      "b": [
+       "G9",
+       "H8",
+       "L6",
+       "L5",
+       "H4",
+       "F2",
+       "K6",
+       "J5"
+      ],
+      "w": [
+       "L9",
+       "J8",
+       "N5",
+       "M3",
+       "N3",
+       "E2",
+       "J7",
+       "G3"
+      ],
+      "atk": "b",
+      "win": "E2"
+     },
+     "L": 2,
+     "line": [
+      "L7",
+      "M8",
+      "L4"
+     ],
+     "five": [
+      "L3",
+      "L8"
+     ],
+     "accept": {
+      "1": [
+       "L4"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 4,
+       "accept": [
+        "L8"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "L4"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "L7"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "再一題四三。",
+      "en": "Another four-three.",
+      "ja": "もう1問、四三だよ。",
+      "ko": "사삼 문제 하나 더예요."
+     },
+     "src": "0068WG80（截短 2 手）",
+     "pos": {
+      "b": [
+       "D12",
+       "G9",
+       "D8",
+       "G8",
+       "H8",
+       "B6",
+       "F10",
+       "E9"
+      ],
+      "w": [
+       "F8",
+       "D7",
+       "H7",
+       "J7",
+       "E5",
+       "H5",
+       "E11",
+       "C7"
+      ],
+      "atk": "b",
+      "win": "B5"
+     },
+     "L": 2,
+     "line": [
+      "G11",
+      "H12",
+      "G10"
+     ],
+     "five": [
+      "G12",
+      "G7"
+     ],
+     "accept": {
+      "1": [
+       "G10"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 4,
+       "accept": [
+        "G7"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "G10"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "G11"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "5-4",
+   "unit": 5,
+   "title": {
+    "zh": "先衝一個四，再做四三",
+    "en": "Make a four, then a four-three",
+    "ja": "まず四を打って、次に四三",
+    "ko": "먼저 사를 두고, 그다음 사삼"
+   },
+   "steps": [
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "先衝一個四，讓子到位，再做四三。",
+      "en": "Make a four to get your stone in place, then make a four-three.",
+      "ja": "まず四を打って石を必要な場所に置き、その後で四三を作ろう。",
+      "ko": "먼저 사를 두어 돌을 제자리에 놓고, 그다음 사삼을 만들어요."
+     },
+     "src": "0047T2SY（截短 1 手）",
+     "pos": {
+      "b": [
+       "D11",
+       "E11",
+       "D8",
+       "E8",
+       "H8",
+       "A7",
+       "F8"
+      ],
+      "w": [
+       "G13",
+       "F11",
+       "C10",
+       "H10",
+       "E9",
+       "E7",
+       "G8"
+      ],
+      "atk": "b",
+      "win": "A6"
+     },
+     "L": 3,
+     "line": [
+      "B8",
+      "C8",
+      "D10",
+      "C9",
+      "D9"
+     ],
+     "five": [
+      "D12",
+      "D7"
+     ],
+     "accept": {
+      "2": [
+       "D9"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "D7"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "D9"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "D10"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "B8"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "再一題。",
+      "en": "One more.",
+      "ja": "もう1問。",
+      "ko": "한 문제 더요."
+     },
+     "src": "00BBJ3T2（截短 1 手）",
+     "pos": {
+      "b": [
+       "E9",
+       "H8",
+       "K8",
+       "M8",
+       "H7",
+       "J5",
+       "J8"
+      ],
+      "w": [
+       "H10",
+       "J9",
+       "K9",
+       "F7",
+       "M7",
+       "G6",
+       "L8"
+      ],
+      "atk": "b",
+      "win": "E3"
+     },
+     "L": 3,
+     "line": [
+      "F8",
+      "G8",
+      "H6",
+      "G7",
+      "H5"
+     ],
+     "five": [
+      "H4",
+      "H9"
+     ],
+     "accept": {
+      "2": [
+       "H5"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "H9"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "H5"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "H6"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "F8"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6-1",
+   "unit": 6,
+   "title": {
+    "zh": "找材料",
+    "en": "Find your options",
+    "ja": "材料を探そう",
+    "ko": "재료 찾기"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "從這單元開始，自己找 VCF。第一步：找材料。VCF 每一手都要是四，所以能下的點，只有「下了會變成四」的那些。",
+      "en": "From this Unit on, find a VCF yourself. Step 1: find your options. Every VCF move must make a four, so only those spots will work.",
+      "ja": "この単元からは自分でVCFを探そう。ステップ1：材料探し。VCFは毎手、四を打つから、四になる点だけが候補だよ。",
+      "ko": "이 단원부터는 직접 VCF를 찾아봐요. 1단계는 재료 찾기. VCF는 매 수 사를 둬야 하니, 사가 되는 자리만 고를 수 있어요."
+     }
+    },
+    {
+     "type": "tap",
+     "kind": "four",
+     "all": true,
+     "text": {
+      "zh": "把所有下了會變成四的點都找出來。",
+      "en": "Find every spot where you can make a four.",
+      "ja": "打つと四になる点を全部見つけよう。",
+      "ko": "두면 사가 되는 자리를 모두 찾아봐요."
+     },
+     "pos": {
+      "b": [
+       "D12",
+       "G9",
+       "H9",
+       "L9",
+       "H8",
+       "H5",
+       "F10"
+      ],
+      "w": [
+       "F12",
+       "F11",
+       "L10",
+       "K9",
+       "J6",
+       "J5",
+       "E11"
+      ],
+      "atk": "b",
+      "win": "D5"
+     },
+     "ans": [
+      "H6",
+      "H7",
+      "J7",
+      "K6"
+     ]
+    },
+    {
+     "type": "tap",
+     "kind": "four",
+     "all": true,
+     "text": {
+      "zh": "再一題，全部找出來。",
+      "en": "One more. Find them all.",
+      "ja": "もう1問。全部見つけよう。",
+      "ko": "한 문제 더요. 모두 찾아봐요."
+     },
+     "pos": {
+      "b": [
+       "H10",
+       "H8",
+       "E7",
+       "G6",
+       "H6",
+       "J3",
+       "H7"
+      ],
+      "w": [
+       "E9",
+       "D6",
+       "M6",
+       "E5",
+       "D4",
+       "K4",
+       "H9"
+      ],
+      "atk": "b",
+      "win": "D3"
+     },
+     "ans": [
+      "H4",
+      "H5"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6-2",
+   "unit": 6,
+   "title": {
+    "zh": "找終點",
+    "en": "Find the finish",
+    "ja": "最後の形を探そう",
+    "ko": "마무리 찾기"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "第二步：找終點。終點就是能一手做出「四三」或活四的那一點，通常在兩條線交會的地方。",
+      "en": "Step 2: find the finish. Look for a spot that makes a four-three or open four in one move, often where two lines meet.",
+      "ja": "ステップ2：最後の形探し。一手で四三か達四を作れる点で、たいてい2本の線が交わる所だよ。",
+      "ko": "2단계는 마무리 찾기. 한 수로 사삼이나 열린 사를 만드는 자리예요. 보통 두 줄이 만나는 곳에 있어요."
+     }
+    },
+    {
+     "type": "tap",
+     "kind": "first",
+     "text": {
+      "zh": "找出終點：哪一點能同時做出四和三？",
+      "en": "Find the finish: where can you make a four and a three at once?",
+      "ja": "最後の点を探そう。四と三を同時に作れるのはどこ？",
+      "ko": "마무리 자리를 찾아봐요. 어디에 두면 사와 삼을 동시에 만들까요?"
+     },
+     "pos": {
+      "b": [
+       "G13",
+       "L13",
+       "H10",
+       "L9",
+       "H8",
+       "H6",
+       "H9",
+       "H12"
+      ],
+      "w": [
+       "E11",
+       "E10",
+       "N10",
+       "J9",
+       "F8",
+       "J8",
+       "H7",
+       "H11"
+      ],
+      "atk": "b",
+      "win": "E6"
+     },
+     "ans": [
+      "J11"
+     ]
+    },
+    {
+     "type": "tap",
+     "kind": "first",
+     "text": {
+      "zh": "再找一次終點。",
+      "en": "Find the finish again.",
+      "ja": "もう一度、最後の点を探そう。",
+      "ko": "다시 마무리 자리를 찾아봐요."
+     },
+     "pos": {
+      "b": [
+       "C11",
+       "E9",
+       "H8",
+       "H7",
+       "E5",
+       "D4",
+       "G7",
+       "F8"
+      ],
+      "w": [
+       "H10",
+       "C7",
+       "D7",
+       "B6",
+       "D6",
+       "K6",
+       "F6",
+       "D10"
+      ],
+      "atk": "b",
+      "win": "B4"
+     },
+     "ans": [
+      "H6"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6-3",
+   "unit": 6,
+   "title": {
+    "zh": "往回接",
+    "en": "Work backward",
+    "ja": "逆にたどってつなごう",
+    "ko": "거꾸로 연결하기"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "第三步：往回接。終點還缺哪顆子？就找一個衝四，把那顆子放上去。",
+      "en": "Step 3: work backward. Which stone is missing for the finish? Find a four that puts it in place.",
+      "ja": "ステップ3：逆につなごう。最後の形には、どの石が足りない？四を打って、その石を置こう。",
+      "ko": "3단계는 거꾸로 연결하기. 마무리에 어떤 돌이 더 필요할까요? 사를 두며 그 돌을 놓을 방법을 찾아봐요."
+     }
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "先看結局，倒回去看看：第一個四是怎麼替終點鋪路的。",
+      "en": "See the ending, then go back: how did the first four set up the finish?",
+      "ja": "結末を見てから戻ろう。最初の四が、どう最後の形につながったかな？",
+      "ko": "결말부터 보고 거슬러 올라가요. 첫 사가 어떻게 마무리를 준비했는지 살펴봐요."
+     },
+     "src": "5W3TEA5K（截短）",
+     "pos": {
+      "b": [
+       "H11",
+       "E8",
+       "H8",
+       "H7",
+       "F5",
+       "J4",
+       "H9"
+      ],
+      "w": [
+       "L11",
+       "K9",
+       "F8",
+       "D7",
+       "C5",
+       "D5",
+       "H10"
+      ],
+      "atk": "b",
+      "win": "C3"
+     },
+     "L": 3,
+     "line": [
+      "H5",
+      "H6",
+      "G6",
+      "F7",
+      "E4"
+     ],
+     "five": [
+      "D3",
+      "J8"
+     ],
+     "accept": {
+      "2": [
+       "E4"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "J8"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "E4",
+        "K3"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "G6"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "H5"
+       ]
+      }
+     ]
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "再倒一題。",
+      "en": "Work backward on one more.",
+      "ja": "もう1問、逆にたどろう。",
+      "ko": "한 문제 더 거슬러 올라가요."
+     },
+     "src": "668HY1C6（截短）",
+     "pos": {
+      "b": [
+       "H8",
+       "F6",
+       "D5",
+       "D4",
+       "G3",
+       "J1",
+       "E5"
+      ],
+      "w": [
+       "D8",
+       "F7",
+       "C5",
+       "F5",
+       "H4",
+       "C2",
+       "G7"
+      ],
+      "atk": "b",
+      "win": "B1"
+     },
+     "L": 3,
+     "line": [
+      "F4",
+      "H2",
+      "D6",
+      "C7",
+      "D3"
+     ],
+     "five": [
+      "D2",
+      "D7"
+     ],
+     "accept": {
+      "2": [
+       "D3"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "D7"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "B2",
+        "C3",
+        "D3"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "B2",
+        "C3",
+        "D6"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "B2",
+        "C3",
+        "F4"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6-4",
+   "unit": 6,
+   "title": {
+    "zh": "對方的擋子也是棋子",
+    "en": "Their blocking stones count too",
+    "ja": "相手が止めるために置いた石も働く",
+    "ko": "상대가 막으려고 둔 돌도 돌이에요"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。",
+      "en": "Step 4: check. Each blocking stone stays on the board. It may take a spot you need.",
+      "ja": "ステップ4：確認しよう。相手が止めるために置いた石は盤に残るよ。あなたが打ちたい点をふさぐかもしれない。",
+      "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 두려던 자리를 막을 수도 있어요."
+     }
+    },
+    {
+     "type": "predict",
+     "text": {
+      "zh": "先看一個錯誤示範：如果黑先下 E8，白會擋哪？",
+      "en": "First, a wrong move: if Black plays E8, where will White block?",
+      "ja": "まずは失敗例。黒が先にE8に打つと、白はどこを止める？",
+      "ko": "먼저 틀린 예를 볼게요. 흑이 E8부터 두면 백은 어디를 막을까요?"
+     },
+     "pos": {
+      "b": [
+       "F12",
+       "C9",
+       "F9",
+       "F8",
+       "H8",
+       "K8",
+       "G5",
+       "G8"
+      ],
+      "w": [
+       "E12",
+       "J11",
+       "K7",
+       "E6",
+       "G6",
+       "D5",
+       "H4",
+       "J8"
+      ],
+      "atk": "b",
+      "win": "C4"
+     },
+     "play": "E8",
+     "ans": [
+      "D8"
+     ]
+    },
+    {
+     "type": "say",
+     "text": {
+      "zh": "白擋在 D8，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。",
+      "en": "White blocks D8, where you needed to play. Get the order wrong, and their blocking stone cuts off your path.",
+      "ja": "白が止めるD8は、正解で打つはずの点。順番を間違えると、相手が止めた石で先に進めなくなるよ。",
+      "ko": "백이 막은 D8이 바로 둬야 했던 자리예요. 순서가 틀리면 상대가 막은 돌에 길이 막혀요."
+     }
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。",
+      "en": "Now solve it yourself. Plan the order first. If you go wrong, we’ll show which blocking stone stopped you.",
+      "ja": "今度は自分で解こう。順番を考えてから打ってね。間違えたら、相手のどの石が道をふさいだか教えるよ。",
+      "ko": "이제 직접 풀어 봐요. 순서를 생각하고 두세요. 틀리면 상대의 어느 돌이 길을 막았는지 알려 줄게요."
+     },
+     "src": "34P6T1MP（截短）",
+     "pos": {
+      "b": [
+       "F12",
+       "C9",
+       "F9",
+       "F8",
+       "H8",
+       "K8",
+       "G5",
+       "G8"
+      ],
+      "w": [
+       "E12",
+       "J11",
+       "K7",
+       "E6",
+       "G6",
+       "D5",
+       "H4",
+       "J8"
+      ],
+      "atk": "b",
+      "win": "C4"
+     },
+     "L": 3,
+     "line": [
+      "D8",
+      "E8",
+      "F6",
+      "E7",
+      "F7"
+     ],
+     "five": [
+      "F10",
+      "F5"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "6-5",
+   "unit": 6,
    "title": {
     "zh": "路上的禁手",
     "en": "Forbidden moves along the way",
     "ja": "途中の禁手",
     "ko": "도중에 생기는 금수"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -2925,6 +2714,556 @@
    ]
   },
   {
+   "id": "6-6",
+   "unit": 6,
+   "title": {
+    "zh": "四步驟一起用",
+    "en": "Use all four steps",
+    "ja": "4つの手順をまとめて使おう",
+    "ko": "네 단계를 함께 쓰기"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。",
+      "en": "Use all four steps: find your options, find the finish, work backward, and check. No hints this time.",
+      "ja": "材料探し、最後の形探し、逆につなぐ、確認する。4つのステップを使おう。今度はヒントなしだよ。",
+      "ko": "재료 찾기, 마무리 찾기, 거꾸로 연결하기, 확인하기. 네 단계를 함께 써 봐요. 이번엔 힌트가 없어요."
+     }
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "自己解。",
+      "en": "Solve it yourself.",
+      "ja": "自分で解いてみよう。",
+      "ko": "직접 풀어 봐요."
+     },
+     "src": "69B4BZW0（截短）",
+     "pos": {
+      "b": [
+       "H11",
+       "G8",
+       "H8",
+       "L8",
+       "D7",
+       "J6",
+       "J8"
+      ],
+      "w": [
+       "G7",
+       "F6",
+       "L6",
+       "F4",
+       "K4",
+       "D3",
+       "K8"
+      ],
+      "atk": "b",
+      "win": "D3"
+     },
+     "L": 3,
+     "line": [
+      "E8",
+      "F8",
+      "F9",
+      "G10",
+      "H7"
+     ],
+     "five": [
+      "E10",
+      "K5"
+     ]
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "再一題。",
+      "en": "One more.",
+      "ja": "もう1問。",
+      "ko": "한 문제 더요."
+     },
+     "src": "6GS8W62K（截短）",
+     "pos": {
+      "b": [
+       "O10",
+       "G9",
+       "H8",
+       "M8",
+       "L5",
+       "M5",
+       "K6"
+      ],
+      "w": [
+       "M11",
+       "J9",
+       "M9",
+       "H6",
+       "L6",
+       "M4",
+       "J7"
+      ],
+      "atk": "b",
+      "win": "G4"
+     },
+     "L": 3,
+     "line": [
+      "L7",
+      "N9",
+      "J5",
+      "H4",
+      "K5"
+     ],
+     "five": [
+      "H5",
+      "N5"
+     ]
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "最後一題。",
+      "en": "Last one.",
+      "ja": "最後の1問。",
+      "ko": "마지막 문제예요."
+     },
+     "src": "6TWH5CV0（截短）",
+     "pos": {
+      "b": [
+       "E8",
+       "H8",
+       "E5",
+       "D4",
+       "H4",
+       "K2",
+       "F6"
+      ],
+      "w": [
+       "H9",
+       "B8",
+       "K5",
+       "G4",
+       "J4",
+       "J2",
+       "G7"
+      ],
+      "atk": "b",
+      "win": "B2"
+     },
+     "L": 3,
+     "line": [
+      "G5",
+      "J3",
+      "E7",
+      "D8",
+      "E6"
+     ],
+     "five": [
+      "E4",
+      "E9"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "7-1",
+   "unit": 7,
+   "title": {
+    "zh": "擋子變成四",
+    "en": "A blocking stone makes a four",
+    "ja": "止めた石が四になる",
+    "ko": "막은 돌이 사가 돼요"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "對方擋你的時候，那顆擋子留在盤上。如果它剛好讓對方自己也連成四，就叫「反四」。",
+      "en": "When they block you, the stone stays on the board. If it also makes their four, that’s a “counter-four”.",
+      "ja": "相手があなたを止めた石は盤に残るよ。その石で相手の四もできたら「逆四」だよ。",
+      "ko": "상대가 막으려고 둔 돌은 판에 남아요. 그 돌로 상대의 사도 생기면 ‘역사’예요."
+     }
+    },
+    {
+     "type": "predict",
+     "text": {
+      "zh": "先看錯誤示範：黑如果先下 L7（正解其實是第二手才下），白會擋哪？",
+      "en": "First, a wrong move: Black plays L7 first (it should be second). Where does White block?",
+      "ja": "まずは失敗例。黒が先にL7に打つと、白はどこを止める？（正解では2手目だよ。）",
+      "ko": "먼저 틀린 예예요. 흑이 L7부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
+     },
+     "pos": {
+      "b": [
+       "L6",
+       "J6",
+       "K4",
+       "L3",
+       "F7",
+       "G4",
+       "K5",
+       "J5",
+       "M3",
+       "H5",
+       "G8",
+       "F5",
+       "F6",
+       "L4"
+      ],
+      "w": [
+       "H6",
+       "F3",
+       "H8",
+       "M7",
+       "J7",
+       "M9",
+       "H3",
+       "H7",
+       "M4",
+       "G5",
+       "M6",
+       "F8",
+       "K3",
+       "N2"
+      ],
+      "atk": "b",
+      "win": "F2"
+     },
+     "play": "L7",
+     "ans": [
+      "L5"
+     ],
+     "counter": [
+      "K6"
+     ],
+     "counterText": {
+      "zh": "白擋在 L5，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。",
+      "en": "White blocks L5 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
+      "ja": "白がL5を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
+      "ko": "백이 L5를 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
+     }
+    },
+    {
+     "type": "rewind",
+     "text": {
+      "zh": "現在看正確的順序：先下哪一手，對方的擋子才不會變成四。",
+      "en": "Now the right order: which move comes first so their blocking stone won’t make a four?",
+      "ja": "今度は正しい順番。どの手から打てば、相手が止めた石で四ができないかな？",
+      "ko": "이제 올바른 순서예요. 어디부터 둬야 상대가 막은 돌이 사가 되지 않을까요?"
+     },
+     "src": "BBE9H52Y（截短）",
+     "pos": {
+      "b": [
+       "L6",
+       "J6",
+       "K4",
+       "L3",
+       "F7",
+       "G4",
+       "K5",
+       "J5",
+       "M3",
+       "H5",
+       "G8",
+       "F5",
+       "F6",
+       "L4"
+      ],
+      "w": [
+       "H6",
+       "F3",
+       "H8",
+       "M7",
+       "J7",
+       "M9",
+       "H3",
+       "H7",
+       "M4",
+       "G5",
+       "M6",
+       "F8",
+       "K3",
+       "N2"
+      ],
+      "atk": "b",
+      "win": "F2"
+     },
+     "L": 3,
+     "line": [
+      "H4",
+      "J4",
+      "L7",
+      "L5",
+      "K6"
+     ],
+     "five": [
+      "G3",
+      "M8"
+     ],
+     "accept": {
+      "2": [
+       "K6"
+      ]
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "M8"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "K6"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "L7",
+        "M2"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "H4",
+        "M2"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "7-2",
+   "unit": 7,
+   "title": {
+    "zh": "反四之後你就沒有先手",
+    "en": "A counter-four takes your initiative",
+    "ja": "逆四で先手を失う",
+    "ko": "역사를 당하면 선수를 잃어요"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "對方一有四，你就得先擋他，不能再衝自己的四。反四一出現，你的先手就沒了。",
+      "en": "Once they have a four, you must block. You can’t make your own four. A counter-four takes your initiative.",
+      "ja": "相手に四ができたら、まず止めよう。自分の四は打てないよ。逆四ができると、あなたの先手はなくなるよ。",
+      "ko": "상대에게 사가 생기면 먼저 막아야 해요. 자기 사를 또 둘 수는 없어요. 역사가 나오면 선수를 잃어요."
+     }
+    },
+    {
+     "type": "predict",
+     "text": {
+      "zh": "先看錯誤示範：黑如果先下 L10（正解其實是第二手才下），白會擋哪？",
+      "en": "First, a wrong move: Black plays L10 first (it should be second). Where does White block?",
+      "ja": "まずは失敗例。黒が先にL10に打つと、白はどこを止める？（正解では2手目だよ。）",
+      "ko": "먼저 틀린 예예요. 흑이 L10부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
+     },
+     "pos": {
+      "b": [
+       "H8",
+       "K7",
+       "M10",
+       "M8",
+       "N11",
+       "O10",
+       "H10",
+       "N12",
+       "H11",
+       "O7",
+       "N8",
+       "P7",
+       "L7",
+       "P10",
+       "K10",
+       "K12",
+       "K14",
+       "H12"
+      ],
+      "w": [
+       "M11",
+       "J8",
+       "J12",
+       "P12",
+       "L13",
+       "L12",
+       "L8",
+       "L11",
+       "J7",
+       "H7",
+       "H13",
+       "N13",
+       "J14",
+       "J13",
+       "H14",
+       "N14",
+       "M14",
+       "H9"
+      ],
+      "atk": "b",
+      "win": "G6"
+     },
+     "play": "L10",
+     "ans": [
+      "J10"
+     ],
+     "counter": [
+      "J11"
+     ],
+     "counterText": {
+      "zh": "白擋在 J10，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。",
+      "en": "White blocks J10 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
+      "ja": "白がJ10を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
+      "ko": "백이 J10을 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
+     }
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。",
+      "en": "Change the order and solve it yourself. Your first move must stop their blocking stone from making a four.",
+      "ja": "順番を変えて自分で解こう。最初の一手は、相手が止めた石で四ができないように選んでね。",
+      "ko": "순서를 바꿔 직접 풀어 봐요. 첫 수는 상대가 막은 돌로 사가 생기지 않게 골라요."
+     },
+     "src": "A5C3XXH0（截短）",
+     "pos": {
+      "b": [
+       "H8",
+       "K7",
+       "M10",
+       "M8",
+       "N11",
+       "O10",
+       "H10",
+       "N12",
+       "H11",
+       "O7",
+       "N8",
+       "P7",
+       "L7",
+       "P10",
+       "K10",
+       "K12",
+       "K14",
+       "H12"
+      ],
+      "w": [
+       "M11",
+       "J8",
+       "J12",
+       "P12",
+       "L13",
+       "L12",
+       "L8",
+       "L11",
+       "J7",
+       "H7",
+       "H13",
+       "N13",
+       "J14",
+       "J13",
+       "H14",
+       "N14",
+       "M14",
+       "H9"
+      ],
+      "atk": "b",
+      "win": "G6"
+     },
+     "L": 3,
+     "line": [
+      "J11",
+      "L9",
+      "L10",
+      "J10",
+      "M9"
+     ],
+     "five": [
+      "K11",
+      "P6"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "7-3",
+   "unit": 7,
+   "title": {
+    "zh": "換手順躲開反四",
+    "en": "Change move order to avoid a counter-four",
+    "ja": "手順を変えて逆四を避けよう",
+    "ko": "수순을 바꿔 역사 피하기"
+   },
+   "steps": [
+    {
+     "type": "say",
+     "text": {
+      "zh": "衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。",
+      "en": "Before making a four, ask: will their blocking stone make a four too? If so, change the order.",
+      "ja": "四を打つ前にもう1つ確認。相手が止める石で、相手の四もできないかな？できるなら順番を変えよう。",
+      "ko": "사를 두기 전에 한 번 더 생각해 봐요. 상대가 막은 돌로 상대의 사도 생길까요? 그렇다면 순서를 바꿔요."
+     }
+    },
+    {
+     "type": "solve",
+     "text": {
+      "zh": "這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。",
+      "en": "No demo this time. Plan your move order first. If you go wrong, we’ll show which blocking stone made a counter-four.",
+      "ja": "今回はお手本なし。順番を考えてから打とう。間違えたら、相手のどの石で逆四ができたか教えるよ。",
+      "ko": "이번엔 시범이 없어요. 순서를 생각하고 두세요. 틀리면 상대가 막은 어느 돌이 역사를 만들었는지 알려 줄게요."
+     },
+     "src": "8Q6Q9W3V（截短）",
+     "pos": {
+      "b": [
+       "F12",
+       "H12",
+       "K12",
+       "J11",
+       "D10",
+       "L10",
+       "F8",
+       "J8",
+       "G7",
+       "J7",
+       "D5",
+       "E10"
+      ],
+      "w": [
+       "D11",
+       "E11",
+       "K11",
+       "F10",
+       "G10",
+       "F9",
+       "F7",
+       "H7",
+       "H6",
+       "L5",
+       "G8"
+      ],
+      "atk": "w",
+      "win": "D5"
+     },
+     "L": 3,
+     "line": [
+      "K5",
+      "J6",
+      "H9",
+      "J10",
+      "H8"
+     ],
+     "five": [
+      "H10",
+      "H5"
+     ]
+    }
+   ]
+  },
+  {
    "id": "8-1",
    "unit": 8,
    "title": {
@@ -2933,7 +3272,6 @@
     "ja": "白は四々も長連もOK",
     "ko": "백은 쌍사와 장목도 가능"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -2992,7 +3330,21 @@
       "0": [
        "D13"
       ]
-     }
+     },
+     "stages": [
+      {
+       "keep": 2,
+       "accept": [
+        "G10"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "D13"
+       ]
+      }
+     ]
     },
     {
      "type": "solve",
@@ -3050,7 +3402,6 @@
     "ja": "黒に禁手の点を止めさせよう",
     "ko": "흑이 금수 자리를 막게 하기"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -3160,7 +3511,6 @@
     "ja": "白先のまとめ問題",
     "ko": "백이 먼저 두는 종합 문제"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -3274,7 +3624,6 @@
     "ja": "禁手解除",
     "ko": "금수 해제"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -3332,7 +3681,35 @@
       "2": [
        "G9"
       ]
-     }
+     },
+     "stages": [
+      {
+       "keep": 6,
+       "accept": [
+        "G10",
+        "K12",
+        "M14"
+       ]
+      },
+      {
+       "keep": 4,
+       "accept": [
+        "G9"
+       ]
+      },
+      {
+       "keep": 2,
+       "accept": [
+        "H10"
+       ]
+      },
+      {
+       "keep": 0,
+       "accept": [
+        "K8"
+       ]
+      }
+     ]
     },
     {
      "type": "solve",
@@ -3389,7 +3766,6 @@
     "ja": "長いVCF（四追い）",
     "ko": "긴 VCF"
    },
-   "style": "rewind",
    "steps": [
     {
      "type": "say",
@@ -3529,7 +3905,6 @@
     "ja": "卒業テスト",
     "ko": "졸업 시험"
    },
-   "style": "board",
    "steps": [],
    "noStone": true
   }
