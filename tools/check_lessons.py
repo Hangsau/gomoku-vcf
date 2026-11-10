@@ -161,6 +161,13 @@ def check_step(E, where, st):
         if typ == 'predict':
             m = E.move(B, W, st['play'], aw)
             if m.get('r') != 'block' or {m.get('def')} != ans: err(where, f'預測題：下 {st["play"]} 後引擎擋 {m.get("def")}（{m.get("r")}），答案寫 {sorted(ans)}')
+            if st.get('counter'):   # 反四示範：擋子要真的做出四（標的點＝守方成五點），而且之後攻方贏不了
+                atk2 = (list(W) if aw else list(B)) + [st['play']]; dfn2 = (list(B) if aw else list(W)) + [m.get('def')]
+                cf = fives(dfn2, atk2, aw)
+                if cf != set(st['counter']): err(where, f'反四示範：守方成五點算出 {sorted(cf)}，寫 {st["counter"]}')
+                b2, w2 = (dfn2, atk2) if aw else (atk2, dfn2)
+                if E.solve(b2, w2, aw).get('vcf'): err(where, '反四示範：順序錯之後引擎說還能贏，示範不成立')
+                in_window(where, sorted(cf), pos.get('win'))
             return
         kind = st.get('kind')
         own, opp = (W, B) if aw else (B, W)

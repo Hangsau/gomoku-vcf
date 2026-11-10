@@ -713,5 +713,55 @@
   "en": "Now solve it yourself. Plan the order first. If you go wrong, we’ll show which blocking stone stopped you.",
   "ja": "今度は自分で解こう。順番を考えてから打ってね。間違えたら、相手のどの石が道をふさいだか教えるよ。",
   "ko": "이제 직접 풀어 봐요. 순서를 생각하고 두세요. 틀리면 상대의 어느 돌이 길을 막았는지 알려 줄게요."
+ },
+ "對方擋你的時候，那顆擋子留在盤上。如果它剛好讓對方自己也連成四，就叫「反四」。": {
+  "en": "When they block you, the stone stays on the board. If it also makes their four, that’s a “counter-four”.",
+  "ja": "相手があなたを止めた石は盤に残るよ。その石で相手の四もできたら「逆四」だよ。",
+  "ko": "상대가 막으려고 둔 돌은 판에 남아요. 그 돌로 상대의 사도 생기면 ‘역사’예요."
+ },
+ "先看錯誤示範：黑如果先下 L7（正解其實是第二手才下），白會擋哪？": {
+  "en": "First, a wrong move: Black plays L7 first (it should be second). Where does White block?",
+  "ja": "まずは失敗例。黒が先にL7に打つと、白はどこを止める？（正解では2手目だよ。）",
+  "ko": "먼저 틀린 예예요. 흑이 L7부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
+ },
+ "白擋在 L5，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。": {
+  "en": "White blocks L5 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
+  "ja": "白がL5を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
+  "ko": "백이 L5를 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
+ },
+ "現在看正確的順序：先下哪一手，對方的擋子才不會變成四。": {
+  "en": "Now the right order: which move comes first so their blocking stone won’t make a four?",
+  "ja": "今度は正しい順番。どの手から打てば、相手が止めた石で四ができないかな？",
+  "ko": "이제 올바른 순서예요. 어디부터 둬야 상대가 막은 돌이 사가 되지 않을까요?"
+ },
+ "對方一有四，你就得先擋他，不能再衝自己的四。反四一出現，你的先手就沒了。": {
+  "en": "Once they have a four, you must block. You can’t make your own four. A counter-four takes your initiative.",
+  "ja": "相手に四ができたら、まず止めよう。自分の四は打てないよ。逆四ができると、あなたの先手はなくなるよ。",
+  "ko": "상대에게 사가 생기면 먼저 막아야 해요. 자기 사를 또 둘 수는 없어요. 역사가 나오면 선수를 잃어요."
+ },
+ "先看錯誤示範：黑如果先下 L10（正解其實是第二手才下），白會擋哪？": {
+  "en": "First, a wrong move: Black plays L10 first (it should be second). Where does White block?",
+  "ja": "まずは失敗例。黒が先にL10に打つと、白はどこを止める？（正解では2手目だよ。）",
+  "ko": "먼저 틀린 예예요. 흑이 L10부터 두면 백은 어디를 막을까요? (정답에선 두 번째 수예요.)"
+ },
+ "白擋在 J10，這一擋同時做出了白自己的四（紅圈那點一下就成五）。黑只能回頭去擋，先手沒了，這題就贏不了。這就是反四。": {
+  "en": "White blocks J10 and makes a four, ready to make five at the red circle. Black must block. You lose the initiative and can’t win now. That’s a counter-four.",
+  "ja": "白がJ10を止めると、白の四もできるよ（赤丸に打てば五連）。黒は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
+  "ko": "백이 J10을 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 흑은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
+ },
+ "換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。": {
+  "en": "Change the order and solve it yourself. Your first move must stop their blocking stone from making a four.",
+  "ja": "順番を変えて自分で解こう。最初の一手は、相手が止めた石で四ができないように選んでね。",
+  "ko": "순서를 바꿔 직접 풀어 봐요. 첫 수는 상대가 막은 돌로 사가 생기지 않게 골라요."
+ },
+ "衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。": {
+  "en": "Before making a four, ask: will their blocking stone make a four too? If so, change the order.",
+  "ja": "四を打つ前にもう1つ確認。相手が止める石で、相手の四もできないかな？できるなら順番を変えよう。",
+  "ko": "사를 두기 전에 한 번 더 생각해 봐요. 상대가 막은 돌로 상대의 사도 생길까요? 그렇다면 순서를 바꿔요."
+ },
+ "這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。": {
+  "en": "No demo this time. Plan your move order first. If you go wrong, we’ll show which blocking stone made a counter-four.",
+  "ja": "今回はお手本なし。順番を考えてから打とう。間違えたら、相手のどの石で逆四ができたか教えるよ。",
+  "ko": "이번엔 시범이 없어요. 순서를 생각하고 두세요. 틀리면 상대가 막은 어느 돌이 역사를 만들었는지 알려 줄게요."
  }
 }

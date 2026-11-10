@@ -200,19 +200,53 @@ C['5-5'] = [
     say('四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。'),
     m_solve('自己解。', m55[0]), m_solve('再一題。', m55[1]), m_solve('最後一題。', m55[2]),
 ]
-m6 = sorted([m for m in MINED if m['fit9'] and m['counter']], key=lambda m: (m['src'], m['L']))
-m6_l2 = [m for m in m6 if m['L'] == 2][:2]; m6_l3 = [m for m in m6 if m['L'] == 3][:2]
+# 第 6 單元（2026-11-10 使用者：6-2、6-3 換順序結果一樣，看不出教學目的）→ 只用「順序一錯就被反四」的題：
+# 正解第一、二手顛倒時，守方的擋子會做出四，而且之後攻方贏不了（tools/mine_counter_black.py 等挖、引擎驗證）
+VD = ROOT / 'docs' / 'design' / 'tutorial-2026-11-10' / 'verify'
+CB = json.loads((VD / 'counter_black.json').read_text(encoding='utf-8')) if (VD / 'counter_black.json').exists() else []
+CO = CB if len(CB) >= 3 else json.loads((VD / 'counter_order.json').read_text(encoding='utf-8'))   # 黑先挖到 3 道以上就用黑先
+_MI = {(m['src'], m['L']): m for m in MINED}
+for h in CO:   # counter_order.json 只存題號，盤面從 mined.json 補
+    if 'b' not in h: m = _MI[(h['src'], h['L'])]; h['b'], h['w'] = m['b'], m['w']
+def c_full(h):   # 補上手順走完後的成五點（倒帶課要用）
+    aw = h['atk'] == 'w'; a = (h['w'] if aw else h['b']) + h['sol'][0::2]; d = (h['b'] if aw else h['w']) + h['sol'][1::2]
+    import sys as _s; _s.path.insert(0, str(Path(__file__).resolve().parent)); from check_lessons import fives
+    return sorted(fives(a, d, not aw))
+def c_pts(h): return h['b'] + h['w'] + h['sol'] + h['counterFive'] + c_full(h)
+def c_fit(h):   # 盤面＋解＋反四點＋最後成五點都要放得進 9×9
+    xy_ = lambda t: (COLS.index(t[0]), int(t[1:]) - 1); ps = [xy_(t) for t in c_pts(h)]
+    return max(p[0] for p in ps) - min(p[0] for p in ps) <= 8 and max(p[1] for p in ps) - min(p[1] for p in ps) <= 8
+def c_pos(h): return P(h['b'], h['w'], h['atk'], win_of(c_pts(h)))
+WO = json.loads((VD / 'counter_order.json').read_text(encoding='utf-8'))
+for h in WO:
+    if 'b' not in h: m = _MI[(h['src'], h['L'])]; h['b'], h['w'] = m['b'], m['w']
+seen6, CO6 = set(), []
+for h in sorted(CB, key=lambda h: (h['L'], h['n'], h['src'])) + sorted(WO, key=lambda h: (h['L'], h['n'], h['src'])):   # 黑先優先，不夠用白先補
+    if h['src'] not in seen6 and h['src'] not in USED and c_fit(h): seen6.add(h['src']); CO6.append(h)
+for h in CO6[:3]: USED.add(h['src'])
+def c_names(h): return ('白', '黑') if h['atk'] == 'w' else ('黑', '白')
+def c_predict(h):
+    A, Dn = c_names(h)
+    s = predict(f'先看錯誤示範：{A}如果先下 {h["wrong"]}（正解其實是第二手才下），{Dn}會擋哪？', c_pos(h), h['wrong'], h['def'])
+    s['counter'] = h['counterFive']
+    s['counterText'] = zh(f'{Dn}擋在 {h["def"]}，這一擋同時做出了{Dn}自己的四（紅圈那點一下就成五）。{A}只能回頭去擋，先手沒了，這題就贏不了。這就是反四。')
+    return s
+def c_solve(t, h): return {'type': 'solve', 'text': zh(t), 'src': f"{h['src']}（截短）", 'pos': c_pos(h), 'L': h['L'], 'line': h['sol'], 'five': c_full(h)}
+def c_rewind(t, h): return rewind(t, c_pos(h), h['sol'], c_full(h), h['sol'][-1], h['L'], f"{h['src']}（截短）")
+h1, h2, h3 = CO6[0], CO6[1], CO6[2]
 C['6-1'] = [
-    say('對方擋你的時候，那顆擋子可能剛好讓他自己做出四。這叫「反四」。'),
-    m_rewind('這題的對方擋子差點變成反四。倒回去看看順序為什麼要這樣排。', m6_l2[0]),
+    say('對方擋你的時候，那顆擋子留在盤上。如果它剛好讓對方自己也連成四，就叫「反四」。'),
+    c_predict(h1),
+    c_rewind('現在看正確的順序：先下哪一手，對方的擋子才不會變成四。', h1),
 ]
 C['6-2'] = [
-    say('對方一有四，你就得先擋；你再衝四，他就直接成五。反四一出現，你的先手就沒了。'),
-    m_solve('小心反四，自己解。', m6_l3[0]),
+    say('對方一有四，你就得先擋他，不能再衝自己的四。反四一出現，你的先手就沒了。'),
+    c_predict(h2),
+    c_solve('換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。', h2),
 ]
 C['6-3'] = [
-    say('同樣幾個四，換個順序，對方的擋子就不會變成四。'),
-    m_solve('找出不會被反四的順序。', m6_l3[1] if len(m6_l3) > 1 else m6_l2[1]),
+    say('衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。'),
+    c_solve('這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
 ]
 # 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
 FB = ['是禁手', '不是禁手']
@@ -289,7 +323,7 @@ tr(D['opening'].get('text'))
 for l in D['lessons']:
     tr(l.get('title'))
     for st in l.get('steps', []):
-        tr(st.get('text'))
+        tr(st.get('text')); tr(st.get('counterText'))
         for o in st.get('options', []): tr(o)
 if missing:
     print('還沒翻譯的句子', len(missing), '句：要把它們加進 game/learn/i18n.json 再派翻譯')

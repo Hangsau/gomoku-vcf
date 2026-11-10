@@ -245,6 +245,18 @@
     };
     return B;
   }
+  function fivePoints(own, occ, black) {   // own 下了會連成五的空點（黑剛好五、白五以上）
+    const out = [];
+    for (let x = 0; x < 15; x++) for (let y = 0; y < 15; y++) {
+      const t = nm(x, y); if (occ.has(t)) continue;
+      for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+        let n = 1;
+        for (const sg of [1, -1]) for (let k = 1; own.has(nm(x + sg * dx * k, y + sg * dy * k)); k++) n++;
+        if (black ? n === 5 : n >= 5) { out.push(t); break; }
+      }
+    }
+    return out;
+  }
   function fiveLine(stones, last) {   // stones：Set(座標)，找最後一手連成的五
     const [x, y] = xy(last);
     for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
@@ -523,7 +535,16 @@
       while (true) {
         const t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p)) res(p); }; });
         if (!alive()) return 'quit';
-        if (st.ans.includes(t)) { B.onTap = null; B.clearMarks(); await B.thread(t, defC); break; }
+        if (st.ans.includes(t)) {
+          B.onTap = null; B.clearMarks(); await B.thread(t, defC);
+          if (st.counter) {   // 反四示範：擋子閃紅光，標出它做出的四要成五的點
+            const [px, py] = B.px(t); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 55, keep: true });
+            st.counter.forEach(p => B.glow(p, '#FF7A6B'));
+            msg(f.body, U('ok'), TX(st.counterText || st.text), 'bad');
+            return new Promise(res => button(f.foot, U('nextStep'), '', res));
+          }
+          break;
+        }
         miss++; B.shake(); B.clearMarks(); B.cross(t); msg(f.body, U('no'), TX({ zh: '這一點擋不住。四只差哪一點就成五？', en: 'That does not stop it. Which single point would complete five?', ja: 'そこでは止まらない。どの一点で五になる？', ko: '거기로는 못 막아요. 어느 한 점이면 오목이 되나요?' }), 'bad');
         if (miss >= 2) st.ans.forEach(a => B.glow(a, '#3CC6B4'));
       }
@@ -729,9 +750,17 @@
           if (!v || !v.vcf) {
             miss++; B.shake(); B.glow(r.def, '#FF7A6B');
             const onPath = st.line && st.line.filter((_, k) => k % 2 === 0).includes(r.def);
+            // 擋子是不是做出了守方自己的四（反四）：算守方下了會成五的點
+            const cf = fivePoints(new Set(theirs), new Set([...b, ...w]), defC === 'b');
+            const D = U(defC === 'b' ? 'black' : 'white');
+            if (cf.length && !r.nofour) {
+              const [px, py] = B.px(r.def); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 55 }); cf.forEach(p => B.glow(p, '#FF7A6B'));
+              msg(f.body, U('no'), TX({ zh: `${D}擋在 ${r.def}，同時做出了${D}自己的四（反四，紅圈一下就成五）。你得回頭去擋，先手沒了。退回去換個順序。`, en: `${D} blocked at ${r.def} and made a four of its own (counter-four: the red ring makes five). You must block it and lose the initiative. Step back and change the order.`, ja: `${D}が ${r.def} に止めて、自分の四も作った（逆四：赤い輪で五）。止めに戻るしかなく、先手を失う。戻って順番を変えよう。`, ko: `${D}이 ${r.def}에 막으면서 자기 사도 만들었어요(역사: 빨간 원이면 오목). 막으러 가야 해서 선수를 잃어요. 돌아가서 순서를 바꾸세요.` }), 'bad');
+              await sleep(900);
+            } else
             msg(f.body, U('no'), r.nofour ? TX(why.nofour) : onPath
-              ? TX({ zh: `白擋在 ${r.def}，剛好是你後面要用的點，這條路斷了。退回去換一手。`, en: `White blocked at ${r.def}, the very point you needed later. That path is dead. Step back and try another.`, ja: `白が ${r.def} に止めた。あとで使うはずの点で、この道は切れた。戻って別の手を。`, ko: `백이 ${r.def}에 막았습니다. 나중에 쓸 자리라 이 길은 끊겼어요. 돌아가서 다른 수를.` })
-              : TX({ zh: `白擋在 ${r.def} 之後，你就贏不了了。退回去換一手。`, en: `After White blocks at ${r.def}, you can no longer win. Step back and try another move.`, ja: `白が ${r.def} に止めたあと、もう勝てない。戻って別の手を。`, ko: `백이 ${r.def}에 막은 뒤로는 이길 수 없어요. 돌아가서 다른 수를.` }), 'bad');
+              ? TX({ zh: `${D}擋在 ${r.def}，剛好是你後面要用的點，這條路斷了。退回去換一手。`, en: `${D} blocked at ${r.def}, the very point you needed later. That path is dead. Step back and try another.`, ja: `${D}が ${r.def} に止めた。あとで使うはずの点で、この道は切れた。戻って別の手を。`, ko: `${D}이 ${r.def}에 막았습니다. 나중에 쓸 자리라 이 길은 끊겼어요. 돌아가서 다른 수를.` })
+              : TX({ zh: `${D}擋在 ${r.def} 之後，你就贏不了了。退回去換一手。`, en: `After ${D} blocks at ${r.def}, you can no longer win. Step back and try another move.`, ja: `${D}が ${r.def} に止めたあと、もう勝てない。戻って別の手を。`, ko: `${D}이 ${r.def}에 막은 뒤로는 이길 수 없어요. 돌아가서 다른 수를.` }), 'bad');
             await sleep(1700); if (!alive()) return;
             B.clearMarks(); undo();
             if (miss >= 2 && onLine() && st.line[2 * hist.length]) B.glow(st.line[2 * hist.length], '#3CC6B4');
