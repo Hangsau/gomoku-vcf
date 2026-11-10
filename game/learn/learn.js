@@ -270,6 +270,23 @@
     const b2 = [...b], w2 = [...w]; (aw ? w2 : b2).push(cf[0]); (aw ? b2 : w2).push(r.def);
     return hasVcf(b2, w2, aw, depth + 1);
   }
+  // 禁手是哪一種（2026-11-10 使用者：7-3 看起來不像禁手卻被判禁手，不知道為什麼）：長連／四四／三三，標出相關的子
+  function forbidWhy(b, w, t) {
+    const B = new Set([...b, t]), occ = new Set([...b, ...w, t]), [x, y] = xy(t), dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    for (const [dx, dy] of dirs) {   // 長連：這條線連成六顆以上
+      const run = [t];
+      for (let k = 1; B.has(nm(x + dx * k, y + dy * k)); k++) run.push(nm(x + dx * k, y + dy * k));
+      for (let k = 1; B.has(nm(x - dx * k, y - dy * k)); k++) run.push(nm(x - dx * k, y - dy * k));
+      if (run.length >= 6) return { kind: 'overline', pts: run };
+    }
+    let fours = 0;   // 四四：有兩條以上的線各自差一點成五
+    for (const [dx, dy] of dirs) {
+      const line = new Set(); for (let k = -4; k <= 4; k++) { const p = nm(x + dx * k, y + dy * k); if (B.has(p)) line.add(p); }
+      const f = fivePoints(line, occ, true).filter(p => { const [px, py] = xy(p); return (px - x) * dy === (py - y) * dx; });
+      if (f.length) fours++;
+    }
+    return { kind: fours >= 2 ? 'double4' : 'double3', pts: [] };
+  }
   function fiveLine(stones, last) {   // stones：Set(座標)，找最後一手連成的五
     const [x, y] = xy(last);
     for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
@@ -729,7 +746,14 @@
       try {
         const r = (await move(b.join(' '), w.join(' '), t, aw)).result || { r: 'illegal' };
         if (!alive() || r.r === 'illegal') return;
-        if (r.r === 'forbidden' || r.r === 'notfour') { B.shake(); B.cross(t); msg(f.body, U('no'), TX(why[r.r]), 'bad'); return; }
+        if (r.r === 'forbidden') {
+          const fw = forbidWhy(b, w, t); B.shake(); B.cross(t); fw.pts.forEach(p => p !== t && B.glow(p, '#FF7A6B'));
+          msg(f.body, U('no'), TX({ overline: { zh: `${t} 是黑棋禁手：下了會連成六顆以上（長連，紅圈那幾顆）。中間隔一格的也算。`, en: `${t} is forbidden for Black: it would make six or more in a row (overline, the red rings). A gap that gets filled counts too.`, ja: `${t} は黒の禁手：六つ以上つながる（長連、赤い輪）。一つ空きを埋める形も含む。`, ko: `${t}은 흑의 금수: 여섯 개 이상 이어집니다(장목, 빨간 원). 한 칸 띈 곳을 메우는 것도 포함.` },
+            double4: { zh: `${t} 是黑棋禁手：一顆子同時做出兩個四（四四）。`, en: `${t} is forbidden for Black: one stone would make two fours at once (double four).`, ja: `${t} は黒の禁手：一手で四が二つできる（四々）。`, ko: `${t}은 흑의 금수: 한 수로 사가 두 개 생깁니다(쌍사).` },
+            double3: { zh: `${t} 是黑棋禁手：一顆子同時做出兩條活三（三三）。`, en: `${t} is forbidden for Black: one stone would make two open threes at once (double three).`, ja: `${t} は黒の禁手：一手で活三が二つできる（三々）。`, ko: `${t}은 흑의 금수: 한 수로 열린 삼이 두 개 생깁니다(삼삼).` } }[fw.kind]), 'bad');
+          return;
+        }
+        if (r.r === 'notfour') { B.shake(); B.cross(t); msg(f.body, U('no'), TX(why[r.r]), 'bad'); return; }
         B.put(t, atkC); mine.push(t);
         if (r.r === 'win') {
           if (/禁/.test(r.how || '')) { if (r.at) { B.glow(r.at, '#FF7A6B'); B.cross(r.at); } msg(f.body, U('ok'), TX(WIN_FORBID), 'good'); await sleep(1200); }
