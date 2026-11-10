@@ -139,7 +139,11 @@ def check_step(E, where, st):
         if not pos: err(where, '缺 pos'); return
         B, W = pos['b'], pos['w']; aw = pos.get('atk', 'b') == 'w'
         ans = set(st.get('ans') or [])
+        if st.get('kind') == 'free': in_window(where, list(B) + list(W), pos.get('win')); return   # 自由落子，不判
         if not ans: err(where, '缺 ans'); return
+        if st.get('kind') == 'coord':   # 點出指定座標：答案只能一個點，且要是空點
+            if len(ans) != 1 or (ans & set(B) | ans & set(W)): err(where, '座標題答案要剛好一個空點')
+            in_window(where, list(B) + list(W) + sorted(ans), pos.get('win')); return
         in_window(where, list(B) + list(W) + sorted(ans), pos.get('win'))
         if typ == 'predict':
             m = E.move(B, W, st['play'], aw)
