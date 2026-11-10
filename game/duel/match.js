@@ -46,11 +46,11 @@ export const END_REASON = {
   FULL: '棋盤下滿',
 };
 
-const CENTER = Math.floor(CELLS / 2);
 const CENTER_RC = Math.floor(SIZE / 2);
 const FIVE = 5;
 // 塔拉系列：第幾顆棋子可以下的範圍（距離天元的切比雪夫距離）
-const TARA_ZONE = { 2: 1, 3: 2, 4: 3, 5: 4 };
+// 第 1 手半徑 0＝只能下天元（Rush 對戰 2026-11-11 使用者：照下棋順序由開局方自己下，不由系統先放；棋神之雞原版是自動放）
+const TARA_ZONE = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
 const TARA_LAST_STONE = 5;
 const TARA_BRANCH_STONE = 4;
 const SWAP2_PLACE_COLORS = [BLACK, WHITE, BLACK];
@@ -103,8 +103,7 @@ export function createMatch({ rule, clock = null }, now = 0) {
   };
   if (isTara(rule)) {
     // 第一手一定在天元，直接放好
-    putStone(match, CENTER, BLACK, FIRST_SEAT);
-    match.phase = PHASE.SWAP_CHOICE;
+    match.phase = PHASE.OPENING_PLACE;   // 第一手由開局方自己下在天元
   } else if (rule === RULE.SWAP2) {
     match.phase = PHASE.SWAP2_PLACE;
   }
