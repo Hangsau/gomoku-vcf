@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-/* 對戰（2026-11-11）：配色、字型、按鈕、棋盤都照 game.html（Gomoku Rush）；下棋規則用棋神之雞的 game/duel/match.js（連珠） */
+/* 對戰大廳（2026-11-11）：配色、字型、按鈕、棋盤照 game.html（Gomoku Rush）；規則 game/duel/match.js（連珠）；伺服器 game/duel-server/worker.js */
 :root {
   --bg: #0F121A; --panel: #161A24; --panel2: #1F2A3D; --line: #252B3A; --line2: #2E3546;
   --text: #EDEFF5; --text2: #B6BCCB; --gold: #F2B544; --goldBg: #3A2F17; --goldInk: #1A1300;
@@ -21,15 +21,14 @@
 html, body { touch-action: manipulation; margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
 :lang(ja) body, body:lang(ja) { font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; }
 :lang(ko) body, body:lang(ko) { font-family: 'Noto Sans KR', 'Noto Sans TC', sans-serif; word-break: keep-all; }
-body { min-height: 100dvh; }
-button, a { touch-action: manipulation; }
+button, a, input { touch-action: manipulation; }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .45; }
-button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
-.app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
-.screen { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app { max-width: 520px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .screen[hidden] { display: none; }
-.pad { padding-left: 20px; padding-right: 20px; }
+.pad { padding-left: 16px; padding-right: 16px; }
 .muted { color: var(--text2); }
 .topbar { position: relative; display: flex; justify-content: space-between; align-items: center; padding: calc(6px + env(safe-area-inset-top)) 8px 0; }
 .topbar > div { display: flex; }
@@ -39,177 +38,234 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-
 .langs[hidden] { display: none; }
 .langs button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--text); font-size: 16px; text-align: left; }
 .langs button[aria-pressed="true"] { color: var(--gold); font-weight: 700; }
-.btn { height: 60px; border-radius: 18px; border: 0; font-size: 20px; font-weight: 900; }
+.btn { height: 56px; border-radius: 18px; border: 0; font-size: 19px; font-weight: 900; }
 .btn.gold { background: var(--gold); color: var(--goldInk); }
 .btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--text); font-size: 16px; font-weight: 500; }
-.thumb { padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
-
-/* 設定 */
-.hero { padding-top: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.bigIco { width: clamp(60px, 10dvh, 92px); height: clamp(60px, 10dvh, 92px); fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.opt { padding-top: 14px; display: flex; flex-direction: column; gap: 6px; }
-.opt > span { font-size: 15px; }
-.opt[hidden] { display: none; }
+.thumb { padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
 .chips { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 8px; }
-.chips button { min-height: 46px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 15px; padding: 2px 4px; line-height: 1.2; }
+.chips button { min-height: 44px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 15px; padding: 2px 4px; line-height: 1.2; }
 .chips button[aria-pressed="true"] { border: 2px solid var(--teal); background: var(--tealBg); font-weight: 700; }
-@media (max-height: 700px) { .opt { padding-top: 9px; } .chips button { min-height: 42px; } .hero .bigIco { display: none; } }
+input.nick { flex: 1; min-width: 0; height: 44px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font: inherit; font-size: 16px; padding: 0 12px; }
 
-/* 對局 */
+/* 等待中的小燈：慢慢呼吸，讓人感覺房裡有人在等 */
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--gold); display: inline-block; flex: none; box-shadow: 0 0 0 0 rgba(242,181,68,.6); animation: breathe 1.8s ease-out infinite; }
+.dot.teal { background: var(--teal); animation: none; }
+.dot.off { background: var(--text2); animation: none; opacity: .5; }
+@keyframes breathe { 0% { box-shadow: 0 0 0 0 rgba(242,181,68,.55); } 70% { box-shadow: 0 0 0 8px rgba(242,181,68,0); } 100% { box-shadow: 0 0 0 0 rgba(242,181,68,0); } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+
+/* 大廳 */
+.me { display: flex; gap: 8px; align-items: center; padding-top: 8px; }
+.net { font-size: 13px; display: flex; align-items: center; gap: 6px; padding: 8px 16px 4px; }
+.list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 16px 4px; display: flex; flex-direction: column; gap: 10px; }
+.roomc { width: 100%; text-align: left; border-radius: 18px; border: 2px solid var(--line2); background: var(--panel); color: var(--text); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.roomc.wait { border-color: var(--gold); }
+.roomc .hd { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text2); }
+.roomc .hd b { font-family: var(--num); font-size: 18px; color: var(--text); }
+.roomc .hd .tag { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.roomc.wait .tag { color: var(--gold); }
+.roomc.play .tag { color: var(--teal); }
+.roomc .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seat { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: var(--bg); font-size: 15px; }
+.seat .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat.empty { border: 1.5px dashed var(--line2); background: transparent; color: var(--text2); }
+.st { width: 18px; height: 18px; border-radius: 50%; flex: none; display: inline-block; }
+.st.b { background: #1B1A17; border: 1.5px solid #8A90A0; }   /* 深色底上黑子要有亮邊才看得到 */
+.st.w { background: #FBFAF6; }
+.empty-hall { margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px; }
+.empty-hall svg { width: 64px; height: 64px; fill: none; stroke: var(--line2); stroke-width: 1.5; }
+
+/* 房間 */
 .pbar { margin: 0 12px; padding: 6px 12px; min-height: 52px; border-radius: 16px; border: 2px solid transparent; background: var(--panel); display: flex; align-items: center; gap: 10px; }
 .pbar.on { border-color: var(--gold); background: var(--goldBg); }
-.pbar .st { width: 22px; height: 22px; border-radius: 50%; flex: none; }
-.pbar .st.b { background: #1B1A17; border: 1.5px solid #5B4524; }
-.pbar .st.w { background: #FBFAF6; }
-.pbar .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pbar .nm small { font-weight: 400; color: var(--text2); font-size: 13px; margin-left: 6px; }
+.pbar.empty { border: 2px dashed var(--line2); background: transparent; }
+.pbar .st { width: 22px; height: 22px; }
+.pbar .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 8px; padding-left: 2px; }   /* 不切 overflow：等待燈的光圈才不會被切掉，名字本身另外省略 */
+.pbar .nm small { font-weight: 400; color: var(--text2); font-size: 13px; }
 .pbar .ck { font-family: var(--num); font-size: 26px; font-weight: 700; }
 .pbar .ck.low { color: var(--fail); }
-.pbar.top { margin-top: calc(6px + env(safe-area-inset-top)); }
-.status { padding: 6px 20px; min-height: 30px; font-size: 15px; color: var(--text2); text-align: center; }
-.boardWrap { position: relative; align-self: center; touch-action: manipulation; margin: 2px 0; }
+.pbar .sit { height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--gold); color: var(--goldInk); font-size: 16px; font-weight: 900; }
+.rhead { display: flex; align-items: center; gap: 8px; padding: calc(4px + env(safe-area-inset-top)) 8px 4px; }
+.rhead .ttl { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rhead .ttl b { font-family: var(--num); font-size: 18px; }
+.rhead .ttl span { font-size: 13px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status { padding: 4px 16px; min-height: 28px; font-size: 15px; color: var(--text2); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.boardWrap { position: relative; align-self: center; touch-action: manipulation; margin: 4px 0; }
 canvas#board { display: block; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
 .flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .flash[hidden] { display: none; }
 .flash span { padding: 12px 24px; border-radius: 20px; font-size: 22px; font-weight: 900; background: rgba(15,18,26,.9); display: inline-flex; flex-direction: column; gap: 4px; text-align: center; max-width: 92%; }
 .flash.warn span { color: var(--gold); border: 2px solid var(--gold); }
 .flash.bad span { color: var(--fail); border: 2px solid var(--fail); }
+.flash.info span { color: var(--text); border: 2px solid var(--line2); font-size: 18px; }
 .flash span small { font-size: 15px; font-weight: 500; color: var(--text2); }
-.tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 8px 12px calc(16px + env(safe-area-inset-bottom)); }
-.tools button { height: 56px; border-radius: 14px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 13px; padding: 0; }
-.tools button .ico { width: 22px; height: 22px; }
+.facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; padding: 2px 16px 0; font-size: 13px; color: var(--text2); }
 
-/* 結果（浮在棋局上，棋盤還看得到） */
-.modal { position: fixed; inset: 0; background: rgba(5,7,12,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+/* 浮層 */
+.modal { position: fixed; inset: 0; background: rgba(5,7,12,.6); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
 .modal[hidden] { display: none; }
-.modal .box { width: 100%; max-width: 520px; border-radius: 24px 24px 0 0; background: var(--panel); padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.stamp { width: 128px; height: 128px; flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); text-align: center; }
+.modal .box { width: 100%; max-width: 520px; max-height: 92dvh; overflow-y: auto; border-radius: 24px 24px 0 0; background: var(--panel); padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.modal h2 { margin: 0; font-size: 20px; }
+.modal .lbl { font-size: 14px; color: var(--text2); margin-top: 4px; }
+.stamp { align-self: center; width: 124px; height: 124px; flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); text-align: center; }
 .stamp.lose { border-color: var(--fail); color: var(--fail); }
 .stamp.even { border-color: var(--teal); color: var(--teal); }
-.stamp b { font-size: 30px; font-weight: 900; line-height: 1.1; }
-.box .row { display: flex; gap: 10px; width: 100%; }
-.box .row .btn { flex: 1; }
+.stamp b { font-size: 28px; font-weight: 900; line-height: 1.1; }
+.row2 { display: flex; gap: 10px; }
+.row2 .btn { flex: 1; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--panel2); color: var(--text); padding: 10px 18px; border-radius: 12px; font-size: 15px; z-index: 20; pointer-events: none; }
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- 設定 -->
-<section id="sSetup" class="screen">
+<!-- 大廳 -->
+<section id="sLobby" class="screen">
   <div class="topbar">
     <a href="game.html" class="icob" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <b style="font-size: 18px;" data-i18n="title">對戰</b>
+    <b style="font-size: 18px;" data-i18n="title">對戰大廳</b>
     <div>
       <button type="button" class="icob" data-sound aria-pressed="true"></button>
       <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
     </div>
     <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
   </div>
-  <div class="hero pad">
-    <svg class="bigIco" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg>
-    <span style="font-size: 18px; font-weight: 700; margin-top: 4px;" data-i18n="rule">連珠規則・黑先</span>
-    <span class="muted" style="margin-top: 4px; font-size: 14px;" data-i18n="ruleSub">黑棋不能下三三、四四、長連</span>
+  <div class="pad me">
+    <label for="nick" class="muted" style="font-size: 15px; white-space: nowrap;" data-i18n="nick">暱稱</label>
+    <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="別人看到的名字" data-i18n-ph="nickPh">
   </div>
-  <div class="pad opt"><span class="muted" data-i18n="oppL">對手</span><div class="chips" id="cOpp" style="--n: 2;"></div></div>
-  <div class="pad opt" id="oLevel"><span class="muted" data-i18n="levelL">電腦強度</span><div class="chips" id="cLevel"></div></div>
-  <div class="pad opt" id="oSide"><span class="muted" data-i18n="sideL">我拿</span><div class="chips" id="cSide"></div></div>
-  <div class="pad opt"><span class="muted" data-i18n="timeL">時間</span><div class="chips" id="cTime"></div></div>
-  <div class="pad opt"><span class="muted" data-i18n="tapL">落子方式</span><div class="chips" id="cTap" style="--n: 2;"></div></div>
-  <div style="flex: 1;"></div>
-  <div class="thumb"><button type="button" class="btn gold" id="go" style="flex: 1; height: 64px; font-size: 23px;" data-i18n="go">開始</button></div>
+  <div class="net muted" id="net" role="status"><i class="dot off"></i><span></span></div>
+  <div class="list" id="list"></div>
+  <div class="thumb"><button type="button" class="btn gold" id="openCreate" style="flex: 1; height: 60px; font-size: 21px;" data-i18n="create">開房</button></div>
 </section>
 
-<!-- 對局 -->
-<section id="sPlay" class="screen" hidden>
-  <div class="pbar top" id="pTop"><i class="st" id="pTopSt"></i><span class="nm" id="pTopNm"></span><span class="ck" id="pTopCk"></span></div>
+<!-- 房間（看房間資訊、入座、下棋、觀戰都在這裡） -->
+<section id="sRoom" class="screen" hidden>
+  <div class="rhead">
+    <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
+    <button type="button" class="icob" data-sound aria-pressed="true"></button>
+  </div>
+  <div class="pbar" id="pTop"></div>
   <div class="status" id="status" role="status"></div>
   <div class="boardWrap" id="boardWrap">
     <canvas id="board" aria-label="棋盤" data-i18n-aria="boardAria"></canvas>
     <div class="flash" id="flash" hidden></div>
   </div>
-  <div style="height: 8px;"></div>
-  <div class="pbar" id="pBot"><i class="st" id="pBotSt"></i><span class="nm" id="pBotNm"></span><span class="ck" id="pBotCk"></span></div>
+  <div class="pbar" id="pBot"></div>
+  <div class="facts" id="facts"></div>
   <div style="flex: 1;"></div>
-  <div class="tools">
-    <button type="button" id="bUndo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="undo">悔棋</span></button>
-    <button type="button" id="bResign"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4h11l-1 4 4 1v8H9"/></svg><span data-i18n="resign">認輸</span></button>
-    <button type="button" id="bLeave" style="color: var(--text2);"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l-4 4 4 4M10 12h10"/></svg><span data-i18n="leave">離開</span></button>
-  </div>
+  <div class="thumb" id="rActs"></div>
 </section>
 </div>
 
-<div class="modal" id="mEnd" hidden role="dialog" aria-modal="true" aria-labelledby="endTitle">
+<!-- 開房 -->
+<div class="modal" id="mCreate" hidden role="dialog" aria-modal="true" aria-labelledby="mCreateT">
   <div class="box">
+    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mCreateT" data-i18n="create">開房</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <span class="muted" style="font-size: 14px;" data-i18n="ruleLine">連珠規則・黑先・黑棋不能下三三、四四、長連</span>
+    <span class="lbl" data-i18n="timeL">時間</span><div class="chips" id="cTime"></div>
+    <span class="lbl" data-i18n="sideL">我拿</span><div class="chips" id="cSide"></div>
+    <span class="lbl" data-i18n="tapL">落子方式</span><div class="chips" id="cTap" style="--n: 2;"></div>
+    <button type="button" class="btn gold" id="doCreate" style="margin-top: 8px; height: 60px;" data-i18n="createGo">開房，等人入座</button>
+  </div>
+</div>
+
+<!-- 對局結束 -->
+<div class="modal" id="mEnd" hidden role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="box" style="align-items: stretch;">
     <div class="stamp" id="stamp"><b id="endTitle"></b></div>
-    <span class="muted" id="endWhy" style="font-size: 16px;"></span>
-    <div class="row">
-      <button type="button" class="btn ghost" id="bSetup" data-i18n="setup">換設定</button>
+    <span class="muted" id="endWhy" style="font-size: 16px; text-align: center;"></span>
+    <span id="endAgain" style="font-size: 14px; text-align: center; color: var(--gold); min-height: 20px;"></span>
+    <div class="row2">
+      <button type="button" class="btn ghost" id="bEndLobby" data-i18n="toLobby">回大廳</button>
       <button type="button" class="btn gold" id="bAgain" data-i18n="again">再來一局</button>
     </div>
-    <button type="button" class="btn ghost" id="bLook" style="width: 100%; height: 48px; border: 0; color: var(--text2);" data-i18n="look">看棋盤</button>
+    <button type="button" class="btn ghost" id="bLook" style="height: 44px; border: 0; color: var(--text2);" data-i18n="look">看棋盤</button>
   </div>
 </div>
 
 <script type="module">
-import { BLACK, WHITE, EMPTY, SIZE, CELLS, FORBID_NONE, forbidType } from './game/duel/rules.js';
-import { RULE, ACTION, END_REASON, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, replayMatch } from './game/duel/match.js';
+import { BLACK, WHITE, EMPTY, SIZE, FORBID_NONE, forbidType } from './game/duel/rules.js';
+import { END_REASON, replayMatch, actorOf, colorOf } from './game/duel/match.js';
+
+const WS_LOCAL = 'ws://127.0.0.1:8787/ws';
+const WS_PROD = 'wss://rush-duel.psyhangsau.workers.dev/ws';   // 還沒部署
+const WS_URL = ['127.0.0.1', 'localhost'].includes(location.hostname) ? WS_LOCAL : WS_PROD;
 
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// ---------- 文字（四種語言，跟 Rush 共用語言設定 vcfgame.lang） ----------
+// ---------- 文字（四種語言，跟 Rush 共用 vcfgame.lang） ----------
 const I18N = {
   zh: {
-    title: '對戰', home: '回入口', rule: '連珠規則・黑先', ruleSub: '黑棋不能下三三、四四、長連',
-    oppL: '對手', oppBot: '電腦', oppTwo: '同一台兩人', levelL: '電腦強度', lv1: '初級', lv2: '中級', lv3: '高級',
-    sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機', timeL: '時間', tNone: '不計時', t53: '5 分＋3 秒', t105: '10 分＋5 秒',
-    tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下', go: '開始', boardAria: '棋盤',
-    undo: '悔棋', resign: '認輸', leave: '離開', setup: '換設定', again: '再來一局', look: '看棋盤',
-    you: '你', bot: '電腦', black: '黑棋', white: '白棋',
-    turnYou: '輪到你', turnBot: '電腦想棋中…', turnColor: '輪到{c}', tap2Hint: '同一格再點一下就下',
+    title: '對戰大廳', home: '回入口', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
+    netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…',
+    create: '開房', createGo: '開房，等人入座', ruleLine: '連珠規則・黑先・黑棋不能下三三、四四、長連',
+    timeL: '時間', tNone: '不計時', t53: '5 分＋3 秒', t105: '10 分＋5 秒', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
+    tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
+    emptyHall: '還沒有人開房', emptyHall2: '開一間，等人進來', room: '房間', waiting: '等待中', playing: '對局中', emptySeat: '空位',
+    watchers: '{n} 人觀戰', moveN: '第 {n} 手', you: '你', offline: '斷線中', sit: '入座', black: '黑棋', white: '白棋',
+    stWaitOther: '等對手入座…', stView: '看看房間，想下就按「入座」', stTurnYou: '輪到你', stTurnOther: '等對手下…', stWatch: '觀戰中', stTurnColor: '輪到{c}',
+    stOver: '這盤下完了', tap2Hint: '同一格再點一下就下', leaveRoom: '離開房間', resign: '認輸', back: '回大廳',
     forbidden: '這裡是黑棋禁手', forbiddenSub: '三三、四四、長連都不能下', occupied: '這裡已經有棋子',
     win: '你贏了', lose: '你輸了', draw: '和棋', colorWin: '{c}勝',
-    whyFive: '連成五', whyTrap: '黑棋被抓禁（非擋不可的點是禁手）', whyResign: '{c}認輸', whyTime: '{c}時間到', whyFull: '棋盤下滿了',
-    resignQ: '確定認輸？', leaveQ: '這盤還沒下完，確定離開？', botErr: '電腦出錯了，換你下一手試試',
+    whyFive: '連成五', whyTrap: '黑棋被抓禁（非擋不可的點是禁手）', whyResign: '{c}認輸', whyLeft: '{c}離開了', whyTime: '{c}時間到', whyFull: '棋盤下滿了',
+    again: '再來一局', againWait: '等對方按「再來一局」…', againOther: '對方想再來一局（會交換黑白）', look: '看棋盤',
+    resignQ: '確定認輸？', leaveQ: '對局中離開算認輸，確定？', gone: '這個房間已經關了', taken: '這個位子剛被坐走了', full: '房間太多了，等一下再開',
+    closed: '房間已關閉', started: '對手入座，開始！',
   },
   en: {
-    title: 'Versus', home: 'Home', rule: 'Renju rules · Black first', ruleSub: 'Black can’t play 3-3, 4-4 or overlines',
-    oppL: 'Opponent', oppBot: 'Computer', oppTwo: '2 players, 1 device', levelL: 'Computer level', lv1: 'Easy', lv2: 'Medium', lv3: 'Hard',
-    sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random', timeL: 'Time', tNone: 'No clock', t53: '5 min + 3 s', t105: '10 min + 5 s',
-    tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice', go: 'Start', boardAria: 'Board',
-    undo: 'Undo', resign: 'Resign', leave: 'Leave', setup: 'Settings', again: 'Play again', look: 'View board',
-    you: 'You', bot: 'Computer', black: 'Black', white: 'White',
-    turnYou: 'Your move', turnBot: 'Computer is thinking…', turnColor: '{c} to move', tap2Hint: 'Tap the same point again to place',
+    title: 'Versus Lobby', home: 'Home', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
+    netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…',
+    create: 'Open a room', createGo: 'Open room and wait', ruleLine: 'Renju · Black first · Black can’t play 3-3, 4-4 or overlines',
+    timeL: 'Time', tNone: 'No clock', t53: '5 min + 3 s', t105: '10 min + 5 s', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
+    tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
+    emptyHall: 'No rooms yet', emptyHall2: 'Open one and wait for someone', room: 'Room', waiting: 'Waiting', playing: 'Playing', emptySeat: 'Empty',
+    watchers: '{n} watching', moveN: 'Move {n}', you: 'You', offline: 'Offline', sit: 'Sit', black: 'Black', white: 'White',
+    stWaitOther: 'Waiting for an opponent…', stView: 'Look around — tap “Sit” to play', stTurnYou: 'Your move', stTurnOther: 'Opponent’s move…', stWatch: 'Watching', stTurnColor: '{c} to move',
+    stOver: 'Game over', tap2Hint: 'Tap the same point again to place', leaveRoom: 'Leave room', resign: 'Resign', back: 'Lobby',
     forbidden: 'Forbidden point for Black', forbiddenSub: '3-3, 4-4 and overlines aren’t allowed', occupied: 'That point is taken',
     win: 'You win', lose: 'You lose', draw: 'Draw', colorWin: '{c} wins',
-    whyFive: 'Five in a row', whyTrap: 'Black was forced onto a forbidden point', whyResign: '{c} resigned', whyTime: '{c} ran out of time', whyFull: 'The board is full',
-    resignQ: 'Resign this game?', leaveQ: 'The game isn’t over. Leave anyway?', botErr: 'The computer hit an error — try your move',
+    whyFive: 'Five in a row', whyTrap: 'Black was forced onto a forbidden point', whyResign: '{c} resigned', whyLeft: '{c} left', whyTime: '{c} ran out of time', whyFull: 'The board is full',
+    again: 'Play again', againWait: 'Waiting for the other player…', againOther: 'Your opponent wants a rematch (colors swap)', look: 'View board',
+    resignQ: 'Resign this game?', leaveQ: 'Leaving now counts as resigning. Leave?', gone: 'That room is closed', taken: 'Someone just took that seat', full: 'Too many rooms, try again soon',
+    closed: 'Room closed', started: 'Opponent seated — game on!',
   },
   ja: {
-    title: '対局', home: 'ホーム', rule: '連珠ルール・黒先', ruleSub: '黒は三三・四四・長連が打てません',
-    oppL: '相手', oppBot: 'コンピュータ', oppTwo: '1台で2人', levelL: 'コンピュータの強さ', lv1: '初級', lv2: '中級', lv3: '上級',
-    sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム', timeL: '持ち時間', tNone: 'なし', t53: '5分＋3秒', t105: '10分＋5秒',
-    tapL: '打ち方', tap1: '1回タップで打つ', tap2: '2回タップで打つ', go: '開始', boardAria: '盤面',
-    undo: '待った', resign: '投了', leave: '退出', setup: '設定を変える', again: 'もう一局', look: '盤面を見る',
-    you: 'あなた', bot: 'コンピュータ', black: '黒', white: '白',
-    turnYou: 'あなたの番', turnBot: 'コンピュータが考え中…', turnColor: '{c}の番', tap2Hint: '同じ場所をもう一度タップで打つ',
+    title: '対局ロビー', home: 'ホーム', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
+    netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…',
+    create: '部屋を作る', createGo: '部屋を作って待つ', ruleLine: '連珠・黒先・黒は三三・四四・長連が打てません',
+    timeL: '持ち時間', tNone: 'なし', t53: '5分＋3秒', t105: '10分＋5秒', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
+    tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
+    emptyHall: 'まだ部屋がありません', emptyHall2: '部屋を作って相手を待ちましょう', room: '部屋', waiting: '待機中', playing: '対局中', emptySeat: '空席',
+    watchers: '{n} 人観戦', moveN: '{n} 手目', you: 'あなた', offline: '切断中', sit: '着席', black: '黒', white: '白',
+    stWaitOther: '相手の着席を待っています…', stView: '部屋を見て、打つなら「着席」', stTurnYou: 'あなたの番', stTurnOther: '相手の番…', stWatch: '観戦中', stTurnColor: '{c}の番',
+    stOver: '対局終了', tap2Hint: '同じ場所をもう一度タップで打つ', leaveRoom: '部屋を出る', resign: '投了', back: 'ロビー',
     forbidden: 'ここは黒の禁手です', forbiddenSub: '三三・四四・長連は打てません', occupied: 'すでに石があります',
     win: 'あなたの勝ち', lose: 'あなたの負け', draw: '引き分け', colorWin: '{c}の勝ち',
-    whyFive: '五連', whyTrap: '黒が禁手に追い込まれた', whyResign: '{c}が投了', whyTime: '{c}の時間切れ', whyFull: '盤が埋まりました',
-    resignQ: '投了しますか？', leaveQ: '対局の途中です。退出しますか？', botErr: 'コンピュータでエラーが起きました。打ってみてください',
+    whyFive: '五連', whyTrap: '黒が禁手に追い込まれた', whyResign: '{c}が投了', whyLeft: '{c}が退出', whyTime: '{c}の時間切れ', whyFull: '盤が埋まりました',
+    again: 'もう一局', againWait: '相手を待っています…', againOther: '相手がもう一局を希望（白黒交代）', look: '盤面を見る',
+    resignQ: '投了しますか？', leaveQ: '対局中に出ると投了になります。出ますか？', gone: 'その部屋は閉じられました', taken: 'その席は埋まりました', full: '部屋が多すぎます。少し待ってください',
+    closed: '部屋が閉じられました', started: '相手が着席、対局開始！',
   },
   ko: {
-    title: '대국', home: '처음으로', rule: '렌주 규칙 · 흑 선', ruleSub: '흑은 삼삼·사사·장목을 둘 수 없음',
-    oppL: '상대', oppBot: '컴퓨터', oppTwo: '한 기기에서 2인', levelL: '컴퓨터 실력', lv1: '초급', lv2: '중급', lv3: '고급',
-    sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위', timeL: '시간', tNone: '시간 없음', t53: '5분 + 3초', t105: '10분 + 5초',
-    tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭', go: '시작', boardAria: '바둑판',
-    undo: '무르기', resign: '기권', leave: '나가기', setup: '설정 변경', again: '한 판 더', look: '판 보기',
-    you: '나', bot: '컴퓨터', black: '흑', white: '백',
-    turnYou: '내 차례', turnBot: '컴퓨터가 생각 중…', turnColor: '{c} 차례', tap2Hint: '같은 자리를 한 번 더 탭하면 착수',
+    title: '대국 로비', home: '처음으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
+    netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…',
+    create: '방 만들기', createGo: '방 만들고 기다리기', ruleLine: '렌주 · 흑 선 · 흑은 삼삼·사사·장목 금지',
+    timeL: '시간', tNone: '시간 없음', t53: '5분 + 3초', t105: '10분 + 5초', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
+    tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
+    emptyHall: '아직 방이 없습니다', emptyHall2: '방을 만들고 상대를 기다려 보세요', room: '방', waiting: '대기 중', playing: '대국 중', emptySeat: '빈자리',
+    watchers: '{n}명 관전', moveN: '{n}수째', you: '나', offline: '연결 끊김', sit: '착석', black: '흑', white: '백',
+    stWaitOther: '상대가 앉기를 기다리는 중…', stView: '방을 둘러보고, 두려면 「착석」', stTurnYou: '내 차례', stTurnOther: '상대 차례…', stWatch: '관전 중', stTurnColor: '{c} 차례',
+    stOver: '대국 종료', tap2Hint: '같은 자리를 한 번 더 탭하면 착수', leaveRoom: '방 나가기', resign: '기권', back: '로비',
     forbidden: '흑의 금수 자리입니다', forbiddenSub: '삼삼·사사·장목은 둘 수 없음', occupied: '이미 돌이 있습니다',
     win: '승리', lose: '패배', draw: '무승부', colorWin: '{c} 승',
-    whyFive: '5목 완성', whyTrap: '흑이 금수에 몰림', whyResign: '{c} 기권', whyTime: '{c} 시간 초과', whyFull: '판이 가득 찼습니다',
-    resignQ: '기권할까요?', leaveQ: '아직 대국 중입니다. 나갈까요?', botErr: '컴퓨터 오류가 났습니다. 직접 두어 보세요',
+    whyFive: '5목 완성', whyTrap: '흑이 금수에 몰림', whyResign: '{c} 기권', whyLeft: '{c} 퇴장', whyTime: '{c} 시간 초과', whyFull: '판이 가득 찼습니다',
+    again: '한 판 더', againWait: '상대를 기다리는 중…', againOther: '상대가 한 판 더 원함(흑백 교대)', look: '판 보기',
+    resignQ: '기권할까요?', leaveQ: '대국 중에 나가면 기권입니다. 나갈까요?', gone: '그 방은 닫혔습니다', taken: '방금 다른 사람이 앉았습니다', full: '방이 너무 많습니다. 잠시 후 다시',
+    closed: '방이 닫혔습니다', started: '상대 착석, 대국 시작!',
   },
 };
 const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
@@ -223,20 +279,23 @@ function pickLang() {
 let lang = pickLang();
 const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
 const colorWord = (c) => T(c === BLACK ? 'black' : 'white');
+const TIME_KEYS = { none: 'tNone', '5+3': 't53', '10+5': 't105' };
 function applyLang() {
   document.documentElement.lang = LANGS.find(l => l[0] === lang)[2];
   document.title = 'Gomoku Rush — ' + T('title');
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
   $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
-  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); renderSetup(); });
-  renderSound();
+  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); });
+  renderSound(); renderCreate(); renderNet(); renderLobby(); renderRoom();
 }
 function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
 $('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
 document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
 
-// ---------- 聲音（照 game.html：Web Audio 現場合成的落子聲，開關跟 Rush 共用 vcfgame.sound） ----------
+// ---------- 聲音（照 game.html） ----------
 const SND_ON = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>`, SND_OFF = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
 let soundOn = store.get('vcfgame.sound') !== '0', actx = null;
 function audio() {
@@ -248,7 +307,7 @@ function audio() {
   } catch { actx = null; }
   return actx;
 }
-addEventListener('pointerdown', () => { if (soundOn && actx && actx.state !== 'running') actx.resume().catch(() => {}); }, { capture: true, passive: true });
+addEventListener('pointerdown', () => { audio(); }, { capture: true, passive: true });
 function stoneSound(soft) {
   const a = audio(); if (!a) return;
   const t = a.currentTime, vol = soft ? 0.35 : 0.6;
@@ -262,33 +321,223 @@ function stoneSound(soft) {
   const g2 = a.createGain(); g2.gain.setValueAtTime(vol * 0.7, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
   o.connect(g2).connect(a.destination); o.start(t); o.stop(t + 0.1);
 }
+function chime() {   // 有人入座：兩聲輕響
+  const a = audio(); if (!a) return;
+  [660, 990].forEach((f, i) => {
+    const t = a.currentTime + i * 0.12, o = a.createOscillator(), gn = a.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.25, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    o.connect(gn).connect(a.destination); o.start(t); o.stop(t + 0.3);
+  });
+}
 function renderSound() {
   document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); });
 }
 document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); if (soundOn) stoneSound(); });
 
-// ---------- 設定 ----------
-const TIMES = { none: null, '5+3': { mainMs: 300000, incMs: 3000 }, '10+5': { mainMs: 600000, incMs: 5000 } };
-const TIME_KEYS = { none: 'tNone', '5+3': 't53', '10+5': 't105' };
+// ---------- 身分、暱稱、設定 ----------
+let myId = store.get('vcfgame.duel.id');
+if (!/^[A-Za-z0-9_-]{8,40}$/.test(myId || '')) { myId = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 20); store.set('vcfgame.duel.id', myId); }
+const defaultNick = () => (lang === 'zh' ? '棋手' : lang === 'ja' ? '棋士' : lang === 'ko' ? '기사' : 'Player') + myId.slice(0, 3).toUpperCase();
+let nick = store.get('vcfgame.nick') || defaultNick();
+$('nick').value = nick;
+$('nick').addEventListener('change', () => {
+  nick = $('nick').value.trim().slice(0, 12) || defaultNick();
+  $('nick').value = nick; store.set('vcfgame.nick', nick);
+  send({ t: 'nick', nick });
+});
 const pick = (k, list, d) => { const v = store.get('vcfgame.duel.' + k); return list.includes(v) ? v : d; };
 const cfg = {
-  opp: pick('opp', ['bot', 'two'], 'bot'),
-  level: pick('level', ['1', '2', '3'], '2'),
-  side: pick('side', ['b', 'w', 'r'], 'b'),
-  time: pick('time', Object.keys(TIMES), 'none'),
+  time: pick('time', Object.keys(TIME_KEYS), '10+5'),
+  side: pick('side', ['b', 'w', 'r'], 'r'),
   tap: pick('tap', ['1', '2'], matchMedia('(pointer: coarse)').matches ? '2' : '1'),
 };
 function chips(id, key, opts) {
-  $(id).innerHTML = opts.map(([v, label]) => `<button type="button" data-v="${v}" aria-pressed="${cfg[key] === v}">${label}</button>`).join('');
-  $(id).querySelectorAll('button').forEach(b => b.onclick = () => { cfg[key] = b.dataset.v; store.set('vcfgame.duel.' + key, cfg[key]); renderSetup(); });
+  $(id).innerHTML = opts.map(([v, label]) => `<button type="button" data-v="${v}" aria-pressed="${cfg[key] === v}">${esc(label)}</button>`).join('');
+  $(id).querySelectorAll('button').forEach(b => b.onclick = () => { cfg[key] = b.dataset.v; store.set('vcfgame.duel.' + key, cfg[key]); renderCreate(); });
 }
-function renderSetup() {
-  chips('cOpp', 'opp', [['bot', T('oppBot')], ['two', T('oppTwo')]]);
-  chips('cLevel', 'level', [['1', T('lv1')], ['2', T('lv2')], ['3', T('lv3')]]);
+function renderCreate() {
+  chips('cTime', 'time', Object.keys(TIME_KEYS).map(k => [k, T(TIME_KEYS[k])]));
   chips('cSide', 'side', [['b', T('sideB')], ['w', T('sideW')], ['r', T('sideR')]]);
-  chips('cTime', 'time', Object.keys(TIMES).map(k => [k, T(TIME_KEYS[k])]));
   chips('cTap', 'tap', [['1', T('tap1')], ['2', T('tap2')]]);
-  $('oLevel').hidden = $('oSide').hidden = cfg.opp !== 'bot';
+}
+function openModal(id) { $(id).hidden = false; const c = $(id).querySelector('[data-close]'); if (c) c.focus(); }
+document.querySelectorAll('.modal [data-close]').forEach(b => b.onclick = () => { b.closest('.modal').hidden = true; });
+$('openCreate').onclick = () => openModal('mCreate');
+$('doCreate').onclick = () => { $('mCreate').hidden = true; send({ t: 'create', time: cfg.time, color: cfg.side }); };
+
+// ---------- 連線 ----------
+let ws = null, online = false, failCount = 0, pingT = 0, retryT = 0;
+let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null;   // viewing：我正在看的房號
+function connect() {
+  clearTimeout(retryT);
+  try { ws = new WebSocket(`${WS_URL}?id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
+  ws.onopen = () => { online = true; failCount = 0; renderNet(); if (viewing) send({ t: 'view', room: viewing }); };
+  ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
+  ws.onclose = () => { online = false; failCount++; renderNet(); retry(); };
+}
+function retry() { clearTimeout(retryT); retryT = setTimeout(connect, Math.min(8000, 800 * 2 ** Math.min(failCount, 4))); }
+function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
+pingT = setInterval(() => send({ t: 'ping' }), 25000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!ws || ws.readyState > 1)) connect(); });
+
+function onMsg(m) {
+  if (m.t === 'lobby') { lobby = m.rooms; onlineN = m.online || 0; renderLobby(); renderNet(); }
+  else if (m.t === 'room') onRoom(m.room, m.now);
+  else if (m.t === 'closed') { if (viewing === m.room) { toast(T('closed')); toLobby(false); } }
+  else if (m.t === 'err') {
+    if (m.code === 'forbidden') flash(T('forbidden'), T('forbiddenSub'), 'warn');
+    else if (m.code === 'occupied') flash(T('occupied'), '', 'warn', 800);
+    else if (m.code === 'gone') { toast(T('gone')); toLobby(false); }
+    else if (m.code === 'taken') toast(T('taken'));
+    else if (m.code === 'full') toast(T('full'));
+  }
+}
+function renderNet() {
+  $('net').querySelector('i').className = 'dot ' + (online ? 'teal' : 'off');
+  $('net').querySelector('span').textContent = online ? T('netOn', { n: Math.max(1, onlineN) }) : T(failCount > 2 ? 'netFail' : 'netOff');
+}
+
+// ---------- 大廳 ----------
+function renderLobby() {
+  if (!lobby.length) {
+    $('list').innerHTML = `<div class="empty-hall"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg><b style="font-size:18px">${esc(T('emptyHall'))}</b><span class="muted" style="font-size:15px">${esc(T('emptyHall2'))}</span></div>`;
+    return;
+  }
+  $('list').innerHTML = lobby.map(r => {
+    const wait = r.state !== 'play';
+    const seat = (s, c) => s ? `<span class="seat"><i class="st ${c}"></i><span class="nm">${esc(s.nick)}</span>${s.online ? '' : '<i class="dot off"></i>'}</span>`
+      : `<span class="seat empty"><i class="st ${c}" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
+    const extra = [T(TIME_KEYS[r.time]), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.moves ? T('moveN', { n: r.moves }) : ''].filter(Boolean).join('・');
+    return `<button type="button" class="roomc ${wait ? 'wait' : 'play'}" data-room="${esc(r.id)}">
+      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b><span>${esc(extra)}</span>
+        <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : 'playing'))}</span></span>
+      <span class="seats">${seat(r.seats[0], 'b')}${seat(r.seats[1], 'w')}</span></button>`;
+  }).join('');
+  $('list').querySelectorAll('[data-room]').forEach(b => b.onclick = () => enterRoom(b.dataset.room));
+}
+function enterRoom(id) { layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
+function toLobby(tell = true) {
+  if (tell) send({ t: 'leave' });
+  viewing = null; room = null; match = null; ghost = null; layoutSig = '';
+  $('mEnd').hidden = true;
+  show('sLobby');
+}
+function show(id) { for (const s of ['sLobby', 'sRoom']) $(s).hidden = s !== id; layout(); }
+
+// ---------- 房間 ----------
+let match = null, ghost = null, flashT = 0, endShownFor = null, layoutSig = '';
+const mySeat = () => room ? room.seats.findIndex(s => s && s.id === myId) : -1;
+function onRoom(r, serverNow) {
+  const prev = room, prevMoves = match ? match.moves.length : 0;
+  room = r; roomAt = Date.now();
+  viewing = r.id;
+  if (!$('sRoom').hidden || mySeat() >= 0) show('sRoom');   // 自己開的房、或重連回原本的座位：直接進房
+  match = r.match ? replayMatch(r.match.config, r.match.log, r.match.startedAt) : null;
+  if (match && match.moves.length > prevMoves && prev && prev.id === r.id) stoneSound(match.moves.at(-1).seat !== mySeat());
+  if (prev && prev.id === r.id && prev.state === 'wait' && r.state === 'play' && mySeat() >= 0) { chime(); flash(T('started'), '', 'info', 1200); }
+  if (r.state !== 'play') ghost = null;
+  const sig = r.state + (mySeat() >= 0) + !!r.watchers;   // 版面會變（按鈕、觀戰人數那行）才重算棋盤大小
+  renderRoom();
+  if (sig !== layoutSig) { layoutSig = sig; layout(); }
+  if (r.state === 'over' && mySeat() >= 0 && endShownFor !== r.id + ':' + r.games) { endShownFor = r.id + ':' + r.games; setTimeout(() => { if (room && room.state === 'over') $('mEnd').hidden = false; }, match?.result?.line ? 700 : 300); }
+  if (r.state !== 'over') $('mEnd').hidden = true;
+  if (r.state === 'over') renderEnd();
+}
+// 畫面下方是我；我沒坐的話，下方黑、上方白
+const bottomSeat = () => (mySeat() >= 0 ? mySeat() : 0);
+function seatColor(seat) { return match ? colorOf(match, seat) : (seat === 0 ? BLACK : WHITE); }
+function clockOf(seat) {
+  if (!room || !room.clock) return null;
+  let ms = room.clock[seat];
+  if (match && room.state === 'play' && actorOf(match) === seat) ms -= Date.now() - roomAt;
+  return Math.max(0, ms);
+}
+const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function renderBar(el, seat) {
+  const s = room && room.seats[seat], c = seatColor(seat);
+  const stone = `<i class="st ${c === BLACK ? 'b' : 'w'}"></i>`;
+  if (!s) {
+    el.className = 'pbar empty';
+    const canSit = room && room.state !== 'play' && mySeat() < 0;
+    el.innerHTML = `${stone}<span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
+    const b = el.querySelector('[data-sit]'); if (b) b.onclick = () => { audio(); send({ t: 'sit', room: room.id, seat }); };
+    return;
+  }
+  const act = match && room.state === 'play' ? actorOf(match) : null;
+  el.className = 'pbar' + (act === seat ? ' on' : '');
+  const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
+  const tag = !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
+  const ck = clockOf(seat);
+  el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < 30000 ? ' low' : ''}">${ck != null && room.state !== 'wait' ? mmss(ck) : ''}</span>`;
+}
+function renderRoom() {
+  if ($('sRoom').hidden) return;
+  if (!room) { $('rTitle').textContent = T('room') + ' ' + (viewing || ''); $('rSub').textContent = ''; $('pTop').innerHTML = ''; $('pBot').innerHTML = ''; $('rActs').innerHTML = ''; draw(); return; }
+  const me = mySeat(), bs = bottomSeat();
+  $('rTitle').textContent = T('room') + ' ' + room.id;
+  $('rSub').textContent = [T(TIME_KEYS[room.time]), T(room.state === 'play' ? 'playing' : room.state === 'wait' ? 'waiting' : 'stOver')].join('・');
+  renderBar($('pTop'), 1 - bs);
+  renderBar($('pBot'), bs);
+  // 狀態列
+  let st = '';
+  if (room.state === 'wait') st = me >= 0 ? `<i class="dot"></i>${esc(T('stWaitOther'))}` : esc(T('stView'));
+  else if (room.state === 'play') {
+    const act = actorOf(match);
+    st = esc(me < 0 ? T('stWatch') + '・' + T('stTurnColor', { c: colorWord(colorOf(match, act)) }) : act === me ? (ghost != null ? T('tap2Hint') : T('stTurnYou')) : T('stTurnOther'));
+  } else st = esc(endLine());
+  $('status').innerHTML = st;
+  $('facts').innerHTML = [T('ruleLine'), room.watchers ? T('watchers', { n: room.watchers }) : ''].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  // 底部按鈕
+  const acts = [];
+  if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
+  if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
+  acts.push(`<button type="button" class="btn ghost" id="aLeave" style="flex:1">${esc(T(me >= 0 ? 'leaveRoom' : 'back'))}</button>`);
+  $('rActs').innerHTML = acts.join('');
+  if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
+  if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
+  $('aLeave').onclick = leaveRoom;
+  draw();
+}
+function leaveRoom() {
+  if (room && room.state === 'play' && mySeat() >= 0 && !confirm(T('leaveQ'))) return;
+  toLobby(true);
+}
+$('rBack').onclick = leaveRoom;
+function endLine() {
+  const r = match && match.result;
+  if (!r) return T('stOver');
+  const loserSeat = r.winnerSeat === null ? null : 1 - r.winnerSeat;
+  const lc = loserSeat === null ? '' : (room.seats[loserSeat]?.nick || colorWord(colorOf(match, loserSeat)));
+  const why = r.reason === END_REASON.FIVE ? T('whyFive') : r.reason === END_REASON.FORBIDDEN ? T('whyTrap')
+    : r.reason === END_REASON.RESIGN ? T(room.endNote === 'disconnect' ? 'whyLeft' : 'whyResign', { c: lc })
+    : r.reason === END_REASON.TIMEOUT ? T('whyTime', { c: lc }) : T('whyFull');
+  return (r.winnerSeat === null ? T('draw') : T('colorWin', { c: colorWord(r.winnerColor) })) + '・' + why;
+}
+function renderEnd() {
+  const r = match && match.result, me = mySeat();
+  if (!r || me < 0) return;
+  let title, cls = '';
+  if (r.winnerSeat === null) { title = T('draw'); cls = 'even'; }
+  else if (r.winnerSeat === me) title = T('win');
+  else { title = T('lose'); cls = 'lose'; }
+  $('endTitle').textContent = title;
+  $('stamp').className = 'stamp ' + cls;
+  $('endWhy').textContent = endLine().split('・').slice(1).join('・');
+  const other = room.seats[1 - me];
+  const iWant = room.again.includes(myId), theyWant = other && room.again.includes(other.id);
+  $('endAgain').textContent = !other ? '' : iWant ? T('againWait') : theyWant ? T('againOther') : '';
+  $('bAgain').disabled = !other || iWant;
+}
+$('bAgain').onclick = () => send({ t: 'again' });
+$('bEndLobby').onclick = () => toLobby(true);
+$('bLook').onclick = () => { $('mEnd').hidden = true; };
+
+function flash(title, sub, cls, ms = 1100) {
+  $('flash').className = 'flash ' + cls;
+  $('flash').innerHTML = `<span>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
+  $('flash').hidden = false;
+  clearTimeout(flashT); flashT = setTimeout(() => { $('flash').hidden = true; }, ms);
 }
 
 // ---------- 棋盤（畫法、顏色照 game.html） ----------
@@ -315,25 +564,17 @@ function draw() {
   }
   ctx.fillStyle = '#5B4524';
   for (const [r, c] of [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]]) { const [x, y] = xyOf(r * SIZE + c); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
-  if (!S) return;
-  for (const m of S.match.moves) stone(m.p, m.color === BLACK);
-  const last = S.match.moves.at(-1);
+  if (!match) return;
+  for (const m of match.moves) stone(m.p, m.color === BLACK);
+  const last = match.moves.at(-1);
   if (last) { const [x, y] = xyOf(last.p); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
-  const line = S.match.result?.line;
-  if (line) {   // 連成的五顆：金色圈
-    ctx.lineWidth = 3; ctx.strokeStyle = '#F2B544';
-    for (const p of line) { const [x, y] = xyOf(p); ctx.beginPath(); ctx.arc(x, y, cell * 0.52, 0, Math.PI * 2); ctx.stroke(); }
-  }
-  const fp = S.match.result?.point;   // 黑棋被抓禁的點：紅色叉
-  if (fp != null) {
-    const [x, y] = xyOf(fp), k = cell * 0.3;
-    ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B';
-    ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke();
-  }
-  if (S.ghost != null) {
-    stone(S.ghost, colorOf(S.match, actorOf(S.match)) === BLACK, 0.55);
-    const [x, y] = xyOf(S.ghost);
-    ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+  const line = match.result?.line;
+  if (line) { ctx.lineWidth = 3; ctx.strokeStyle = '#F2B544'; for (const p of line) { const [x, y] = xyOf(p); ctx.beginPath(); ctx.arc(x, y, cell * 0.52, 0, Math.PI * 2); ctx.stroke(); } }
+  const fp = match.result?.point;   // 黑棋被抓禁的點：紅叉
+  if (fp != null) { const [x, y] = xyOf(fp), k = cell * 0.3; ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B'; ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke(); }
+  if (ghost != null && room && room.state === 'play') {
+    stone(ghost, colorOf(match, mySeat()) === BLACK, 0.55);
+    const [x, y] = xyOf(ghost); ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
     ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
   }
 }
@@ -347,11 +588,13 @@ function setBoardPx(v) {
   pad = px * 0.045; cell = (px - 2 * pad) / (SIZE - 1);
   draw();
 }
-function layout() {   // 跟 Rush 一樣一屏放得下：先照寬度放，超出視窗多少就把棋盤縮多少（最小 240）
+function layout() {   // 一屏放得下：先照寬度放，再看房間畫面其他東西佔多少高度，剩下的給棋盤（最小 240）
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
-  setBoardPx(Math.max(300, Math.min(w - 16, window.innerHeight - 300)));
-  if ($('sPlay').hidden) return;
-  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if ($('sRoom').hidden) return setBoardPx(Math.max(240, w - 16));
+  setBoardPx(Math.max(240, w - 16));
+  const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && el.style.flex !== '1').reduce((s, el) => s + el.getBoundingClientRect().height, 0);
+  setBoardPx(Math.max(240, Math.min(w - 16, window.innerHeight - used - 16)));
+  const over = document.documentElement.scrollHeight - window.innerHeight;   // 還是超出（字換行等）：超出多少縮多少
   if (over > 0) setBoardPx(Math.max(240, px - over));
 }
 addEventListener('resize', layout);
@@ -361,191 +604,26 @@ function cellAt(ev) {
   if (c < 0 || c >= SIZE || row < 0 || row >= SIZE) return null;
   return row * SIZE + c;
 }
-
-// ---------- 一盤棋 ----------
-// S.match 是 match.js 的棋局（不可改，每次動作回傳新的）；座位 0 先下黑。打電腦時 S.me 是我的座位，兩人時 null。
-let S = null, flashT = 0;
-const worker = new Worker(new URL('./game/duel/botWorker.js', import.meta.url), { type: 'module' });
-let botReq = 0;
-const BOT_MIN_MS = 350;   // 電腦太快下會看不清，至少等這麼久
-const isBotTurn = () => S && S.me !== null && actorOf(S.match) === 1 - S.me;
-const seatName = (seat) => S.me === null ? colorWord(colorOf(S.match, seat)) : seat === S.me ? T('you') : T('bot');
-
-function newGame() {
-  const me = cfg.opp === 'bot' ? (cfg.side === 'b' ? 0 : cfg.side === 'w' ? 1 : (Math.random() < 0.5 ? 0 : 1)) : null;
-  S = { match: createMatch({ rule: RULE.RENJU, clock: TIMES[cfg.time] }, Date.now()), me, ghost: null, level: Number(cfg.level), done: false };
-  $('mEnd').hidden = true;
-  show('sPlay');
-  render();
-  maybeBot();
-}
-function show(id) {
-  for (const s of ['sSetup', 'sPlay']) $(s).hidden = s !== id;
-  layout();
-}
-// 畫面上方是對手（兩人時是白），下方是我（兩人時是黑）
-const bottomSeat = () => S.me ?? S.match.blackSeat;
-function render() {
-  if (!S) return;
-  const m = S.match, act = actorOf(m), now = Date.now(), ck = clockMs(m, now);
-  const fill = (pre, seat) => {
-    const c = colorOf(m, seat);
-    $(pre + 'St').className = 'st ' + (c === BLACK ? 'b' : 'w');
-    $(pre + 'Nm').innerHTML = esc(seatName(seat)) + (S.me !== null && seat !== S.me ? `<small>${esc(T('lv' + S.level))}</small>` : '');
-    $(pre).classList.toggle('on', act === seat);
-    const el = $(pre + 'Ck');
-    el.textContent = ck ? mmss(ck[seat]) : '';
-    el.classList.toggle('low', !!ck && ck[seat] < 30000);
-  };
-  fill('pBot', bottomSeat());
-  fill('pTop', 1 - bottomSeat());
-  let st = '';
-  if (act !== null) {
-    if (S.me === null) st = T('turnColor', { c: colorWord(colorOf(m, act)) });
-    else st = act === S.me ? T('turnYou') : T('turnBot');
-    if (S.ghost != null) st = T('tap2Hint');
-  }
-  $('status').textContent = st;
-  $('bUndo').disabled = !canUndo();
-  $('bResign').disabled = act === null;
-  draw();
-}
-const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-
-function flash(title, sub, cls, ms = 1100) {
-  $('flash').className = 'flash ' + cls;
-  $('flash').innerHTML = `<span>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
-  $('flash').hidden = false;
-  clearTimeout(flashT); flashT = setTimeout(() => { $('flash').hidden = true; }, ms);
-}
-
-// 套用一個動作；成功回傳 true
-function act(seat, action) {
-  const r = applyAction(S.match, seat, action, Date.now());
-  S.match = r.match;
-  if (r.error && !S.match.result) return false;
-  S.ghost = null;
-  if (action.type === ACTION.PLACE && !r.error) stoneSound(S.me !== null && seat !== S.me);
-  afterMove();
-  return true;
-}
-// 黑棋非擋不可的點是禁手（Rush 的「被禁手」判輸）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 黑只能下那裡，交給 match.js 判黑輸
-function forcedForbidden() {
-  const m = S.match;
-  if (m.result || colorOf(m, actorOf(m)) !== BLACK) return null;
-  const cells = m.cells;
-  for (let p = 0; p < CELLS; p++) if (cells[p] === EMPTY && isWinningMove(m.rule, cells, p, BLACK) && forbidType(cells, p) === FORBID_NONE) return null;
-  const fives = [];
-  for (let p = 0; p < CELLS; p++) if (cells[p] === EMPTY && isWinningMove(m.rule, cells, p, WHITE)) fives.push(p);
-  return fives.length === 1 && forbidType(cells, fives[0]) !== FORBID_NONE ? fives[0] : null;
-}
-function afterMove() {
-  const trap = forcedForbidden();
-  if (trap !== null) { S.match = applyAction(S.match, actorOf(S.match), { type: ACTION.PLACE, p: trap }, Date.now()).match; }
-  render();
-  if (S.match.result) return endGame();
-  maybeBot();
-}
-
-function maybeBot() {
-  if (!isBotTurn() || S.match.result) return;
-  const id = ++botReq, seat = 1 - S.me, t0 = Date.now();
-  render();
-  if (!S.match.moves.length) {   // 電腦拿黑：第一手下天元（bot.js 空盤會亂下）
-    setTimeout(() => { if (id === botReq && S && !S.match.moves.length) act(seat, { type: ACTION.PLACE, p: Math.floor(CELLS / 2) }); }, BOT_MIN_MS);
-    return;
-  }
-  worker.onmessage = ({ data }) => {
-    if (data.id !== botReq || !S || S.match.result) return;
-    const wait = Math.max(0, BOT_MIN_MS - (Date.now() - t0));
-    setTimeout(() => {
-      if (data.id !== botReq || !S || S.match.result) return;
-      if (data.error || !data.action) { console.error(data.error); flash(T('botErr'), '', 'bad'); return; }
-      act(seat, data.action);
-    }, wait);
-  };
-  worker.postMessage({ id, saved: serializeMatch(S.match), seat, level: S.level, seed: (Math.random() * 2 ** 32) >>> 0 });
-}
-
 cv.addEventListener('click', (ev) => {
-  if (!S || S.match.result || !$('mEnd').hidden) return;
-  const seat = actorOf(S.match);
-  if (seat === null || isBotTurn()) return;
+  if (!room) return;
+  if (room.state === 'over' && mySeat() >= 0 && $('mEnd').hidden) { $('mEnd').hidden = false; return; }
+  if (room.state !== 'play' || !match || actorOf(match) !== mySeat()) return;
   const p = cellAt(ev);
   if (p === null) return;
-  if (S.match.cells[p] !== EMPTY) { flash(T('occupied'), '', 'warn', 800); return; }
-  // Rush 的規則：自己點到禁手只提醒，棋子不落、不判輸
-  if (colorOf(S.match, seat) === BLACK && forbidType(S.match.cells, p) !== FORBID_NONE) { S.ghost = null; render(); flash(T('forbidden'), T('forbiddenSub'), 'warn'); return; }
-  if (cfg.tap === '2' && S.ghost !== p) { S.ghost = p; render(); return; }
-  act(seat, { type: ACTION.PLACE, p });
+  if (match.cells[p] !== EMPTY) { flash(T('occupied'), '', 'warn', 800); return; }
+  // Rush 的規則：自己點到禁手只提醒，棋子不落、不判輸（伺服器也會擋）
+  if (colorOf(match, mySeat()) === BLACK && forbidType(match.cells, p) !== FORBID_NONE) { ghost = null; renderRoom(); flash(T('forbidden'), T('forbiddenSub'), 'warn'); return; }
+  if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
+  ghost = null;
+  send({ t: 'move', p });
 });
-
-// 悔棋：打電腦退回到我上一手之前（電腦那手一起退）；兩人時退一手。時間不還。
-function undoCount() {
-  const mv = S.match.log.filter(x => x.action.type === ACTION.PLACE);
-  if (S.me === null) return mv.length ? 1 : 0;
-  let k = 0;
-  for (let i = mv.length - 1; i >= 0; i--) { k++; if (mv[i].seat === S.me) return k; }
-  return 0;
-}
-const canUndo = () => !!S && !S.match.result && !isBotTurn() && undoCount() > 0;
-$('bUndo').onclick = () => {
-  if (!canUndo()) return;
-  const keep = S.match.log.slice(0, S.match.log.length - undoCount());
-  const cur = S.match.clock && clockMs(S.match, Date.now());
-  const m = replayMatch(S.match.config, keep, S.match.startedAt);
-  if (m.clock) { m.clock.remaining = cur; m.clock.since = Date.now(); }
-  botReq++;
-  S.match = m; S.ghost = null;
-  render();
-};
-$('bResign').onclick = () => {
-  if (!S || S.match.result || !confirm(T('resignQ'))) return;
-  const seat = S.me ?? actorOf(S.match);   // 兩人時是輪到的人認輸
-  botReq++;
-  act(seat, { type: ACTION.RESIGN });
-};
-$('bLeave').onclick = () => {
-  if (S && !S.match.result && S.match.moves.length && !confirm(T('leaveQ'))) return;
-  botReq++; S = null; $('mEnd').hidden = true; show('sSetup');
-};
-
-function endGame() {
-  const r = S.match.result;
-  const loserSeat = r.winnerSeat === null ? null : 1 - r.winnerSeat;
-  const loserColor = loserSeat === null ? null : colorWord(colorOf(S.match, loserSeat));
-  let title, cls = '';
-  if (r.winnerSeat === null) { title = T('draw'); cls = 'even'; }
-  else if (S.me === null) { title = T('colorWin', { c: colorWord(r.winnerColor) }); cls = r.winnerColor === BLACK ? '' : 'even'; }
-  else if (r.winnerSeat === S.me) title = T('win');
-  else { title = T('lose'); cls = 'lose'; }
-  const why = r.reason === END_REASON.FIVE ? T('whyFive') : r.reason === END_REASON.FORBIDDEN ? T('whyTrap')
-    : r.reason === END_REASON.RESIGN ? T('whyResign', { c: loserColor }) : r.reason === END_REASON.TIMEOUT ? T('whyTime', { c: loserColor }) : T('whyFull');
-  $('endTitle').textContent = title;
-  $('stamp').className = 'stamp ' + cls;
-  $('endWhy').textContent = why;
-  setTimeout(() => { if (S && S.match.result) $('mEnd').hidden = false; }, r.line ? 700 : 300);   // 先讓人看到連成的五顆
-}
-$('bAgain').onclick = newGame;
-$('bSetup').onclick = () => { S = null; $('mEnd').hidden = true; show('sSetup'); };
-$('bLook').onclick = () => { $('mEnd').hidden = true; };
-$('go').onclick = () => { audio(); newGame(); };
-
-// 計時：輪到的人時間用完就判負
-setInterval(() => {
-  if (!S || S.match.result || !S.match.clock) return;
-  const m = checkTimeout(S.match, Date.now());
-  if (m !== S.match) { botReq++; S.match = m; render(); endGame(); } else render();
-}, 250);
-// 對局中離開頁面前提醒
-addEventListener('beforeunload', (e) => { if (S && !S.match.result && S.match.moves.length) { e.preventDefault(); e.returnValue = ''; } });
-// 「看棋盤」之後點棋盤再叫出結果
-cv.addEventListener('click', () => { if (S && S.match.result && $('mEnd').hidden) $('mEnd').hidden = false; });
+// 時鐘每 250ms 重畫（只動兩條玩家列，不重畫棋盤）
+setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom').hidden) { renderBar($('pTop'), 1 - bottomSeat()); renderBar($('pBot'), bottomSeat()); } }, 250);
+addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && mySeat() >= 0) { e.preventDefault(); e.returnValue = ''; } });
 
 applyLang();
-renderSetup();
 layout();
+connect();
 </script>
 </body>
 </html>

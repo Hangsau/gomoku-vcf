@@ -15,7 +15,7 @@ OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT" .wrangler' EXIT  # .wrangler 是 wrangler 自己留的快取，不留在 repo 裡
 # autocrlf=false：上傳跟 GitHub 上一模一樣的位元組（Windows 預設會轉成 CRLF）
 git -c core.autocrlf=false archive HEAD | tar -x -C "$OUT"
-rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/tools"
+rm -rf "$OUT/docs" "$OUT/game/worker" "$OUT/game/duel-server" "$OUT/tools"
 find "$OUT" -maxdepth 1 -name '*.md' -delete
 # 自動更新（2026-11-09）：頁面裡的 BUILD 換成這次的 commit 短碼，version.txt 寫同一個；開著的 App 比對到不同就會在選單畫面重新整理
 BUILD="$(git rev-parse --short HEAD)"
