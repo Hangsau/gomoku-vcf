@@ -1,6 +1,6 @@
 {
  "ver": "2026-11-09b",
- "at": "2026-11-10 16:16",
+ "at": "2026-11-10 16:48",
  "blocked": 0,
  "dans": [
   {
@@ -86,23 +86,23 @@
   {
    "dan": "九段",
    "file": "9.json",
-   "n": 609,
+   "n": 611,
    "white": 15,
    "trained": 105,
-   "bank": 504,
-   "pool": 725,
+   "bank": 506,
+   "pool": 727,
    "blocked": 0
   },
   {
    "dan": "傳說",
    "file": "10.json",
-   "n": 897,
+   "n": 904,
    "white": 0,
    "trained": 46,
-   "bank": 851,
-   "pool": 1039,
+   "bank": 858,
+   "pool": 1046,
    "blocked": 0
   }
  ],
- "total": 187521
+ "total": 187530
 }
