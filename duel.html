@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F121A">
+<title>Gomoku Rush — 對戰</title>
+<link rel="icon" type="image/png" sizes="192x192" href="app/icon-192.png">
+<link rel="apple-touch-icon" href="app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* 對戰（2026-11-11）：配色、字型、按鈕、棋盤都照 game.html（Gomoku Rush）；下棋規則用棋神之雞的 game/duel/match.js（連珠） */
+:root {
+  --bg: #0F121A; --panel: #161A24; --panel2: #1F2A3D; --line: #252B3A; --line2: #2E3546;
+  --text: #EDEFF5; --text2: #B6BCCB; --gold: #F2B544; --goldBg: #3A2F17; --goldInk: #1A1300;
+  --teal: #3CC6B4; --tealBg: #1F3B39; --tealInk: #06231F; --fail: #FF7A6B; --failBg: #3D1F1F;
+  --num: 'Chakra Petch', 'Noto Sans TC', sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { touch-action: manipulation; margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: 100%; }
+:lang(ja) body, body:lang(ja) { font-family: 'Noto Sans JP', 'Noto Sans TC', sans-serif; }
+:lang(ko) body, body:lang(ko) { font-family: 'Noto Sans KR', 'Noto Sans TC', sans-serif; word-break: keep-all; }
+body { min-height: 100dvh; }
+button, a { touch-action: manipulation; }
+button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: default; opacity: .45; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.app { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+.screen { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+.screen[hidden] { display: none; }
+.pad { padding-left: 20px; padding-right: 20px; }
+.muted { color: var(--text2); }
+.topbar { position: relative; display: flex; justify-content: space-between; align-items: center; padding: calc(6px + env(safe-area-inset-top)) 8px 0; }
+.topbar > div { display: flex; }
+.icob { width: 48px; height: 48px; border: 0; border-radius: 14px; background: transparent; color: var(--text); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.ico { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.langs { position: absolute; right: 8px; top: calc(56px + env(safe-area-inset-top)); z-index: 5; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.langs[hidden] { display: none; }
+.langs button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--text); font-size: 16px; text-align: left; }
+.langs button[aria-pressed="true"] { color: var(--gold); font-weight: 700; }
+.btn { height: 60px; border-radius: 18px; border: 0; font-size: 20px; font-weight: 900; }
+.btn.gold { background: var(--gold); color: var(--goldInk); }
+.btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--text); font-size: 16px; font-weight: 500; }
+.thumb { padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
+
+/* 設定 */
+.hero { padding-top: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.bigIco { width: clamp(60px, 10dvh, 92px); height: clamp(60px, 10dvh, 92px); fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.opt { padding-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.opt > span { font-size: 15px; }
+.opt[hidden] { display: none; }
+.chips { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 8px; }
+.chips button { min-height: 46px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 15px; padding: 2px 4px; line-height: 1.2; }
+.chips button[aria-pressed="true"] { border: 2px solid var(--teal); background: var(--tealBg); font-weight: 700; }
+@media (max-height: 700px) { .opt { padding-top: 9px; } .chips button { min-height: 42px; } .hero .bigIco { display: none; } }
+
+/* 對局 */
+.pbar { margin: 0 12px; padding: 6px 12px; min-height: 52px; border-radius: 16px; border: 2px solid transparent; background: var(--panel); display: flex; align-items: center; gap: 10px; }
+.pbar.on { border-color: var(--gold); background: var(--goldBg); }
+.pbar .st { width: 22px; height: 22px; border-radius: 50%; flex: none; }
+.pbar .st.b { background: #1B1A17; border: 1.5px solid #5B4524; }
+.pbar .st.w { background: #FBFAF6; }
+.pbar .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbar .nm small { font-weight: 400; color: var(--text2); font-size: 13px; margin-left: 6px; }
+.pbar .ck { font-family: var(--num); font-size: 26px; font-weight: 700; }
+.pbar .ck.low { color: var(--fail); }
+.pbar.top { margin-top: calc(6px + env(safe-area-inset-top)); }
+.status { padding: 6px 20px; min-height: 30px; font-size: 15px; color: var(--text2); text-align: center; }
+.boardWrap { position: relative; align-self: center; touch-action: manipulation; margin: 2px 0; }
+canvas#board { display: block; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.flash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.flash[hidden] { display: none; }
+.flash span { padding: 12px 24px; border-radius: 20px; font-size: 22px; font-weight: 900; background: rgba(15,18,26,.9); display: inline-flex; flex-direction: column; gap: 4px; text-align: center; max-width: 92%; }
+.flash.warn span { color: var(--gold); border: 2px solid var(--gold); }
+.flash.bad span { color: var(--fail); border: 2px solid var(--fail); }
+.flash span small { font-size: 15px; font-weight: 500; color: var(--text2); }
+.tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 8px 12px calc(16px + env(safe-area-inset-bottom)); }
+.tools button { height: 56px; border-radius: 14px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 13px; padding: 0; }
+.tools button .ico { width: 22px; height: 22px; }
+
+/* 結果（浮在棋局上，棋盤還看得到） */
+.modal { position: fixed; inset: 0; background: rgba(5,7,12,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.modal[hidden] { display: none; }
+.modal .box { width: 100%; max-width: 520px; border-radius: 24px 24px 0 0; background: var(--panel); padding: 18px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.stamp { width: 128px; height: 128px; flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); text-align: center; }
+.stamp.lose { border-color: var(--fail); color: var(--fail); }
+.stamp.even { border-color: var(--teal); color: var(--teal); }
+.stamp b { font-size: 30px; font-weight: 900; line-height: 1.1; }
+.box .row { display: flex; gap: 10px; width: 100%; }
+.box .row .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- 設定 -->
+<section id="sSetup" class="screen">
+  <div class="topbar">
+    <a href="game.html" class="icob" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <b style="font-size: 18px;" data-i18n="title">對戰</b>
+    <div>
+      <button type="button" class="icob" data-sound aria-pressed="true"></button>
+      <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
+    </div>
+    <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
+  </div>
+  <div class="hero pad">
+    <svg class="bigIco" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg>
+    <span style="font-size: 18px; font-weight: 700; margin-top: 4px;" data-i18n="rule">連珠規則・黑先</span>
+    <span class="muted" style="margin-top: 4px; font-size: 14px;" data-i18n="ruleSub">黑棋不能下三三、四四、長連</span>
+  </div>
+  <div class="pad opt"><span class="muted" data-i18n="oppL">對手</span><div class="chips" id="cOpp" style="--n: 2;"></div></div>
+  <div class="pad opt" id="oLevel"><span class="muted" data-i18n="levelL">電腦強度</span><div class="chips" id="cLevel"></div></div>
+  <div class="pad opt" id="oSide"><span class="muted" data-i18n="sideL">我拿</span><div class="chips" id="cSide"></div></div>
+  <div class="pad opt"><span class="muted" data-i18n="timeL">時間</span><div class="chips" id="cTime"></div></div>
+  <div class="pad opt"><span class="muted" data-i18n="tapL">落子方式</span><div class="chips" id="cTap" style="--n: 2;"></div></div>
+  <div style="flex: 1;"></div>
+  <div class="thumb"><button type="button" class="btn gold" id="go" style="flex: 1; height: 64px; font-size: 23px;" data-i18n="go">開始</button></div>
+</section>
+
+<!-- 對局 -->
+<section id="sPlay" class="screen" hidden>
+  <div class="pbar top" id="pTop"><i class="st" id="pTopSt"></i><span class="nm" id="pTopNm"></span><span class="ck" id="pTopCk"></span></div>
+  <div class="status" id="status" role="status"></div>
+  <div class="boardWrap" id="boardWrap">
+    <canvas id="board" aria-label="棋盤" data-i18n-aria="boardAria"></canvas>
+    <div class="flash" id="flash" hidden></div>
+  </div>
+  <div style="height: 8px;"></div>
+  <div class="pbar" id="pBot"><i class="st" id="pBotSt"></i><span class="nm" id="pBotNm"></span><span class="ck" id="pBotCk"></span></div>
+  <div style="flex: 1;"></div>
+  <div class="tools">
+    <button type="button" id="bUndo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="undo">悔棋</span></button>
+    <button type="button" id="bResign"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4h11l-1 4 4 1v8H9"/></svg><span data-i18n="resign">認輸</span></button>
+    <button type="button" id="bLeave" style="color: var(--text2);"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l-4 4 4 4M10 12h10"/></svg><span data-i18n="leave">離開</span></button>
+  </div>
+</section>
+</div>
+
+<div class="modal" id="mEnd" hidden role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="box">
+    <div class="stamp" id="stamp"><b id="endTitle"></b></div>
+    <span class="muted" id="endWhy" style="font-size: 16px;"></span>
+    <div class="row">
+      <button type="button" class="btn ghost" id="bSetup" data-i18n="setup">換設定</button>
+      <button type="button" class="btn gold" id="bAgain" data-i18n="again">再來一局</button>
+    </div>
+    <button type="button" class="btn ghost" id="bLook" style="width: 100%; height: 48px; border: 0; color: var(--text2);" data-i18n="look">看棋盤</button>
+  </div>
+</div>
+
+<script type="module">
+import { BLACK, WHITE, EMPTY, SIZE, CELLS, FORBID_NONE, forbidType } from './game/duel/rules.js';
+import { RULE, ACTION, END_REASON, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, replayMatch } from './game/duel/match.js';
+
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// ---------- 文字（四種語言，跟 Rush 共用語言設定 vcfgame.lang） ----------
+const I18N = {
+  zh: {
+    title: '對戰', home: '回入口', rule: '連珠規則・黑先', ruleSub: '黑棋不能下三三、四四、長連',
+    oppL: '對手', oppBot: '電腦', oppTwo: '同一台兩人', levelL: '電腦強度', lv1: '初級', lv2: '中級', lv3: '高級',
+    sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機', timeL: '時間', tNone: '不計時', t53: '5 分＋3 秒', t105: '10 分＋5 秒',
+    tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下', go: '開始', boardAria: '棋盤',
+    undo: '悔棋', resign: '認輸', leave: '離開', setup: '換設定', again: '再來一局', look: '看棋盤',
+    you: '你', bot: '電腦', black: '黑棋', white: '白棋',
+    turnYou: '輪到你', turnBot: '電腦想棋中…', turnColor: '輪到{c}', tap2Hint: '同一格再點一下就下',
+    forbidden: '這裡是黑棋禁手', forbiddenSub: '三三、四四、長連都不能下', occupied: '這裡已經有棋子',
+    win: '你贏了', lose: '你輸了', draw: '和棋', colorWin: '{c}勝',
+    whyFive: '連成五', whyTrap: '黑棋被抓禁（非擋不可的點是禁手）', whyResign: '{c}認輸', whyTime: '{c}時間到', whyFull: '棋盤下滿了',
+    resignQ: '確定認輸？', leaveQ: '這盤還沒下完，確定離開？', botErr: '電腦出錯了，換你下一手試試',
+  },
+  en: {
+    title: 'Versus', home: 'Home', rule: 'Renju rules · Black first', ruleSub: 'Black can’t play 3-3, 4-4 or overlines',
+    oppL: 'Opponent', oppBot: 'Computer', oppTwo: '2 players, 1 device', levelL: 'Computer level', lv1: 'Easy', lv2: 'Medium', lv3: 'Hard',
+    sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random', timeL: 'Time', tNone: 'No clock', t53: '5 min + 3 s', t105: '10 min + 5 s',
+    tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice', go: 'Start', boardAria: 'Board',
+    undo: 'Undo', resign: 'Resign', leave: 'Leave', setup: 'Settings', again: 'Play again', look: 'View board',
+    you: 'You', bot: 'Computer', black: 'Black', white: 'White',
+    turnYou: 'Your move', turnBot: 'Computer is thinking…', turnColor: '{c} to move', tap2Hint: 'Tap the same point again to place',
+    forbidden: 'Forbidden point for Black', forbiddenSub: '3-3, 4-4 and overlines aren’t allowed', occupied: 'That point is taken',
+    win: 'You win', lose: 'You lose', draw: 'Draw', colorWin: '{c} wins',
+    whyFive: 'Five in a row', whyTrap: 'Black was forced onto a forbidden point', whyResign: '{c} resigned', whyTime: '{c} ran out of time', whyFull: 'The board is full',
+    resignQ: 'Resign this game?', leaveQ: 'The game isn’t over. Leave anyway?', botErr: 'The computer hit an error — try your move',
+  },
+  ja: {
+    title: '対局', home: 'ホーム', rule: '連珠ルール・黒先', ruleSub: '黒は三三・四四・長連が打てません',
+    oppL: '相手', oppBot: 'コンピュータ', oppTwo: '1台で2人', levelL: 'コンピュータの強さ', lv1: '初級', lv2: '中級', lv3: '上級',
+    sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム', timeL: '持ち時間', tNone: 'なし', t53: '5分＋3秒', t105: '10分＋5秒',
+    tapL: '打ち方', tap1: '1回タップで打つ', tap2: '2回タップで打つ', go: '開始', boardAria: '盤面',
+    undo: '待った', resign: '投了', leave: '退出', setup: '設定を変える', again: 'もう一局', look: '盤面を見る',
+    you: 'あなた', bot: 'コンピュータ', black: '黒', white: '白',
+    turnYou: 'あなたの番', turnBot: 'コンピュータが考え中…', turnColor: '{c}の番', tap2Hint: '同じ場所をもう一度タップで打つ',
+    forbidden: 'ここは黒の禁手です', forbiddenSub: '三三・四四・長連は打てません', occupied: 'すでに石があります',
+    win: 'あなたの勝ち', lose: 'あなたの負け', draw: '引き分け', colorWin: '{c}の勝ち',
+    whyFive: '五連', whyTrap: '黒が禁手に追い込まれた', whyResign: '{c}が投了', whyTime: '{c}の時間切れ', whyFull: '盤が埋まりました',
+    resignQ: '投了しますか？', leaveQ: '対局の途中です。退出しますか？', botErr: 'コンピュータでエラーが起きました。打ってみてください',
+  },
+  ko: {
+    title: '대국', home: '처음으로', rule: '렌주 규칙 · 흑 선', ruleSub: '흑은 삼삼·사사·장목을 둘 수 없음',
+    oppL: '상대', oppBot: '컴퓨터', oppTwo: '한 기기에서 2인', levelL: '컴퓨터 실력', lv1: '초급', lv2: '중급', lv3: '고급',
+    sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위', timeL: '시간', tNone: '시간 없음', t53: '5분 + 3초', t105: '10분 + 5초',
+    tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭', go: '시작', boardAria: '바둑판',
+    undo: '무르기', resign: '기권', leave: '나가기', setup: '설정 변경', again: '한 판 더', look: '판 보기',
+    you: '나', bot: '컴퓨터', black: '흑', white: '백',
+    turnYou: '내 차례', turnBot: '컴퓨터가 생각 중…', turnColor: '{c} 차례', tap2Hint: '같은 자리를 한 번 더 탭하면 착수',
+    forbidden: '흑의 금수 자리입니다', forbiddenSub: '삼삼·사사·장목은 둘 수 없음', occupied: '이미 돌이 있습니다',
+    win: '승리', lose: '패배', draw: '무승부', colorWin: '{c} 승',
+    whyFive: '5목 완성', whyTrap: '흑이 금수에 몰림', whyResign: '{c} 기권', whyTime: '{c} 시간 초과', whyFull: '판이 가득 찼습니다',
+    resignQ: '기권할까요?', leaveQ: '아직 대국 중입니다. 나갈까요?', botErr: '컴퓨터 오류가 났습니다. 직접 두어 보세요',
+  },
+};
+const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
+function pickLang() {
+  const saved = store.get('vcfgame.lang');
+  if (saved && I18N[saved]) return saved;
+  const nav = (navigator.languages || [navigator.language || 'zh']).join(',').toLowerCase();
+  for (const l of nav.split(',')) { const k = l.slice(0, 2); if (I18N[k]) return k; }
+  return 'zh';
+}
+let lang = pickLang();
+const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
+const colorWord = (c) => T(c === BLACK ? 'black' : 'white');
+function applyLang() {
+  document.documentElement.lang = LANGS.find(l => l[0] === lang)[2];
+  document.title = 'Gomoku Rush — ' + T('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
+  $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
+  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); renderSetup(); });
+  renderSound();
+}
+function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
+$('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
+document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
+
+// ---------- 聲音（照 game.html：Web Audio 現場合成的落子聲，開關跟 Rush 共用 vcfgame.sound） ----------
+const SND_ON = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>`, SND_OFF = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
+let soundOn = store.get('vcfgame.sound') !== '0', actx = null;
+function audio() {
+  if (!soundOn) return null;
+  try {
+    if (actx && actx.state === 'closed') actx = null;
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state !== 'running') actx.resume().catch(() => {});
+  } catch { actx = null; }
+  return actx;
+}
+addEventListener('pointerdown', () => { if (soundOn && actx && actx.state !== 'running') actx.resume().catch(() => {}); }, { capture: true, passive: true });
+function stoneSound(soft) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime, vol = soft ? 0.35 : 0.6;
+  const n = a.createBuffer(1, Math.floor(a.sampleRate * 0.06), a.sampleRate), d = n.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  const src = a.createBufferSource(); src.buffer = n;
+  const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 1.4;
+  const g1 = a.createGain(); g1.gain.setValueAtTime(vol, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  src.connect(bp).connect(g1).connect(a.destination); src.start(t);
+  const o = a.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(160, t + 0.08);
+  const g2 = a.createGain(); g2.gain.setValueAtTime(vol * 0.7, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+  o.connect(g2).connect(a.destination); o.start(t); o.stop(t + 0.1);
+}
+function renderSound() {
+  document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); });
+}
+document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); if (soundOn) stoneSound(); });
+
+// ---------- 設定 ----------
+const TIMES = { none: null, '5+3': { mainMs: 300000, incMs: 3000 }, '10+5': { mainMs: 600000, incMs: 5000 } };
+const TIME_KEYS = { none: 'tNone', '5+3': 't53', '10+5': 't105' };
+const pick = (k, list, d) => { const v = store.get('vcfgame.duel.' + k); return list.includes(v) ? v : d; };
+const cfg = {
+  opp: pick('opp', ['bot', 'two'], 'bot'),
+  level: pick('level', ['1', '2', '3'], '2'),
+  side: pick('side', ['b', 'w', 'r'], 'b'),
+  time: pick('time', Object.keys(TIMES), 'none'),
+  tap: pick('tap', ['1', '2'], matchMedia('(pointer: coarse)').matches ? '2' : '1'),
+};
+function chips(id, key, opts) {
+  $(id).innerHTML = opts.map(([v, label]) => `<button type="button" data-v="${v}" aria-pressed="${cfg[key] === v}">${label}</button>`).join('');
+  $(id).querySelectorAll('button').forEach(b => b.onclick = () => { cfg[key] = b.dataset.v; store.set('vcfgame.duel.' + key, cfg[key]); renderSetup(); });
+}
+function renderSetup() {
+  chips('cOpp', 'opp', [['bot', T('oppBot')], ['two', T('oppTwo')]]);
+  chips('cLevel', 'level', [['1', T('lv1')], ['2', T('lv2')], ['3', T('lv3')]]);
+  chips('cSide', 'side', [['b', T('sideB')], ['w', T('sideW')], ['r', T('sideR')]]);
+  chips('cTime', 'time', Object.keys(TIMES).map(k => [k, T(TIME_KEYS[k])]));
+  chips('cTap', 'tap', [['1', T('tap1')], ['2', T('tap2')]]);
+  $('oLevel').hidden = $('oSide').hidden = cfg.opp !== 'bot';
+}
+
+// ---------- 棋盤（畫法、顏色照 game.html） ----------
+const cv = $('board'), ctx = cv.getContext('2d');
+let px = 390, cell = 24, pad = 14;
+const xyOf = (p) => [pad + (p % SIZE) * cell, pad + Math.floor(p / SIZE) * cell];
+function stone(p, black, alpha) {
+  const [x, y] = xyOf(p), r = cell * 0.46;
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = black ? '#1B1A17' : '#FBFAF6'; ctx.fill();
+  if (!black) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#1B1A17'; ctx.stroke(); }
+  ctx.globalAlpha = 1;
+}
+function draw() {
+  ctx.clearRect(0, 0, px, px);
+  ctx.fillStyle = '#E9C98B';
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, px, px, 10) : ctx.rect(0, 0, px, px); ctx.fill();
+  ctx.strokeStyle = '#5B4524'; ctx.lineWidth = 1;
+  for (let i = 0; i < SIZE; i++) {
+    const o = Math.round(pad + i * cell) + 0.5;
+    ctx.beginPath(); ctx.moveTo(pad, o); ctx.lineTo(px - pad, o); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(o, pad); ctx.lineTo(o, px - pad); ctx.stroke();
+  }
+  ctx.fillStyle = '#5B4524';
+  for (const [r, c] of [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]]) { const [x, y] = xyOf(r * SIZE + c); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+  if (!S) return;
+  for (const m of S.match.moves) stone(m.p, m.color === BLACK);
+  const last = S.match.moves.at(-1);
+  if (last) { const [x, y] = xyOf(last.p); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  const line = S.match.result?.line;
+  if (line) {   // 連成的五顆：金色圈
+    ctx.lineWidth = 3; ctx.strokeStyle = '#F2B544';
+    for (const p of line) { const [x, y] = xyOf(p); ctx.beginPath(); ctx.arc(x, y, cell * 0.52, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  const fp = S.match.result?.point;   // 黑棋被抓禁的點：紅色叉
+  if (fp != null) {
+    const [x, y] = xyOf(fp), k = cell * 0.3;
+    ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B';
+    ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke();
+  }
+  if (S.ghost != null) {
+    stone(S.ghost, colorOf(S.match, actorOf(S.match)) === BLACK, 0.55);
+    const [x, y] = xyOf(S.ghost);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+function setBoardPx(v) {
+  px = v;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(px * dpr); cv.height = Math.round(px * dpr);
+  cv.style.width = px + 'px'; cv.style.height = px + 'px';
+  $('boardWrap').style.width = px + 'px'; $('boardWrap').style.height = px + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pad = px * 0.045; cell = (px - 2 * pad) / (SIZE - 1);
+  draw();
+}
+function layout() {   // 跟 Rush 一樣一屏放得下：先照寬度放，超出視窗多少就把棋盤縮多少（最小 240）
+  const w = Math.min(document.querySelector('.app').clientWidth, 520);
+  setBoardPx(Math.max(300, Math.min(w - 16, window.innerHeight - 300)));
+  if ($('sPlay').hidden) return;
+  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if (over > 0) setBoardPx(Math.max(240, px - over));
+}
+addEventListener('resize', layout);
+function cellAt(ev) {
+  const r = cv.getBoundingClientRect();
+  const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);
+  if (c < 0 || c >= SIZE || row < 0 || row >= SIZE) return null;
+  return row * SIZE + c;
+}
+
+// ---------- 一盤棋 ----------
+// S.match 是 match.js 的棋局（不可改，每次動作回傳新的）；座位 0 先下黑。打電腦時 S.me 是我的座位，兩人時 null。
+let S = null, flashT = 0;
+const worker = new Worker(new URL('./game/duel/botWorker.js', import.meta.url), { type: 'module' });
+let botReq = 0;
+const BOT_MIN_MS = 350;   // 電腦太快下會看不清，至少等這麼久
+const isBotTurn = () => S && S.me !== null && actorOf(S.match) === 1 - S.me;
+const seatName = (seat) => S.me === null ? colorWord(colorOf(S.match, seat)) : seat === S.me ? T('you') : T('bot');
+
+function newGame() {
+  const me = cfg.opp === 'bot' ? (cfg.side === 'b' ? 0 : cfg.side === 'w' ? 1 : (Math.random() < 0.5 ? 0 : 1)) : null;
+  S = { match: createMatch({ rule: RULE.RENJU, clock: TIMES[cfg.time] }, Date.now()), me, ghost: null, level: Number(cfg.level), done: false };
+  $('mEnd').hidden = true;
+  show('sPlay');
+  render();
+  maybeBot();
+}
+function show(id) {
+  for (const s of ['sSetup', 'sPlay']) $(s).hidden = s !== id;
+  layout();
+}
+// 畫面上方是對手（兩人時是白），下方是我（兩人時是黑）
+const bottomSeat = () => S.me ?? S.match.blackSeat;
+function render() {
+  if (!S) return;
+  const m = S.match, act = actorOf(m), now = Date.now(), ck = clockMs(m, now);
+  const fill = (pre, seat) => {
+    const c = colorOf(m, seat);
+    $(pre + 'St').className = 'st ' + (c === BLACK ? 'b' : 'w');
+    $(pre + 'Nm').innerHTML = esc(seatName(seat)) + (S.me !== null && seat !== S.me ? `<small>${esc(T('lv' + S.level))}</small>` : '');
+    $(pre).classList.toggle('on', act === seat);
+    const el = $(pre + 'Ck');
+    el.textContent = ck ? mmss(ck[seat]) : '';
+    el.classList.toggle('low', !!ck && ck[seat] < 30000);
+  };
+  fill('pBot', bottomSeat());
+  fill('pTop', 1 - bottomSeat());
+  let st = '';
+  if (act !== null) {
+    if (S.me === null) st = T('turnColor', { c: colorWord(colorOf(m, act)) });
+    else st = act === S.me ? T('turnYou') : T('turnBot');
+    if (S.ghost != null) st = T('tap2Hint');
+  }
+  $('status').textContent = st;
+  $('bUndo').disabled = !canUndo();
+  $('bResign').disabled = act === null;
+  draw();
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+function flash(title, sub, cls, ms = 1100) {
+  $('flash').className = 'flash ' + cls;
+  $('flash').innerHTML = `<span>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
+  $('flash').hidden = false;
+  clearTimeout(flashT); flashT = setTimeout(() => { $('flash').hidden = true; }, ms);
+}
+
+// 套用一個動作；成功回傳 true
+function act(seat, action) {
+  const r = applyAction(S.match, seat, action, Date.now());
+  S.match = r.match;
+  if (r.error && !S.match.result) return false;
+  S.ghost = null;
+  if (action.type === ACTION.PLACE && !r.error) stoneSound(S.me !== null && seat !== S.me);
+  afterMove();
+  return true;
+}
+// 黑棋非擋不可的點是禁手（Rush 的「被禁手」判輸）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 黑只能下那裡，交給 match.js 判黑輸
+function forcedForbidden() {
+  const m = S.match;
+  if (m.result || colorOf(m, actorOf(m)) !== BLACK) return null;
+  const cells = m.cells;
+  for (let p = 0; p < CELLS; p++) if (cells[p] === EMPTY && isWinningMove(m.rule, cells, p, BLACK) && forbidType(cells, p) === FORBID_NONE) return null;
+  const fives = [];
+  for (let p = 0; p < CELLS; p++) if (cells[p] === EMPTY && isWinningMove(m.rule, cells, p, WHITE)) fives.push(p);
+  return fives.length === 1 && forbidType(cells, fives[0]) !== FORBID_NONE ? fives[0] : null;
+}
+function afterMove() {
+  const trap = forcedForbidden();
+  if (trap !== null) { S.match = applyAction(S.match, actorOf(S.match), { type: ACTION.PLACE, p: trap }, Date.now()).match; }
+  render();
+  if (S.match.result) return endGame();
+  maybeBot();
+}
+
+function maybeBot() {
+  if (!isBotTurn() || S.match.result) return;
+  const id = ++botReq, seat = 1 - S.me, t0 = Date.now();
+  render();
+  if (!S.match.moves.length) {   // 電腦拿黑：第一手下天元（bot.js 空盤會亂下）
+    setTimeout(() => { if (id === botReq && S && !S.match.moves.length) act(seat, { type: ACTION.PLACE, p: Math.floor(CELLS / 2) }); }, BOT_MIN_MS);
+    return;
+  }
+  worker.onmessage = ({ data }) => {
+    if (data.id !== botReq || !S || S.match.result) return;
+    const wait = Math.max(0, BOT_MIN_MS - (Date.now() - t0));
+    setTimeout(() => {
+      if (data.id !== botReq || !S || S.match.result) return;
+      if (data.error || !data.action) { console.error(data.error); flash(T('botErr'), '', 'bad'); return; }
+      act(seat, data.action);
+    }, wait);
+  };
+  worker.postMessage({ id, saved: serializeMatch(S.match), seat, level: S.level, seed: (Math.random() * 2 ** 32) >>> 0 });
+}
+
+cv.addEventListener('click', (ev) => {
+  if (!S || S.match.result || !$('mEnd').hidden) return;
+  const seat = actorOf(S.match);
+  if (seat === null || isBotTurn()) return;
+  const p = cellAt(ev);
+  if (p === null) return;
+  if (S.match.cells[p] !== EMPTY) { flash(T('occupied'), '', 'warn', 800); return; }
+  // Rush 的規則：自己點到禁手只提醒，棋子不落、不判輸
+  if (colorOf(S.match, seat) === BLACK && forbidType(S.match.cells, p) !== FORBID_NONE) { S.ghost = null; render(); flash(T('forbidden'), T('forbiddenSub'), 'warn'); return; }
+  if (cfg.tap === '2' && S.ghost !== p) { S.ghost = p; render(); return; }
+  act(seat, { type: ACTION.PLACE, p });
+});
+
+// 悔棋：打電腦退回到我上一手之前（電腦那手一起退）；兩人時退一手。時間不還。
+function undoCount() {
+  const mv = S.match.log.filter(x => x.action.type === ACTION.PLACE);
+  if (S.me === null) return mv.length ? 1 : 0;
+  let k = 0;
+  for (let i = mv.length - 1; i >= 0; i--) { k++; if (mv[i].seat === S.me) return k; }
+  return 0;
+}
+const canUndo = () => !!S && !S.match.result && !isBotTurn() && undoCount() > 0;
+$('bUndo').onclick = () => {
+  if (!canUndo()) return;
+  const keep = S.match.log.slice(0, S.match.log.length - undoCount());
+  const cur = S.match.clock && clockMs(S.match, Date.now());
+  const m = replayMatch(S.match.config, keep, S.match.startedAt);
+  if (m.clock) { m.clock.remaining = cur; m.clock.since = Date.now(); }
+  botReq++;
+  S.match = m; S.ghost = null;
+  render();
+};
+$('bResign').onclick = () => {
+  if (!S || S.match.result || !confirm(T('resignQ'))) return;
+  const seat = S.me ?? actorOf(S.match);   // 兩人時是輪到的人認輸
+  botReq++;
+  act(seat, { type: ACTION.RESIGN });
+};
+$('bLeave').onclick = () => {
+  if (S && !S.match.result && S.match.moves.length && !confirm(T('leaveQ'))) return;
+  botReq++; S = null; $('mEnd').hidden = true; show('sSetup');
+};
+
+function endGame() {
+  const r = S.match.result;
+  const loserSeat = r.winnerSeat === null ? null : 1 - r.winnerSeat;
+  const loserColor = loserSeat === null ? null : colorWord(colorOf(S.match, loserSeat));
+  let title, cls = '';
+  if (r.winnerSeat === null) { title = T('draw'); cls = 'even'; }
+  else if (S.me === null) { title = T('colorWin', { c: colorWord(r.winnerColor) }); cls = r.winnerColor === BLACK ? '' : 'even'; }
+  else if (r.winnerSeat === S.me) title = T('win');
+  else { title = T('lose'); cls = 'lose'; }
+  const why = r.reason === END_REASON.FIVE ? T('whyFive') : r.reason === END_REASON.FORBIDDEN ? T('whyTrap')
+    : r.reason === END_REASON.RESIGN ? T('whyResign', { c: loserColor }) : r.reason === END_REASON.TIMEOUT ? T('whyTime', { c: loserColor }) : T('whyFull');
+  $('endTitle').textContent = title;
+  $('stamp').className = 'stamp ' + cls;
+  $('endWhy').textContent = why;
+  setTimeout(() => { if (S && S.match.result) $('mEnd').hidden = false; }, r.line ? 700 : 300);   // 先讓人看到連成的五顆
+}
+$('bAgain').onclick = newGame;
+$('bSetup').onclick = () => { S = null; $('mEnd').hidden = true; show('sSetup'); };
+$('bLook').onclick = () => { $('mEnd').hidden = true; };
+$('go').onclick = () => { audio(); newGame(); };
+
+// 計時：輪到的人時間用完就判負
+setInterval(() => {
+  if (!S || S.match.result || !S.match.clock) return;
+  const m = checkTimeout(S.match, Date.now());
+  if (m !== S.match) { botReq++; S.match = m; render(); endGame(); } else render();
+}, 250);
+// 對局中離開頁面前提醒
+addEventListener('beforeunload', (e) => { if (S && !S.match.result && S.match.moves.length) { e.preventDefault(); e.returnValue = ''; } });
+// 「看棋盤」之後點棋盤再叫出結果
+cv.addEventListener('click', () => { if (S && S.match.result && $('mEnd').hidden) $('mEnd').hidden = false; });
+
+applyLang();
+renderSetup();
+layout();
+</script>
+</body>
+</html>
