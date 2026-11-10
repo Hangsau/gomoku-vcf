@@ -83,3 +83,16 @@
 - 覆盤改成遊戲內研究盤（跟象牙塔同一套），不再連試煉場；改版前的舊紀錄用引擎重放重建手順（commit 087bd38、643d7f7）
 - 試煉場（score.html）加「用題號找題目」，也支援 `score.html#id=題號`（087bd38）
 - 新模式「火眼金睛」：只看第一手、一題 8 秒、4 手題、3 條命、分數＝題目分×(1＋剩餘秒數÷8)；Worker `/eye`、D1 `eye` 表已建（0d4dc6f）
+
+---
+
+## 5. v2（2026-11-10 晚）現況
+
+規劃：`C:\claudehome\projects\VCF\docs\tutorial_plan_v2.md`。已上線 `a3e0d1e`（https://rush.hangsau.app）。
+
+- 單元順序：棋盤 → 四 → 衝四 → **禁手（第 4）** → 一兩手就贏 → 找 VCF → 反四 → 白棋與逼禁 → 解禁／長題／畢業。進度存 `vcfgame.learn2`（v1 進度不沿用）。
+- 倒帶：先退成五那手，之後一次退兩手，每關問「下一手」；可接受點 `stages[].accept` 由 `tools/learn_content.py` 用引擎算、`tools/check_lessons.py` 驗證；退到開頭用「自己解」往前下。
+- 檢查程式三條規則：只用教過的（黑禁點 ≥ 第 4、逼禁 ≥ 第 8、解禁 ≥ 第 9 單元，開場是第 0）、倒帶關卡答案＝引擎判定集合、反四示範要真的順序錯就輸。
+- 引擎盲點已補：對方已有四時，`vcf_score` 單獨解題會漏「擋他成五點同時自己成四」→ 外層 `hasVcf`／`has_vcf`（learn.js、check_lessons.py 同一套）。
+- 測試：`python C:/claudehome/projects/VCF/tools/test_learn.py zh 375x667`（開場＋31 課＋畢業考）。中文 0 超出 0 錯；英日韓那輪在跑。
+- 測試模式：網址加 `?dev=1`（每課直接上、重置進度）。
