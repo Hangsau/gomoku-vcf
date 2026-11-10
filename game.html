@@ -287,7 +287,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
   <div class="instbar" id="instBar" hidden>
     <span class="tx" data-i18n="instT">加到主畫面，下次一鍵開啟</span>
     <button type="button" class="btn gold" id="instGo" data-i18n="instBtn">安裝</button>
-    <button type="button" class="icob" id="instNo" aria-label="不要再顯示" data-i18n-aria="instNo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button type="button" class="icob" id="instNo" aria-label="先不要" data-i18n-aria="instNo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
 </section>
 
@@ -610,7 +610,7 @@ const I18N = {
     pTimeLbl: '練習時間', tapLbl: '落子方式', tap1: '點一下就下', tap2: '點兩下', hint2: '點一下預覽、同一點再點一下落子；禁手或不是四的點只會提醒，不算錯', pMinBtn: '{n} 分', pInf: '不限', goPrac: '開始練習', pNoBoard: '不計排行', pEnd: '結束練習', pHint: '下錯可以悔棋再試；用了悔棋或提示，這題不加分、只扣一半',
     undo: '悔棋', hintBtn: '提示', unitSec: '秒', unitMin: '分', timeLeft2: '剩餘時間', elapsed: '已練習', ownN: '自己解開', helpN: '靠提示／悔棋', missN: '錯／跳過',
     pRankLbl: '練習段位', pNext: '→ {r}', pTop: '最高段', pMissed: '按悔棋退回去再試', pRetry: '再試一次', pDead: '先按悔棋退回去', hintWait: '找提示中…', hintNone: '找不到提示',
-    share: '分享', shareText: '60 秒解五子棋 VCF 題、衝段位、上排行榜，還有從零開始的 VCF 教學。', copied: '網址已複製', instT: '加到主畫面，下次一鍵開啟', instBtn: '安裝', instNo: '不要再顯示', iosT: '加到主畫面', ios1: '按 Safari 下方的「分享」', ios2: '往下滑，選「加入主畫面」', ios3: '之後從主畫面的圖示打開，就是全螢幕。',
+    share: '分享', shareText: '60 秒解五子棋 VCF 題、衝段位、上排行榜，還有從零開始的 VCF 教學。', copied: '網址已複製', instT: '加到主畫面，下次一鍵開啟', instBtn: '安裝', instNo: '先不要', iosT: '加到主畫面', ios1: '按 Safari 下方的「分享」', ios2: '往下滑，選「加入主畫面」', ios3: '之後從主畫面的圖示打開，就是全螢幕。',
     pEndWhy: '練習結束', pEndLine: '能力分 {a}・練習成績不上排行', pFrom: '從{r}開始', toRush: '去挑戰', againP: '再練一局', tagHelp: '靠提示', helpInfo: '悔棋 {u}・提示 {h}・下錯 {m}', homeSub: '五子棋 VCF 解題', cardRush: '成績上排行榜', cardPrac: '自己選時間・可悔棋、提示、加時', cardPrac2: '錯題不會結束・不上排行榜', home: '回入口', why_quit: '沒做完', addedN: '加時 {n} 次',
   },
   en: {
@@ -640,7 +640,7 @@ const I18N = {
     pTimeLbl: 'Practice time', tapLbl: 'Placing stones', tap1: 'Single tap', tap2: 'Double tap', hint2: 'Tap to preview, tap the same point again to play. Forbidden or non-four points only warn you; no miss.', pMinBtn: '{n} min', pInf: 'No limit', goPrac: 'Start practice', pNoBoard: 'not ranked', pEnd: 'End practice', pHint: 'Missed? Undo and try again. Using undo or a hint gives no gain and half the loss for that puzzle.',
     undo: 'Undo', hintBtn: 'Hint', unitSec: 'sec', unitMin: 'min', timeLeft2: 'Time left', elapsed: 'Practiced', ownN: 'Solved alone', helpN: 'With help', missN: 'Missed',
     pRankLbl: 'Practice rank', pNext: '→ {r}', pTop: 'Top rank', pMissed: 'Undo and try again', pRetry: 'Try again', pDead: 'Undo first', hintWait: 'Finding a hint…', hintNone: 'No hint found',
-    share: 'Share', shareText: 'Solve Gomoku VCF puzzles against a 60-second clock, climb the ranks, and learn VCF from scratch.', copied: 'Link copied', instT: 'Add to your home screen for one-tap play', instBtn: 'Install', instNo: 'Don’t show again', iosT: 'Add to Home Screen', ios1: 'Tap Share at the bottom of Safari', ios2: 'Scroll down and choose “Add to Home Screen”', ios3: 'Open it from the home screen icon for full screen.',
+    share: 'Share', shareText: 'Solve Gomoku VCF puzzles against a 60-second clock, climb the ranks, and learn VCF from scratch.', copied: 'Link copied', instT: 'Add to your home screen for one-tap play', instBtn: 'Install', instNo: 'Not now', iosT: 'Add to Home Screen', ios1: 'Tap Share at the bottom of Safari', ios2: 'Scroll down and choose “Add to Home Screen”', ios3: 'Open it from the home screen icon for full screen.',
     pEndWhy: 'Practice over', pEndLine: 'Rating {a} · practice is not on the leaderboard', pFrom: 'Started at {r}', toRush: 'Challenge', againP: 'Practice again', tagHelp: 'Helped', helpInfo: 'undo {u} · hints {h} · wrong moves {m}', homeSub: 'Gomoku VCF puzzles', cardRush: 'Scores go on the leaderboard', cardPrac: 'Pick your time · undo, hints, extra time', cardPrac2: 'Misses never end the run · not ranked', home: 'Back', why_quit: 'Not finished', addedN: 'extra time ×{n}',
   },
   ja: {
@@ -670,7 +670,7 @@ const I18N = {
     pTimeLbl: '練習時間', tapLbl: '着手方法', tap1: '1 回タップ', tap2: '2 回タップ', hint2: 'タップで仮置き、同じ点をもう一度で着手。禁手や四にならない点は警告だけで、ミスになりません', pMinBtn: '{n} 分', pInf: '無制限', goPrac: '練習開始', pNoBoard: 'ランキング対象外', pEnd: '練習終了', pHint: '間違えたら待ったでやり直せます。待ったやヒントを使った問題は加点なし・減点は半分',
     undo: '待った', hintBtn: 'ヒント', unitSec: '秒', unitMin: '分', timeLeft2: '残り時間', elapsed: '練習時間', ownN: '自力で正解', helpN: 'ヒント等で正解', missN: 'ミス／スキップ',
     pRankLbl: '練習段位', pNext: '→ {r}', pTop: '最高段位', pMissed: '待ったで戻ってやり直し', pRetry: 'もう一度', pDead: '先に待ったで戻してください', hintWait: 'ヒントを探しています…', hintNone: 'ヒントが見つかりません',
-    share: '共有', shareText: '60 秒で五目並べの VCF パズルを解いて段位を上げよう。ゼロから学べる VCF 講座つき。', copied: 'リンクをコピーしました', instT: 'ホーム画面に追加してワンタップで', instBtn: '追加', instNo: '今後表示しない', iosT: 'ホーム画面に追加', ios1: 'Safari 下部の「共有」をタップ', ios2: '下にスクロールして「ホーム画面に追加」', ios3: 'ホーム画面のアイコンから開くと全画面になります。',
+    share: '共有', shareText: '60 秒で五目並べの VCF パズルを解いて段位を上げよう。ゼロから学べる VCF 講座つき。', copied: 'リンクをコピーしました', instT: 'ホーム画面に追加してワンタップで', instBtn: '追加', instNo: '今はしない', iosT: 'ホーム画面に追加', ios1: 'Safari 下部の「共有」をタップ', ios2: '下にスクロールして「ホーム画面に追加」', ios3: 'ホーム画面のアイコンから開くと全画面になります。',
     pEndWhy: '練習終了', pEndLine: 'レーティング {a}・練習はランキング対象外', pFrom: '{r}から開始', toRush: 'チャレンジ', againP: 'もう一度練習', tagHelp: 'ヒント等', helpInfo: '待った {u}・ヒント {h}・誤着手 {m}', homeSub: '五目並べ VCF パズル', cardRush: '成績はランキングに載ります', cardPrac: '時間を選べる・待った、ヒント、時間追加', cardPrac2: 'ミスしても終わらない・ランキング対象外', home: '戻る', why_quit: '途中終了', addedN: '時間追加 {n} 回',
   },
   ko: {
@@ -700,7 +700,7 @@ const I18N = {
     pTimeLbl: '연습 시간', tapLbl: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭', hint2: '탭하면 미리보기, 같은 자리를 다시 탭하면 둡니다. 금수나 4가 아닌 자리는 경고만 하고 실수로 치지 않습니다', pMinBtn: '{n}분', pInf: '무제한', goPrac: '연습 시작', pNoBoard: '순위 미반영', pEnd: '연습 끝내기', pHint: '틀리면 무르고 다시 둘 수 있습니다. 무르기나 힌트를 쓴 문제는 점수가 오르지 않고 절반만 깎입니다',
     undo: '무르기', hintBtn: '힌트', unitSec: '초', unitMin: '분', timeLeft2: '남은 시간', elapsed: '연습한 시간', ownN: '혼자 풂', helpN: '도움 받아 풂', missN: '실패/건너뜀',
     pRankLbl: '연습 단', pNext: '→ {r}', pTop: '최고 단', pMissed: '무르고 다시 두세요', pRetry: '다시 두세요', pDead: '먼저 무르기를 누르세요', hintWait: '힌트 찾는 중…', hintNone: '힌트를 찾지 못했습니다',
-    share: '공유', shareText: '60초 안에 오목 VCF 퍼즐을 풀고 단을 올려 보세요. 처음부터 배우는 VCF 강좌도 있어요.', copied: '링크를 복사했어요', instT: '홈 화면에 추가하고 다음엔 한 번에 열기', instBtn: '설치', instNo: '다시 보지 않기', iosT: '홈 화면에 추가', ios1: 'Safari 아래쪽의 공유를 누르세요', ios2: '아래로 내려 "홈 화면에 추가" 선택', ios3: '홈 화면 아이콘으로 열면 전체 화면이에요.',
+    share: '공유', shareText: '60초 안에 오목 VCF 퍼즐을 풀고 단을 올려 보세요. 처음부터 배우는 VCF 강좌도 있어요.', copied: '링크를 복사했어요', instT: '홈 화면에 추가하고 다음엔 한 번에 열기', instBtn: '설치', instNo: '나중에', iosT: '홈 화면에 추가', ios1: 'Safari 아래쪽의 공유를 누르세요', ios2: '아래로 내려 "홈 화면에 추가" 선택', ios3: '홈 화면 아이콘으로 열면 전체 화면이에요.',
     pEndWhy: '연습 종료', pEndLine: '능력 점수 {a} · 연습은 순위표에 오르지 않음', pFrom: '{r}에서 시작', toRush: '도전', againP: '다시 연습', tagHelp: '도움', helpInfo: '무르기 {u} · 힌트 {h} · 잘못 둔 수 {m}', homeSub: '오목 VCF 퍼즐', cardRush: '기록이 순위표에 오름', cardPrac: '시간 선택 · 무르기, 힌트, 시간 추가', cardPrac2: '틀려도 끝나지 않음 · 순위 미반영', home: '돌아가기', why_quit: '못 끝냄', addedN: '시간 추가 {n}회',
   },
 };
@@ -1636,14 +1636,17 @@ $('shareBtn').onclick = async () => {
 let instEv = null;
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-function renderInst() { $('instBar').hidden = standalone() || store.get('vcfgame.instNo') === '1' || !(instEv || isIOS); }
+// 按 × 只收起這一次，下次打開再出現，直到裝好（2026-11-11 使用者：按掉了之後想裝怎麼辦；14 天很奇怪）
+let instClosed = false;
+const instSnoozed = () => instClosed;
+function renderInst() { $('instBar').hidden = standalone() || instSnoozed() || !(instEv || isIOS); }
 addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); instEv = e; renderInst(); });
 addEventListener('appinstalled', () => { instEv = null; $('instBar').hidden = true; });
 $('instGo').onclick = async () => {
   if (instEv) { instEv.prompt(); const c = await instEv.userChoice.catch(() => null); if (c && c.outcome === 'accepted') { instEv = null; $('instBar').hidden = true; } return; }
   openModal('mIos');
 };
-$('instNo').onclick = () => { store.set('vcfgame.instNo', '1'); $('instBar').hidden = true; };
+$('instNo').onclick = () => { instClosed = true; $('instBar').hidden = true; };
 renderInst();
 $('openMsg').onclick = () => { $('msgStatus').textContent = ''; $('msgSend').disabled = false; openModal('mMsg'); };
 $('msgSend').onclick = async () => {
