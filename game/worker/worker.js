@@ -9,6 +9,7 @@
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
 // POST /mirror 明鏡台一局（2026-11-10）→ {id, place:{today,all}}（inf=1 無限才排名；inf=0 分級只存後台）；GET /board?by=mj → 明鏡台無限排行；GET /admin/mirror
+// POST /eye 火眼金睛一局（2026-11-10）→ {id, place:{today,all}}；GET /board?by=eye → 火眼金睛排行（total 高者在前、同分用時少者在前）；GET /admin/eye
 // 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
@@ -106,6 +107,46 @@ async function adminBlitz(req, env) {
   return json({ rows: results });
 }
 
+// 火眼金睛（2026-11-10 使用者：只出 4 手勝的題、一題 8 秒、只看第一手、3 條命）：獨立的 eye 表
+// 分數＝解開題目的（題目分×(1＋剩餘秒數÷8)）加總，每題最多題目分×2；同分用時短的在前
+const EYE_SEC = 8;
+async function postEye(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  const solved = num(b.solved, 0, 1000), wrong = num(b.wrong, 0, 3), seconds = num(b.seconds, 0, 20000), total = num(b.total, 0, 100000000);
+  if (!nick || solved === null || wrong === null || seconds === null || total === null) return json({ error: "bad fields" }, 400);
+  const dets = Array.isArray(b.detail) ? b.detail.slice(0, 1000) : [];
+  const maxTotal = dets.reduce((a, x) => a + (Number(x && x.s) > 0 ? Number(x.s) : 0), 0) * 2;   // 每題最多題目分×2（剩 8 秒＝瞬間答對）
+  if (total > maxTotal + 1) return json({ error: "bad total" }, 400);   // +1：前端四捨五入
+  if (seconds > EYE_SEC * (solved + wrong) + 5) return json({ error: "bad time" }, 400);   // 每題最多 8 秒
+  const now = Date.now(), day = taipeiDay(now);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM eye WHERE t > ?").bind(now - 60000).first();
+  if (recent.n >= 60) return json({ error: "too many" }, 429);
+  const detail = JSON.stringify(dets).slice(0, 200000);
+  const res = await env.DB.prepare("INSERT INTO eye(t, day, nick, lang, total, solved, wrong, seconds, detail) VALUES (?,?,?,?,?,?,?,?,?)")
+    .bind(now, day, nick, lang, total, solved, wrong, seconds, detail).run();
+  const id = res.meta.last_row_id;
+  if (!solved) return json({ id, day, place: null });
+  const better = "solved > 0 AND (total > ? OR (total = ? AND seconds < ?))";
+  const today = await env.DB.prepare(`SELECT COUNT(*) AS n FROM eye WHERE day = ? AND ${better}`).bind(day, total, total, seconds).first();
+  const all = await env.DB.prepare(`SELECT COUNT(*) AS n FROM eye WHERE ${better}`).bind(total, total, seconds).first();
+  return json({ id, day, place: { today: today.n + 1, all: all.n + 1 } });
+}
+async function getEyeBoard(url, env) {
+  const today = url.searchParams.get("scope") !== "all";
+  const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
+  const day = taipeiDay(Date.now());
+  const st = env.DB.prepare(`SELECT id, nick, total, solved, wrong, seconds, t FROM eye WHERE solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY total DESC, seconds ASC, t ASC LIMIT ${limit}`);
+  const { results } = await (today ? st.bind(day) : st).all();
+  return json({ by: "eye", scope: today ? "today" : "all", day, rows: results });
+}
+async function adminEye(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, lang, total, solved, wrong, seconds, detail FROM eye ORDER BY id").all();
+  return json({ rows: results });
+}
+
 // 明鏡台（2026-11-10 使用者：落第一手才計時、起始 5 秒每手 +1 秒、錯 3 題結束、可退出）：獨立的 mirror 表
 // 分數＝解開題目的（題目分＋題目分×10%×剩餘整秒數）加總；同分用時短的在前；只有 inf=1（無限，從初段開始）上排行
 async function postMirror(req, env) {
@@ -147,6 +188,7 @@ async function adminMirror(req, env) {
 async function getBoard(url, env) {
   if (url.searchParams.get("by") === "mj") return getMirrorBoard(url, env);
   if (url.searchParams.get("by") === "b4") return getBlitzBoard(url, env);
+  if (url.searchParams.get("by") === "eye") return getEyeBoard(url, env);
   if (url.searchParams.get("by") === "tower") return getTowerBoard(url, env);
   const by = ORDER[url.searchParams.get("by")] ? url.searchParams.get("by") : "rank";
   const today = url.searchParams.get("scope") !== "all";
@@ -473,6 +515,8 @@ export default {
       if (req.method === "POST" && url.pathname === "/admin/feedback") return await adminSetFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/blitz") return await postBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/mirror") return await postMirror(req, env);
+      if (req.method === "POST" && url.pathname === "/eye") return await postEye(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/eye") return await adminEye(req, env);
       if (req.method === "GET" && url.pathname === "/admin/mirror") return await adminMirror(req, env);
       if (req.method === "GET" && url.pathname === "/admin/blitz") return await adminBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);

@@ -66,3 +66,10 @@ CREATE TABLE IF NOT EXISTS mirror(
   seconds REAL NOT NULL, think REAL NOT NULL, quit INTEGER NOT NULL, detail TEXT);
 CREATE INDEX IF NOT EXISTS mirror_rank ON mirror(inf, total DESC, seconds ASC);
 CREATE INDEX IF NOT EXISTS mirror_day ON mirror(day);
+
+-- 2026-11-10：火眼金睛（只出 4 手勝的題、一題 8 秒、只看第一手、錯 3 題結束）；total＝解開題目的（題目分×(1＋剩餘秒數÷8)）加總，同分 seconds 小的在前；detail 每題作答（e 一律 0，另有 lf 剩幾秒、pts 得分；wk 'eyx'＝第一手不是解、wa＝正解第一手）
+CREATE TABLE IF NOT EXISTS eye(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, nick TEXT NOT NULL, lang TEXT,
+  total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL, seconds REAL NOT NULL, detail TEXT);
+CREATE INDEX IF NOT EXISTS eye_rank ON eye(total DESC, seconds ASC);
+CREATE INDEX IF NOT EXISTS eye_day ON eye(day);
