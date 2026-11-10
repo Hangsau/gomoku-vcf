@@ -1,0 +1,3 @@
+OUTPUT_NAME: lift_black
+
+This sheet: A BLACK Go stone being removed during a rewind, seen from above. 16 frames (4x4); the stone starts at the center of the cell. 1-3: the stone squashes slightly as if being plucked. 4-12: it lifts toward the camera (grows a little), spins and flies off toward the upper-left while shrinking, leaving a short motion trail. 13-16: only a few fading sparkles and a faint ring at the empty spot.

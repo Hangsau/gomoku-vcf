@@ -7,7 +7,7 @@
 
 ## 0. 換帳號後先做這件事：把設計稿畫布重新發佈
 
-舊畫布 https://claude.ai/artifact/3TKFw7XMHZDGQGtD8nUspM 換帳號後會 not found。原始檔在：
+舊畫布 https://claude.ai/artifact/CVLvQrkdbHRFurPhdNbUey 換帳號後會 not found。原始檔在：
 
 - `C:\claudehome\projects\VCF\docs\design\tutorial-2026-11-10\project\`（canvas.json＋10 張 .dc.html）
 

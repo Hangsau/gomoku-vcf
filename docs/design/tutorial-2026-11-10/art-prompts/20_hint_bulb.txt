@@ -1,0 +1,3 @@
+OUTPUT_NAME: hint_bulb
+
+This sheet: A teal (#3CC6B4) light-bulb icon turning on, as a hint effect, front view. 16 frames (4x4), centered. 1-4: dim outline. 5-8: flickers on. 9-12: bright with radiating rays. 13-16: the rays pulse and settle into a soft glow.

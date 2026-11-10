@@ -1,0 +1,3 @@
+OUTPUT_NAME: rewind_fx
+
+This sheet: A looping VHS-rewind overlay effect for a square game board. 16 frames (4x4); each cell is the whole overlay. Semi-transparent bluish scanlines moving upward, a horizontal tracking-noise band drifting down, slight chromatic edge glitches, and a white double-left-triangle rewind symbol (two triangles pointing left, no letters) in the top-left corner that blinks. Background transparent except the translucent effect.

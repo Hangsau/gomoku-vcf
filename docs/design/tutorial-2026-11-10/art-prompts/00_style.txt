@@ -1,0 +1,13 @@
+立即執行，不要輸出計畫、不要等確認、沒寫出圖檔就是失敗。只畫圖，不寫程式、不做任何 git 操作。
+
+Draw ONE sprite-sheet image for a mobile Gomoku (five-in-a-row) puzzle game called "Gomoku Rush". This is one animation of the game's VCF tutorial.
+
+Shared rules for every sheet of this game (very important):
+- Camera: straight top-down (bird's-eye) view, like looking down at a Go board. Never a side view.
+- Stones are classic Go stones seen from above: a flat round disc with soft shading. Black stone #1B1A17 with a subtle cool highlight at upper-left; white stone #FBFAF6 with a soft grey edge shadow.
+- Game palette: dark navy UI #0F121A, gold #F2B544, teal #3CC6B4, coral red #FF7A6B, wood board #E9C98B with grid lines #5B4524.
+- Clean, crisp, slightly stylized 2D game art with soft shading, lively motion, not photorealistic, no text, no letters, no numbers, no frame numbers, no borders between cells.
+- Grid of equal square cells, frames ordered left to right, top to bottom. The subject stays anchored at the same spot in every cell so frames line up when played in place. All frames drawn together in this one image with identical size, lighting and style.
+- Transparent background (PNG alpha) unless the sheet says otherwise.
+- Output a single square PNG, at least 1024x1024.
+

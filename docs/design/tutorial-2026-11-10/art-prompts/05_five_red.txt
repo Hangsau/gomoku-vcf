@@ -1,0 +1,3 @@
+OUTPUT_NAME: five_red
+
+This sheet: Five WHITE Go stones in a straight horizontal row (seen from above), evenly spaced, centered, identical position in every cell. 16 frames (4x4). 1-5: the stones light up one by one from left to right with a coral red (#FF7A6B) glow ring. 6-10: a coral red light beam sweeps across all five. 11-16: all five glow and pulse; a faint red shockwave ring expands from the row.

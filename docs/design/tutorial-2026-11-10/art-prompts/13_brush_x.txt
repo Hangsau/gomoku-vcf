@@ -1,0 +1,3 @@
+OUTPUT_NAME: brush_x
+
+This sheet: A red (#C8473A) ink-brush X drawn on a spot to mark a wrong answer, seen from above. 16 frames (4x4), centered. 1-6: the first diagonal brush stroke is drawn from top-left to bottom-right with a wet ink edge. 7-12: the second stroke from top-right to bottom-left. 13-16: small ink drips settle and the X holds.

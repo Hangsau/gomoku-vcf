@@ -1,0 +1,3 @@
+OUTPUT_NAME: forbid_break
+
+This sheet: A red forbidden mark (a bold coral red X, #FF7A6B) on a board intersection breaking apart, meaning a forbidden point becomes playable, seen from above. 16 frames (4x4), centered. 1-3: the X holds and glows. 4-7: cracks spread through it. 8-12: it shatters into sharp red shards flying outward. 13-16: the shards fade, leaving a soft teal glow where the X was.

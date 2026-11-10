@@ -1,0 +1,3 @@
+OUTPUT_NAME: land_gold
+
+This sheet: A small BLACK Go stone with a thin gold rim landing on a board point, seen from above, as the first stone of a journey. 16 frames (4x4); the landing spot is the exact center. 1-4: the stone falls in from far above (large and blurred, shrinking to normal size). 5-6: lands with a squash. 7-16: gold (#F2B544) halo rings and small gold sparkles burst outward and fade; the stone keeps a soft gold glow.

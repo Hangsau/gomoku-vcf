@@ -1,0 +1,3 @@
+OUTPUT_NAME: counter_four
+
+This sheet: A WHITE Go stone that has just become an opponent counter-threat, seen from above. 16 frames (4x4), centered. 1-4: the stone flashes coral red (#FF7A6B) with a sharp outline. 5-10: a jagged red shockwave ring bursts out from it twice. 11-16: it keeps a pulsing red warning glow.

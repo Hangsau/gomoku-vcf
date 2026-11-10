@@ -1,0 +1,3 @@
+OUTPUT_NAME: five_gold
+
+This sheet: Five BLACK Go stones in a straight horizontal row (seen from above), evenly spaced, centered, identical position in every cell. 16 frames (4x4). 1-5: the stones light up one by one from left to right with a gold (#F2B544) glow ring. 6-10: a bright gold light beam sweeps across all five from left to right. 11-16: all five glow together and pulse gently, with a few small gold sparkles.

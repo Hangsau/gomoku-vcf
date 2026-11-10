@@ -2,7 +2,7 @@
 
 > 2026-11-10 規劃。參考 [台灣五子棋協會教學](https://www.renju.org.tw/teach.htm)（術語、單線棋型、基本勝型、進攻材料、先手、連接、衝四勝、禁手、逼禁各篇），內容用我們自己的順序與文字重寫，不搬原文和棋圖。
 > 狀態：課程內容（§2）已確認；呈現方式 2026-11-10 選定「一盤棋教學」（§2.5），取代 §5 的單元清單式入口。
-> 設計稿：https://claude.ai/artifact/3TKFw7XMHZDGQGtD8nUspM（原始檔 `docs/design/tutorial-2026-11-10/`），第二排三張是選定方向。
+> 設計稿：https://claude.ai/artifact/CVLvQrkdbHRFurPhdNbUey（原始檔 `docs/design/tutorial-2026-11-10/`），第二排三張是選定方向。
 
 ---
 

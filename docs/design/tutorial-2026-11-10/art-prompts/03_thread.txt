@@ -1,0 +1,3 @@
+OUTPUT_NAME: thread_pull
+
+This sheet: A glowing teal (#3CC6B4) puppet string pulling a WHITE Go stone into place, seen from above. 16 frames (4x4). In every cell the target spot is the exact center. 1-4: a thin glowing string shoots in from the upper-right corner of the cell and hooks onto a white stone that starts near the upper-right. 5-10: the string pulls the stone along a gentle curve to the center; the string stays taut and slightly vibrates. 11-12: the stone snaps into the center with a small squash. 13-16: the string loosens, breaks into small teal sparkles and fades; the stone stays at the center.

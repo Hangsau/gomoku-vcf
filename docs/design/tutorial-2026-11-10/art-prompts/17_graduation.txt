@@ -1,0 +1,3 @@
+OUTPUT_NAME: graduation
+
+This sheet: A celebration effect for finishing the whole tutorial: gold and teal confetti and two firework bursts. 16 frames (4x4); each cell is a whole transparent overlay. 1-4: two firework rockets streak up. 5-9: they burst into gold (#F2B544) and teal (#3CC6B4) sparks. 10-16: confetti falls and fades.

@@ -1,0 +1,3 @@
+OUTPUT_NAME: lift_white
+
+This sheet: Same as a black-stone lift but with a WHITE Go stone: plucked, lifts, spins and flies toward the upper-left while shrinking with a short trail, then only fading sparkles remain. 16 frames (4x4); the stone starts at the center.

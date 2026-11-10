@@ -1,0 +1,3 @@
+OUTPUT_NAME: unlock
+
+This sheet: A small gold padlock unlocking, front view, as a game UI effect. 16 frames (4x4), centered. 1-4: the lock shakes. 5-8: the shackle pops open. 9-12: the lock bursts into gold sparkles. 13-16: the sparkles fade to nothing.

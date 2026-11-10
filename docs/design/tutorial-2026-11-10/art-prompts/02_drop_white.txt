@@ -1,0 +1,3 @@
+OUTPUT_NAME: drop_white
+
+This sheet: Same animation as a black stone drop but with a WHITE Go stone (#FBFAF6), seen from straight above. 16 frames (4x4). 1-3 lifted toward the camera (about 30% larger) with the shadow offset down-right; 4-5 lands and flattens slightly; 6-7 tiny rebound; 8-10 settles with a wobble; 11-16 at rest while a thin warm-brown ring ripple expands and fades. Only the stone, shadow and ripple; no board.
