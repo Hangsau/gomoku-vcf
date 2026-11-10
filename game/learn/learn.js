@@ -483,7 +483,7 @@
     const f = frame(TX(l.title), progressChip(l, i));
     const T = st.type;
     // 2026-11-10 使用者：要說現在換黑還是換白 → 頂端標你下哪一色（解題／倒帶＝攻方；擋四、預測擋點＝守方）
-    if (st.pos && !(T === 'tap' && (st.kind === 'coord' || st.kind === 'free')) && T !== 'say' && T !== 'choose') {
+    if (st.pos && !(T === 'tap' && (st.kind === 'coord' || st.kind === 'free')) && T !== 'say') {   // 判斷題（是不是四、是不是禁手）也標：題目都在問黑棋這一手
       const atkW = st.pos.atk === 'w', meW = (T === 'predict' || st.kind === 'block') ? !atkW : atkW;
       const chip = document.createElement('span'); chip.className = 'lchip'; chip.setAttribute('data-me', '');
       chip.style.cssText = 'background:#E9C98B;color:#1B1A17;font-weight:900';   // 棋盤色底＋實心子：黑子、白子一眼分得出來
