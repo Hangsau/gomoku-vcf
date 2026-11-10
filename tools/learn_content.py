@@ -179,9 +179,21 @@ C['5-3'] = [
     m_rewind('再倒一題。', m53[1]),
 ]
 m54 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and m['trap'] and not m['forb'] and not m['counter'], 1) or []
+def trap_demo(m):
+    """找一手「是四但不是正解」、而且白的擋子剛好落在正解要用的點上（用引擎算）"""
+    pos = mpos(m); four_points(pos)   # 確保引擎已開
+    atk_pts = set(m['sol'][0::2])
+    for t in four_points(pos):
+        if t == m['sol'][0]: continue
+        r = _E.move(pos['b'], pos['w'], t, pos['atk'] == 'w')
+        if r.get('r') == 'block' and r.get('def') in atk_pts: return t, r['def']
+    raise SystemExit(f'{m["src"]} 找不到示範陷阱的那一手')
+wrong, hit = trap_demo(m54[0])
 C['5-4'] = [
-    say('第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你另一條線。'),
-    m_solve('這題有陷阱：有的四衝下去，對方的擋子會壞了你的路。自己解解看。', m54[0]),
+    say('第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。'),
+    predict(f'先看一個錯誤示範：如果黑先下 {wrong}，白會擋哪？', mpos(m54[0]), wrong, hit),
+    say(f'白擋在 {hit}，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。'),
+    m_solve('現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。', m54[0]),
 ]
 m55 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 3)
 C['5-5'] = [

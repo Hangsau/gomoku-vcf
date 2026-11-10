@@ -1939,19 +1939,65 @@
     {
      "type": "say",
      "text": {
-      "zh": "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你另一條線。",
-      "en": "Step 4: check. Each stone they use to block stays on the board. It may block another of your lines.",
-      "ja": "ステップ4：確認しよう。相手が止めるために置いた石は、盤に残るよ。あなたの別の線まで止めるかもしれない。",
-      "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 그 돌이 당신의 다른 줄까지 막을 수 있어요."
+      "zh": "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。",
+      "en": "Step 4: check. Each blocking stone stays on the board. It may take a spot you need.",
+      "ja": "ステップ4：確認しよう。相手が止めるために置いた石は盤に残るよ。あなたが打ちたい点をふさぐかもしれない。",
+      "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 두려던 자리를 막을 수도 있어요."
+     }
+    },
+    {
+     "type": "predict",
+     "text": {
+      "zh": "先看一個錯誤示範：如果黑先下 E8，白會擋哪？",
+      "en": "First, a wrong move: if Black plays E8, where will White block?",
+      "ja": "まずは失敗例。黒が先にE8に打つと、白はどこを止める？",
+      "ko": "먼저 틀린 예를 볼게요. 흑이 E8부터 두면 백은 어디를 막을까요?"
+     },
+     "pos": {
+      "b": [
+       "F12",
+       "C9",
+       "F9",
+       "F8",
+       "H8",
+       "K8",
+       "G5",
+       "G8"
+      ],
+      "w": [
+       "E12",
+       "J11",
+       "K7",
+       "E6",
+       "G6",
+       "D5",
+       "H4",
+       "J8"
+      ],
+      "atk": "b",
+      "win": "C4"
+     },
+     "play": "E8",
+     "ans": [
+      "D8"
+     ]
+    },
+    {
+     "type": "say",
+     "text": {
+      "zh": "白擋在 D8，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。",
+      "en": "White blocks D8, where you needed to play. Get the order wrong, and their blocking stone cuts off your path.",
+      "ja": "白が止めるD8は、正解で打つはずの点。順番を間違えると、相手が止めた石で先に進めなくなるよ。",
+      "ko": "백이 막은 D8이 바로 둬야 했던 자리예요. 순서가 틀리면 상대가 막은 돌에 길이 막혀요."
      }
     },
     {
      "type": "solve",
      "text": {
-      "zh": "這題有陷阱：有的四衝下去，對方的擋子會壞了你的路。自己解解看。",
-      "en": "There’s a trap here: some fours let their blocking stone cut off your next moves. Try solving it yourself.",
-      "ja": "この問題には落とし穴があるよ。四を打つ場所によっては、相手が止めた石で続かなくなる。自分で解いてみよう。",
-      "ko": "함정이 있어요. 어떤 사를 두면 상대가 막은 돌이 다음 길을 막아 버려요. 직접 풀어 봐요."
+      "zh": "現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。",
+      "en": "Now solve it yourself. Plan the order first. If you go wrong, we’ll show which blocking stone stopped you.",
+      "ja": "今度は自分で解こう。順番を考えてから打ってね。間違えたら、相手のどの石が道をふさいだか教えるよ。",
+      "ko": "이제 직접 풀어 봐요. 순서를 생각하고 두세요. 틀리면 상대의 어느 돌이 길을 막았는지 알려 줄게요."
      },
      "src": "34P6T1MP（截短）",
      "pos": {

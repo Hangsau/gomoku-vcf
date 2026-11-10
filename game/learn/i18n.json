@@ -693,5 +693,25 @@
   "en": "A four needs just one stone to make five, gap or no gap. Both ends blocked or too many gaps? It’s not a four.",
   "ja": "四は、あと1個で五連になる形。途中の空きはあってもOK。両端を止められたり、空きが多すぎたりすると四ではないよ。",
   "ko": "사는 돌 하나만 더 놓으면 오목 완성이에요. 중간이 비어도 돼요. 양 끝이 막혔거나 빈 곳이 너무 많으면 사가 아니에요."
+ },
+ "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你要用的點。": {
+  "en": "Step 4: check. Each blocking stone stays on the board. It may take a spot you need.",
+  "ja": "ステップ4：確認しよう。相手が止めるために置いた石は盤に残るよ。あなたが打ちたい点をふさぐかもしれない。",
+  "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 두려던 자리를 막을 수도 있어요."
+ },
+ "先看一個錯誤示範：如果黑先下 E8，白會擋哪？": {
+  "en": "First, a wrong move: if Black plays E8, where will White block?",
+  "ja": "まずは失敗例。黒が先にE8に打つと、白はどこを止める？",
+  "ko": "먼저 틀린 예를 볼게요. 흑이 E8부터 두면 백은 어디를 막을까요?"
+ },
+ "白擋在 D8，剛好是正解要下的點。順序錯了，你自己的路就被對方的擋子堵死。": {
+  "en": "White blocks D8, where you needed to play. Get the order wrong, and their blocking stone cuts off your path.",
+  "ja": "白が止めるD8は、正解で打つはずの点。順番を間違えると、相手が止めた石で先に進めなくなるよ。",
+  "ko": "백이 막은 D8이 바로 둬야 했던 자리예요. 순서가 틀리면 상대가 막은 돌에 길이 막혀요."
+ },
+ "現在自己解：想好順序再下。走錯了會告訴你是哪顆擋子壞了路。": {
+  "en": "Now solve it yourself. Plan the order first. If you go wrong, we’ll show which blocking stone stopped you.",
+  "ja": "今度は自分で解こう。順番を考えてから打ってね。間違えたら、相手のどの石が道をふさいだか教えるよ。",
+  "ko": "이제 직접 풀어 봐요. 순서를 생각하고 두세요. 틀리면 상대의 어느 돌이 길을 막았는지 알려 줄게요."
  }
 }

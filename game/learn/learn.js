@@ -8,10 +8,10 @@
   const KEY = 'vcfgame.learn';
   const DEV = /[?&]dev=1\b/.test(location.search);   // 測試模式（網址加 ?dev=1）：教學盤每課都能直接上、可重置進度
   const UI = {
-    zh: { entry: 'VCF 教學', entrySub: '新手從這裡開始', board: '教學盤', placed: '已落 {n} 子・還有 {m} 子', exam: '畢業考', next: '下一子', start: '落下這一子', again: '再上一次這課', soon: '即將推出', soonSub: '這一課還在準備中。', cont: '繼續', nextStep: '下一步', tapBoard: '點棋盤作答', ok: '答對了', no: '再想想', done: '完成', back: '返回', close: '關閉', rewindOne: '倒帶一手', rewindMore: '再倒一手', playFwd: '倒帶完成，正著下一遍', drop: '落下這一子', you: '你', cpu: '電腦', youDef: '你：白（防守）', youAtk: '你：黑（進攻）', lostT: '你輸了', wonT: '你贏了', rw: '倒帶看看', go: '開始', enter: '進入教學盤', firstStone: '這局，是你的第一顆子', firstSub: '每學會一件事，這張棋盤就多一顆子。全部落完的時候，你會看懂它在說什麼。', hint: '提示', unit: '第 {u} 單元', end: '結局', q: '第 {n} 手是什麼？', fwd: '正著下', forced: '它只能擋那裡……', examT: '畢業考', examSub: '這盤棋，是你一路學過來的。現在把它下完。', grad: '畢業了！', gradSub: '你自己解開了一道真正的 VCF。去無限之塔、火眼金睛、明鏡台試試身手吧。', locked: '先完成前面的課' },
-    en: { entry: 'VCF Lessons', entrySub: 'New here? Start here', board: 'Lesson Board', placed: '{n} stones placed · {m} to go', exam: 'Final', next: 'Next stone', start: 'Place this stone', again: 'Replay this lesson', soon: 'Coming soon', soonSub: 'This lesson is still being prepared.', cont: 'Continue', nextStep: 'Next', tapBoard: 'Tap the board', ok: 'Correct', no: 'Think again', done: 'Done', back: 'Back', close: 'Close', rewindOne: 'Rewind one move', rewindMore: 'Rewind again', playFwd: 'Now play it forward', drop: 'Place this stone', you: 'You', cpu: 'CPU', youDef: 'You: White (defend)', youAtk: 'You: Black (attack)', lostT: 'You lost', wonT: 'You won', rw: 'Rewind it', go: 'Start', enter: 'Open the Lesson Board', firstStone: 'That game is your first stone', firstSub: 'Each thing you learn adds a stone to this board. When it is full, you will see what it says.', hint: 'Hint', unit: 'Unit {u}', end: 'The ending', q: 'What was move {n}?', fwd: 'Play forward', forced: 'It can only block there…', examT: 'Final', examSub: 'You built this board lesson by lesson. Now finish it.', grad: 'You graduated!', gradSub: 'You solved a real VCF on your own. Try Endless Tower, Fiery Eyes and Mirror Terrace.', locked: 'Finish the earlier lessons first' },
-    ja: { entry: 'VCF 教室', entrySub: '初めての方はここから', board: '教室の盤', placed: '{n} 子・あと {m} 子', exam: '卒業試験', next: '次の一子', start: 'この一子を置く', again: 'このレッスンをもう一度', soon: '準備中', soonSub: 'このレッスンは準備中です。', cont: '続ける', nextStep: '次へ', tapBoard: '盤をタップ', ok: '正解', no: 'もう一度', done: '完了', back: '戻る', close: '閉じる', rewindOne: '一手巻き戻す', rewindMore: 'さらに巻き戻す', playFwd: '巻き戻し完了、順に打つ', drop: 'この一子を置く', you: 'あなた', cpu: 'CPU', youDef: 'あなた：白（守り）', youAtk: 'あなた：黒（攻め）', lostT: '負け', wonT: '勝ち', rw: '巻き戻す', go: '開始', enter: '教室の盤へ', firstStone: 'この対局が最初の一子', firstSub: '一つ覚えるたびに、この盤に一子増えます。全部置き終えたとき、その意味が分かります。', hint: 'ヒント', unit: '第 {u} 単元', end: '結末', q: '{n} 手目は？', fwd: '順に打つ', forced: 'そこを止めるしかない……', examT: '卒業試験', examSub: 'この盤はあなたが一つずつ学んで作ったもの。最後まで打ち切ろう。', grad: '卒業！', gradSub: '本物の VCF を自力で解きました。無限の塔・火眼金睛・明鏡台に挑戦しよう。', locked: '先に前のレッスンを' },
-    ko: { entry: 'VCF 교실', entrySub: '처음이라면 여기부터', board: '교실 판', placed: '{n}수 놓음 · {m}수 남음', exam: '졸업 시험', next: '다음 수', start: '이 수 놓기', again: '이 레슨 다시', soon: '준비 중', soonSub: '이 레슨은 준비 중입니다.', cont: '계속', nextStep: '다음', tapBoard: '판을 누르세요', ok: '정답', no: '다시 생각해 봐요', done: '완료', back: '돌아가기', close: '닫기', rewindOne: '한 수 되감기', rewindMore: '더 되감기', playFwd: '되감기 끝, 순서대로 두기', drop: '이 수 놓기', you: '나', cpu: 'CPU', youDef: '나: 백(수비)', youAtk: '나: 흑(공격)', lostT: '졌습니다', wonT: '이겼습니다', rw: '되감아 보기', go: '시작', enter: '교실 판으로', firstStone: '이 판이 첫 번째 수', firstSub: '하나 배울 때마다 이 판에 한 수가 늘어납니다. 다 채우면 무슨 뜻인지 알게 됩니다.', hint: '힌트', unit: '{u}단원', end: '결말', q: '{n}번째 수는?', fwd: '순서대로', forced: '거기밖에 막을 수 없어요……', examT: '졸업 시험', examSub: '이 판은 당신이 하나씩 배워 만든 것. 이제 끝까지 두세요.', grad: '졸업!', gradSub: '진짜 VCF를 스스로 풀었습니다. 무한의 탑·화안금정·명경대에 도전해 보세요.', locked: '앞 레슨을 먼저 끝내세요' },
+    zh: { undo: '退一手', reset: '重來', entry: 'VCF 教學', entrySub: '新手從這裡開始', board: '教學盤', placed: '已落 {n} 子・還有 {m} 子', exam: '畢業考', next: '下一子', start: '落下這一子', again: '再上一次這課', soon: '即將推出', soonSub: '這一課還在準備中。', cont: '繼續', nextStep: '下一步', tapBoard: '點棋盤作答', ok: '答對了', no: '再想想', done: '完成', back: '返回', close: '關閉', rewindOne: '倒帶一手', rewindMore: '再倒一手', playFwd: '倒帶完成，正著下一遍', drop: '落下這一子', you: '你', cpu: '電腦', youDef: '你：白（防守）', youAtk: '你：黑（進攻）', lostT: '你輸了', wonT: '你贏了', rw: '倒帶看看', go: '開始', enter: '進入教學盤', firstStone: '這局，是你的第一顆子', firstSub: '每學會一件事，這張棋盤就多一顆子。全部落完的時候，你會看懂它在說什麼。', hint: '提示', unit: '第 {u} 單元', end: '結局', q: '第 {n} 手是什麼？', fwd: '正著下', forced: '它只能擋那裡……', examT: '畢業考', examSub: '這盤棋，是你一路學過來的。現在把它下完。', grad: '畢業了！', gradSub: '你自己解開了一道真正的 VCF。去無限之塔、火眼金睛、明鏡台試試身手吧。', locked: '先完成前面的課' },
+    en: { undo: 'Undo', reset: 'Restart', entry: 'VCF Lessons', entrySub: 'New here? Start here', board: 'Lesson Board', placed: '{n} stones placed · {m} to go', exam: 'Final', next: 'Next stone', start: 'Place this stone', again: 'Replay this lesson', soon: 'Coming soon', soonSub: 'This lesson is still being prepared.', cont: 'Continue', nextStep: 'Next', tapBoard: 'Tap the board', ok: 'Correct', no: 'Think again', done: 'Done', back: 'Back', close: 'Close', rewindOne: 'Rewind one move', rewindMore: 'Rewind again', playFwd: 'Now play it forward', drop: 'Place this stone', you: 'You', cpu: 'CPU', youDef: 'You: White (defend)', youAtk: 'You: Black (attack)', lostT: 'You lost', wonT: 'You won', rw: 'Rewind it', go: 'Start', enter: 'Open the Lesson Board', firstStone: 'That game is your first stone', firstSub: 'Each thing you learn adds a stone to this board. When it is full, you will see what it says.', hint: 'Hint', unit: 'Unit {u}', end: 'The ending', q: 'What was move {n}?', fwd: 'Play forward', forced: 'It can only block there…', examT: 'Final', examSub: 'You built this board lesson by lesson. Now finish it.', grad: 'You graduated!', gradSub: 'You solved a real VCF on your own. Try Endless Tower, Fiery Eyes and Mirror Terrace.', locked: 'Finish the earlier lessons first' },
+    ja: { undo: '一手戻す', reset: 'やり直し', entry: 'VCF 教室', entrySub: '初めての方はここから', board: '教室の盤', placed: '{n} 子・あと {m} 子', exam: '卒業試験', next: '次の一子', start: 'この一子を置く', again: 'このレッスンをもう一度', soon: '準備中', soonSub: 'このレッスンは準備中です。', cont: '続ける', nextStep: '次へ', tapBoard: '盤をタップ', ok: '正解', no: 'もう一度', done: '完了', back: '戻る', close: '閉じる', rewindOne: '一手巻き戻す', rewindMore: 'さらに巻き戻す', playFwd: '巻き戻し完了、順に打つ', drop: 'この一子を置く', you: 'あなた', cpu: 'CPU', youDef: 'あなた：白（守り）', youAtk: 'あなた：黒（攻め）', lostT: '負け', wonT: '勝ち', rw: '巻き戻す', go: '開始', enter: '教室の盤へ', firstStone: 'この対局が最初の一子', firstSub: '一つ覚えるたびに、この盤に一子増えます。全部置き終えたとき、その意味が分かります。', hint: 'ヒント', unit: '第 {u} 単元', end: '結末', q: '{n} 手目は？', fwd: '順に打つ', forced: 'そこを止めるしかない……', examT: '卒業試験', examSub: 'この盤はあなたが一つずつ学んで作ったもの。最後まで打ち切ろう。', grad: '卒業！', gradSub: '本物の VCF を自力で解きました。無限の塔・火眼金睛・明鏡台に挑戦しよう。', locked: '先に前のレッスンを' },
+    ko: { undo: '한 수 무르기', reset: '다시', entry: 'VCF 교실', entrySub: '처음이라면 여기부터', board: '교실 판', placed: '{n}수 놓음 · {m}수 남음', exam: '졸업 시험', next: '다음 수', start: '이 수 놓기', again: '이 레슨 다시', soon: '준비 중', soonSub: '이 레슨은 준비 중입니다.', cont: '계속', nextStep: '다음', tapBoard: '판을 누르세요', ok: '정답', no: '다시 생각해 봐요', done: '완료', back: '돌아가기', close: '닫기', rewindOne: '한 수 되감기', rewindMore: '더 되감기', playFwd: '되감기 끝, 순서대로 두기', drop: '이 수 놓기', you: '나', cpu: 'CPU', youDef: '나: 백(수비)', youAtk: '나: 흑(공격)', lostT: '졌습니다', wonT: '이겼습니다', rw: '되감아 보기', go: '시작', enter: '교실 판으로', firstStone: '이 판이 첫 번째 수', firstSub: '하나 배울 때마다 이 판에 한 수가 늘어납니다. 다 채우면 무슨 뜻인지 알게 됩니다.', hint: '힌트', unit: '{u}단원', end: '결말', q: '{n}번째 수는?', fwd: '순서대로', forced: '거기밖에 막을 수 없어요……', examT: '졸업 시험', examSub: '이 판은 당신이 하나씩 배워 만든 것. 이제 끝까지 두세요.', grad: '졸업!', gradSub: '진짜 VCF를 스스로 풀었습니다. 무한의 탑·화안금정·명경대에 도전해 보세요.', locked: '앞 레슨을 먼저 끝내세요' },
   };
   const L = () => (typeof lang !== 'undefined' && UI[lang]) ? lang : 'zh';
   const U = (k, v) => String(UI[L()][k] ?? UI.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
@@ -659,11 +659,34 @@
 
   // ---------- 自己解：9×9 局部盤，引擎即時判定（下錯退回這手） ----------
   async function solveStep(l, st, f, alive) {
+    const B = await solveCore(st, f, alive);
+    if (!B) return 'quit';
+    msg(f.body, U('done'), TX({ zh: '解開了！', en: 'Solved!', ja: '解けた！', ko: '풀었습니다!' }), 'good');
+    return new Promise(res => button(f.foot, U('nextStep'), '', res));
+  }
+  // 自己解的核心（各課「自己解」與畢業考共用）。2026-11-10 使用者：下錯沒有退場機制 →
+  // ① 每次對方擋完都用引擎重算還有沒有 VCF，沒有就標出那顆擋子、說明、自動退回這一手
+  // ② 底下常駐「退一手／重來／提示」
+  async function solveCore(st, f, alive) {
     const pos = st.pos, aw = pos.atk === 'w', atkC = aw ? 'w' : 'b', defC = aw ? 'b' : 'w';
     const B = makeBoard(f.body, pos.win || null, pos.win ? 9 : 15); B.fit(boardSize());   // 沒給框＝整盤 15×15（長題）
     const b = [...pos.b], w = [...pos.w], mine = aw ? w : b, theirs = aw ? b : w;
     b.forEach(t => B.put(t, 'b', { anim: false })); w.forEach(t => B.put(t, 'w', { anim: false }));
-    msg(f.body, '', TX(st.text)); button(f.foot, '');
+    msg(f.body, '', TX(st.text));
+    const hist = [];   // 每一手 [攻方子, 擋子]
+    let busy = false, finish;
+    const solved = new Promise(r => { finish = r; });
+    const undo = () => { const h = hist.pop(); if (!h) return; B.take(h[1]); theirs.pop(); B.take(h[0]); mine.pop(); };
+    const onLine = () => st.line && hist.every((h, k) => h[0] === st.line[2 * k] && h[1] === st.line[2 * k + 1]);
+    f.foot.innerHTML = '';
+    const tool = (label, fn) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'lbtn ghost'; x.textContent = label; x.onclick = () => { if (!busy) fn(); }; f.foot.appendChild(x); return x; };
+    tool(U('undo'), () => { B.clearMarks(); undo(); msg(f.body, '', TX(st.text)); });
+    tool(U('reset'), () => { B.clearMarks(); while (hist.length) undo(); msg(f.body, '', TX(st.text)); });
+    tool(U('hint'), () => {
+      B.clearMarks();
+      if (!onLine()) { msg(f.body, U('hint'), TX({ zh: '這條路跟答案不一樣了。先按「退一手」或「重來」。', en: 'You have left the solution path. Tap Undo or Restart first.', ja: '正解の道から外れている。まず「一手戻す」か「やり直し」を。', ko: '정답 길에서 벗어났어요. 먼저 "한 수 무르기"나 "다시"를 누르세요.' }), 'bad'); return; }
+      const nx = st.line[2 * hist.length]; if (nx) B.glow(nx, '#3CC6B4');
+    });
     const why = {
       forbidden: { zh: '這點是黑棋禁手，不能下。', en: 'That is a forbidden point for Black.', ja: 'そこは黒の禁手。', ko: '거기는 흑의 금수입니다.' },
       notfour: { zh: '這手不是四。這題每一手都要是四。', en: 'That is not a four. Every move here must be a four.', ja: 'それは四じゃない。毎手が四。', ko: '사가 아닙니다. 매 수가 사여야 합니다.' },
@@ -671,63 +694,60 @@
       bad: { zh: '這條路接不下去。退回去再想想。', en: 'That path leads nowhere. Step back and think again.', ja: 'その道は続かない。戻って考え直そう。', ko: '그 길은 이어지지 않습니다. 돌아가서 다시 생각해 보세요.' },
       nofour: { zh: '下完這手之後你就沒有四可以衝了。換一條路。', en: 'After that you have no fours left. Try another path.', ja: 'その後、四が打てなくなる。別の道を。', ko: '그 다음엔 둘 사가 없습니다. 다른 길로.' },
     };
+    const WIN_FORBID = { zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' };
     let miss = 0;
-    while (true) {
-      const t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p)) res(p); }; });
-      if (!alive()) return 'quit';
-      B.onTap = null; B.clearMarks();
-      const r = (await move(b.join(' '), w.join(' '), t, aw)).result || { r: 'illegal' };
-      if (!alive()) return 'quit';
-      if (r.r === 'illegal') continue;
-      if (r.r === 'forbidden' || r.r === 'notfour') { B.shake(); B.cross(t); msg(f.body, U('no'), TX(why[r.r]), 'bad'); continue; }
-      B.put(t, atkC); mine.push(t);
-      if (r.r === 'win') {
-        if (/禁/.test(r.how || '')) { if (r.at) { B.glow(r.at, '#FF7A6B'); B.cross(r.at); } msg(f.body, U('ok'), TX({ zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' }), 'good'); await sleep(1200); }
-        else if (/五/.test(r.how || '')) B.five(fiveLine(new Set(mine), t), true); else B.glow(t, '#F2B544');
-        break;
-      }
-      if (r.r === 'block') {
-        await sleep(400); if (!alive()) return 'quit';
-        if (r.forcedForbidden) { B.glow(r.def, '#FF7A6B'); msg(f.body, U('ok'), TX({ zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' }), 'good'); break; }
-        msg(f.body, '', U('forced')); await B.thread(r.def, defC); theirs.push(r.def);
-        if (r.nofour) { B.shake(); msg(f.body, U('no'), TX(why.nofour), 'bad'); await sleep(900); B.take(r.def); theirs.pop(); B.take(t); mine.pop(); continue; }
-        msg(f.body, '', TX(st.text)); continue;
-      }
-      // defFive／bad：退回這一手（反四：對方剛才那顆擋子閃紅光）
-      if (r.r === 'defFive' && theirs.length) { const [px, py] = B.px(theirs[theirs.length - 1]); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 50 }); }
-      miss++; B.shake(); msg(f.body, U('no'), TX(why[r.r] || why.bad), 'bad');
-      await sleep(900); if (!alive()) return 'quit';
-      B.take(t); mine.pop();
-      if (miss >= 2 && st.line) B.glow(st.line[(mine.length - (aw ? pos.w.length : pos.b.length)) * 2] || st.line[0], '#3CC6B4');
-    }
-    msg(f.body, U('done'), TX({ zh: '解開了！', en: 'Solved!', ja: '解けた！', ko: '풀었습니다!' }), 'good');
-    return new Promise(res => button(f.foot, U('nextStep'), '', res));
+    B.onTap = async (t) => {
+      if (busy || B.has(t) || !alive()) return;
+      busy = true; B.clearMarks();
+      try {
+        const r = (await move(b.join(' '), w.join(' '), t, aw)).result || { r: 'illegal' };
+        if (!alive() || r.r === 'illegal') return;
+        if (r.r === 'forbidden' || r.r === 'notfour') { B.shake(); B.cross(t); msg(f.body, U('no'), TX(why[r.r]), 'bad'); return; }
+        B.put(t, atkC); mine.push(t);
+        if (r.r === 'win') {
+          if (/禁/.test(r.how || '')) { if (r.at) { B.glow(r.at, '#FF7A6B'); B.cross(r.at); } msg(f.body, U('ok'), TX(WIN_FORBID), 'good'); await sleep(1200); }
+          else if (/五/.test(r.how || '')) B.five(fiveLine(new Set(mine), t), true); else B.glow(t, '#F2B544');
+          B.onTap = null; finish(B); return;
+        }
+        if (r.r === 'block') {
+          await sleep(400); if (!alive()) return;
+          if (r.forcedForbidden) { B.glow(r.def, '#FF7A6B'); msg(f.body, U('ok'), TX(WIN_FORBID), 'good'); B.onTap = null; finish(B); return; }
+          msg(f.body, '', U('forced')); await B.thread(r.def, defC); theirs.push(r.def); hist.push([t, r.def]);
+          if (!alive()) return;
+          // 這一擋之後還有沒有 VCF？沒有＝走進死路：標出擋子、說明、退回這一手
+          const v = r.nofour ? null : ((await solveFrom(b.join(' '), w.join(' '), aw)) || {}).result;
+          if (!alive()) return;
+          if (!v || !v.vcf) {
+            miss++; B.shake(); B.glow(r.def, '#FF7A6B');
+            const onPath = st.line && st.line.filter((_, k) => k % 2 === 0).includes(r.def);
+            msg(f.body, U('no'), r.nofour ? TX(why.nofour) : onPath
+              ? TX({ zh: `白擋在 ${r.def}，剛好是你後面要用的點，這條路斷了。退回去換一手。`, en: `White blocked at ${r.def}, the very point you needed later. That path is dead. Step back and try another.`, ja: `白が ${r.def} に止めた。あとで使うはずの点で、この道は切れた。戻って別の手を。`, ko: `백이 ${r.def}에 막았습니다. 나중에 쓸 자리라 이 길은 끊겼어요. 돌아가서 다른 수를.` })
+              : TX({ zh: `白擋在 ${r.def} 之後，你就贏不了了。退回去換一手。`, en: `After White blocks at ${r.def}, you can no longer win. Step back and try another move.`, ja: `白が ${r.def} に止めたあと、もう勝てない。戻って別の手を。`, ko: `백이 ${r.def}에 막은 뒤로는 이길 수 없어요. 돌아가서 다른 수를.` }), 'bad');
+            await sleep(1700); if (!alive()) return;
+            B.clearMarks(); undo();
+            if (miss >= 2 && onLine() && st.line[2 * hist.length]) B.glow(st.line[2 * hist.length], '#3CC6B4');
+            return;
+          }
+          msg(f.body, '', TX(st.text)); return;
+        }
+        // defFive／bad：退回這一手（反四：對方剛才那顆擋子閃紅光）
+        if (r.r === 'defFive' && theirs.length) { const [px, py] = B.px(theirs[theirs.length - 1]); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 50 }); }
+        miss++; B.shake(); msg(f.body, U('no'), TX(why[r.r] || why.bad), 'bad');
+        await sleep(900); if (!alive()) return;
+        B.take(t); mine.pop();
+        if (miss >= 2 && onLine() && st.line[2 * hist.length]) B.glow(st.line[2 * hist.length], '#3CC6B4');
+      } finally { busy = false; }
+    };
+    return solved;
   }
 
   // ---------- 畢業考：教學盤整盤，用引擎判定 ----------
   async function exam() {
     const my = ++run, alive = () => my === run, bd = DATA.board;
     const f = frame(U('examT'));
-    const B = makeBoard(f.body, null, 15); B.fit(boardSize());
-    let b = [...bd.b], w = [...bd.w];
-    b.forEach(t => B.put(t, 'b', { anim: false })); w.forEach(t => B.put(t, 'w', { anim: false }));
-    msg(f.body, U('examT'), U('examSub')); button(f.foot, '');
-    while (true) {
-      const t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p)) res(p); }; });
-      if (!alive()) return;
-      B.onTap = null;
-      const r = (await move(b.join(' '), w.join(' '), t, false)).result || { r: 'illegal' };
-      if (!alive()) return;
-      if (r.r === 'illegal') continue;
-      if (r.r === 'forbidden' || r.r === 'notfour') { B.shake(); msg(f.body, U('no'), r.r === 'forbidden' ? TX({ zh: '這點是禁手。', en: 'That point is forbidden.', ja: 'そこは禁手。', ko: '거기는 금수입니다.' }) : TX({ zh: '這手不是四。VCF 每一手都要是四。', en: 'That is not a four. Every VCF move must be a four.', ja: 'それは四じゃない。VCF は毎手が四。', ko: '사가 아닙니다. VCF는 매 수가 사여야 합니다.' }), 'bad'); continue; }
-      B.put(t, 'b'); b.push(t);
-      if (r.r === 'win') { if (/五/.test(r.how || '')) B.five(fiveLine(new Set(b), t), true); else B.glow(t, '#F2B544'); break; }   // 活四／四四：已經擋不住
-      if (r.r === 'block') { await sleep(400); await B.thread(r.def, 'w'); w.push(r.def); msg(f.body, '', U('forced')); continue; }
-      // 下錯（對方反四成五、或接不下去）：退回這一手重來
-      B.shake(); msg(f.body, U('no'), TX({ zh: '這條路不通。退回去再想想。', en: 'That path fails. Step back and think again.', ja: 'その道は通らない。戻って考え直そう。', ko: '그 길은 막혔습니다. 돌아가서 다시 생각해 보세요.' }), 'bad');
-      await sleep(900); B.take(t); b.pop();
-    }
-    // 下完：補上五連（引擎回 win 表示已經擋不住；這裡讓玩家看到結局）
+    // 跟各課「自己解」同一套（走進死路會說明並退回、有退一手／重來／提示）
+    const B = await solveCore({ pos: { b: bd.b, w: bd.w, atk: 'b' }, text: { zh: UI.zh.examSub, en: UI.en.examSub, ja: UI.ja.examSub, ko: UI.ko.examSub }, line: bd.sol }, f, alive);
+    if (!B || !alive()) return;
     sprite(B.el, 'graduation', 0, 0, 0, { full: true, z: 8, ms: 70 });
     msg(f.body, U('grad'), U('gradSub'), 'good');
     const p = prog(); p.graduated = true; store.set(p);
