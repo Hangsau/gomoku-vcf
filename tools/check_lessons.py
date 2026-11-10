@@ -123,7 +123,7 @@ def check_line(E, where, pos, step):
             d.append(sol[i + 1])
     fv = fives(a, d, not aw)
     if step.get('five') and set(step['five']) != fv: err(where, f'成五點宣告 {step["five"]}，算出 {sorted(fv)}')
-    in_window(where, B + W + sol + sorted(fv), pos.get('win'))
+    in_window(where, B + W + sol + (sorted(fv) if step.get('toFive') or step.get('type') == 'rewind' else []), pos.get('win'))   # 成五點只有要玩家自己連五（toFive）或倒帶看結局時才要看得到；第 6 單元以後下到四三就結束
     if r.get('forbidden') and not aw: uses_forbid.append((4, '你下黑，盤上有黑棋禁點 ' + ' '.join(r['forbidden']) + '，禁手第 4 單元才教'))   # 白先題：黑的禁點不影響玩家
     if (r.get('facts') or {}).get('lifts') and not aw: uses_forbid.append((9, '解法裡有解禁，解禁第 9 單元才教'))
     return uses_forbid

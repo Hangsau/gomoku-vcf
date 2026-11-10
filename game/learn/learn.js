@@ -164,13 +164,16 @@
     const B = { el, n, ox, oy, size: 0, cell: 0, m: 0, stones: new Map(), onTap: null };
     B.fit = (avail) => {
       // 盤邊標座標（2026-11-10 使用者：9×9 局部盤沒標字母數字，叫人找 H8 根本找不到）：下緣字母、左緣數字
-      const s = Math.max(220, Math.min(avail, 520)); B.size = s; B.m = Math.max(Math.round(s / (n * 2)), 20); B.cell = (s - 2 * B.m) / (n - 1);
+      // 邊距要放得下「子的半徑＋座標字」：靠邊的子不可蓋住字母數字（2026-11-11 7-3 第 7 行的子蓋住 H J K L）
+      const s = Math.max(220, Math.min(avail, 520)); B.size = s; B.m = Math.max(Math.round(s / (n * 2)), 20);
+      for (let k = 0; k < 3; k++) { const c = (s - 2 * B.m) / (n - 1); B.m = Math.max(B.m, Math.ceil(c * 0.47 + Math.max(9, Math.min(12, Math.round(c * 0.42))) * 1.25 + 3)); }
+      B.cell = (s - 2 * B.m) / (n - 1);
       el.style.width = el.style.height = s + 'px';
       let lines = '', labels = '';
       const fs = Math.max(9, Math.min(12, Math.round(B.cell * 0.42)));
       for (let i = 0; i < n; i++) {
         const p = Math.round(B.m + i * B.cell) + .5; lines += `<line x1="${B.m}" y1="${p}" x2="${s - B.m}" y2="${p}"/><line x1="${p}" y1="${B.m}" x2="${p}" y2="${s - B.m}"/>`;
-        labels += `<text x="${p}" y="${s - B.m + fs + 4}" text-anchor="middle">${COLS[ox + i]}</text><text x="${B.m - 6}" y="${p + fs * .36}" text-anchor="end">${oy + n - i}</text>`;
+        labels += `<text x="${p}" y="${s - B.m + B.cell * 0.47 + fs + 1}" text-anchor="middle">${COLS[ox + i]}</text><text x="${B.m - B.cell * 0.47 - 3}" y="${p + fs * .36}" text-anchor="end">${oy + n - i}</text>`;
       }
       const star = n === 15 ? ['D4', 'D12', 'L4', 'L12', 'H8'].map(t => { const [x, y] = xy(t); return `<circle cx="${B.m + x * B.cell}" cy="${B.m + (14 - y) * B.cell}" r="3"/>`; }).join('') : '';
       el.innerHTML = `<svg class="grid" width="${s}" height="${s}" aria-hidden="true"><g stroke="#5B4524" stroke-width="1">${lines}</g><g fill="#5B4524">${star}</g><g fill="#7A5E36" font-size="${fs}" font-family="var(--num)" font-weight="700">${labels}</g></svg>`;

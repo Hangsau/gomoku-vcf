@@ -283,13 +283,18 @@ C['7-2'] = [
     c_predict(h2),
     c_solve('換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。', h2),
 ]
-def full_board(st): st['pos']['win'] = None; return st   # 後果點塞不進 9×9（A5C3XXH0 的活四兩頭在第 15 行）就用整盤
+def full_board(st, h):
+    """第 7 單元以後下到四三就結束，最後的成五點不用看得到：畫面只框盤面＋解＋所有第一手的後果點（A5C3XXH0：往下一格，第 7–15 行）；仍塞不進才用整盤"""
+    pts = h['b'] + h['w'] + h['sol'] + h['counterFive'] + reply_fives(h['b'], h['w'], h['atk'])
+    xy_ = lambda t: (COLS.index(t[0]), int(t[1:]) - 1); ps = [xy_(t) for t in pts]
+    fit = max(p[0] for p in ps) - min(p[0] for p in ps) <= 8 and max(p[1] for p in ps) - min(p[1] for p in ps) <= 8
+    st['pos']['win'] = win_of(pts) if fit else None; return st
 HB = next((h for h in CB if h['src'] == 'A5C3XXH0'), None)   # 反四之後又被反擊回來的漂亮題（使用者 2026-11-10：這題很漂亮）
 C['7-3'] = [
     say('衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。'),
     c_solve('想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
 ] + ([say('反過來也可能：對方反四時，你去擋他的那一手，如果剛好也是你的四，先手就又回到你手上。'),
-      full_board(c_solve('這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。', HB))] if HB else [])
+      full_board(c_solve('這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。', HB), HB)] if HB else [])
 # 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
 FB = ['是禁手', '不是禁手']
 C['4-1'] = [
