@@ -72,6 +72,7 @@ try:
                 elif T == 'solve':   # 照驗證過的手順下，電腦用引擎擋
                     for j in range(0, len(st['line']), 2):
                         pg.wait_for_timeout(300); tap(pg, st['line'][j]); pg.wait_for_timeout(1600)
+                    pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)   # 解完才只剩「下一步」；別按到退一手
                     overflow(pg, where + ' 解完'); btn(pg, timeout=12000)
                 elif T == 'rewind':
                     ln = st['line'] + [st['five'][0], st['five'][1]]
@@ -90,7 +91,8 @@ try:
             btn(pg); pg.wait_for_timeout(800); overflow(pg, '畢業考')
             sol = D['board']['sol']
             for j in range(0, len(sol), 2):
-                tap(pg, sol[j]); pg.wait_for_timeout(1700)
+                tap(pg, sol[j]); pg.wait_for_timeout(2200)
+            pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)
             grad = pg.evaluate("(document.querySelector('#learn .lmsg .tag')||{}).textContent")
             if not pg.evaluate("JSON.parse(localStorage.getItem('vcfgame.learn')).graduated === true"): issues.append(f'畢業考沒有過關（訊息：{grad}）')
             overflow(pg, '畢業')
