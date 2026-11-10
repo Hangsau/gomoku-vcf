@@ -64,8 +64,15 @@ try:
                 if T == 'say': btn(pg)
                 elif T == 'choose': pg.click(f'#learn .lopt >> nth={st["ans"]}'); btn(pg)
                 elif T == 'predict': pg.wait_for_timeout(700); tap(pg, st['ans'][0]); pg.wait_for_timeout(1100); btn(pg)
+                elif T == 'tap' and st.get('all'):
+                    for a in st['ans']: tap(pg, a); pg.wait_for_timeout(250)
+                    btn(pg)
                 elif T == 'tap':
                     tap(pg, 'H8' if st['kind'] == 'free' else st['ans'][0]); pg.wait_for_timeout(1500 if st['kind'] == 'free' else 700); btn(pg)
+                elif T == 'solve':   # 照驗證過的手順下，電腦用引擎擋
+                    for j in range(0, len(st['line']), 2):
+                        pg.wait_for_timeout(300); tap(pg, st['line'][j]); pg.wait_for_timeout(1600)
+                    overflow(pg, where + ' 解完'); btn(pg, timeout=12000)
                 elif T == 'rewind':
                     ln = st['line'] + [st['five'][0], st['five'][1]]
                     btn(pg)                       # 倒帶一手

@@ -1,14 +1,14 @@
 // 教學動畫圖集：依序請 codex 畫（ChatGPT 訂閱額度，不吃 Claude）。一次一張、畫完立刻寫檔，已畫過的跳過。
 // 用法：node C:/claudehome/projects/VCF/tools/codex_art_queue.mjs [只畫這些編號，例如 01 02]
 // 提示檔：docs/design/tutorial-2026-11-10/art-prompts/NN_*.txt（第一行 OUTPUT_NAME: 檔名），共用規則在 00_style.txt
-// 輸出：game/learn/art/<檔名>.png；舊圖要重畫就先把它改名或刪掉
+// 輸出：docs/design/tutorial-2026-11-10/art-src/<檔名>.png（再跑 tools/art_build.py 轉成遊戲用的 WebP）；舊圖要重畫就先把它改名或刪掉
 import { readFile, readdir, copyFile, mkdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = 'C:/claudehome/projects/VCF';
 const PROMPTS = `${ROOT}/docs/design/tutorial-2026-11-10/art-prompts`;
-const OUT = `${ROOT}/game/learn/art`;
+const OUT = `${ROOT}/docs/design/tutorial-2026-11-10/art-src`;   // 原圖不上線；遊戲用的 WebP 由 tools/art_build.py 產生
 const HELPER = 'C:/claudehome/projects/swim-coach/tools/companion/codex-image.mjs';   // swim-coach 的 codex 生圖工具，沿用不改
 const { generatePhoto } = await import(pathToFileURL(HELPER).href);
 

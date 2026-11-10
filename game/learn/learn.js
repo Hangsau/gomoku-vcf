@@ -121,11 +121,11 @@
 
   // ---------- codex 逐格圖集（2026-11-10 W7）：4×4 圖集逐格硬切播放；沒載到就用上面的 CSS 動畫 ----------
   // manifest.json 由 tools/art_build.py 產生：anchor＝主體中心相對格心偏移、size＝主體寬／格寬
-  let ART = null;
-  fetch('game/learn/art/manifest.json?v=' + (typeof BUILD !== 'undefined' ? BUILD : Date.now())).then(r => r.ok ? r.json() : null).then(m => {
+  let ART = null, artP = null;
+  const loadArt = () => artP || (artP = fetch('game/learn/art/manifest.json?v=' + (typeof BUILD !== 'undefined' ? BUILD : Date.now())).then(r => r.ok ? r.json() : null).then(m => {
     ART = m;
-    if (m) Object.values(m).forEach(s => { const i = new Image(); i.src = 'game/learn/art/' + s.file; });   // 先載好，第一次播放不閃
-  }).catch(() => {});
+    if (m) Object.values(m).forEach(s => { const i = new Image(); i.src = 'game/learn/art/' + s.file; });   // 打開教學才載（約 3 MB），先載好第一次播放不閃
+  }).catch(() => {}));
   const FRAME_MS = 42;
   // host：疊在誰上面；cx,cy：主體中心要對準的位置（px）；body：主體要多寬（px）；opt.full＝整張蓋滿 host（特效層）
   function sprite(host, name, cx, cy, body, opt = {}) {
@@ -290,6 +290,7 @@
   async function open() {
     root.hidden = false; history.pushState({ learn: 1 }, '');
     root.innerHTML = '';
+    loadArt();
     await load();
     if (!prog().opening) return opening(); else return boardScreen();
   }
@@ -413,7 +414,7 @@
     if (prog().justDone) { const o = order.find(x => x.lesson === prog().justDone); if (o) { B.take(o.t, true); setTimeout(() => alive() && B.put(o.t, o.c, { cls: o.c === 'b' ? 'a-breath' : '' }), 350); } const p = prog(); delete p.justDone; store.set(p); }
     const alive = () => my === run;
     if (nextO) {   // 下一課的信標：逐格圖循環，沒有圖就用 CSS 波紋
-      const [px, py] = B.px(nextO.t), sp = sprite(B.layer, 'beacon', px, py, B.cell * 1.1, { loop: true, ms: 70 });
+      const [px, py] = B.px(nextO.t), sp = sprite(B.layer, 'beacon', px, py, B.cell * 0.45, { loop: true, ms: 70 });   // manifest 量的是信標核心
       if (sp) sp.classList.add('beacon');
       else { const bc = B.mark('beacon', nextO.t, '<i></i><i style="animation-delay:.6s"></i><i style="animation-delay:1.2s"></i><b></b>'); bc.style.transform = 'scale(1.3)'; }
     }

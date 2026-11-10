@@ -1,0 +1,222 @@
+{
+ "beacon": {
+  "file": "web/beacon.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.03,
+   -0.045
+  ],
+  "size": 0.156
+ },
+ "board_flip": {
+  "file": "web/board_flip.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.002,
+   0.01
+  ],
+  "size": 0.785
+ },
+ "bowl_tug": {
+  "file": "web/bowl_tug.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.002,
+   0.052
+  ],
+  "size": 0.609
+ },
+ "brush_x": {
+  "file": "web/brush_x.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.001,
+   -0.006
+  ],
+  "size": 0.686
+ },
+ "counter_four": {
+  "file": "web/counter_four.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.001,
+   0.041
+  ],
+  "size": 0.561
+ },
+ "drop_black": {
+  "file": "web/drop_black.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.007,
+   0.057
+  ],
+  "size": 0.507
+ },
+ "drop_white": {
+  "file": "web/drop_white.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.001,
+   0.047
+  ],
+  "size": 0.507
+ },
+ "five_gold": {
+  "file": "web/five_gold.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.002,
+   0.03
+  ],
+  "size": 0.813
+ },
+ "five_red": {
+  "file": "web/five_red.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.001,
+   0.023
+  ],
+  "size": 0.817
+ },
+ "forbid_break": {
+  "file": "web/forbid_break.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.004,
+   0.03
+  ],
+  "size": 0.536
+ },
+ "graduation": {
+  "file": "web/graduation.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0,
+   0
+  ],
+  "size": 1
+ },
+ "hint_bulb": {
+  "file": "web/hint_bulb.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.006,
+   0.045
+  ],
+  "size": 0.469
+ },
+ "land_gold": {
+  "file": "web/land_gold.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.002,
+   0.01
+  ],
+  "size": 0.38
+ },
+ "lift_black": {
+  "file": "web/lift_black.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.001,
+   0.044
+  ],
+  "size": 0.421
+ },
+ "lift_white": {
+  "file": "web/lift_white.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.02,
+   0.06
+  ],
+  "size": 0.453
+ },
+ "rewind_fx": {
+  "file": "web/rewind_fx.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.071,
+   0.329
+  ],
+  "size": 0.756
+ },
+ "stamp_ok": {
+  "file": "web/stamp_ok.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.012,
+   0.044
+  ],
+  "size": 0.711
+ },
+ "thread_pull": {
+  "file": "web/thread_pull.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.001,
+   0.018
+  ],
+  "size": 0.281
+ },
+ "unit_clear": {
+  "file": "web/unit_clear.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   0.004,
+   0.026
+  ],
+  "size": 0.427
+ },
+ "unlock": {
+  "file": "web/unlock.webp",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "anchor": [
+   -0.001,
+   0.057
+  ],
+  "size": 0.456
+ }
+}

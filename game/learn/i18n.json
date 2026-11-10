@@ -400,233 +400,233 @@
   "ko": "졸업 시험"
  },
  "從這單元開始，自己找 VCF。第一步：找材料。VCF 每一手都要是四，所以能下的點，只有「下了會變成四」的那些。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "From this Unit on, find a VCF yourself. Step 1: find your options. Every VCF move must make a four, so only those spots will work.",
+  "ja": "この単元からは自分でVCFを探そう。ステップ1：材料探し。VCFは毎手、四を打つから、四になる点だけが候補だよ。",
+  "ko": "이 단원부터는 직접 VCF를 찾아봐요. 1단계는 재료 찾기. VCF는 매 수 사를 둬야 하니, 사가 되는 자리만 고를 수 있어요."
  },
  "把所有下了會變成四的點都找出來。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Find every spot where you can make a four.",
+  "ja": "打つと四になる点を全部見つけよう。",
+  "ko": "두면 사가 되는 자리를 모두 찾아봐요."
  },
  "再一題，全部找出來。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "One more. Find them all.",
+  "ja": "もう1問。全部見つけよう。",
+  "ko": "한 문제 더요. 모두 찾아봐요."
  },
  "第二步：找終點。終點就是能一手做出「四三」或活四的那一點，通常在兩條線交會的地方。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Step 2: find the finish. Look for a spot that makes a four-three or open four in one move, often where two lines meet.",
+  "ja": "ステップ2：最後の形探し。一手で四三か達四を作れる点で、たいてい2本の線が交わる所だよ。",
+  "ko": "2단계는 마무리 찾기. 한 수로 사삼이나 열린 사를 만드는 자리예요. 보통 두 줄이 만나는 곳에 있어요."
  },
  "找出終點：哪一點能同時做出四和三？": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Find the finish: where can you make a four and a three at once?",
+  "ja": "最後の点を探そう。四と三を同時に作れるのはどこ？",
+  "ko": "마무리 자리를 찾아봐요. 어디에 두면 사와 삼을 동시에 만들까요?"
  },
  "再找一次終點。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Find the finish again.",
+  "ja": "もう一度、最後の点を探そう。",
+  "ko": "다시 마무리 자리를 찾아봐요."
  },
  "第三步：往回接。終點還缺哪顆子？就找一個衝四，把那顆子放上去。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Step 3: work backward. Which stone is missing for the finish? Find a four that puts it in place.",
+  "ja": "ステップ3：逆につなごう。最後の形には、どの石が足りない？四を打って、その石を置こう。",
+  "ko": "3단계는 거꾸로 연결하기. 마무리에 어떤 돌이 더 필요할까요? 사를 두며 그 돌을 놓을 방법을 찾아봐요."
  },
  "先看結局，倒回去看看：第一個四是怎麼替終點鋪路的。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "See the ending, then go back: how did the first four set up the finish?",
+  "ja": "結末を見てから戻ろう。最初の四が、どう最後の形につながったかな？",
+  "ko": "결말부터 보고 거슬러 올라가요. 첫 사가 어떻게 마무리를 준비했는지 살펴봐요."
  },
  "再倒一題。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Work backward on one more.",
+  "ja": "もう1問、逆にたどろう。",
+  "ko": "한 문제 더 거슬러 올라가요."
  },
  "第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你另一條線。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Step 4: check. Each stone they use to block stays on the board. It may block another of your lines.",
+  "ja": "ステップ4：確認しよう。相手が止めるために置いた石は、盤に残るよ。あなたの別の線まで止めるかもしれない。",
+  "ko": "4단계는 확인하기. 상대가 막으려고 둔 돌은 판에 남아요. 그 돌이 당신의 다른 줄까지 막을 수 있어요."
  },
  "這題有陷阱：有的四衝下去，對方的擋子會壞了你的路。自己解解看。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "There’s a trap here: some fours let their blocking stone cut off your next moves. Try solving it yourself.",
+  "ja": "この問題には落とし穴があるよ。四を打つ場所によっては、相手が止めた石で続かなくなる。自分で解いてみよう。",
+  "ko": "함정이 있어요. 어떤 사를 두면 상대가 막은 돌이 다음 길을 막아 버려요. 직접 풀어 봐요."
  },
  "四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Use all four steps: find your options, find the finish, work backward, and check. No hints this time.",
+  "ja": "材料探し、最後の形探し、逆につなぐ、確認する。4つのステップを使おう。今度はヒントなしだよ。",
+  "ko": "재료 찾기, 마무리 찾기, 거꾸로 연결하기, 확인하기. 네 단계를 함께 써 봐요. 이번엔 힌트가 없어요."
  },
  "自己解。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Solve it yourself.",
+  "ja": "自分で解いてみよう。",
+  "ko": "직접 풀어 봐요."
  },
  "最後一題。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Last one.",
+  "ja": "最後の1問。",
+  "ko": "마지막 문제예요."
  },
  "對方擋你的時候，那顆擋子可能剛好讓他自己做出四。這叫「反四」。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "When they block you, that stone may also make a four for them. That’s a “counter-four”.",
+  "ja": "相手があなたを止めた石で、相手の四もできることがあるよ。これが「逆四」。",
+  "ko": "상대가 막으려고 둔 돌로 상대의 사가 생길 수 있어요. 이게 ‘역사’예요."
  },
  "這題的對方擋子差點變成反四。倒回去看看順序為什麼要這樣排。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Their blocking stones almost make a counter-four here. Go back and see why this move order matters.",
+  "ja": "相手が止めた石で、逆四になりかける問題だよ。戻って、なぜこの手順なのか見てみよう。",
+  "ko": "상대가 막은 돌이 하마터면 역사가 될 뻔했어요. 거슬러 올라가서 왜 이 순서인지 살펴봐요."
  },
  "對方一有四，你就得先擋；你再衝四，他就直接成五。反四一出現，你的先手就沒了。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Once they have a four, you must block. Make another four instead, and they make five. A counter-four takes your initiative.",
+  "ja": "相手に四ができたら、まず止めないとね。また四を打つと、相手が五連にするよ。逆四ができたら、あなたの先手はなくなる。",
+  "ko": "상대에게 사가 생기면 먼저 막아야 해요. 또 사를 두면 상대가 바로 오목을 완성해요. 역사가 나오면 선수를 잃어요."
  },
  "小心反四，自己解。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Watch for counter-fours. Solve it yourself.",
+  "ja": "逆四に気をつけて、自分で解こう。",
+  "ko": "역사를 조심하며 직접 풀어 봐요."
  },
  "同樣幾個四，換個順序，對方的擋子就不會變成四。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Play the same fours in a different order, and their blocking stones won’t make a four.",
+  "ja": "同じ四でも、順番を変えると相手が止めた石で四ができなくなるよ。",
+  "ko": "같은 사라도 순서를 바꾸면 상대가 막은 돌이 사가 되지 않아요."
  },
  "找出不會被反四的順序。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Find a move order that avoids a counter-four.",
+  "ja": "逆四を防げる手順を見つけよう。",
+  "ko": "역사를 피할 수 있는 순서를 찾아봐요."
  },
  "黑棋有三種禁手：長連（六子以上）、四四（一子做出兩個四）、三三（一子做出兩個活三）。白棋沒有禁手。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black has 3 types of forbidden moves: overline (6+ in a row), double four (2 fours in one move), double three (2 open threes in one move). White has none.",
+  "ja": "黒の禁手は3つ。長連（6個以上の連続）、四々（1個の石で四を2つ）、三々（1個の石で活三を2つ）。白に禁手はないよ。",
+  "ko": "흑의 금수는 세 가지예요. 장목(6개 이상 한 줄로 잇기), 쌍사(한 돌로 사 둘), 쌍삼(한 돌로 열린 삼 둘). 백은 금수가 없어요."
  },
  "黑下在金圈，同時做出橫的四和直的四。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black plays in the gold ring, making a horizontal four and a vertical four.",
+  "ja": "黒が金色の丸に打つと、横と縦に四ができるよ。",
+  "ko": "흑이 금색 원에 두면 가로 사와 세로 사가 동시에 생겨요."
  },
  "是禁手": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Forbidden move",
+  "ja": "禁手だよ",
+  "ko": "금수예요"
  },
  "不是禁手": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Not a forbidden move",
+  "ja": "禁手ではないよ",
+  "ko": "금수가 아니에요"
  },
  "黑下在金圈，同時做出兩條活三。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black plays in the gold ring, making two open threes at once.",
+  "ja": "黒が金色の丸に打つと、活三が同時に2つできるよ。",
+  "ko": "흑이 금색 원에 두면 열린 삼 두 개가 동시에 생겨요."
  },
  "黑下在金圈，會連成六顆。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black plays in the gold ring, making six in a row.",
+  "ja": "黒が金色の丸に打つと、石が6個つながるよ。",
+  "ko": "흑이 금색 원에 두면 돌 6개가 한 줄로 이어져요."
  },
  "黑下在金圈，做出一個四和一條活三。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black plays in the gold ring, making a four and an open three.",
+  "ja": "黒が金色の丸に打つと、四と活三ができるよ。",
+  "ko": "흑이 금색 원에 두면 사 하나와 열린 삼 하나가 생겨요."
  },
  "黑棋這一手如果同時連成五，就算形狀看起來像禁手，也是黑贏。成五最優先。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "If Black also makes five with this move, Black wins, even if it looks like a forbidden move. Making five comes first.",
+  "ja": "黒がその一手で五連も作れば、禁手の形に見えても黒の勝ち。五連が最優先だよ。",
+  "ko": "흑이 이번 수로 오목도 완성하면, 금수처럼 보여도 흑이 이겨요. 오목 완성이 최우선이에요."
  },
  "這一點看起來會做出兩個四，可是它直接連成五。點下去！": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "This spot seems to make two fours, but it makes five right away. Tap it!",
+  "ja": "ここは四が2つできそうだけど、そのまま五連になるよ。タップしよう！",
+  "ko": "여기는 사 두 개가 생길 것 같지만, 바로 오목 완성이에요. 눌러 봐요!"
  },
  "黑棋不能用四四贏，所以黑先的題，收尾一定是四三或活四。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black can’t win with a double four. In Black-to-move puzzles, you must finish with a four-three or open four.",
+  "ja": "黒は四々では勝てないよ。だから黒先の問題は、必ず四三か達四で終わるよ。",
+  "ko": "흑은 쌍사로 이길 수 없어요. 흑이 먼저 두는 문제는 꼭 사삼이나 열린 사로 마무리해요."
  },
  "這題有禁點。倒回去看：黑是怎麼避開禁點收尾的。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "There’s a forbidden point here. Go back and see how Black avoids it to finish.",
+  "ja": "禁手になる点があるよ。戻って、黒がどう避けて決めたか見てみよう。",
+  "ko": "금수 자리가 있어요. 거슬러 올라가서 흑이 어떻게 피하며 마무리했는지 봐요."
  },
  "黑棋路上某一手如果是禁手，那手就不能下，要換一條路。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Black can’t play a forbidden move along the way. You’ll need another route.",
+  "ja": "途中の一手が黒の禁手なら、そこには打てないよ。別の道を探そう。",
+  "ko": "도중에 흑이 둘 수가 금수라면 거기엔 둘 수 없어요. 다른 길을 찾아봐요."
  },
  "盤上有禁點（下了會被判負的點）。避開它，自己解。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "There’s a forbidden point on the board (play there and you lose). Avoid it and solve the puzzle.",
+  "ja": "盤に禁手の点があるよ（打つと負け）。そこを避けて、自分で解こう。",
+  "ko": "판에 금수 자리가 있어요(두면 패배하는 곳). 그곳을 피해 직접 풀어 봐요."
  },
  "白棋沒有禁手：四四、長連都可以。白先的題，收尾的方式比黑多。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "White has no forbidden moves: double fours and overlines are allowed. White-to-move puzzles have more ways to finish.",
+  "ja": "白に禁手はないから、四々も長連もOK。白先の問題は、黒より決め方が多いよ。",
+  "ko": "백은 금수가 없어 쌍사와 장목도 가능해요. 백이 먼저 두는 문제는 흑보다 마무리 방법이 많아요."
  },
  "白一手就擋不住了。倒回去看看。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "One White move makes it unstoppable. Go back and see.",
+  "ja": "白が一手打つと、もう止められないよ。戻って見てみよう。",
+  "ko": "백이 한 수만 두면 막을 수 없어요. 거슬러 올라가서 봐요."
  },
  "換你當白，自己解。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Now you’re White. Solve it yourself.",
+  "ja": "次はあなたが白。自分で解こう。",
+  "ko": "이번엔 백이 되어 직접 풀어 봐요."
  },
  "白還有一招：衝一個四，讓黑唯一的擋點剛好是黑的禁手。黑不能下禁手，就擋不了。這叫「逼禁」。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "White has another trick: make a four that Black can only block with a forbidden move. Black can’t play there! This is “forcing a forbidden move”.",
+  "ja": "白は、四を打って黒が止める点を禁手にする手もあるよ。黒はそこに打てず、止められない。これが「禁手に追い込む」攻め方だよ。",
+  "ko": "백에겐 또 한 수가 있어요. 사를 두어 흑이 막을 유일한 자리를 금수로 만드는 거예요. 흑은 거기에 둘 수 없어 못 막아요. 이게 ‘금수 유도’예요."
  },
  "用逼禁贏。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Win by forcing a forbidden move.",
+  "ja": "禁手に追い込んで勝とう。",
+  "ko": "금수를 유도해 이겨 봐요."
  },
  "再一題逼禁。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "One more: force a forbidden move.",
+  "ja": "もう1問、禁手に追い込もう。",
+  "ko": "금수 유도 문제 하나 더예요."
  },
  "白先綜合：四四、四三、逼禁都可能是終點。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "White to move: finish with a double four, four-three, or by forcing a forbidden move.",
+  "ja": "白先のまとめ問題。四々、四三、禁手に追い込む攻め、どれも最後の形になるよ。",
+  "ko": "백이 먼저 두는 종합 문제예요. 쌍사, 사삼, 금수 유도 모두 마무리가 될 수 있어요."
  },
  "原本是禁手的點，衝了幾個四之後形狀改變，可能變成可以下。這叫「解禁」。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "A few fours can change the shape so a forbidden point becomes playable.",
+  "ja": "四を何度か打つと形が変わり、禁手だった点に打てるようになることがあるよ。これが「禁手解除」。",
+  "ko": "사를 몇 번 두면 모양이 바뀌어 금수였던 자리에 둘 수 있게 되기도 해요. 이게 ‘금수 해제’예요."
  },
  "這題的某一手，一開始是禁點。倒回去看看它什麼時候變成可以下。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "A spot you’ll need is forbidden at first. Go back and see when it becomes playable.",
+  "ja": "この問題で打つ点の1つは、最初は禁手だよ。戻って、いつ打てるようになったか見てみよう。",
+  "ko": "이 문제에서 둘 자리 하나는 처음엔 금수예요. 거슬러 올라가서 언제 둘 수 있게 되는지 봐요."
  },
  "自己解一題有解禁的。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "Solve one where a forbidden point becomes playable.",
+  "ja": "禁手解除のある問題を自分で解こう。",
+  "ko": "금수 해제가 있는 문제를 직접 풀어 봐요."
  },
  "手數變多時，方法一樣：找材料、找終點、往回接、檢查。只是往回接要接好幾層。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "More moves, same method: find your options, find the finish, work backward, and check. Just work back a few more steps.",
+  "ja": "手数が増えても、材料探し、最後の形探し、逆につなぐ、確認するのは同じ。逆につなぐ手数が増えるだけだよ。",
+  "ko": "수가 많아져도 방법은 같아요. 재료 찾기, 마무리 찾기, 거꾸로 연결하기, 확인하기. 거꾸로 여러 단계 연결하면 돼요."
  },
  "4 手題，整個棋盤。自己解。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "4 moves, full board. Solve it yourself.",
+  "ja": "4手の問題、盤全体だよ。自分で解こう。",
+  "ko": "4수 문제, 전체 판이에요. 직접 풀어 봐요."
  },
  "再一題 4 手題。": {
-  "en": "",
-  "ja": "",
-  "ko": ""
+  "en": "One more 4-move puzzle.",
+  "ja": "もう1問、4手の問題。",
+  "ko": "4수 문제 하나 더예요."
  }
 }
