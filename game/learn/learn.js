@@ -134,7 +134,10 @@
     if (!s) return null;
     const cell = opt.full ? Math.max(host.clientWidth, host.clientHeight) : body / s.size;
     const el = document.createElement('div');
-    const left = opt.full ? 0 : cx - cell / 2 - s.anchor[0] * cell, top = opt.full ? 0 : cy - cell / 2 - s.anchor[1] * cell;
+    // 主體偏移要跟著旋轉（2026-11-10 使用者：直的五連金光圖偏掉半格）：主體中心＝元素中心＋旋轉後的 anchor
+    const rad = (opt.rot || 0) * Math.PI / 180, ax = s.anchor[0] * cell, ay = s.anchor[1] * cell;
+    const rx = ax * Math.cos(rad) - ay * Math.sin(rad), ry = ax * Math.sin(rad) + ay * Math.cos(rad);
+    const left = opt.full ? 0 : cx - cell / 2 - rx, top = opt.full ? 0 : cy - cell / 2 - ry;
     el.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${opt.full ? host.clientWidth : cell}px;height:${opt.full ? host.clientHeight : cell}px;pointer-events:none;background:url('game/learn/art/${s.file}') no-repeat;background-size:${s.cols * 100}% ${s.rows * 100}%;z-index:${opt.z || 3};${opt.rot ? `transform:rotate(${opt.rot}deg)` : ''}`;
     host.appendChild(el);
     let k = 0;
@@ -217,7 +220,7 @@
     B.shake = () => { el.classList.remove('a-no'); void el.offsetWidth; el.classList.add('a-no'); };
     B.beam = (a, b, color) => {
       const [x1, y1] = B.px(a), [x2, y2] = B.px(b), w = Math.hypot(x2 - x1, y2 - y1) + 10, ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-      const m = document.createElement('div'); m.className = 'beam'; m.style.cssText = `left:${x1 - 5}px;top:${y1 - 5}px;width:${w}px;background:${color};box-shadow:0 0 16px ${color};--a:${ang}deg`; B.layer.appendChild(m);
+      const m = document.createElement('div'); m.className = 'beam'; m.style.cssText = `left:${x1 - 5}px;top:${y1 - 5}px;width:${w}px;background:${color};box-shadow:0 0 16px ${color};--a:${ang}deg`; B.layer.prepend(m);   // 光束在子下面，不壓到子上的數字
     };
     B.thread = async (t, color) => {   // 木偶線：從右上角拉一條線到擋點，子沿線被拖過去
       const [tx, ty] = B.px(t), sx = B.size + 2, sy = -40, d = `M ${sx} ${sy} Q ${Math.round((sx + tx) / 2 + 40)} ${Math.round((sy + ty) / 2 - 40)} ${tx} ${ty}`;
@@ -226,18 +229,11 @@
       const dd = B.cell * 0.88, tr = document.createElement('div'); tr.className = 'travel'; tr.style.cssText = `width:${dd}px;height:${dd}px;offset-path:path('${d}');background:${color === 'b' ? '#1B1A17' : '#FBFAF6'}`; B.layer.appendChild(tr);
       await sleep(780); sv.remove(); tr.remove(); B.put(t, color);
     };
-    B.five = (pts, good) => {   // 連成五：依序點亮＋光束＋震動
+    B.five = (pts, good, o = {}) => {   // 連成五：依序點亮＋光束＋震動
       const c = good ? 'rgba(242,181,68,.6)' : 'rgba(255,122,107,.6)';
       // 橫、直的五：用逐格圖（金＝黑子五連、紅＝白子五連；圖裡的子顏色要對得上才用）
-      if (pts.length === 5) {
-        const s0 = B.stones.get(pts[0]), [x1, y1] = B.px(pts[0]), [x2, y2] = B.px(pts[4]);
-        // 金色圖是黑子、紅色圖是白子：顏色和輸贏都對得上才用圖（例如開場黑子五連是「你輸了」，要紅光，用 CSS）
-        const name = s0 && (good && s0.color === 'b' ? 'five_gold' : !good && s0.color === 'w' ? 'five_red' : null), horiz = y1 === y2, vert = x1 === x2;
-        if (name && (horiz || vert) && ART && ART[name]) {
-          const sp = sprite(B.layer, name, (x1 + x2) / 2, (y1 + y2) / 2, 4 * B.cell + B.cell * 0.88, { keep: true, rot: vert ? 90 : 0, z: 4 });
-          if (sp) { sp.classList.add('fxk'); el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake'); return; }
-        }
-      }
+      // 子上有手順數字時（倒帶課的結局）不用圖：圖裡的子沒有數字，會把數字蓋掉
+      // 2026-11-10 使用者：五連金色圖不好看、有時卡在第一格 → 不用 five_gold／five_red 圖，一律用 CSS（點亮＋光束），子上的數字也不會被蓋
       pts.forEach((t, i) => { const s = B.stones.get(t); if (s) { s.el.style.animationDelay = (i * .12) + 's'; s.el.classList.remove('a-drop'); s.el.classList.add('a-lit'); s.el.style.boxShadow = `0 0 0 3px ${c}`; } });
       B.beam(pts[0], pts[pts.length - 1], c);
       el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake');
@@ -588,7 +584,7 @@
     line.forEach((t, k) => B.put(t, colorAt(k), { anim: false, num: k + 1 }));
     layoutTape(line.length);
     const atkSet = new Set([...(atkC === 'b' ? pos.b : pos.w), ...line.filter((_, k) => k % 2 === 0)]);
-    B.five(fiveLine(atkSet, line[line.length - 1]), true);
+    B.five(fiveLine(atkSet, line[line.length - 1]), true, { keepNumbers: true });
     msg(f.body, U('end'), TX(st.text));
     await new Promise(res => button(f.foot, U('rewindOne'), '', res, IC.rew));
     // 倒帶：從最後一手往回，每退一手問一題
