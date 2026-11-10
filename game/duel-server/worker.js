@@ -2,9 +2,14 @@
 // 下棋規則用 game/duel/match.js（連珠，跟前端同一份），每一手都在這裡驗，前端改不了結果。
 // 狀態只放記憶體：大廳重開（部署、長時間沒人）房間就清空；第一版夠用，人多了再拆成一個房間一個 DO。
 import { BLACK, WHITE, EMPTY, CELLS, FORBID_NONE, forbidType } from '../duel/rules.js';
-import { RULE, ACTION, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch } from '../duel/match.js';
+import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
 const TIMES = { none: null, '5+3': { mainMs: 300000, incMs: 3000 }, '10+5': { mainMs: 600000, incMs: 5000 } };
+const RULES = Object.values(RULE);
+const PLACE_PHASES = [PHASE.PLAY, PHASE.OPENING_PLACE, PHASE.SWAP2_PLACE, PHASE.SWAP2_ADD];
+// match.js 的錯誤原因（中文）換成前端認得的代碼
+const ERR_CODES = [['中央', 'zone'], ['對稱', 'symmetric'], ['黑方提出', 'notoffer'], ['候選點', 'badoffer']];
+const errCode = (msg) => (ERR_CODES.find(([k]) => String(msg).includes(k)) || [null, 'bad'])[1];
 const MAX_ROOMS = 200;
 const MAX_NICK = 12;
 const PLAY_GRACE_MS = 60000;   // 對局中斷線，60 秒內回來可以繼續，過了判輸
@@ -100,10 +105,10 @@ export class Hall {
       }
       case 'create': {
         if (this.rooms.size >= MAX_ROOMS) return err('full');
-        if (!(m.time in TIMES)) return err('bad');
+        if (!(m.time in TIMES) || !RULES.includes(m.rule)) return err('bad');
         this.leaveAll(id);
         const room = {
-          id: this.newRoomId(), time: m.time, createdAt: Date.now(), state: 'wait',
+          id: this.newRoomId(), time: m.time, rule: m.rule, createdAt: Date.now(), state: 'wait',
           seats: [null, null], match: null, endNote: null, again: new Set(), timer: null, games: 0,
         };
         this.rooms.set(room.id, room);
@@ -143,15 +148,19 @@ export class Hall {
         const p = Number(m.p);
         if (!Number.isInteger(p) || p < 0 || p >= CELLS) return err('bad');
         if (actorOf(room.match) !== seat) return err('notturn');
+        if (!PLACE_PHASES.includes(room.match.phase)) return err('bad');
         if (room.match.cells[p] !== EMPTY) return err('occupied');
-        // Rush 的規則：自己下禁手只擋下，不判輸
-        if (colorOf(room.match, seat) === BLACK && forbidType(room.match.cells, p) !== FORBID_NONE) return err('forbidden');
-        const r = applyAction(room.match, seat, { type: ACTION.PLACE, p }, Date.now());
-        room.match = r.match;
-        if (r.error && !room.match.result) return err('bad');
-        this.trapCheck(room);
-        this.afterChange(room);
-        return;
+        // Rush 的規則：自己下禁手只擋下，不判輸（只在有禁手的規則、正式對局階段）
+        if (room.match.phase === PHASE.PLAY && ruleHasForbidden(room.rule) && colorOf(room.match, seat) === BLACK && forbidType(room.match.cells, p) !== FORBID_NONE) return err('forbidden');
+        return this.apply(room, seat, { type: ACTION.PLACE, p }, err);
+      }
+      case 'act': {   // 開局的決定：換手、轉山口、提候選、挑候選、Swap2 選擇、選色
+        const s = this.seatOf(id);
+        if (!s || s.room.state !== 'play') return err('notplay');
+        if (actorOf(s.room.match) !== s.seat) return err('notturn');
+        const action = this.cleanAction(m.action);
+        if (!action) return err('bad');
+        return this.apply(s.room, s.seat, action, err);
       }
       case 'resign': {
         const s = this.seatOf(id);
@@ -178,6 +187,31 @@ export class Hall {
       }
       default: return err('bad');
     }
+  }
+
+  cleanAction(a) {
+    if (!a || typeof a !== 'object') return null;
+    const pt = (v) => (Number.isInteger(v) && v >= 0 && v < CELLS ? v : null);
+    switch (a.type) {
+      case ACTION.SWAP: return { type: ACTION.SWAP, swap: a.swap === true };
+      case ACTION.YAMAGUCHI: return { type: ACTION.YAMAGUCHI };
+      case ACTION.OFFER: {
+        if (!Array.isArray(a.points) || a.points.length !== OFFER_COUNT) return null;
+        const points = a.points.map(pt);
+        return points.includes(null) ? null : { type: ACTION.OFFER, points };
+      }
+      case ACTION.PICK: return pt(a.p) === null ? null : { type: ACTION.PICK, p: a.p };
+      case ACTION.SWAP2_CHOICE: return [BLACK, WHITE, SWAP2_ADD_CHOICE].includes(a.choice) ? { type: ACTION.SWAP2_CHOICE, choice: a.choice } : null;
+      case ACTION.COLOR: return [BLACK, WHITE].includes(a.color) ? { type: ACTION.COLOR, color: a.color } : null;
+      default: return null;
+    }
+  }
+  apply(room, seat, action, err) {
+    const r = applyAction(room.match, seat, action, Date.now());
+    room.match = r.match;
+    if (r.error && !room.match.result) return err(errCode(r.error));
+    this.trapCheck(room);
+    this.afterChange(room);
   }
 
   // ---------- 房間 ----------
@@ -218,7 +252,7 @@ export class Hall {
     this.broadcastLobby();
   }
   start(room) {
-    room.match = createMatch({ rule: RULE.RENJU, clock: TIMES[room.time] }, Date.now());
+    room.match = createMatch({ rule: room.rule, clock: TIMES[room.time] }, Date.now());
     room.state = 'play';
     room.endNote = null;
     room.again.clear();
@@ -228,7 +262,7 @@ export class Hall {
   // 黑棋非擋不可的點是禁手（Rush 的「被禁手」）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 判黑輸
   trapCheck(room) {
     const m = room.match;
-    if (m.result || colorOf(m, actorOf(m)) !== BLACK) return;
+    if (m.result || m.phase !== PHASE.PLAY || !ruleHasForbidden(room.rule) || colorOf(m, actorOf(m)) !== BLACK) return;
     const cells = m.cells;
     for (let p = 0; p < CELLS; p++) if (cells[p] === EMPTY && isWinningMove(m.rule, cells, p, BLACK) && forbidType(cells, p) === FORBID_NONE) return;
     const fives = [];
@@ -264,7 +298,7 @@ export class Hall {
     return {
       t: 'room', now,
       room: {
-        id: room.id, time: room.time, state: room.state, games: room.games, endNote: room.endNote,
+        id: room.id, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
         seats: room.seats.map(s => s && { id: s.id, nick: s.nick, online: s.online }),
         watchers: this.watchers(room),
         again: [...room.again],
@@ -286,7 +320,7 @@ export class Hall {
   }
   lobbyMsg() {
     const rooms = [...this.rooms.values()].map(r => ({
-      id: r.id, time: r.time, state: r.state, createdAt: r.createdAt,
+      id: r.id, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt,
       seats: r.seats.map(s => s && { nick: s.nick, online: s.online }),
       watchers: this.watchers(r),
       moves: r.match ? r.match.moves.length : 0,
