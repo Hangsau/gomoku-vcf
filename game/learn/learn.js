@@ -738,6 +738,7 @@
     };
     const WIN_FORBID = { zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' };
     let miss = 0;
+    let counterAt = null;   // 剛提示過「對方反四、先擋這裡」的點：玩家擋了而且還是四 → 回饋反擊成功
     let needFive = null;   // 初學（st.toFive）：下到活四／四四後，電腦擋一頭，要玩家自己連成五
     B.onTap = async (t) => {
       if (busy || B.has(t) || !alive()) return;
@@ -812,10 +813,16 @@
           const cf2 = fivePoints(new Set(theirs), new Set([...b, ...w]), defC === 'b');
           if (cf2.length) {
             const D2 = U(defC === 'b' ? 'black' : 'white');
-            cf2.forEach(p => B.glow(p, '#FF7A6B'));
+            cf2.forEach(p => B.glow(p, '#FF7A6B')); counterAt = cf2;
             msg(f.body, U('no'), TX({ zh: `${D2}反四了！你得先擋在 ${cf2[0]}。這一手如果剛好也是你的四，先手就搶得回來。`, en: `${D2} made a counter-four! Block at ${cf2[0]} first. If that move is also a four for you, you take the initiative back.`, ja: `${D2}の逆四！まず ${cf2[0]} を止めて。その手があなたの四にもなれば、先手を取り返せる。`, ko: `${D2}의 역사! 먼저 ${cf2[0]}을 막으세요. 그 수가 당신의 사도 되면 선수를 되찾아요.` }), 'bad');
             return;
           }
+          if (counterAt && counterAt.includes(t)) {
+            counterAt = null; B.glow(t, '#3CC6B4');
+            msg(f.body, U('ok'), TX({ zh: `反擊成功！你擋在 ${t}，這一手同時是你的四，對方只能再擋，先手回到你手上。繼續下。`, en: `Hit back! Your block at ${t} is also a four, so the opponent must block again and the initiative is yours. Keep going.`, ja: `反撃成功！${t} の止めがあなたの四にもなり、相手はまた止めるしかない。先手が戻った。続けよう。`, ko: `반격 성공! ${t}에 막은 수가 당신의 사이기도 해서 상대는 또 막아야 해요. 선수가 돌아왔어요. 계속 두세요.` }), 'good');
+            return;
+          }
+          counterAt = null;
           msg(f.body, '', TX(st.text)); return;
         }
         // defFive／bad：退回這一手（反四：對方剛才那顆擋子閃紅光）
