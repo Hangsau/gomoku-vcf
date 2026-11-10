@@ -1,6 +1,6 @@
 {
  "ver": "2026-11-09b",
- "at": "2026-11-10 15:09",
+ "at": "2026-11-10 15:42",
  "blocked": 0,
  "dans": [
   {
@@ -16,71 +16,71 @@
   {
    "dan": "二段",
    "file": "2.json",
-   "n": 31153,
+   "n": 31154,
    "white": 1806,
    "trained": 5416,
-   "bank": 25737,
-   "pool": 27097,
+   "bank": 25738,
+   "pool": 27101,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 23788,
+   "n": 23790,
    "white": 3468,
    "trained": 7988,
-   "bank": 15800,
-   "pool": 18877,
+   "bank": 15802,
+   "pool": 18893,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 29197,
+   "n": 29204,
    "white": 4770,
    "trained": 11310,
-   "bank": 17887,
-   "pool": 20104,
+   "bank": 17894,
+   "pool": 20146,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 20449,
+   "n": 20457,
    "white": 4150,
-   "trained": 8912,
-   "bank": 11537,
-   "pool": 12106,
+   "trained": 8914,
+   "bank": 11543,
+   "pool": 12180,
    "blocked": 0
   },
   {
    "dan": "六段",
    "file": "6.json",
-   "n": 13690,
+   "n": 13705,
    "white": 2498,
-   "trained": 6184,
-   "bank": 7506,
-   "pool": 7973,
+   "trained": 6196,
+   "bank": 7509,
+   "pool": 8040,
    "blocked": 0
   },
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 5293,
+   "n": 5295,
    "white": 662,
-   "trained": 1869,
-   "bank": 3424,
-   "pool": 3871,
+   "trained": 1900,
+   "bank": 3395,
+   "pool": 3899,
    "blocked": 0
   },
   {
    "dan": "八段",
    "file": "8.json",
-   "n": 1559,
+   "n": 1561,
    "white": 75,
-   "trained": 284,
-   "bank": 1275,
-   "pool": 1486,
+   "trained": 349,
+   "bank": 1212,
+   "pool": 1496,
    "blocked": 0
   },
   {
@@ -88,21 +88,21 @@
    "file": "9.json",
    "n": 609,
    "white": 15,
-   "trained": 51,
-   "bank": 558,
-   "pool": 719,
+   "trained": 103,
+   "bank": 506,
+   "pool": 725,
    "blocked": 0
   },
   {
    "dan": "傳說",
    "file": "10.json",
-   "n": 887,
+   "n": 888,
    "white": 0,
-   "trained": 25,
-   "bank": 862,
-   "pool": 1025,
+   "trained": 46,
+   "bank": 842,
+   "pool": 1030,
    "blocked": 0
   }
  ],
- "total": 187474
+ "total": 187512
 }
