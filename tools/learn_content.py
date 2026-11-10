@@ -218,7 +218,7 @@ def c_fit(h):   # 盤面＋解＋反四點＋最後成五點都要放得進 9×9
     xy_ = lambda t: (COLS.index(t[0]), int(t[1:]) - 1); ps = [xy_(t) for t in c_pts(h)]
     return max(p[0] for p in ps) - min(p[0] for p in ps) <= 8 and max(p[1] for p in ps) - min(p[1] for p in ps) <= 8
 def c_pos(h): return P(h['b'], h['w'], h['atk'], win_of(c_pts(h)))
-WO = json.loads((VD / 'counter_order.json').read_text(encoding='utf-8'))
+WO = json.loads((VD / 'counter_order.json').read_text(encoding='utf-8')) + (json.loads((VD / 'counter_white.json').read_text(encoding='utf-8')) if (VD / 'counter_white.json').exists() else [])   # 白先：舊的 12 道＋mine_counter_black.py w 挖的
 for h in WO:
     if 'b' not in h: m = _MI[(h['src'], h['L'])]; h['b'], h['w'] = m['b'], m['w']
 def no_forbid(h):
@@ -233,9 +233,17 @@ def no_forbid(h):
         a.append(h['sol'][i])
         if i + 1 < len(h['sol']): d.append(h['sol'][i + 1])
     return True
+def clean_counter(h):
+    """乾淨的反四示範（2026-11-10 使用者：7-2 黑擋白成五點時也成了黑的四，「先手沒了」不成立）：
+    順序錯了之後真的贏不了（用補過盲點的 has_vcf），而且攻方去擋對方成五點那一手不能又是自己的四"""
+    from check_lessons import has_vcf
+    four_points(c_pos(h)); aw = h['atk'] == 'w'
+    b, w = list(h['b']), list(h['w']); (w if aw else b).append(h['wrong']); (b if aw else w).append(h['def'])
+    if has_vcf(_E, b, w, aw): return False
+    return _E.move(b, w, h['counterFive'][0], aw).get('r') not in ('block', 'win')
 seen6, CO6 = set(), []
 for h in sorted(CB, key=lambda h: (h['L'], h['n'], h['src'])) + sorted(WO, key=lambda h: (h['L'], h['n'], h['src'])):   # 黑先優先，不夠用白先補
-    if h['src'] not in seen6 and h['src'] not in USED and c_fit(h) and no_forbid(h): seen6.add(h['src']); CO6.append(h)
+    if h['src'] not in seen6 and h['src'] not in USED and c_fit(h) and no_forbid(h) and clean_counter(h): seen6.add(h['src']); CO6.append(h)
 if len(CO6) < 3: raise SystemExit(f'第 6 單元合格的反四題只有 {len(CO6)} 道，要再挖')
 for h in CO6[:3]: USED.add(h['src'])
 def c_names(h): return ('白', '黑') if h['atk'] == 'w' else ('黑', '白')
@@ -258,10 +266,12 @@ C['7-2'] = [
     c_predict(h2),
     c_solve('換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。', h2),
 ]
+HB = next((h for h in CB if h['src'] == 'A5C3XXH0'), None)   # 反四之後又被反擊回來的漂亮題（使用者 2026-11-10：這題很漂亮）
 C['7-3'] = [
     say('衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。'),
-    c_solve('這次沒有示範。想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
-]
+    c_solve('想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
+] + ([say('反過來也可能：對方反四時，你去擋他的那一手，如果剛好也是你的四，先手就又回到你手上。'),
+      c_solve('這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。', HB)] if HB and c_fit(HB) else [])
 # 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
 FB = ['是禁手', '不是禁手']
 C['4-1'] = [

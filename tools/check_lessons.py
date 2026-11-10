@@ -210,7 +210,8 @@ def check_step(E, where, st, unit=9):
                 cf = fives(dfn2, atk2, aw)
                 if cf != set(st['counter']): err(where, f'反四示範：守方成五點算出 {sorted(cf)}，寫 {st["counter"]}')
                 b2, w2 = (dfn2, atk2) if aw else (atk2, dfn2)
-                if E.solve(b2, w2, aw).get('vcf'): err(where, '反四示範：順序錯之後引擎說還能贏，示範不成立')
+                if has_vcf(E, b2, w2, aw): err(where, '反四示範：順序錯之後還能贏，示範不成立')
+                if cf and E.move(b2, w2, sorted(cf)[0], aw).get('r') in ('block', 'win'): err(where, f'反四示範：攻方擋對方成五點 {sorted(cf)[0]} 那一手又是自己的四，「先手沒了」不成立')
                 in_window(where, sorted(cf), pos.get('win'))
             return
         kind = st.get('kind')

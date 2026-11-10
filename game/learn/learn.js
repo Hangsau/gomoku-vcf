@@ -777,6 +777,14 @@
             if (miss >= 2 && onLine() && st.line[2 * hist.length]) B.glow(st.line[2 * hist.length], '#3CC6B4');
             return;
           }
+          // 還有救、但對方剛做出反四：提醒先擋（2026-11-10：7-3 被反四後又能反擊的題，不提示的話玩家會照樣衝四被連五）
+          const cf2 = fivePoints(new Set(theirs), new Set([...b, ...w]), defC === 'b');
+          if (cf2.length) {
+            const D2 = U(defC === 'b' ? 'black' : 'white');
+            cf2.forEach(p => B.glow(p, '#FF7A6B'));
+            msg(f.body, U('no'), TX({ zh: `${D2}反四了！你得先擋在 ${cf2[0]}。這一手如果剛好也是你的四，先手就搶得回來。`, en: `${D2} made a counter-four! Block at ${cf2[0]} first. If that move is also a four for you, you take the initiative back.`, ja: `${D2}の逆四！まず ${cf2[0]} を止めて。その手があなたの四にもなれば、先手を取り返せる。`, ko: `${D2}의 역사! 먼저 ${cf2[0]}을 막으세요. 그 수가 당신의 사도 되면 선수를 되찾아요.` }), 'bad');
+            return;
+          }
           msg(f.body, '', TX(st.text)); return;
         }
         // defFive／bad：退回這一手（反四：對方剛才那顆擋子閃紅光）

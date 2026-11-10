@@ -818,5 +818,30 @@
   "en": "One stone makes a four and a three: a “four-three”. They block the four, then you turn the three into an open four.",
   "ja": "1個の石で四と三を作るのが「四三」。相手が四を止めたら、三を達四にしよう。",
   "ko": "한 돌로 사와 삼을 만들면 ‘사삼’이에요. 상대가 사를 막으면 삼을 열린 사로 만들어요."
+ },
+ "先看錯誤示範：白如果先下 N7（正解其實是第二手才下），黑會擋哪？": {
+  "en": "First, a wrong move: White plays N7 first (it should be second). Where does Black block?",
+  "ja": "まずは失敗例。白が先にN7に打つと、黒はどこを止める？（正解では2手目だよ。）",
+  "ko": "먼저 틀린 예예요. 백이 N7부터 두면 흑은 어디를 막을까요? (정답에선 두 번째 수예요.)"
+ },
+ "黑擋在 L5，這一擋同時做出了黑自己的四（紅圈那點一下就成五）。白只能回頭去擋，先手沒了，這題就贏不了。這就是反四。": {
+  "en": "Black blocks L5 and makes a four, ready to make five at the red circle. White must block. You lose the initiative and can’t win now. That’s a counter-four.",
+  "ja": "黒がL5を止めると、黒の四もできるよ（赤丸に打てば五連）。白は止めるしかなく、先手を失い、もう勝てないよ。これが逆四。",
+  "ko": "흑이 L5를 막으며 사도 만들어요(빨간 원에 두면 오목 완성). 백은 막아야 해서 선수를 잃고, 이 문제에서 이길 수 없어요. 이게 역사예요."
+ },
+ "想好順序再下，走錯了會告訴你是哪顆擋子變成反四。": {
+  "en": "Plan your move order first. If you go wrong, we’ll show which blocking stone made a counter-four.",
+  "ja": "順番を考えてから打とう。間違えたら、相手のどの石で逆四ができたか教えるよ。",
+  "ko": "순서를 생각하고 두세요. 틀리면 상대가 막은 어느 돌이 역사를 만들었는지 알려 줄게요."
+ },
+ "反過來也可能：對方反四時，你去擋他的那一手，如果剛好也是你的四，先手就又回到你手上。": {
+  "en": "You can counter too: if blocking their counter-four makes your own four, you regain the initiative.",
+  "ja": "逆もあるよ。相手の逆四を止める一手であなたの四もできれば、先手を取り戻せるよ。",
+  "ko": "반격도 가능해요. 상대의 역사를 막으면서 사를 만들면 선수를 되찾을 수 있어요."
+ },
+ "這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。": {
+  "en": "This puzzle has that counterattack. Try it: the right order wins directly. Get it wrong, and a counterattack may save you.",
+  "ja": "この問題にはその反撃があるよ。自分で解こう。順番が合えばそのまま勝てるし、間違えても反撃で立て直せるかも。",
+  "ko": "이 문제에 그 반격이 있어요. 직접 풀어 봐요. 순서가 맞으면 바로 이기고, 틀려도 반격으로 만회할 수 있어요."
  }
 }
