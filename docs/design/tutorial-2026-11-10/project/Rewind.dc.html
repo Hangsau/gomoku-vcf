@@ -20,7 +20,7 @@ a{color:#F2B544}a:hover{color:#FFD27A}
 @keyframes ghostR{0%{transform:scale(1.6);opacity:0}100%{transform:none;opacity:.9}}
 @keyframes dashR{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 @keyframes litR{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1.05)}}
-@keyframes beamR{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+@keyframes beamR{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
 @keyframes noR{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 @keyframes threadR{0%{stroke-dashoffset:460}100%{stroke-dashoffset:0}}
 @keyframes travelR{0%{offset-distance:0%;transform:scale(.6)}100%{offset-distance:100%;transform:scale(1)}}
@@ -33,7 +33,7 @@ a{color:#F2B544}a:hover{color:#FFD27A}
 .ghostR{animation:ghostR .3s ease-out both}
 .dashR{animation:dashR 6s linear infinite}
 .litR{animation:litR .5s ease-out both}
-.beamR{transform-origin:left center;animation:beamR .5s ease-out .4s both}
+.beamR{transform-origin:center top;animation:beamR .5s ease-out .4s both}
 .noR{animation:noR .35s ease-out}
 .threadR{stroke-dasharray:460;animation:threadR .35s ease-out both}
 .travelR{animation:travelR .5s cubic-bezier(.5,0,.3,1) .25s both;offset-rotate:0deg;offset-anchor:50% 50%}
@@ -70,7 +70,7 @@ a{color:#F2B544}a:hover{color:#FFD27A}
       </sc-for>
     </svg>
     <sc-if value="{{hasBeam}}" hint-placeholder-val="{{false}}">
-      <div class="beamR" style="position:absolute;left:83px;top:188px;width:150px;height:10px;border-radius:5px;background:rgba(242,181,68,.6);box-shadow:0 0 16px rgba(242,181,68,.8);pointer-events:none;"></div>
+      <div class="beamR" style="position:absolute;left:223px;top:83px;width:10px;height:150px;border-radius:5px;background:rgba(242,181,68,.6);box-shadow:0 0 16px rgba(242,181,68,.8);pointer-events:none;"></div>
     </sc-if>
     <sc-if value="{{hasRing}}" hint-placeholder-val="{{false}}">
       <svg class="dashR" width="34" height="34" viewBox="0 0 34 34" style="position:absolute;left:{{rx}}px;top:{{ry}}px;pointer-events:none;" aria-hidden="true">
@@ -141,33 +141,35 @@ class Component extends DCLogic {
       else this.setState({ flash: Q.no, no: st.no + 1 });
       return;
     }
-    if (st.phase.startsWith('p')) {
-      const is = (a, b) => a === c && b === r, ph = st.phase;
-      if (ph === 'p1') { if (!is(5, 5)) return this.setState({ flash: '第一手要同時做出四和三。', no: st.no + 1 });
-        this.setState({ pm: [[5, 5, 'B']], phase: 'pc', flash: '' }); this.later(550, () => this.cpu(5, 6, { phase: 'p2' })); }
-      else if (ph === 'p2') { if (!is(6, 5) && !is(2, 5)) return this.setState({ flash: '把橫的三變成活四。', no: st.no + 1 });
-        const ends = is(6, 5) ? [[7, 5], [2, 5]] : [[1, 5], [6, 5]];
-        this.setState(s => ({ pm: s.pm.concat([[c, r, 'B']]), phase: 'pc', ends, flash: '' })); this.later(550, () => this.cpu(ends[0][0], ends[0][1], { phase: 'p3' })); }
-      else if (ph === 'p3') { const e = st.ends[1]; if (!is(e[0], e[1])) return this.setState({ flash: '活四的另一頭！', no: st.no + 1 });
-        this.setState(s => ({ pm: s.pm.concat([[c, r, 'B']]), phase: 'done', flash: '' })); }
+    if (st.phase.startsWith('p')) {   // 正著下：照驗證過的手順（LINE），每手只接受引擎判定會照劇本贏的點
+      const L = this.LINE, is = (p) => p[0] === c && p[1] === r, ph = st.phase;
+      const map = { p1: [0, '第一手要同時做出四和三。', 'p2'], p2: [2, '把直線的三變成兩頭都空的活四。', 'p3'], p3: [4, '活四的另一頭！', 'done'] }[ph];
+      if (!map) return;
+      const [idx, hint, nextPh] = map;
+      if (!is(L[idx])) return this.setState({ flash: hint, no: st.no + 1 });
+      this.setState(s => ({ pm: s.pm.concat([[c, r, 'B']]), phase: nextPh === 'done' ? 'done' : 'pc', flash: '' }));
+      if (nextPh !== 'done') this.later(550, () => this.cpu(L[idx + 1][0], L[idx + 1][1], { phase: nextPh }));
     }
   }
   renderVals() {
     const S = 35, M = 18, st = this.state, ph = st.phase, k = st.k;
-    const IB = [[5,2],[5,3],[5,4],[3,5],[4,5]], IW = [[5,1],[2,2],[7,7]];   // 已用 Gomoku Rush 引擎驗證（2026-11-10）：唯一解 K6 四三→K5→L6／G6 活四；原本多一顆 G4 黑子會讓黑一手活四，已拿掉
-    const LINE = [[5,5,'B'],[5,6,'W'],[6,5,'B'],[7,5,'W'],[2,5,'B']];
+    // 盤面：題庫 #005RSGY4（黑先 4 手）照正解走掉前兩手後的 2 手題；已用 Gomoku Rush 引擎驗證唯一、逐手重放、每題可接受的點都由引擎判定（2026-11-10）
+    // 9×9 局部，左下角＝E2；解：L7（四三）擋 M8 → L4（活四，唯一）→ 擋 L3 → L8 成五
+    const IB = [[2,1],[3,2],[6,4],[6,5],[3,6],[1,8],[5,4],[4,5]], IW = [[6,1],[4,2],[8,5],[7,7],[8,7],[0,8],[4,3],[2,7]];
+    const LINE = [[6,3,'B'],[7,2,'W'],[6,6,'B'],[6,7,'W'],[6,2,'B']];
+    this.LINE = LINE;
     this.Q = [
-      { q: '第一手：一子同時做出「四」和「三」。下哪？', ok: '對！這就是四三。白只能擋四，三就變成活四。', no: '提示：直線有三顆、橫線有兩顆，找它們交會的那一點。', ans: [[5, 5]] },
-      { q: '虛線圈是白擋過的地方。是哪條四逼它擋那裡？點那條四上的黑子。', ok: '對！直線的四只差虛線那一點，白非擋不可。', no: '找一條「再一子就成五」的線，虛線圈就在它的盡頭。', ans: [[5, 2], [5, 3], [5, 4], [5, 5]], stone: true, ring: [5, 6] },
-      { q: '這一手把橫線的三變成兩頭都能成五的活四。下哪？', ok: '對！三的兩頭都可以，活四一出現，白就擋不完了。', no: '橫線上有三顆黑子，往左或往右接一顆。', ans: [[6, 5], [2, 5]] },
-      { q: '虛線圈是白擋過的地方。是哪顆黑子逼它擋那裡？', ok: '對！那手做出活四，白只能先擋一頭。', no: '虛線圈在一條四的盡頭，找那條四剛多出來的那顆。', ans: [[6, 5]], stone: true, ring: [7, 5] },
-      { q: '最後一手在哪裡連成五？', ok: '對！活四的另一頭，白已經擋不到了。', no: '找橫線上四顆黑子的空著那一頭。', ans: [[2, 5]] },
+      { q: '第一手：一子同時做出「四」和「三」。下哪？', ok: '對！這就是四三。白只能擋四，三就變成活四。', no: '提示：斜線有三顆、直線有兩顆，找它們交會的那一點。', ans: [[6, 3]] },
+      { q: '虛線圈是白擋過的地方。是哪條四逼它擋那裡？點那條四上的黑子。', ok: '對！斜線的四只差虛線那一點，白非擋不可。', no: '找一條「再一子就成五」的線，虛線圈就在它的盡頭。', ans: [[3, 6], [4, 5], [5, 4], [6, 3]], stone: true, ring: [7, 2] },
+      { q: '這一手把直線的三，變成兩頭都能成五的活四。下哪？', ok: '對！往下接才是活四；往上接的話，上面已經被白子堵住。', no: '直線上有三顆黑子。哪一頭接上去，兩頭都還空著？', ans: [[6, 6]] },
+      { q: '虛線圈是白擋過的地方。是哪顆黑子逼它擋那裡？', ok: '對！那手做出活四，白只能先擋一頭。', no: '虛線圈在一條四的盡頭，找那條四剛多出來的那顆。', ans: [[6, 6]], stone: true, ring: [6, 7] },
+      { q: '最後一手在哪裡連成五？', ok: '對！活四的另一頭，白已經擋不到了。', no: '直線上四顆黑子，另一頭還空著。', ans: [[6, 2]] },
     ];
     const play = ph.startsWith('p') || ph === 'done';
     const shown = play ? st.pm : LINE.slice(0, k);
     const all = IB.map(([c, r]) => ({ c, r, s: 'B' })).concat(IW.map(([c, r]) => ({ c, r, s: 'W' })), shown.map(([c, r, s], i) => ({ c, r, s, n: i + 1, mv: 1 })));
     const isEnd = ph === 'end' || ph === 'done';
-    const fiveRow = new Set(['2,5', '3,5', '4,5', '5,5', '6,5']);
+    const fiveRow = new Set(['6,2', '6,3', '6,4', '6,5', '6,6']);
     const Q = this.Q[k] || {};
     const stones = all.map((m, i) => {
       const last = m.mv && i === all.length - 1;
@@ -185,7 +187,7 @@ class Component extends DCLogic {
       const occ = taken.has(c + ',' + r), stoneQ = ph === 'q' && Q.stone;
       if (occ && !stoneQ) continue;
       if (!occ && stoneQ) continue;
-      cells.push({ x: M + c * S - 17.5, y: M + r * S - 17.5, label: 'EFGHJKLMN'[c] + (11 - r), pick: () => this.tap(c, r) });
+      cells.push({ x: M + c * S - 17.5, y: M + r * S - 17.5, label: 'EFGHJKLMN'[c] + (10 - r), pick: () => this.tap(c, r) });
     }
     const tape = LINE.map(([c, r, s], i) => ({ x: 14 + i * 66, n: i + 1, bg: s === 'B' ? '#1B1A17' : '#FBFAF6', bd: s === 'B' ? '#FBFAF6' : '#1B1A17', ink: s === 'B' ? '#FBFAF6' : '#1B1A17',
       op: play ? (i < st.pm.length ? 1 : .25) : (i < k ? 1 : .25) }));
@@ -197,7 +199,7 @@ class Component extends DCLogic {
     else if (qa) { tag = st.got ? '答對' : '第 ' + (k + 1) + ' 手是什麼？'; msg = st.got ? Q.ok : (st.flash || Q.q);
       if (st.got) { btn = k > 0 ? '再倒一手' : '倒帶完成，正著下一遍'; act = k > 0 ? () => this.back() : () => this.setState({ phase: 'p1', got: false, pm: [] }); } }
     else if (ph === 'p1') { tag = '正著下'; msg = st.flash || '這次沒有數字了。從第一手開始，自己下完。'; }
-    else if (ph === 'p2') { tag = '它只能擋那裡'; msg = st.flash || '線把白的手拉到了唯一的擋點。下一手？'; }
+    else if (ph === 'p2') { tag = '它只能擋那裡'; msg = st.flash || '線把白的手拉到了唯一的擋點。把直線的三變成活四！'; }
     else if (ph === 'p3') { tag = '擋不完'; msg = st.flash || '活四！白只擋得了一頭。'; }
     else if (ph === 'pc') { tag = ''; msg = '它只能擋那裡……'; }
     else if (ph === 'done') { tag = '完成'; msg = '你先倒著想了一次，又正著下了一次。找 VCF 就是這樣：先看終點，再往回接。'; }
