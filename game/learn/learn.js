@@ -159,11 +159,17 @@
     host.appendChild(el);
     const B = { el, n, ox, oy, size: 0, cell: 0, m: 0, stones: new Map(), onTap: null };
     B.fit = (avail) => {
-      const s = Math.max(220, Math.min(avail, 520)); B.size = s; B.m = Math.round(s / (n * 2)); B.cell = (s - 2 * B.m) / (n - 1);
+      // 盤邊標座標（2026-11-10 使用者：9×9 局部盤沒標字母數字，叫人找 H8 根本找不到）：下緣字母、左緣數字
+      const s = Math.max(220, Math.min(avail, 520)); B.size = s; B.m = Math.max(Math.round(s / (n * 2)), 20); B.cell = (s - 2 * B.m) / (n - 1);
       el.style.width = el.style.height = s + 'px';
-      let lines = '';
-      for (let i = 0; i < n; i++) { const p = Math.round(B.m + i * B.cell) + .5; lines += `<line x1="${B.m}" y1="${p}" x2="${s - B.m}" y2="${p}"/><line x1="${p}" y1="${B.m}" x2="${p}" y2="${s - B.m}"/>`; }
-      el.innerHTML = `<svg class="grid" width="${s}" height="${s}" aria-hidden="true"><g stroke="#5B4524" stroke-width="1">${lines}</g></svg>`;
+      let lines = '', labels = '';
+      const fs = Math.max(9, Math.min(12, Math.round(B.cell * 0.42)));
+      for (let i = 0; i < n; i++) {
+        const p = Math.round(B.m + i * B.cell) + .5; lines += `<line x1="${B.m}" y1="${p}" x2="${s - B.m}" y2="${p}"/><line x1="${p}" y1="${B.m}" x2="${p}" y2="${s - B.m}"/>`;
+        labels += `<text x="${p}" y="${s - B.m + fs + 4}" text-anchor="middle">${COLS[ox + i]}</text><text x="${B.m - 6}" y="${p + fs * .36}" text-anchor="end">${oy + n - i}</text>`;
+      }
+      const star = n === 15 ? ['D4', 'D12', 'L4', 'L12', 'H8'].map(t => { const [x, y] = xy(t); return `<circle cx="${B.m + x * B.cell}" cy="${B.m + (14 - y) * B.cell}" r="3"/>`; }).join('') : '';
+      el.innerHTML = `<svg class="grid" width="${s}" height="${s}" aria-hidden="true"><g stroke="#5B4524" stroke-width="1">${lines}</g><g fill="#5B4524">${star}</g><g fill="#7A5E36" font-size="${fs}" font-family="var(--num)" font-weight="700">${labels}</g></svg>`;
       B.layer = document.createElement('div'); B.layer.style.cssText = 'position:absolute;inset:0'; el.appendChild(B.layer);
       B.hits = document.createElement('div'); B.hits.style.cssText = 'position:absolute;inset:0'; el.appendChild(B.hits);
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
@@ -224,7 +230,8 @@
       // 橫、直的五：用逐格圖（金＝黑子五連、紅＝白子五連；圖裡的子顏色要對得上才用）
       if (pts.length === 5) {
         const s0 = B.stones.get(pts[0]), [x1, y1] = B.px(pts[0]), [x2, y2] = B.px(pts[4]);
-        const name = s0 && (s0.color === 'b' ? 'five_gold' : 'five_red'), horiz = y1 === y2, vert = x1 === x2;
+        // 金色圖是黑子、紅色圖是白子：顏色和輸贏都對得上才用圖（例如開場黑子五連是「你輸了」，要紅光，用 CSS）
+        const name = s0 && (good && s0.color === 'b' ? 'five_gold' : !good && s0.color === 'w' ? 'five_red' : null), horiz = y1 === y2, vert = x1 === x2;
         if (name && (horiz || vert) && ART && ART[name]) {
           const sp = sprite(B.layer, name, (x1 + x2) / 2, (y1 + y2) / 2, 4 * B.cell + B.cell * 0.88, { keep: true, rot: vert ? 90 : 0, z: 4 });
           if (sp) { sp.classList.add('fxk'); el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake'); return; }
@@ -233,6 +240,11 @@
       pts.forEach((t, i) => { const s = B.stones.get(t); if (s) { s.el.style.animationDelay = (i * .12) + 's'; s.el.classList.remove('a-drop'); s.el.classList.add('a-lit'); s.el.style.boxShadow = `0 0 0 3px ${c}`; } });
       B.beam(pts[0], pts[pts.length - 1], c);
       el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake');
+    };
+    B.unfive = () => {   // 清掉連五的光線、圖集與點亮（倒帶前用；2026-11-10 使用者：倒帶後紅線還在）
+      B.layer.querySelectorAll('.beam,.fxk').forEach(e => (e._stop ? e._stop() : e.remove()));
+      B.layer.querySelectorAll('.a-lit').forEach(e => { e.classList.remove('a-lit'); e.style.boxShadow = ''; e.style.animationDelay = ''; });
+      el.classList.remove('a-quake');
     };
     return B;
   }
@@ -332,7 +344,7 @@
     await new Promise(res => button(f.foot, U('rw'), '', res, IC.redo));
     if (!alive()) return;
     // 倒帶：一顆顆拎走，掃描線
-    button(f.foot, '');
+    button(f.foot, ''); B.clearMarks(); B.unfive();
     const scan = sprite(B.el, 'rewind_fx', 0, 0, 0, { full: true, loop: true, z: 6 }) || Object.assign(document.createElement('div'), { className: 'lscan' });
     if (!scan.parentNode) B.el.appendChild(scan);
     msg(f.body, '', TX({ zh: '倒帶……', en: 'Rewinding…', ja: '巻き戻し中……', ko: '되감는 중……' }));
@@ -464,7 +476,7 @@
     if (T === 'solve') return solveStep(l, st, f, alive);
     const pos = st.pos;
     let B = null;
-    if (pos) { B = makeBoard(f.body, pos.win, 9); B.fit(boardSize(T === 'choose' ? (st.options.length * 60) : 0)); pos.b.forEach(t => B.put(t, 'b', { anim: false })); pos.w.forEach(t => B.put(t, 'w', { anim: false })); }
+    if (pos) { B = makeBoard(f.body, pos.win || null, pos.win ? 9 : 15); B.fit(boardSize(T === 'choose' ? (st.options.length * 60) : 0)); pos.b.forEach(t => B.put(t, 'b', { anim: false })); pos.w.forEach(t => B.put(t, 'w', { anim: false })); }
     const text = TX(st.text);
     if (T === 'say') { msg(f.body, '', text); return new Promise(res => button(f.foot, U('cont'), '', res)); }
     if (T === 'choose') {
@@ -573,7 +585,7 @@
       if (!scan.parentNode) B.el.appendChild(scan);
       B.take(line[k]); layoutTape(k);
       await sleep(620); scan._stop ? scan._stop() : scan.remove(); if (!alive()) return 'quit';
-      B.layer.querySelectorAll('.a-lit').forEach(e => { e.classList.remove('a-lit'); e.style.boxShadow = ''; }); B.layer.querySelectorAll('.beam,.fxk').forEach(e => (e._stop ? e._stop() : e.remove()));
+      B.unfive();
       const isAtk = k % 2 === 0, t0 = line[k];
       let ans, q, hint, stoneQ = false;
       if (isAtk) {

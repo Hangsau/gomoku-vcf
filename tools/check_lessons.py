@@ -188,6 +188,11 @@ def check_step(E, where, st):
     if typ == 'choose':
         opts = st.get('options') or []
         if st.get('ans') not in range(len(opts)): err(where, 'choose 的 ans 不是選項編號')
+        if st.get('isFour'):   # 認四題：攻方這些子有沒有「下一顆就成五」的點，要跟答案一致（選項 0＝是四）
+            aw = pos.get('atk') == 'w'; own, opp = (pos['w'], pos['b']) if aw else (pos['b'], pos['w'])
+            has = bool(fives(own, opp, not aw))
+            if has != (st.get('ans') == 0): err(where, f'認四題：成五點 {sorted(fives(own, opp, not aw))}，答案寫 {"是" if st.get("ans") == 0 else "不是"}四')
+            in_window(where, list(pos['b']) + list(pos['w']), pos.get('win'))
         if st.get('probe'):   # 禁手判斷題：probe 那一點黑下去是不是禁手，要跟答案一致（選項 0＝是禁手）
             if not pos: err(where, 'probe 題缺 pos'); return
             m = E.move(pos['b'], pos['w'], st['probe'], False)
