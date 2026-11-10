@@ -220,9 +220,23 @@ def c_pos(h): return P(h['b'], h['w'], h['atk'], win_of(c_pts(h)))
 WO = json.loads((VD / 'counter_order.json').read_text(encoding='utf-8'))
 for h in WO:
     if 'b' not in h: m = _MI[(h['src'], h['L'])]; h['b'], h['w'] = m['b'], m['w']
+def no_forbid(h):
+    """第 6 單元還沒教禁手（2026-11-10 使用者：6-3 莫名其妙四四禁贏）：黑先題盤上不能有黑禁點；任何題的贏法不能靠禁手／逼禁"""
+    four_points(c_pos(h))   # 確保引擎已開
+    aw = h['atk'] == 'w'; r = _E.solve(h['b'], h['w'], aw)
+    if r.get('forbidden') and not aw: return False
+    a, d = list(h['w'] if aw else h['b']), list(h['b'] if aw else h['w'])
+    for i in range(0, len(h['sol']), 2):
+        bb, ww = (d, a) if aw else (a, d)
+        m = _E.move(bb, ww, h['sol'][i], aw)
+        if '禁' in (m.get('how') or '') or m.get('forcedForbidden'): return False
+        a.append(h['sol'][i])
+        if i + 1 < len(h['sol']): d.append(h['sol'][i + 1])
+    return True
 seen6, CO6 = set(), []
 for h in sorted(CB, key=lambda h: (h['L'], h['n'], h['src'])) + sorted(WO, key=lambda h: (h['L'], h['n'], h['src'])):   # 黑先優先，不夠用白先補
-    if h['src'] not in seen6 and h['src'] not in USED and c_fit(h): seen6.add(h['src']); CO6.append(h)
+    if h['src'] not in seen6 and h['src'] not in USED and c_fit(h) and no_forbid(h): seen6.add(h['src']); CO6.append(h)
+if len(CO6) < 3: raise SystemExit(f'第 6 單元合格的反四題只有 {len(CO6)} 道，要再挖')
 for h in CO6[:3]: USED.add(h['src'])
 def c_names(h): return ('白', '黑') if h['atk'] == 'w' else ('黑', '白')
 def c_predict(h):

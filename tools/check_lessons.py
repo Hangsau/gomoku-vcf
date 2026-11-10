@@ -98,6 +98,7 @@ def check_line(E, where, pos, step):
     want = step.get('line')
     if want and want[:len(sol)] != sol: err(where, f'手順宣告 {" ".join(want)}，引擎正解 {" ".join(sol)}')
     accepts = step.get('accept') or {}
+    uses_forbid = []   # 用到禁手的地方（第 7 單元之前的課不准出現：禁手第 7 單元才教）
     a, d = list(atk), list(dfn)
     for i in range(0, len(sol), 2):
         mv = sol[i]; last = i == len(sol) - 1
@@ -113,6 +114,7 @@ def check_line(E, where, pos, step):
             if set(accepts[str(i // 2)]) != okset: err(where, f'第 {i // 2 + 1} 手可接受點宣告 {sorted(accepts[str(i // 2)])}，引擎 {sorted(okset)}')
         bb, ww = (d, a) if aw else (a, d)
         m = E.move(bb, ww, mv, aw)
+        if '禁' in (m.get('how') or '') or m.get('forcedForbidden'): uses_forbid.append(f'第 {i // 2 + 1} 手 {mv} 是禁手相關的贏法（{m.get("how") or "逼禁"}）')
         a.append(mv)
         if last:
             if m.get('r') != 'win': err(where, f'最後一手 {mv} 引擎回 {m.get("r")}，不是 win')
@@ -122,13 +124,15 @@ def check_line(E, where, pos, step):
     fv = fives(a, d, not aw)
     if step.get('five') and set(step['five']) != fv: err(where, f'成五點宣告 {step["five"]}，算出 {sorted(fv)}')
     in_window(where, B + W + sol + sorted(fv), pos.get('win'))
+    if r.get('forbidden') and not aw: uses_forbid.append('你下黑，盤上卻有黑棋禁點 ' + ' '.join(r['forbidden']))   # 白先題：黑的禁點不影響玩家，只管贏法有沒有逼禁
+    return uses_forbid
 
 def window_points(win):
     if not win: return [COLS[x] + str(y + 1) for x in range(15) for y in range(15)]
     ox, oy = xy(win)
     return [COLS[x] + str(y + 1) for x in range(ox, min(15, ox + 9)) for y in range(oy, min(15, oy + 9))]
 
-def check_step(E, where, st):
+def check_step(E, where, st, unit=9):
     typ = st.get('type')
     if typ not in STEP_TYPES: err(where, f'不認得的步驟類型 {typ!r}'); return
     pos = st.get('pos')
@@ -147,7 +151,9 @@ def check_step(E, where, st):
                 if i + 1 < len(sol): d.append(sol[i + 1])
             if pos.get('win'): in_window(where, list(pos['b']) + list(pos['w']) + sol, pos['win'])
             return
-        check_line(E, where, pos, st); return
+        used = check_line(E, where, pos, st)
+        if used and unit < 7: err(where, '禁手第 7 單元才教，這題卻用到：' + '；'.join(used))
+        return
     if typ in ('tap', 'predict'):
         if not pos: err(where, '缺 pos'); return
         B, W = pos['b'], pos['w']; aw = pos.get('atk', 'b') == 'w'
@@ -241,7 +247,7 @@ def main():
             for k, st in enumerate(steps):
                 sw = f'{lw} 第 {k + 1} 步'
                 text_ok(sw, st.get('text'), need_langs)
-                try: check_step(E, sw, st)
+                try: check_step(E, sw, st, l.get('unit', 9))
                 except ValueError as e: err(sw, str(e))
     finally:
         E.close()
