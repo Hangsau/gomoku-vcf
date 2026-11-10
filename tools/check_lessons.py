@@ -167,12 +167,26 @@ def window_points(win):
     ox, oy = xy(win)
     return [COLS[x] + str(y + 1) for x in range(ox, min(15, ox + 9)) for y in range(oy, min(15, oy + 9))]
 
+def check_visible(E, where, pos):
+    """畫面要看得到後果（2026-11-10 使用者：7-3 先下 L9，白擋出活四，另一頭 J15 在 9×9 外，看不出為什麼輸）：
+    攻方在畫面內下任何一個四，守方擋下後做出的成五點都要在畫面內"""
+    if not pos.get('win'): return
+    aw = pos.get('atk') == 'w'; b, w = list(pos['b']), list(pos['w']); vis = set(window_points(pos['win']))
+    for t in vis:
+        if t in b or t in w: continue
+        m = E.move(b, w, t, aw)
+        if m.get('r') != 'block': continue
+        a2, d2 = ((w + [t], b + [m['def']]) if aw else (b + [t], w + [m['def']]))
+        out = sorted(set(fives(d2, a2, not aw)) - vis)
+        if out: err(where, f'先下 {t}，對方擋 {m["def"]} 後的成五點 {out} 在畫面外')
+
 def check_step(E, where, st, unit=9):
     typ = st.get('type')
     if typ not in STEP_TYPES: err(where, f'不認得的步驟類型 {typ!r}'); return
     pos = st.get('pos')
     if typ in ('solve', 'rewind', 'opening'):
         if not pos: err(where, '缺 pos'); return
+        check_visible(E, where, pos)
         if typ == 'solve' and st.get('finish') == 'forbid':   # 逼禁收尾：最後一手引擎要回「禁手」勝
             if unit < 8: err(where, '用到還沒教的東西：逼禁第 8 單元才教')
             r = E.solve(pos['b'], pos['w'], pos.get('atk') == 'w')

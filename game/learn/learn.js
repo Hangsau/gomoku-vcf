@@ -792,8 +792,10 @@
             const D = U(defC === 'b' ? 'black' : 'white');
             if (cf.length && !r.nofour) {
               const [px, py] = B.px(r.def); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 55 }); cf.forEach(p => B.glow(p, '#FF7A6B'));
-              msg(f.body, U('no'), TX({ zh: `${D}擋在 ${r.def}，同時做出了${D}自己的四（反四，紅圈一下就成五）。你得回頭去擋，先手沒了。退回去換個順序。`, en: `${D} blocked at ${r.def} and made a four of its own (counter-four: the red ring makes five). You must block it and lose the initiative. Step back and change the order.`, ja: `${D}が ${r.def} に止めて、自分の四も作った（逆四：赤い輪で五）。止めに戻るしかなく、先手を失う。戻って順番を変えよう。`, ko: `${D}이 ${r.def}에 막으면서 자기 사도 만들었어요(역사: 빨간 원이면 오목). 막으러 가야 해서 선수를 잃어요. 돌아가서 순서를 바꾸세요.` }), 'bad');
-              await sleep(900);
+              // 兩個成五點＝擋子做出活四：擋一頭他下另一頭，就算你擋的那手也是四，他先成五（2026-11-10 使用者：7-3 L9 先下，以為能 J10 反擊）
+              if (cf.length >= 2) msg(f.body, U('no'), TX({ zh: `${D}擋在 ${r.def}，做出了${D}的活四：${cf.join('、')} 兩頭都能成五。你只能擋一頭，${D}下另一頭就連五；就算你擋的那手也是四也來不及，對方先成五。退回去換個順序。`, en: `${D} blocked at ${r.def} and made an open four: both ${cf.join(' and ')} make five. You can only block one end and ${D} plays the other. Even if your block is also a four, it is too late: five comes first. Step back and change the order.`, ja: `${D}が ${r.def} に止めて活四を作った：${cf.join('・')} の両方で五。一方しか止められず、もう一方で五にされる。止める手があなたの四になっても間に合わない。戻って順番を変えよう。`, ko: `${D}이 ${r.def}에 막으면서 열린 사를 만들었어요: ${cf.join('、')} 양쪽 다 오목. 한쪽만 막을 수 있고 다른 쪽에서 오목이 됩니다. 막는 수가 당신의 사여도 늦어요, 오목이 먼저입니다. 돌아가서 순서를 바꾸세요.` }), 'bad');
+              else msg(f.body, U('no'), TX({ zh: `${D}擋在 ${r.def}，同時做出了${D}自己的四（反四，紅圈一下就成五）。你得回頭去擋，先手沒了。退回去換個順序。`, en: `${D} blocked at ${r.def} and made a four of its own (counter-four: the red ring makes five). You must block it and lose the initiative. Step back and change the order.`, ja: `${D}が ${r.def} に止めて、自分の四も作った（逆四：赤い輪で五）。止めに戻るしかなく、先手を失う。戻って順番を変えよう。`, ko: `${D}이 ${r.def}에 막으면서 자기 사도 만들었어요(역사: 빨간 원이면 오목). 막으러 가야 해서 선수를 잃어요. 돌아가서 순서를 바꾸세요.` }), 'bad');
+              await sleep(2600);   // 反四要看得懂，多停一下再退回
             } else
             msg(f.body, U('no'), r.nofour ? TX(why.nofour) : onPath
               ? TX({ zh: `${D}擋在 ${r.def}，剛好是你後面要用的點，這條路斷了。退回去換一手。`, en: `${D} blocked at ${r.def}, the very point you needed later. That path is dead. Step back and try another.`, ja: `${D}が ${r.def} に止めた。あとで使うはずの点で、この道は切れた。戻って別の手を。`, ko: `${D}이 ${r.def}에 막았습니다. 나중에 쓸 자리라 이 길은 끊겼어요. 돌아가서 다른 수를.` })

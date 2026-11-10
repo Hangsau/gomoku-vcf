@@ -149,6 +149,12 @@ plain = lambda m: not m['lifts'] and not m['counter'] and not m['forb'] and not 
 
 # 「全部找出來」題的答案要用引擎算（下了會成四的點），只算一次
 _E = None
+def engine():
+    global _E
+    import sys as _s; _s.path.insert(0, str(Path(__file__).resolve().parent))
+    from check_lessons import Engine
+    if _E is None: _E = Engine()
+    return _E
 def four_points(pos):
     global _E
     import sys as _s; _s.path.insert(0, str(Path(__file__).resolve().parent))
@@ -213,7 +219,18 @@ def c_full(h):   # 補上手順走完後的成五點（倒帶課要用）
     aw = h['atk'] == 'w'; a = (h['w'] if aw else h['b']) + h['sol'][0::2]; d = (h['b'] if aw else h['w']) + h['sol'][1::2]
     import sys as _s; _s.path.insert(0, str(Path(__file__).resolve().parent)); from check_lessons import fives
     return sorted(fives(a, d, not aw))
-def c_pts(h): return h['b'] + h['w'] + h['sol'] + h['counterFive'] + c_full(h)
+def reply_fives(b, w, atk):
+    """攻方第一手下任何四、守方擋下後做出的成五點（要看得到，見 check_lessons.check_visible）"""
+    from check_lessons import fives
+    aw = atk == 'w'; occ = set(b) | set(w); out = set()
+    for t in (COLS[x] + str(y + 1) for x in range(15) for y in range(15)):
+        if t in occ: continue
+        m = engine().move(list(b), list(w), t, aw)
+        if m.get('r') != 'block': continue
+        a2, d2 = ((list(w) + [t], list(b) + [m['def']]) if aw else (list(b) + [t], list(w) + [m['def']]))
+        out |= set(fives(d2, a2, not aw))
+    return sorted(out)
+def c_pts(h): return h['b'] + h['w'] + h['sol'] + h['counterFive'] + c_full(h) + reply_fives(h['b'], h['w'], h['atk'])
 def c_fit(h):   # 盤面＋解＋反四點＋最後成五點都要放得進 9×9
     xy_ = lambda t: (COLS.index(t[0]), int(t[1:]) - 1); ps = [xy_(t) for t in c_pts(h)]
     return max(p[0] for p in ps) - min(p[0] for p in ps) <= 8 and max(p[1] for p in ps) - min(p[1] for p in ps) <= 8
@@ -266,12 +283,13 @@ C['7-2'] = [
     c_predict(h2),
     c_solve('換個順序，自己解：先下的那一手，要讓對方的擋子做不出四。', h2),
 ]
+def full_board(st): st['pos']['win'] = None; return st   # 後果點塞不進 9×9（A5C3XXH0 的活四兩頭在第 15 行）就用整盤
 HB = next((h for h in CB if h['src'] == 'A5C3XXH0'), None)   # 反四之後又被反擊回來的漂亮題（使用者 2026-11-10：這題很漂亮）
 C['7-3'] = [
     say('衝四之前多問一句：對方擋下來的那顆子，會不會剛好連成他的四？會的話，換一個順序。'),
     c_solve('想好順序再下，走錯了會告訴你是哪顆擋子變成反四。', h3),
 ] + ([say('反過來也可能：對方反四時，你去擋他的那一手，如果剛好也是你的四，先手就又回到你手上。'),
-      c_solve('這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。', HB)] if HB and c_fit(HB) else [])
+      full_board(c_solve('這題就有這種反擊。自己解：順序對可以直接贏，順序錯也可能靠反擊救回來。', HB))] if HB else [])
 # 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
 FB = ['是禁手', '不是禁手']
 C['4-1'] = [
