@@ -54,7 +54,7 @@
 #learn .tape i{position:absolute;top:8px;width:24px;height:24px;border-radius:50%;box-sizing:border-box;font-style:normal;font-family:var(--num);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
 #learn .tape .head{position:absolute;top:-4px;width:4px;height:48px;border-radius:2px;background:var(--fail);box-shadow:0 0 8px var(--fail);transition:left .35s cubic-bezier(.3,.7,.3,1)}
 #learn .lcard{width:100%;max-width:520px;box-sizing:border-box;border-radius:18px;background:var(--panel);border:1px solid #2C6B62;padding:12px 14px}
-#learn .lcard b{display:block;font-size:19px;margin-top:4px}#learn .lcard > span:not(.lchip){display:block;font-size:14px;color:var(--text2);margin-top:4px;line-height:1.5}
+#learn .lcard b{display:block;font-size:19px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#learn .lcard > span:not(.lchip){display:block;font-size:14px;color:var(--text2);margin-top:4px;line-height:1.5}
 #learn .lscan{position:absolute;inset:0;border-radius:14px;pointer-events:none;background-color:rgba(20,30,50,.3);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 6px);animation:lscan .3s linear infinite}
 @keyframes lscan{to{background-position:0 12px}}
 @keyframes ldrop{0%{transform:translateY(-46px) scale(1.5);opacity:0}38%{transform:translateY(-8px) scale(1.12);opacity:1}55%{transform:translateY(0) scale(1.22,.74)}68%{transform:translateY(-5px) scale(.9,1.12)}80%{transform:translateY(0) scale(1.06,.94)}90%{transform:translateY(-1px) scale(.98,1.02)}100%{transform:none}}
