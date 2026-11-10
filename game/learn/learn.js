@@ -627,7 +627,9 @@
     const tape = document.createElement('div'); tape.className = 'tape'; f.body.appendChild(tape);
     const B = makeBoard(f.body, pos.win, 9);
     msg(f.body, U('end'), TX(st.text));   // 先排好訊息再決定棋盤大小：長句（英文）多一行時棋盤縮一點，不撐出一屏
-    B.fit(Math.min(boardSize(50), f.body.clientHeight - f.body.scrollHeight - 4));
+    // 棋盤能用的高度＝內容區高度－磁帶－訊息框－間距（scrollHeight 永遠 ≥ clientHeight，不能拿來算剩餘空間）
+    const used = tape.offsetHeight + Math.max(f.body.querySelector('.lmsg').offsetHeight, 132) + 2 * 10 + 4;   // 訊息框至少預留 4 行：後面的問題可能比結局那句長（英文 360×640）
+    B.fit(Math.min(Math.min(root.clientWidth, 544) - 24, root.clientHeight - root.querySelector('.lbar').offsetHeight - 86 - used));   // 底部按鈕這時還沒放上去，固定預留 86px
     const head = document.createElement('div'); head.className = 'head'; tape.appendChild(head);
     const dots = line.map((t, k) => { const d = document.createElement('i'); d.textContent = k + 1; const c = colorAt(k); d.style.cssText = `background:${c === 'b' ? '#1B1A17' : '#FBFAF6'};color:${c === 'b' ? '#FBFAF6' : '#1B1A17'};border:2px solid ${c === 'b' ? '#FBFAF6' : '#1B1A17'}`; tape.appendChild(d); return d; });
     const layoutTape = (n) => { const w = tape.clientWidth - 40, gap = w / Math.max(1, line.length - 1); dots.forEach((d, k) => { d.style.left = (8 + k * gap) + 'px'; d.style.opacity = k < n ? 1 : .25; }); head.style.left = Math.max(4, Math.min(tape.clientWidth - 8, 8 + n * gap - gap / 2 + 10)) + 'px'; };
@@ -670,7 +672,7 @@
     // 往前下：跟「自己解」同一套（引擎判定、走錯有說明、可退一手／重來／提示）
     if (!alive()) return 'quit';
     f.body.innerHTML = '';
-    const B2 = await solveCore({ pos: st.pos, text: { zh: '從第一手往前下到贏。', en: 'Play forward from the first move to the win.', ja: '一手目から勝ちまで打とう。', ko: '첫 수부터 이길 때까지 두세요.' }, line: st.line, toFive: st.toFive }, f, alive);
+    const B2 = await solveCore({ pos: st.pos, text: { zh: '從第一手往前下到贏。', en: 'Play forward from the first move to the win.', ja: '一手目から勝ちまで打とう。', ko: '첫 수부터 이길 때까지 두세요.' }, line: st.line, toFive: st.toFive, boardPx: B.size }, f, alive);
     if (!B2 || !alive()) return 'quit';
     if (!sprite(B2.el, 'stamp_ok', B2.size - 46, 40, 76, { keep: true, z: 7 })) { const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B2.el.appendChild(stamp); }
     msg(f.body, U('done'), TX({ zh: '從快贏的局面一層一層往回想下一手，再從頭下一遍。找 VCF 就是這樣想的。', en: 'You worked back layer by layer from the winning position, then played it from the start. That is how to think about VCF.', ja: '勝ちの局面から一層ずつ次の一手を考え、最初から打ち直した。VCF の考え方はこれ。', ko: '이기기 직전 국면부터 한 층씩 다음 수를 생각하고, 처음부터 다시 두었습니다. VCF는 이렇게 생각합니다.' }), 'good');
@@ -689,7 +691,7 @@
   // ② 底下常駐「退一手／重來／提示」
   async function solveCore(st, f, alive) {
     const pos = st.pos, aw = pos.atk === 'w', atkC = aw ? 'w' : 'b', defC = aw ? 'b' : 'w';
-    const B = makeBoard(f.body, pos.win || null, pos.win ? 9 : 15); B.fit(boardSize());   // 沒給框＝整盤 15×15（長題）
+    const B = makeBoard(f.body, pos.win || null, pos.win ? 9 : 15); B.fit(st.boardPx || boardSize());   // 沒給框＝整盤 15×15（長題）；倒帶課往前下沿用倒帶時的大小，不跳
     const b = [...pos.b], w = [...pos.w], mine = aw ? w : b, theirs = aw ? b : w;
     b.forEach(t => B.put(t, 'b', { anim: false })); w.forEach(t => B.put(t, 'w', { anim: false }));
     msg(f.body, U(aw ? 'whiteFirst' : 'blackFirst'), TX(st.text));
