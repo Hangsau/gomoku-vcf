@@ -264,7 +264,7 @@
     foot.innerHTML = '';
     if (!label) return null;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'lbtn' + (cls ? ' ' + cls : '');
-    b.innerHTML = (ico ? svgIco(ico, true) : '') + '<span></span>'; b.querySelector('span').textContent = label;
+    b.innerHTML = (ico ? svgIco(ico, ico === IC.play || ico === IC.rew) : '') + '<span></span>'; b.querySelector('span').textContent = label;   // 播放、倒帶是實心三角；獎盃、重來是線條
     if (onClick) b.onclick = onClick; else b.disabled = true;
     foot.appendChild(b); return b;
   }
@@ -411,7 +411,11 @@
     // 下一課＝落子順序中第一個還沒完成的課
     const nextO = order.find(o => o.lesson !== 'opening' && !doneSet.has(o.lesson));
     order.forEach(o => { if (o.lesson === 'opening' || doneSet.has(o.lesson)) B.put(o.t, o.c, { anim: false, cls: o.c === 'b' ? 'a-breath' : '' }); });
-    if (prog().justDone) { const o = order.find(x => x.lesson === prog().justDone); if (o) { B.take(o.t, true); setTimeout(() => alive() && B.put(o.t, o.c, { cls: o.c === 'b' ? 'a-breath' : '' }), 350); } const p = prog(); delete p.justDone; store.set(p); }
+    if (prog().justDone) {   // 剛完成的課：子落到盤上，再轉一圈金光（逐格圖 unit_clear）
+      const o = order.find(x => x.lesson === prog().justDone);
+      if (o) { B.take(o.t, true); setTimeout(() => { if (!alive()) return; B.put(o.t, o.c, { cls: o.c === 'b' ? 'a-breath' : '' }); const [px, py] = B.px(o.t); setTimeout(() => alive() && sprite(B.layer, 'unit_clear', px, py, B.cell * 0.88, { ms: 55 }), 650); }, 350); }
+      const p = prog(); delete p.justDone; store.set(p);
+    }
     const alive = () => my === run;
     if (nextO) {   // 下一課的信標：逐格圖循環，沒有圖就用 CSS 波紋
       const [px, py] = B.px(nextO.t), sp = sprite(B.layer, 'beacon', px, py, B.cell * 0.45, { loop: true, ms: 70 });   // manifest 量的是信標核心
@@ -667,7 +671,8 @@
         if (r.nofour) { B.shake(); msg(f.body, U('no'), TX(why.nofour), 'bad'); await sleep(900); B.take(r.def); theirs.pop(); B.take(t); mine.pop(); continue; }
         msg(f.body, '', TX(st.text)); continue;
       }
-      // defFive／bad：退回這一手
+      // defFive／bad：退回這一手（反四：對方剛才那顆擋子閃紅光）
+      if (r.r === 'defFive' && theirs.length) { const [px, py] = B.px(theirs[theirs.length - 1]); sprite(B.layer, 'counter_four', px, py, B.cell * 0.88, { ms: 50 }); }
       miss++; B.shake(); msg(f.body, U('no'), TX(why[r.r] || why.bad), 'bad');
       await sleep(900); if (!alive()) return 'quit';
       B.take(t); mine.pop();

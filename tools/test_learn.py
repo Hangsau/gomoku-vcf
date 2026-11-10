@@ -86,6 +86,14 @@ try:
             pg.wait_for_timeout(700); overflow(pg, f"{l['id']} 完成後回教學盤")
             done += 1
         stones = pg.evaluate("document.querySelectorAll('#learn .lst').length")
+        if done == sum(1 for l in D['lessons'] if l['steps']):   # 全部做完 → 畢業考：照教學盤正解下完
+            btn(pg); pg.wait_for_timeout(800); overflow(pg, '畢業考')
+            sol = D['board']['sol']
+            for j in range(0, len(sol), 2):
+                tap(pg, sol[j]); pg.wait_for_timeout(1700)
+            grad = pg.evaluate("(document.querySelector('#learn .lmsg .tag')||{}).textContent")
+            if not pg.evaluate("JSON.parse(localStorage.getItem('vcfgame.learn')).graduated === true"): issues.append(f'畢業考沒有過關（訊息：{grad}）')
+            overflow(pg, '畢業')
         prog = pg.evaluate("localStorage.getItem('vcfgame.learn')")
         print(f'{lang} {vp}：做完 {done} 課，教學盤子數 {stones}，進度 {prog}')
         br.close()
