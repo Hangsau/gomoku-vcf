@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 3-1 互動課 B</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes drawB{0%{stroke-dashoffset:150}60%,100%{stroke-dashoffset:0}}
+@keyframes qB{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.18);opacity:1}}
+@keyframes stampB{0%{transform:scale(2.4) rotate(-24deg);opacity:0}60%{transform:scale(.92) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+@keyframes dropB{0%{transform:scale(1.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes inkB{0%{stroke-dashoffset:40}100%{stroke-dashoffset:0}}
+@keyframes slideB{0%{transform:translateY(12px);opacity:0}100%{transform:none;opacity:1}}
+.drawB{stroke-dasharray:150;animation:drawB 1.8s ease-out infinite}
+.qB{animation:qB 1s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+.stampB{animation:stampB .4s cubic-bezier(.2,.9,.3,1.1) both}
+.dropB{animation:dropB .25s ease-out both}
+.inkB{stroke-dasharray:40;animation:inkB .3s ease-out both}
+.slideB{animation:slideB .3s ease-out both}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;">
+    <a href="B-map.dc.html" aria-label="回到卷軸" style="width:44px;height:44px;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span style="font-family:'Noto Serif TC',serif;font-weight:900;color:#F2B544;font-size:18px;">參</span>
+    <span style="flex:1;font-size:15px;color:#B6BCCB;">3-1・衝四是絕對先手</span>
+    <div style="display:flex;gap:6px;">
+      <sc-for list="{{dots}}" as="d" hint-placeholder-count="4">
+        <span style="width:10px;height:10px;border-radius:50%;background:{{d.bg}};"></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div class="slideB" style="margin:4px 14px 0;min-height:104px;border-radius:16px;background:#161A24;border:1px solid {{cardLine}};padding:12px 14px;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="height:24px;padding:0 9px;border-radius:6px;background:{{chipBg}};color:{{chipInk}};font-size:12px;font-weight:700;display:flex;align-items:center;">{{chip}}</span>
+      <b style="font-family:'Noto Serif TC',serif;font-size:17px;">{{title}}</b>
+    </div>
+    <p style="margin:8px 0 0;font-size:15px;line-height:1.55;color:#D5D9E3;">{{body}}</p>
+  </div>
+
+  <div style="position:absolute;left:37px;top:180px;width:300px;height:300px;border-radius:10px;background:#E9C98B;box-shadow:0 0 0 6px #3A2C18,0 14px 30px rgba(0,0,0,.5);">
+    <svg width="300" height="300" style="position:absolute;left:0;top:0;" aria-hidden="true">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="9">
+        <line x1="18" y1="{{l.p}}" x2="282" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+        <line x1="{{l.p}}" y1="18" x2="{{l.p}}" y2="282" stroke="#5B4524" stroke-width="1"/>
+      </sc-for>
+      <sc-if value="{{notOk}}" hint-placeholder-val="{{true}}">
+        <line class="drawB" x1="84" y1="150" x2="216" y2="150" stroke="#F2B544" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+        <g class="qB"><circle cx="216" cy="150" r="13" fill="none" stroke="#F2B544" stroke-width="3" stroke-dasharray="5 4"/></g>
+      </sc-if>
+    </svg>
+    <sc-for list="{{stones}}" as="s" hint-placeholder-count="10">
+      <div style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:28px;height:28px;border-radius:50%;background:{{s.bg}};box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35);"></div>
+    </sc-for>
+    <div style="position:absolute;left:174px;top:141px;width:18px;height:18px;border-radius:50%;border:2px solid #FF7A6B;box-sizing:border-box;pointer-events:none;"></div>
+    <sc-if value="{{isOk}}" hint-placeholder-val="{{false}}">
+      <div class="dropB" style="position:absolute;left:202px;top:136px;width:28px;height:28px;border-radius:50%;background:#FBFAF6;box-shadow:inset -3px -4px 0 rgba(0,0,0,.12),0 2px 3px rgba(0,0,0,.35);"></div>
+      <div class="stampB" style="position:absolute;right:-6px;top:-18px;width:92px;height:92px;border-radius:14px;border:4px solid #D64B3C;color:#D64B3C;background:rgba(255,236,230,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+        <span style="font-family:'Noto Serif TC',serif;font-weight:900;font-size:30px;line-height:1;">正解</span>
+        <span style="font-size:11px;font-weight:700;margin-top:4px;letter-spacing:2px;">絕對先手</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{showX}}" hint-placeholder-val="{{false}}">
+      <svg width="30" height="30" viewBox="0 0 30 30" style="position:absolute;left:{{xx}}px;top:{{xy}}px;pointer-events:none;" aria-hidden="true">
+        <path class="inkB" d="M5 5L25 25" stroke="#C8473A" stroke-width="5" stroke-linecap="round"/>
+        <path class="inkB" d="M25 5L5 25" stroke="#C8473A" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+    </sc-if>
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+      <button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="position:absolute;left:{{c.x}}px;top:{{c.y}}px;width:33px;height:33px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;"></button>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:14px;right:14px;top:500px;display:flex;gap:8px;">
+    <sc-for list="{{keys}}" as="k" hint-placeholder-count="2">
+      <div style="flex:1;height:68px;border-radius:14px;background:{{k.bg}};border:1px solid {{k.line}};display:flex;flex-direction:column;justify-content:center;padding:0 12px;">
+        <span style="font-size:12px;color:#8E95A6;">{{k.lbl}}</span>
+        <b style="font-size:15px;color:{{k.ink}};">{{k.val}}</b>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:14px;right:14px;bottom:18px;">
+    <button type="button" onClick="{{next}}" style="width:100%;height:60px;border-radius:18px;border:0;background:{{btnBg}};color:{{btnInk}};font-size:20px;font-weight:900;">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 33, M = 18;
+    const phase = (this.state && this.state.phase) || 'ask';
+    const picked = this.state && this.state.picked;
+    const tries = (this.state && this.state.tries) || 0;
+    const black = [[2,4],[3,4],[4,4],[5,4],[4,3]], white = [[1,4],[2,6],[3,6],[4,6],[3,2]];
+    const key = (c, r) => c + ',' + r;
+    const taken = new Set([...black, ...white].map(([c, r]) => key(c, r)));
+    const stones = black.map(([c, r]) => ({ x: M + c * S - 14, y: M + r * S - 14, bg: '#1B1A17' }))
+      .concat(white.map(([c, r]) => ({ x: M + c * S - 14, y: M + r * S - 14, bg: '#FBFAF6' })));
+    const cols = 'EFGHJKLMN', cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      if (taken.has(key(c, r))) continue;
+      cells.push({ x: M + c * S - 16.5, y: M + r * S - 16.5, label: cols[c] + (11 - r),
+        pick: () => { if (phase === 'ok') return; if (c === 6 && r === 4) this.setState({ phase: 'ok', picked: null }); else this.setState({ phase: 'no', picked: [c, r], tries: tries + 1 }); } });
+    }
+    const ok = phase === 'ok', no = phase === 'no';
+    return {
+      dots: [0, 1, 2, 3].map(i => ({ bg: i === 0 || (i === 1 && ok) ? '#F2B544' : i === 1 ? '#8A6420' : '#252B3A' })),
+      chip: ok ? '正解' : no ? '再看一次' : '看一看', chipBg: ok ? '#1F3B39' : no ? '#3D1F1F' : '#3A2F17', chipInk: ok ? '#3CC6B4' : no ? '#FF7A6B' : '#F2B544',
+      cardLine: ok ? '#2C6B62' : no ? '#6B2E28' : '#2E3546',
+      title: ok ? '對方只能擋這一點' : no ? '這點擋不住' : '金線是黑的四',
+      body: ok ? '你衝四，白就算有三，也只能先擋你。對方會下哪裡，你事先就知道。'
+        : no ? '白下在這裡，黑下一手就在金圈成五。四只差一點，白只能擋那一點。'
+        : '紅圈是黑剛下的子。金線上黑已經有四顆，只差金圈那一點就成五。白要擋哪裡？',
+      lines: Array.from({ length: 9 }, (_, i) => ({ p: M + i * S + 0.5 })), stones, cells,
+      isOk: ok, notOk: !ok, showX: no && !!picked,
+      xx: picked ? M + picked[0] * S - 15 : 0, xy: picked ? M + picked[1] * S - 15 : 0,
+      keys: [
+        { lbl: '黑的四', val: '差一點成五', bg: '#161A24', line: '#2E3546', ink: '#EDEFF5' },
+        { lbl: '白能擋的點', val: ok ? '只有一個' : no ? '試了 ' + tries + ' 次' : '？', bg: ok ? '#1F3B39' : '#161A24', line: ok ? '#2C6B62' : '#2E3546', ink: ok ? '#3CC6B4' : '#EDEFF5' },
+      ],
+      btn: ok ? '下一張' : '點棋盤上的一點', btnBg: ok ? '#F2B544' : '#1F2A3D', btnInk: ok ? '#1A1300' : '#8E95A6',
+      next: () => { if (ok) this.setState({ phase: 'ask', picked: null, tries: 0 }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

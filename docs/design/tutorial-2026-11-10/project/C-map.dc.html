@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 課程地圖 C</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FE3D3}
+@keyframes hopC{0%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+@keyframes wiggleC{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.hopC{animation:hopC 1.2s ease-in-out infinite}
+.wiggleC{animation:wiggleC 1.6s ease-in-out infinite}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <div style="padding:10px 14px 0;display:flex;align-items:center;gap:10px;">
+    <button type="button" aria-label="返回選單" style="width:44px;height:44px;border:0;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:18px;color:#3CC6B4;">Lv.3</b>
+        <span style="font-size:14px;font-weight:700;">見習棋士</span>
+        <span style="margin-left:auto;font-family:'Chakra Petch',sans-serif;font-size:13px;color:#B6BCCB;">340 / 500 XP</span>
+      </div>
+      <div style="height:10px;border-radius:5px;background:#252B3A;overflow:hidden;"><div style="width:68%;height:100%;border-radius:5px;background:#3CC6B4;"></div></div>
+    </div>
+  </div>
+
+  <div style="padding:14px 15px 0;display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#B6BCCB;">第 2 關卡區・四<span style="margin-left:auto;font-family:'Chakra Petch',sans-serif;color:#F2B544;">11/12 ★</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+      <sc-for list="{{done}}" as="t" hint-placeholder-count="4">
+        <div style="height:76px;border-radius:14px;background:#1F2A3D;box-shadow:0 4px 0 #161A24;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+          <b style="font-family:'Chakra Petch',sans-serif;font-size:16px;">{{t.n}}</b>
+          <span style="display:flex;gap:1px;">
+            <sc-for list="{{t.stars}}" as="s" hint-placeholder-count="3">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="{{s.c}}" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+            </sc-for>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;margin-top:6px;">第 3 關卡區・衝四逼對方擋<span style="margin-left:auto;font-family:'Chakra Petch',sans-serif;color:#F2B544;">0/9 ★</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+      <a class="hopC" href="C-lesson.dc.html" aria-label="開始 3-1 衝四是絕對先手" style="height:76px;border-radius:14px;background:#3CC6B4;color:#06231F;box-shadow:0 5px 0 #1C7F72;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:18px;">3-1</b>
+        <span style="font-size:12px;font-weight:900;">開始</span>
+      </a>
+      <div style="height:76px;border-radius:14px;background:#161A24;border:1px solid #252B3A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B7385;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:16px;">3-2</b>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div style="height:76px;border-radius:14px;background:#161A24;border:1px solid #252B3A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B7385;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:16px;">3-3</b>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div style="height:76px;border-radius:14px;background:#2A2414;border:1px solid #5C4A22;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#F2B544;">
+        <svg class="wiggleC" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18v10H3z"/><path d="M3 10l2-5h14l2 5"/><path d="M10 13h4v3h-4z"/></svg>
+        <span style="font-size:11px;font-weight:700;">9 ★ 開</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#6B7385;margin-top:6px;">第 4 關卡區・一兩手就贏</div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+      <sc-for list="{{locked}}" as="t" hint-placeholder-count="4">
+        <div style="height:76px;border-radius:14px;background:#12151E;border:1px dashed #252B3A;display:flex;align-items:center;justify-content:center;color:#4A5163;">
+          <b style="font-family:'Chakra Petch',sans-serif;font-size:16px;">{{t.n}}</b>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:15px;right:15px;bottom:16px;display:flex;gap:8px;">
+    <div style="flex:1;height:60px;border-radius:16px;background:#161A24;border:1px solid #2E3546;display:flex;align-items:center;gap:10px;padding:0 12px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF7A6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3 0 2 1 3 2 3 0-3-1-5 1-8z"/></svg>
+      <div style="display:flex;flex-direction:column;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:18px;">3 天</b>
+        <span style="font-size:11px;color:#B6BCCB;">連續上課</span>
+      </div>
+    </div>
+    <button type="button" style="flex:1.3;height:60px;border-radius:16px;border:1px solid #F2B544;background:transparent;color:#F2B544;font-size:16px;font-weight:900;">直接畢業考</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const star = (k) => [0, 1, 2].map(i => ({ c: i < k ? '#F2B544' : '#2E3546' }));
+    return {
+      done: [['2-1', 3], ['2-2', 3], ['2-3', 2], ['2-4', 3]].map(([n, k]) => ({ n, stars: star(k) })),
+      locked: ['4-1', '4-2', '4-3', '4-4'].map(n => ({ n })),
+    };
+  }
+}
+</script>
+</body>
+</html>

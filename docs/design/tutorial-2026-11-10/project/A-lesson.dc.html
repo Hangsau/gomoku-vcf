@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 3-1 互動課 A</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes dropA{0%{transform:translateY(-40px) scale(1.3);opacity:0}70%{transform:translateY(3px) scale(.96);opacity:1}100%{transform:none}}
+@keyframes glowA{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes popA{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes bobA{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes jumpA{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px)}60%{transform:translateY(0)}75%{transform:translateY(-5px)}}
+@keyframes shakeA{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.dropA{animation:dropA .45s cubic-bezier(.2,.8,.3,1.2) both}
+.glowA{animation:glowA 1s ease-in-out infinite}
+.popA{animation:popA .25s ease-out both}
+.bobA{animation:bobA 2.4s ease-in-out infinite}
+.jumpA{animation:jumpA .7s ease-out}
+.shakeA{animation:shakeA .3s ease-in-out 2}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <div style="position:absolute;left:0;top:0;right:0;height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;box-sizing:border-box;">
+    <a href="Main.dc.html" aria-label="離開這課" style="width:44px;height:44px;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </a>
+    <div style="flex:1;display:flex;gap:5px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+        <div style="flex:1;height:10px;border-radius:5px;background:{{s.bg}};"></div>
+      </sc-for>
+    </div>
+    <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:#F2B544;font-size:16px;">3-1</span>
+  </div>
+
+  <div style="position:absolute;left:16px;top:60px;font-size:18px;font-weight:900;">衝四是絕對先手</div>
+
+  <div style="position:absolute;left:30px;top:96px;width:316px;height:316px;border-radius:14px;background:#E9C98B;box-shadow:0 8px 0 #9C7A45,0 12px 30px rgba(0,0,0,.45);">
+    <svg width="316" height="316" style="position:absolute;left:0;top:0;" aria-hidden="true">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="9">
+        <line x1="18" y1="{{l.p}}" x2="298" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+        <line x1="{{l.p}}" y1="18" x2="{{l.p}}" y2="298" stroke="#5B4524" stroke-width="1"/>
+      </sc-for>
+    </svg>
+    <sc-if value="{{showLine}}" hint-placeholder-val="{{false}}">
+      <div class="glowA" style="position:absolute;left:84px;top:154px;width:150px;height:12px;border-radius:6px;background:#3CC6B4;box-shadow:0 0 14px #3CC6B4;"></div>
+    </sc-if>
+    <sc-for list="{{stones}}" as="s" hint-placeholder-count="10">
+      <div style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:30px;height:30px;border-radius:50%;background:{{s.bg}};box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35);"></div>
+    </sc-for>
+    <div style="position:absolute;left:184px;top:149px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:#F2B544;pointer-events:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+    </div>
+    <sc-if value="{{isOk}}" hint-placeholder-val="{{false}}">
+      <div class="dropA" style="position:absolute;left:213px;top:143px;width:30px;height:30px;border-radius:50%;background:#FBFAF6;box-shadow:inset -3px -4px 0 rgba(0,0,0,.12),0 2px 3px rgba(0,0,0,.35),0 0 0 4px #3CC6B4;"></div>
+    </sc-if>
+    <sc-if value="{{showX}}" hint-placeholder-val="{{false}}">
+      <div class="popA" style="position:absolute;left:{{xx}}px;top:{{xy}}px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:#FF7A6B;pointer-events:none;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+    </sc-if>
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+      <button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="position:absolute;left:{{c.x}}px;top:{{c.y}}px;width:35px;height:35px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;"></button>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:12px;right:12px;top:432px;height:150px;display:flex;align-items:flex-start;gap:10px;">
+    <div class="{{mascotCls}}" style="flex:none;width:64px;height:64px;margin-top:20px;">
+      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+        <ellipse cx="32" cy="58" rx="18" ry="4" fill="#000" opacity=".35"/>
+        <circle cx="32" cy="32" r="24" fill="#1B1A17" stroke="#3A3A44" stroke-width="2"/>
+        <ellipse cx="24" cy="20" rx="7" ry="4" fill="#FFFFFF" opacity=".14"/>
+        <sc-if value="{{isOk}}" hint-placeholder-val="{{false}}">
+          <path d="M19 33q5-6 10 0M35 33q5-6 10 0" fill="none" stroke="#FBFAF6" stroke-width="3" stroke-linecap="round"/>
+          <path d="M26 42q6 6 12 0" fill="#FF7A6B" stroke="#FBFAF6" stroke-width="2" stroke-linecap="round"/>
+        </sc-if>
+        <sc-if value="{{notOk}}" hint-placeholder-val="{{true}}">
+          <ellipse cx="24" cy="32" rx="5" ry="6" fill="#FBFAF6"/><ellipse cx="40" cy="32" rx="5" ry="6" fill="#FBFAF6"/>
+          <circle cx="25" cy="33" r="2.5" fill="#1B1A17"/><circle cx="41" cy="33" r="2.5" fill="#1B1A17"/>
+          <path d="M28 44q4 3 8 0" fill="none" stroke="#FBFAF6" stroke-width="2" stroke-linecap="round"/>
+        </sc-if>
+        <ellipse cx="17" cy="41" rx="4" ry="2.2" fill="#F2B544" opacity=".55"/><ellipse cx="47" cy="41" rx="4" ry="2.2" fill="#F2B544" opacity=".55"/>
+      </svg>
+    </div>
+    <div style="flex:1;position:relative;">
+      <div style="position:absolute;left:-7px;top:40px;width:14px;height:14px;background:{{bubbleBg}};transform:rotate(45deg);"></div>
+      <div style="position:relative;padding:14px 16px;border-radius:18px;background:{{bubbleBg}};color:#0F121A;font-size:16px;line-height:1.5;font-weight:500;min-height:96px;box-sizing:border-box;">
+        <b style="display:block;font-size:13px;color:{{tagColor}};margin-bottom:2px;">{{tag}}</b>{{say}}
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:16px;right:16px;bottom:18px;display:flex;gap:10px;">
+    <button type="button" onClick="{{hint}}" aria-label="提示" style="width:60px;height:60px;border-radius:18px;border:1px solid #2E3546;background:#161A24;color:#3CC6B4;display:flex;align-items:center;justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>
+    </button>
+    <button type="button" onClick="{{next}}" style="flex:1;height:60px;border-radius:18px;border:0;background:{{btnBg}};color:{{btnInk}};font-size:20px;font-weight:900;">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 35, M = 18;
+    const phase = (this.state && this.state.phase) || 'ask';
+    const picked = this.state && this.state.picked;
+    const hinted = this.state && this.state.hinted;
+    const black = [[2,4],[3,4],[4,4],[5,4],[4,3]], white = [[1,4],[2,6],[3,6],[4,6],[3,2]];
+    const key = (c, r) => c + ',' + r;
+    const taken = new Set([...black, ...white].map(([c, r]) => key(c, r)));
+    const stones = black.map(([c, r]) => ({ x: M + c * S - 15, y: M + r * S - 15, bg: '#1B1A17' }))
+      .concat(white.map(([c, r]) => ({ x: M + c * S - 15, y: M + r * S - 15, bg: '#FBFAF6' })));
+    const cols = 'EFGHJKLMN';
+    const cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      if (taken.has(key(c, r))) continue;
+      cells.push({ x: M + c * S - 17.5, y: M + r * S - 17.5, label: cols[c] + (11 - r),
+        pick: () => { if (phase === 'ok') return; if (c === 6 && r === 4) this.setState({ phase: 'ok', picked: null }); else this.setState({ phase: 'no', picked: [c, r] }); } });
+    }
+    const lines = Array.from({ length: 9 }, (_, i) => ({ p: M + i * S + 0.5 }));
+    const say = phase === 'ok' ? '白只能擋這裡！就算白自己有三，也得先擋你的四。這就叫「絕對先手」。'
+      : phase === 'no' ? '差一點！看發亮的那條線：黑的四只差一個點就成五，白一定得擋那一點。'
+      : '黑剛下了★這手，做出一個「四」。白只有一個地方能擋，你猜在哪？點點看！';
+    const tag = phase === 'ok' ? '答對了' : phase === 'no' ? '再想想' : '小棋說';
+    return {
+      steps: [0, 1, 2, 3].map(i => ({ bg: i < 1 || (i === 1 && phase === 'ok') ? '#F2B544' : i === 1 ? '#5C4A22' : '#252B3A' })),
+      lines, stones, cells,
+      isOk: phase === 'ok', notOk: phase !== 'ok',
+      showLine: phase === 'no' || !!hinted,
+      showX: phase === 'no' && !!picked, xx: picked ? M + picked[0] * S - 15 : 0, xy: picked ? M + picked[1] * S - 15 : 0,
+      mascotCls: phase === 'ok' ? 'jumpA' : phase === 'no' ? 'shakeA' : 'bobA',
+      bubbleBg: phase === 'ok' ? '#C9F2EA' : phase === 'no' ? '#FFE1DC' : '#EDEFF5',
+      tagColor: phase === 'ok' ? '#0E7A6B' : phase === 'no' ? '#B23A2C' : '#8A6420',
+      tag, say,
+      btn: phase === 'ok' ? '下一步' : '點棋盤作答',
+      btnBg: phase === 'ok' ? '#F2B544' : '#1F2A3D', btnInk: phase === 'ok' ? '#1A1300' : '#8E95A6',
+      hint: () => this.setState({ hinted: true }),
+      next: () => { if (phase === 'ok') this.setState({ phase: 'ask', picked: null, hinted: false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 3-1 互動課 C</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FE3D3}
+@keyframes burstC{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-110px) scale(.4);opacity:0}}
+@keyframes riseC{0%{transform:translateY(10px);opacity:0}30%{opacity:1}100%{transform:translateY(-40px);opacity:0}}
+@keyframes dropC{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes shakeC{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@keyframes toastC{0%{transform:translateY(-14px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes pulseC{0%,100%{box-shadow:0 0 0 0 rgba(60,198,180,.7)}50%{box-shadow:0 0 0 7px rgba(60,198,180,0)}}
+.burstC{animation:burstC .8s ease-out both}
+.riseC{animation:riseC 1.2s ease-out both}
+.dropC{animation:dropC .3s ease-out both}
+.shakeC{animation:shakeC .4s ease-in-out}
+.toastC{animation:toastC .25s ease-out both}
+.pulseC{animation:pulseC 1.1s ease-in-out infinite}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <div style="height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;">
+    <a href="C-map.dc.html" aria-label="離開關卡" style="width:44px;height:44px;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </a>
+    <span style="height:30px;padding:0 10px;border-radius:15px;background:#1F3B39;color:#3CC6B4;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:14px;display:flex;align-items:center;">3-1</span>
+    <span style="flex:1;font-size:15px;font-weight:700;">衝四是絕對先手</span>
+    <span style="display:flex;align-items:center;gap:3px;">
+      <sc-for list="{{stars}}" as="s" hint-placeholder-count="3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="{{s.c}}" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+      </sc-for>
+    </span>
+  </div>
+
+  <div class="toastC" style="margin:2px 12px 0;height:62px;border-radius:16px;background:{{toastBg}};color:{{toastInk}};display:flex;align-items:center;gap:10px;padding:0 14px;">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 6.6L21 9l-5 4.6L17.5 21 12 17.3 6.5 21 8 13.6 3 9l6.6-.4z"/></svg>
+    <span style="font-size:15px;line-height:1.4;font-weight:700;">{{toast}}</span>
+  </div>
+
+  <div class="{{boardCls}}" style="position:absolute;left:12px;top:128px;width:351px;height:351px;border-radius:12px;background:#E9C98B;box-shadow:0 10px 0 #9C7A45;">
+    <svg width="351" height="351" style="position:absolute;left:0;top:0;" aria-hidden="true">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="9">
+        <line x1="19" y1="{{l.p}}" x2="332" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+        <line x1="{{l.p}}" y1="19" x2="{{l.p}}" y2="332" stroke="#5B4524" stroke-width="1"/>
+      </sc-for>
+    </svg>
+    <sc-for list="{{stones}}" as="s" hint-placeholder-count="10">
+      <div class="{{s.cls}}" style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:33px;height:33px;border-radius:50%;background:{{s.bg}};border:{{s.ring}};box-sizing:border-box;"></div>
+    </sc-for>
+    <sc-if value="{{isOk}}" hint-placeholder-val="{{false}}">
+      <div class="dropC" style="position:absolute;left:236px;top:158px;width:33px;height:33px;border-radius:50%;background:#FBFAF6;box-shadow:0 0 0 4px #3CC6B4;"></div>
+      <sc-for list="{{parts}}" as="p" hint-placeholder-count="12">
+        <div style="position:absolute;left:252px;top:174px;width:0;height:0;transform:rotate({{p.a}}deg);">
+          <div class="burstC" style="position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:{{p.r}};background:{{p.c}};animation-delay:{{p.d}}s;"></div>
+        </div>
+      </sc-for>
+      <div class="riseC" style="position:absolute;left:206px;top:110px;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:26px;color:#0F7A6C;text-shadow:0 2px 0 #FBFAF6;">+10 XP</div>
+    </sc-if>
+    <sc-if value="{{showX}}" hint-placeholder-val="{{false}}">
+      <div class="dropC" style="position:absolute;left:{{xx}}px;top:{{xy}}px;width:33px;height:33px;border-radius:50%;border:4px solid #FF7A6B;box-sizing:border-box;pointer-events:none;"></div>
+    </sc-if>
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+      <button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="position:absolute;left:{{c.x}}px;top:{{c.y}}px;width:39px;height:39px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;"></button>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:12px;right:12px;top:500px;height:76px;display:flex;gap:8px;">
+    <div style="flex:1;border-radius:16px;background:#161A24;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2B544" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+      <div style="display:flex;flex-direction:column;">
+        <b style="font-family:'Chakra Petch',sans-serif;font-size:22px;line-height:1;">{{combo}}</b>
+        <span style="font-size:11px;color:#B6BCCB;">連續答對</span>
+      </div>
+    </div>
+    <button type="button" onClick="{{hint}}" style="flex:1;border-radius:16px;border:1px solid #2C6B62;background:#12201F;color:#3CC6B4;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:700;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>提示（−1★）
+    </button>
+  </div>
+
+  <div style="position:absolute;left:12px;right:12px;bottom:16px;">
+    <button type="button" onClick="{{next}}" style="width:100%;height:62px;border-radius:18px;border:0;background:{{btnBg}};color:{{btnInk}};font-size:20px;font-weight:900;box-shadow:{{btnShadow}};">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 39, M = 19;
+    const st = this.state || {};
+    const phase = st.phase || 'ask', picked = st.picked, hinted = !!st.hinted, miss = st.miss || 0, combo = st.combo || 0;
+    const black = [[2,4],[3,4],[4,4],[5,4],[4,3]], white = [[1,4],[2,6],[3,6],[4,6],[3,2]];
+    const four = new Set(['2,4', '3,4', '4,4', '5,4']);
+    const key = (c, r) => c + ',' + r;
+    const taken = new Set([...black, ...white].map(([c, r]) => key(c, r)));
+    const glow = phase === 'no' || hinted;
+    const stones = black.map(([c, r]) => ({ x: M + c * S - 16.5, y: M + r * S - 16.5, bg: '#1B1A17',
+      ring: glow && four.has(key(c, r)) ? '3px solid #3CC6B4' : (c === 5 && r === 4 ? '3px solid #FF7A6B' : '0'), cls: glow && four.has(key(c, r)) ? 'pulseC' : '' }))
+      .concat(white.map(([c, r]) => ({ x: M + c * S - 16.5, y: M + r * S - 16.5, bg: '#FBFAF6', ring: '0', cls: '' })));
+    const cols = 'EFGHJKLMN', cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      if (taken.has(key(c, r))) continue;
+      cells.push({ x: M + c * S - 19.5, y: M + r * S - 19.5, label: cols[c] + (11 - r),
+        pick: () => { if (phase === 'ok') return; if (c === 6 && r === 4) this.setState({ phase: 'ok', picked: null, combo: combo + 1 }); else this.setState({ phase: 'no', picked: [c, r], miss: miss + 1, combo: 0 }); } });
+    }
+    const ok = phase === 'ok';
+    const earned = ok ? Math.max(1, 3 - miss - (hinted ? 1 : 0)) : 0;
+    const palette = ['#F2B544', '#3CC6B4', '#FF7A6B', '#FBFAF6'];
+    return {
+      stars: [0, 1, 2].map(i => ({ c: i < earned ? '#F2B544' : '#2E3546' })),
+      toast: ok ? '漂亮！白只能擋這裡，衝四讓你算得到對方的下一手。'
+        : phase === 'no' ? '不是這裡！亮起來的四顆差一點就成五，白要擋哪？'
+        : '紅圈那手做出了四。白會擋哪一點？點下去！',
+      toastBg: ok ? '#3CC6B4' : phase === 'no' ? '#3D1F1F' : '#1F2A3D', toastInk: ok ? '#06231F' : phase === 'no' ? '#FFB3A8' : '#EDEFF5',
+      boardCls: phase === 'no' ? 'shakeC' : '',
+      lines: Array.from({ length: 9 }, (_, i) => ({ p: M + i * S + 0.5 })), stones, cells,
+      isOk: ok, showX: phase === 'no' && !!picked, xx: picked ? M + picked[0] * S - 16.5 : 0, xy: picked ? M + picked[1] * S - 16.5 : 0,
+      parts: Array.from({ length: 14 }, (_, i) => ({ a: i * (360 / 14), c: palette[i % 4], r: i % 3 ? '50%' : '2px', d: (i % 4) * 0.04 })),
+      combo,
+      hint: () => this.setState({ hinted: true }),
+      btn: ok ? '下一關' : '點棋盤作答', btnBg: ok ? '#3CC6B4' : '#1F2A3D', btnInk: ok ? '#06231F' : '#8E95A6',
+      btnShadow: ok ? '0 5px 0 #1C7F72' : 'none',
+      next: () => { if (ok) this.setState({ phase: 'ask', picked: null, hinted: false, miss: 0 }); },
+    };
+  }
+}
+</script>
+</body>
+</html>
