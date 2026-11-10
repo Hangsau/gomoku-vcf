@@ -149,8 +149,8 @@ def check_step(E, where, st):
         own, opp = (W, B) if aw else (B, W)
         if kind == 'five':
             got = fives(own, opp, not aw)
-        elif kind == 'block':
-            got = fives(opp, own, aw)
+        elif kind == 'block':   # 玩家當守方：要擋的就是攻方（pos.atk）下了會成五的點
+            got = fives(own, opp, not aw)
         elif kind == 'four':
             got = set()
             for t in window_points(pos.get('win')):
@@ -170,7 +170,8 @@ def check_step(E, where, st):
 
 def main():
     need_langs = '--langs' in sys.argv
-    D = json.loads(DATA.read_text(encoding='utf-8'))
+    files = [a for a in sys.argv[1:] if a.endswith('.json')]   # 可指定別的資料檔（測試用）
+    D = json.loads((Path(files[0]) if files else DATA).read_text(encoding='utf-8'))
     lessons = D.get('lessons', [])
     ids = [l.get('id') for l in lessons]
     for i in set(ids):
