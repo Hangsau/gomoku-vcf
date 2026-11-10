@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>教學盤候選棋譜</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes inP{0%{transform:scale(1.8);opacity:0}100%{transform:none;opacity:1}}
+.inP{animation:inP .25s ease-out both}
+</style>
+</helmet>
+<div style="width:820px;height:960px;box-sizing:border-box;padding:24px;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;display:flex;flex-direction:column;gap:16px;">
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <b style="font-size:24px;font-weight:900;">教學盤候選棋譜：32 子、黑先 4 手勝</b>
+    <span style="font-size:14px;color:#B6BCCB;line-height:1.5;">全部來自題庫，已用 Gomoku Rush 引擎驗證：答案唯一、盤面合法、逐手重放能連成五。紅色 × 是黑棋一開始的禁點；按「看解法」顯示手順，金圈是解禁那一手。</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+    <sc-for list="{{cards}}" as="k" hint-placeholder-count="6">
+      <div style="border-radius:16px;background:#161A24;border:2px solid {{k.line}};padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <b style="font-family:'Chakra Petch',sans-serif;font-size:16px;">#{{k.id}}</b>
+          <span style="margin-left:auto;font-family:'Chakra Petch',sans-serif;color:#F2B544;font-weight:700;">{{k.score}} 分</span>
+        </div>
+        <div style="position:relative;width:218px;height:218px;align-self:center;border-radius:8px;background:#E9C98B;">
+          <svg width="218" height="218" style="position:absolute;left:0;top:0;" aria-hidden="true">
+            <sc-for list="{{grid}}" as="l" hint-placeholder-count="15">
+              <line x1="11" y1="{{l.p}}" x2="207" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+              <line x1="{{l.p}}" y1="11" x2="{{l.p}}" y2="207" stroke="#5B4524" stroke-width="1"/>
+            </sc-for>
+          </svg>
+          <sc-for list="{{k.forb}}" as="f" hint-placeholder-count="2">
+            <svg width="12" height="12" viewBox="0 0 12 12" style="position:absolute;left:{{f.x}}px;top:{{f.y}}px;" aria-hidden="true"><path d="M2 2L10 10M10 2L2 10" stroke="#D64B3C" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </sc-for>
+          <sc-for list="{{k.stones}}" as="s" hint-placeholder-count="32">
+            <div style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:12px;height:12px;border-radius:50%;background:{{s.bg}};box-shadow:0 1px 1px rgba(0,0,0,.35);"></div>
+          </sc-for>
+          <sc-if value="{{k.open}}" hint-placeholder-val="{{false}}">
+            <sc-for list="{{k.sol}}" as="s" hint-placeholder-count="7">
+              <div class="inP" style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:13px;height:13px;border-radius:50%;background:{{s.bg}};color:{{s.ink}};box-shadow:{{s.ring}};font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:9px;display:flex;align-items:center;justify-content:center;animation-delay:{{s.d}}s;">{{s.n}}</div>
+            </sc-for>
+          </sc-if>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;">
+          <sc-for list="{{k.tags}}" as="t" hint-placeholder-count="2">
+            <span style="height:24px;padding:0 9px;border-radius:12px;background:{{t.bg}};color:{{t.ink}};font-size:12px;font-weight:700;display:flex;align-items:center;">{{t.n}}</span>
+          </sc-for>
+        </div>
+        <span style="font-family:'Chakra Petch',sans-serif;font-size:12px;color:#8E95A6;">{{k.solTxt}}</span>
+        <div style="display:flex;gap:8px;">
+          <button type="button" onClick="{{k.toggle}}" style="flex:1;height:40px;border-radius:12px;border:1px solid #2E3546;background:transparent;color:#EDEFF5;font-size:14px;font-weight:700;">{{k.toggleLbl}}</button>
+          <button type="button" onClick="{{k.pick}}" style="flex:1;height:40px;border-radius:12px;border:0;background:{{k.pickBg}};color:{{k.pickInk}};font-size:14px;font-weight:700;">{{k.pickLbl}}</button>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 14, M = 11, st = this.state || {}, open = st.open || {}, picked = st.picked;
+    const D = [{"id":"P967KE41","score":203.1,"b":[[6,9],[5,9],[8,9],[7,7],[4,7],[5,8],[3,10],[4,10],[8,10],[6,4],[4,9],[3,5],[8,7],[4,4],[3,7],[4,6]],"w":[[6,7],[9,5],[9,4],[7,8],[5,6],[5,5],[6,6],[7,9],[5,10],[8,6],[7,4],[8,4],[3,6],[6,5],[4,8],[5,4]],"sol":[[6,8],[3,11],[5,7],[2,4],[1,7],[2,7],[2,6]],"solTxt":"G7 D4 F8 C11 B8 C8 C9","lift":["B8@3"],"counter":0,"trap":1,"forb":["B8","J4"]},{"id":"BVKPFYNB","score":191.5,"b":[[7,7],[9,6],[11,2],[10,3],[7,4],[8,8],[6,3],[9,8],[10,7],[12,9],[6,4],[5,8],[7,3],[5,2],[6,2],[12,8]],"w":[[8,9],[7,6],[7,9],[6,9],[5,4],[6,5],[6,7],[8,5],[8,4],[9,2],[11,5],[9,7],[8,2],[12,5],[12,4],[7,5]],"sol":[[6,1],[6,0],[8,3],[9,3],[4,3],[5,3],[3,4]],"solTxt":"G14 G15 J12 K12 E12 F12 D11","lift":["E12@3"],"counter":0,"trap":1,"forb":["M7"]},{"id":"WYD06SSB","score":181.9,"b":[[5,11],[5,12],[6,11],[4,9],[5,8],[10,9],[10,11],[10,10],[7,7],[7,6],[8,6],[5,7],[8,7],[5,9],[9,12],[9,6]],"w":[[6,6],[4,7],[4,8],[10,6],[10,7],[8,9],[8,10],[8,8],[6,9],[7,9],[10,8],[4,10],[9,10],[9,8],[5,10],[4,6]],"sol":[[3,10],[6,7],[2,11],[1,12],[4,11],[3,11],[6,13]],"solTxt":"D5 G8 C4 B3 E4 D4 G2","lift":["E4@3"],"counter":0,"trap":1,"forb":["G8"]},{"id":"G0BSGZ8C","score":164.3,"b":[[10,8],[7,7],[9,4],[4,9],[9,8],[4,8],[4,7],[6,3],[5,5],[10,5],[6,5],[8,5],[7,4],[7,6],[8,9],[9,9]],"w":[[8,7],[5,8],[5,9],[7,9],[10,7],[9,7],[7,8],[10,6],[5,6],[6,6],[4,6],[6,8],[9,6],[6,7],[8,6],[5,4]],"sol":[[7,3],[7,5],[10,3],[11,2],[8,3],[9,3],[11,6]],"solTxt":"H12 H10 L12 M13 J12 K12 M9","lift":["J12@3"],"counter":0,"trap":1,"forb":["H10"]},{"id":"RTR43RMA","score":206.5,"b":[[6,7],[7,8],[7,7],[5,10],[6,10],[8,9],[8,12],[5,11],[8,11],[7,6],[10,6],[7,11],[10,9],[7,12],[4,8],[6,12]],"w":[[8,6],[9,6],[9,11],[7,9],[10,10],[6,9],[9,7],[10,12],[8,8],[9,12],[5,6],[10,7],[4,11],[5,9],[4,6],[9,8]],"sol":[[5,12],[4,12],[5,14],[5,13],[8,10],[8,13],[7,10]],"solTxt":"F3 E3 F1 F2 J5 J2 H5","lift":[],"counter":0,"trap":2,"forb":["E6","E5","J5","K5"]},{"id":"G4YTQ7FG","score":65.5,"b":[[7,2],[8,3],[6,4],[5,5],[9,5],[5,6],[4,7],[10,8],[3,9],[3,10],[2,11],[2,12],[5,12],[7,12],[9,12],[12,12]],"w":[[7,1],[6,3],[8,4],[9,6],[10,7],[4,8],[11,9],[11,10],[12,11],[3,12],[4,12],[6,12],[8,12],[10,12],[11,12],[13,12]],"sol":[[6,5],[7,4],[8,5],[7,5],[3,8],[2,9],[3,7]],"solTxt":"G10 H11 J10 H10 D7 C6 D8","lift":["D8@4"],"counter":1,"trap":1,"forb":["D8","F7","C6"]}];
+    const COLS = 'ABCDEFGHJKLMNOP', at = (t) => [COLS.indexOf(t[0]), 15 - Number(t.slice(1))];
+    const cards = D.map((d) => {
+      const liftPts = new Set(d.lift.map(s => s.split('@')[0]));
+      const tags = [];
+      if (d.lift.length) tags.push({ n: '解禁', bg: '#3A2F17', ink: '#F2B544' });
+      if (d.counter) tags.push({ n: '反四', bg: '#3D1F1F', ink: '#FF7A6B' });
+      if (d.trap) tags.push({ n: '陷阱 ' + d.trap, bg: '#1F2A3D', ink: '#B6BCCB' });
+      tags.push({ n: '禁點 ' + d.forb.length, bg: '#1F2A3D', ink: '#B6BCCB' });
+      const words = d.solTxt.split(' ');
+      return {
+        id: d.id, score: d.score, solTxt: '解：' + d.solTxt, tags,
+        stones: d.b.map(([c, r]) => ({ x: M + c * S - 6, y: M + r * S - 6, bg: '#1B1A17' })).concat(d.w.map(([c, r]) => ({ x: M + c * S - 6, y: M + r * S - 6, bg: '#FBFAF6' }))),
+        forb: d.forb.map(at).map(([c, r]) => ({ x: M + c * S - 6, y: M + r * S - 6 })),
+        sol: d.sol.map(([c, r], i) => ({ x: M + c * S - 6.5, y: M + r * S - 6.5, n: i + 1, bg: i % 2 ? '#FBFAF6' : '#1B1A17', ink: i % 2 ? '#1B1A17' : '#FBFAF6',
+          ring: liftPts.has(words[i]) && i % 2 === 0 ? '0 0 0 2.5px #F2B544' : '0 0 0 1.5px #3CC6B4', d: i * 0.12 })),
+        open: !!open[d.id],
+        toggle: () => this.setState({ open: Object.assign({}, open, { [d.id]: !open[d.id] }) }), toggleLbl: open[d.id] ? '收起解法' : '看解法',
+        pick: () => this.setState({ picked: d.id }), pickLbl: picked === d.id ? '已選' : '選這盤',
+        pickBg: picked === d.id ? '#F2B544' : '#1F2A3D', pickInk: picked === d.id ? '#1A1300' : '#EDEFF5',
+        line: picked === d.id ? '#F2B544' : '#252B3A',
+      };
+    });
+    return { cards, grid: Array.from({ length: 15 }, (_, i) => ({ p: M + i * S + 0.5 })) };
+  }
+}
+</script>
+</body>
+</html>

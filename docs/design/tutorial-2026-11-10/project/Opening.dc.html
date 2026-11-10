@@ -161,7 +161,7 @@ a{color:#F2B544}a:hover{color:#FFD27A}
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
 class Component extends DCLogic {
   constructor(p) { super(p); this.state = { phase: 'intro', mv: [], thread: null, flash: '', lifting: false, n: 0 }; this.tm = []; }
-  componentDidMount() { this.later(1100, () => this.push(5, 6, 'W', { phase: 'd1' })); }
+  componentDidMount() { this.later(1100, () => this.push(4, 5, 'W', { phase: 'd1' })); }   // 盤面與手順已用 Gomoku Rush 引擎驗證（2026-11-10）：白 J6 四三→黑擋 J4→白 G4／L8 活四
   componentWillUnmount() { this.tm.forEach(clearTimeout); }
   later(ms, f) { this.tm.push(setTimeout(f, ms)); }
   push(c, r, s, extra) { this.setState(st => Object.assign({ mv: st.mv.concat([{ c, r, s }]), flash: '', n: st.n + 1 }, extra || {})); }
@@ -186,21 +186,14 @@ class Component extends DCLogic {
     const st = this.state, ph = st.phase, is = (a, b) => c === a && r === b;
     if (ph === 'd1') {
       this.push(c, r, 'B', { phase: 'wait' });
-      if (is(6, 6)) this.later(900, () => this.push(4, 5, 'W', { phase: 'd2' }));
-      else this.later(700, () => this.push(6, 6, 'W', { phase: 'lost', early: true }));
+      if (is(4, 7)) this.later(900, () => this.push(2, 7, 'W', { phase: 'd2' }));
+      else this.later(700, () => this.push(4, 7, 'W', { phase: 'lost', early: true }));
     } else if (ph === 'd2') {
       this.push(c, r, 'B', { phase: 'wait' });
-      if (is(4, 7)) this.later(900, () => this.push(6, 3, 'W', { phase: 'd3' }));
-      else this.later(700, () => this.push(4, 7, 'W', { phase: 'lost', early: true }));
-    } else if (ph === 'd3') {
-      this.push(c, r, 'B', { phase: 'wait' });
-      const o = is(7, 2) ? [2, 7] : [7, 2];
+      const o = is(1, 8) ? [6, 3] : [1, 8];
       this.later(800, () => this.push(o[0], o[1], 'W', { phase: 'lost', early: false }));
     } else if (ph === 'a1') {
-      if (!is(5, 6)) return this.setState({ flash: '不是這裡：找能做出四的點，就是發光那顆。' });
-      this.push(5, 6, 'W', { phase: 'cpu' }); this.later(550, () => this.cpu(6, 6, 'B', { phase: 'a2' }));
-    } else if (ph === 'a2') {
-      if (!is(4, 5)) return this.setState({ flash: '不是這裡：這一手要同時做出四和三。' });
+      if (!is(4, 5)) return this.setState({ flash: '不是這裡：這一手要同時做出四和三，就是發光那顆。' });
       this.push(4, 5, 'W', { phase: 'cpu' }); this.later(550, () => this.cpu(4, 7, 'B', { phase: 'a3' }));
     } else if (ph === 'a3') {
       if (!is(6, 3) && !is(2, 7)) return this.setState({ flash: '不是這裡：把斜線上的三，變成兩頭都能成五的活四。' });
@@ -225,7 +218,7 @@ class Component extends DCLogic {
   }
   renderVals() {
     const S = 35, M = 18, st = this.state, ph = st.phase;
-    const swap = ['swap', 'a1', 'a2', 'a3', 'a4', 'cpu', 'won'].includes(ph);
+    const swap = ['swap', 'a1', 'a3', 'a4', 'cpu', 'won'].includes(ph);
     const initW = [[2,6],[3,6],[4,6],[4,3],[4,4],[5,4]], initB = [[1,6],[4,2],[2,3],[7,6]];
     const all = initW.map(([c, r]) => ({ c, r, s: 'W', init: 1 })).concat(initB.map(([c, r]) => ({ c, r, s: 'B', init: 1 })), st.mv);
     const taken = new Set(all.map(m => m.c + ',' + m.r));
@@ -241,7 +234,7 @@ class Component extends DCLogic {
       if (st.lifting && isLast) cls = 'liftO'; else if (lit) cls = 'litO'; else if (isLast) cls = 'dropO';
       return { x: M + m.c * S - 15, y: M + m.r * S - 15, bg: color(m.s), cls, new: isLast && !st.lifting && !lit, k, d: lit ? 0.12 * litMap[key] : 0 };
     });
-    const want = { d1: [[6, 6]], d2: [[4, 7]], d3: [[7, 2], [2, 7]], a1: [[5, 6]], a2: [[4, 5]], a3: [[6, 3], [2, 7]], a4: st.ends ? [st.ends[1]] : [] }[ph] || [];
+    const want = { d1: [[4, 7]], d2: [[1, 8], [6, 3]], a1: [[4, 5]], a3: [[6, 3], [2, 7]], a4: st.ends ? [st.ends[1]] : [] }[ph] || [];
     const glows = want.map(([c, r]) => ({ x: M + c * S - 15, y: M + r * S - 15, c: ph[0] === 'd' ? '#FF7A6B' : '#3CC6B4' }));
     const cells = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
@@ -255,16 +248,14 @@ class Component extends DCLogic {
     }
     const T = {
       intro: ['', '你是黑棋。白要攻過來了……'],
-      d1: ['擋住！', '白排出一條四，只差紅圈那一點就連成五。'],
-      d2: ['又來了！', '新的四，還順便多了一條斜的三。先擋四，不然馬上輸。'],
-      d3: ['兩頭都是洞', '斜線變成活四了：兩頭都能成五。你只有一手。'],
+      d1: ['擋住！', '白一手同時做出直線的四和斜線的三。四只差紅圈那一點就成五，先擋四！'],
+      d2: ['兩頭都是洞', '斜線變成活四了：兩頭都能成五。你只有一手。'],
       wait: ['', ''],
       lost: ['你輸了', st.early ? '沒擋到那一點，白直接連成五。' : '可是回頭看：你每一手都只能擋那裡，根本沒得選。'],
       rw: ['倒帶', '回到一開始……'], flipA: ['', ''],
       swap: ['換你了', '黑白對調。剛才逼你的那串棋，這次由你來下。'],
-      a1: ['先衝一個四', '下一顆子做出四，它就只能擋一個地方。'],
-      a2: ['看那條線', '你的四把它的手拉到唯一的擋點。再來：做出四，同時多一條三。'],
-      a3: ['它又沒得選', '現在把斜線的三，變成兩頭都能成五的活四！'],
+      a1: ['四三', '剛才白的第一手：一子同時做出四和三。換你下。'],
+      a3: ['看那條線', '你的四把它的手拉到唯一的擋點。現在把斜線的三，變成兩頭都能成五的活四！'],
       a4: ['擋不完', '它只擋得了一頭。連成五！'],
       cpu: ['', '它只能擋那裡……'],
       won: ['你贏了', '剛才逼你的，現在換你逼它。這種一路衝四、對手只能跟著擋的贏法，叫 VCF。'],
