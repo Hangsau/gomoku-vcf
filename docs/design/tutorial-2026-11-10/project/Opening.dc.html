@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 開場 先被打敗</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes dropO{0%{transform:translateY(-46px) scale(1.5,1.5);opacity:0}38%{transform:translateY(-8px) scale(1.12,1.12);opacity:1}55%{transform:translateY(0) scale(1.22,.74)}68%{transform:translateY(-5px) scale(.9,1.12)}80%{transform:translateY(0) scale(1.06,.94)}90%{transform:translateY(-1px) scale(.98,1.02)}100%{transform:none}}
+@keyframes rippleO{0%{transform:scale(.6);opacity:.8}100%{transform:scale(2.4);opacity:0}}
+@keyframes liftO{0%{transform:none;opacity:1}30%{transform:translateY(4px) scale(1.15,.85)}100%{transform:translateY(-70px) scale(.5) rotate(-40deg);opacity:0}}
+@keyframes glowO{0%,100%{transform:scale(.8);opacity:.45}50%{transform:scale(1.15);opacity:1}}
+@keyframes threadO{0%{stroke-dashoffset:460}100%{stroke-dashoffset:0}}
+@keyframes travelO{0%{offset-distance:0%;transform:scale(.6)}70%{transform:scale(1.1)}100%{offset-distance:100%;transform:scale(1)}}
+@keyframes tugO{0%,100%{transform:translateY(0)}30%{transform:translateY(5px) rotate(-8deg)}60%{transform:translateY(-3px) rotate(6deg)}}
+@keyframes litO{0%{box-shadow:0 0 0 0 var(--k);transform:scale(1)}40%{box-shadow:0 0 0 7px var(--k);transform:scale(1.18)}100%{box-shadow:0 0 0 3px var(--k);transform:scale(1.05)}}
+@keyframes beamO{0%{transform:scaleX(0);opacity:0}30%{opacity:1}100%{transform:scaleX(1);opacity:1}}
+@keyframes quakeO{0%,100%{transform:none}15%{transform:translate(-7px,3px) rotate(-1deg)}30%{transform:translate(6px,-4px) rotate(1deg)}45%{transform:translate(-5px,2px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
+@keyframes flipAO{0%{transform:perspective(900px) rotateY(0)}100%{transform:perspective(900px) rotateY(90deg)}}
+@keyframes flipBO{0%{transform:perspective(900px) rotateY(-90deg)}70%{transform:perspective(900px) rotateY(8deg)}100%{transform:perspective(900px) rotateY(0)}}
+@keyframes scanO{0%{background-position:0 0}100%{background-position:0 12px}}
+@keyframes spinO{0%{transform:rotate(0)}100%{transform:rotate(-360deg)}}
+@keyframes msgO{0%{transform:translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes headO{0%{transform:scale(1.6);opacity:0;letter-spacing:8px}60%{transform:scale(.95);opacity:1}100%{transform:none;letter-spacing:0}}
+@keyframes dotO{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes pullO{0%{transform:scale(3.2) translate(-28%,-28%);opacity:.2}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes landO{0%{transform:translateY(-70px) scale(2.2);opacity:0}55%{transform:translateY(0) scale(1.25,.75);opacity:1}72%{transform:translateY(-4px) scale(.92,1.1)}100%{transform:none}}
+@keyframes haloO{0%{transform:scale(1);opacity:.9}100%{transform:scale(3);opacity:0}}
+@keyframes ghostO{0%{opacity:0;transform:scale(.5)}100%{opacity:.85;transform:none}}
+.dropO{animation:dropO .55s cubic-bezier(.3,.7,.4,1) both}
+.rippleO{animation:rippleO .55s ease-out .2s both}
+.liftO{animation:liftO .24s ease-in both}
+.glowO{animation:glowO 1s ease-in-out infinite}
+.threadO{stroke-dasharray:460;animation:threadO .35s ease-out both}
+.travelO{animation:travelO .5s cubic-bezier(.5,0,.3,1) .25s both;offset-rotate:0deg;offset-anchor:50% 50%}
+.tugO{animation:tugO .45s ease-in-out .3s 2}
+.litO{animation:litO .5s ease-out both}
+.beamO{transform-origin:left center;animation:beamO .55s ease-out .55s both}
+.quakeO{animation:quakeO .5s ease-out .55s}
+.flipAO{animation:flipAO .32s ease-in both}
+.flipBO{animation:flipBO .5s ease-out both}
+.scanO{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 2px,transparent 2px 6px);animation:scanO .3s linear infinite}
+.spinO{animation:spinO .7s linear infinite}
+.msgO{animation:msgO .28s ease-out both}
+.headO{animation:headO .45s cubic-bezier(.2,.8,.3,1.2) both}
+.dotO{animation:dotO .9s ease-in-out infinite}
+.pullO{transform-origin:83% 83%;animation:pullO 1s cubic-bezier(.2,.8,.2,1) both}
+.landO{animation:landO .6s cubic-bezier(.3,.7,.4,1) .9s both}
+.haloO{animation:haloO 1.4s ease-out 1.4s infinite}
+.ghostO{animation:ghostO .4s ease-out both}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <sc-if value="{{notZoom}}" hint-placeholder-val="{{true}}">
+    <div style="position:absolute;left:16px;right:16px;top:14px;height:44px;display:flex;align-items:center;gap:10px;">
+      <span style="height:30px;padding:0 12px;border-radius:15px;background:{{roleBg}};color:{{roleInk}};font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">
+        <span style="width:14px;height:14px;border-radius:50%;background:#1B1A17;border:2px solid #FBFAF6;box-sizing:border-box;"></span>{{role}}
+      </span>
+      <span style="flex:1;"></span>
+      <span class="{{bowlCls}}" style="display:flex;align-items:center;gap:6px;font-size:13px;color:#B6BCCB;">
+        電腦
+        <span style="position:relative;width:34px;height:22px;border-radius:0 0 17px 17px;background:#3A2C18;box-shadow:inset 0 3px 0 #5B4524;">
+          <span style="position:absolute;left:5px;top:-5px;width:12px;height:12px;border-radius:50%;background:{{oppColor}};"></span>
+          <span style="position:absolute;left:15px;top:-7px;width:12px;height:12px;border-radius:50%;background:{{oppColor}};"></span>
+        </span>
+      </span>
+    </div>
+
+    <div class="{{boardCls}}" style="position:absolute;left:30px;top:96px;width:316px;height:316px;border-radius:14px;background:#E9C98B;box-shadow:0 8px 0 #9C7A45,0 12px 30px rgba(0,0,0,.45);">
+      <svg width="316" height="316" style="position:absolute;left:0;top:0;" aria-hidden="true">
+        <sc-for list="{{lines}}" as="l" hint-placeholder-count="9">
+          <line x1="18" y1="{{l.p}}" x2="298" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+          <line x1="{{l.p}}" y1="18" x2="{{l.p}}" y2="298" stroke="#5B4524" stroke-width="1"/>
+        </sc-for>
+      </svg>
+      <sc-for list="{{glows}}" as="g" hint-placeholder-count="1">
+        <div class="glowO" style="position:absolute;left:{{g.x}}px;top:{{g.y}}px;width:30px;height:30px;border-radius:50%;border:3px dashed {{g.c}};box-sizing:border-box;pointer-events:none;"></div>
+      </sc-for>
+      <sc-if value="{{hasBeam}}" hint-placeholder-val="{{false}}">
+        <div class="beamO" style="position:absolute;left:{{bx}}px;top:{{by}}px;width:{{bw}}px;height:10px;border-radius:5px;background:{{beamC}};box-shadow:0 0 16px {{beamC}};transform:rotate({{ba}}deg);transform-origin:5px 5px;pointer-events:none;"></div>
+      </sc-if>
+      <sc-for list="{{stones}}" as="s" hint-placeholder-count="10">
+        <div style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:30px;height:30px;pointer-events:none;">
+          <sc-if value="{{s.new}}" hint-placeholder-val="{{false}}">
+            <div class="rippleO" style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(91,69,36,.6);"></div>
+          </sc-if>
+          <div class="{{s.cls}}" style="position:absolute;inset:0;border-radius:50%;background:{{s.bg}};box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35);--k:{{s.k}};animation-delay:{{s.d}}s;"></div>
+        </div>
+      </sc-for>
+      <sc-if value="{{hasThread}}" hint-placeholder-val="{{false}}">
+        <svg width="316" height="316" style="position:absolute;left:0;top:0;overflow:visible;pointer-events:none;" aria-hidden="true">
+          <path class="threadO" d="{{threadD}}" fill="none" stroke="#3CC6B4" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <div class="travelO" style="position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:{{threadStone}};box-shadow:0 0 0 3px #3CC6B4,0 6px 10px rgba(0,0,0,.4);offset-path:path('{{threadD}}');pointer-events:none;"></div>
+      </sc-if>
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+        <button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="position:absolute;left:{{c.x}}px;top:{{c.y}}px;width:35px;height:35px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;"></button>
+      </sc-for>
+      <sc-if value="{{isRw}}" hint-placeholder-val="{{false}}">
+        <div class="scanO" style="position:absolute;inset:0;border-radius:14px;background-color:rgba(20,30,50,.28);pointer-events:none;">
+          <div style="position:absolute;left:10px;top:10px;height:26px;padding:0 10px;border-radius:13px;background:rgba(15,18,26,.75);color:#FBFAF6;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;">
+            <svg class="spinO" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>REWIND
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div class="msgO" style="position:absolute;left:16px;right:16px;top:432px;min-height:112px;border-radius:18px;background:{{msgBg}};border:1px solid {{msgLine}};padding:14px 16px;box-sizing:border-box;">
+      <sc-if value="{{isWait}}" hint-placeholder-val="{{false}}">
+        <span style="display:flex;gap:6px;padding-top:8px;">
+          <span class="dotO" style="width:10px;height:10px;border-radius:50%;background:#B6BCCB;"></span>
+          <span class="dotO" style="width:10px;height:10px;border-radius:50%;background:#B6BCCB;animation-delay:.15s;"></span>
+          <span class="dotO" style="width:10px;height:10px;border-radius:50%;background:#B6BCCB;animation-delay:.3s;"></span>
+        </span>
+      </sc-if>
+      <b class="headO" style="display:block;font-size:22px;font-weight:900;color:{{headInk}};">{{head}}</b>
+      <span style="display:block;margin-top:6px;font-size:15px;line-height:1.55;color:#D5D9E3;">{{msg}}</span>
+    </div>
+
+    <sc-if value="{{hasBtn}}" hint-placeholder-val="{{false}}">
+      <button type="button" onClick="{{act}}" style="position:absolute;left:16px;right:16px;bottom:18px;height:60px;border-radius:18px;border:0;background:#F2B544;color:#1A1300;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 5px 0 #8A6420;">
+        <sc-if value="{{btnRw}}" hint-placeholder-val="{{false}}">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
+        </sc-if>{{btn}}
+      </button>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{isZoom}}" hint-placeholder-val="{{false}}">
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding-top:70px;box-sizing:border-box;">
+      <div class="pullO" style="position:relative;width:300px;height:300px;border-radius:12px;background:#E9C98B;box-shadow:0 8px 0 #9C7A45;">
+        <svg width="300" height="300" style="position:absolute;left:0;top:0;" aria-hidden="true">
+          <sc-for list="{{big}}" as="l" hint-placeholder-count="15">
+            <line x1="10" y1="{{l.p}}" x2="290" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+            <line x1="{{l.p}}" y1="10" x2="{{l.p}}" y2="290" stroke="#5B4524" stroke-width="1"/>
+          </sc-for>
+        </svg>
+        <sc-for list="{{bigWhite}}" as="w" hint-placeholder-count="5">
+          <div class="ghostO" style="position:absolute;left:{{w.x}}px;top:{{w.y}}px;width:17px;height:17px;border-radius:50%;background:#FBFAF6;animation-delay:{{w.d}}s;"></div>
+        </sc-for>
+        <div style="position:absolute;left:241px;top:241px;width:18px;height:18px;">
+          <div class="haloO" style="position:absolute;inset:0;border-radius:50%;border:2px solid #F2B544;"></div>
+          <div class="landO" style="position:absolute;inset:0;border-radius:50%;background:#1B1A17;box-shadow:0 0 0 2px #F2B544;"></div>
+        </div>
+      </div>
+      <b class="msgO" style="margin-top:28px;font-size:22px;font-weight:900;animation-delay:1.3s;">這局，是你的第一顆子</b>
+      <span class="msgO" style="margin:8px 28px 0;text-align:center;font-size:15px;line-height:1.6;color:#B6BCCB;animation-delay:1.5s;">每學會一件事，這張棋盤就多一顆子。<br>全部落完的時候，你會看懂它在說什麼。</span>
+      <a href="Board.dc.html" style="position:absolute;left:16px;right:16px;bottom:18px;height:60px;border-radius:18px;background:#F2B544;color:#1A1300;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 5px 0 #8A6420;">進入教學盤</a>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { phase: 'intro', mv: [], thread: null, flash: '', lifting: false, n: 0 }; this.tm = []; }
+  componentDidMount() { this.later(1100, () => this.push(5, 6, 'W', { phase: 'd1' })); }
+  componentWillUnmount() { this.tm.forEach(clearTimeout); }
+  later(ms, f) { this.tm.push(setTimeout(f, ms)); }
+  push(c, r, s, extra) { this.setState(st => Object.assign({ mv: st.mv.concat([{ c, r, s }]), flash: '', n: st.n + 1 }, extra || {})); }
+  cpu(c, r, s, extra) {   // 被逼著擋：線從對手棋盒拉出來，子沿著線被拖到擋點
+    this.setState({ thread: [c, r, s], tug: true });
+    this.later(800, () => this.push(c, r, s, Object.assign({ thread: null, tug: false }, extra || {})));
+  }
+  rewind() {
+    this.setState({ phase: 'rw' });
+    const step = () => {
+      if (!this.state.mv.length) {
+        this.setState({ phase: 'flipA' });
+        this.later(330, () => this.setState({ phase: 'swap' }));
+        return;
+      }
+      this.setState({ lifting: true });
+      this.later(240, () => { this.setState(st => ({ mv: st.mv.slice(0, -1), lifting: false })); this.later(90, step); });
+    };
+    this.later(450, step);
+  }
+  tap(c, r) {
+    const st = this.state, ph = st.phase, is = (a, b) => c === a && r === b;
+    if (ph === 'd1') {
+      this.push(c, r, 'B', { phase: 'wait' });
+      if (is(6, 6)) this.later(900, () => this.push(4, 5, 'W', { phase: 'd2' }));
+      else this.later(700, () => this.push(6, 6, 'W', { phase: 'lost', early: true }));
+    } else if (ph === 'd2') {
+      this.push(c, r, 'B', { phase: 'wait' });
+      if (is(4, 7)) this.later(900, () => this.push(6, 3, 'W', { phase: 'd3' }));
+      else this.later(700, () => this.push(4, 7, 'W', { phase: 'lost', early: true }));
+    } else if (ph === 'd3') {
+      this.push(c, r, 'B', { phase: 'wait' });
+      const o = is(7, 2) ? [2, 7] : [7, 2];
+      this.later(800, () => this.push(o[0], o[1], 'W', { phase: 'lost', early: false }));
+    } else if (ph === 'a1') {
+      if (!is(5, 6)) return this.setState({ flash: '不是這裡：找能做出四的點，就是發光那顆。' });
+      this.push(5, 6, 'W', { phase: 'cpu' }); this.later(550, () => this.cpu(6, 6, 'B', { phase: 'a2' }));
+    } else if (ph === 'a2') {
+      if (!is(4, 5)) return this.setState({ flash: '不是這裡：這一手要同時做出四和三。' });
+      this.push(4, 5, 'W', { phase: 'cpu' }); this.later(550, () => this.cpu(4, 7, 'B', { phase: 'a3' }));
+    } else if (ph === 'a3') {
+      if (!is(6, 3) && !is(2, 7)) return this.setState({ flash: '不是這裡：把斜線上的三，變成兩頭都能成五的活四。' });
+      const ends = is(6, 3) ? [[7, 2], [2, 7]] : [[6, 3], [1, 8]];
+      this.push(c, r, 'W', { phase: 'cpu', ends });
+      this.later(550, () => this.cpu(ends[0][0], ends[0][1], 'B', { phase: 'a4' }));
+    } else if (ph === 'a4') {
+      const e = st.ends[1];
+      if (!is(e[0], e[1])) return this.setState({ flash: '活四還有另一頭，連成五！' });
+      this.push(c, r, 'W', { phase: 'won' });
+    }
+  }
+  five(all, last) {   // 找出最後一手連成的五（用來依序點亮）
+    const own = new Set(all.filter(m => m.s === last.s).map(m => m.c + ',' + m.r));
+    for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      const run = [[last.c, last.r]];
+      for (let k = 1; own.has((last.c + dc * k) + ',' + (last.r + dr * k)); k++) run.push([last.c + dc * k, last.r + dr * k]);
+      for (let k = 1; own.has((last.c - dc * k) + ',' + (last.r - dr * k)); k++) run.unshift([last.c - dc * k, last.r - dr * k]);
+      if (run.length >= 5) return run.slice(0, 5);
+    }
+    return null;
+  }
+  renderVals() {
+    const S = 35, M = 18, st = this.state, ph = st.phase;
+    const swap = ['swap', 'a1', 'a2', 'a3', 'a4', 'cpu', 'won'].includes(ph);
+    const initW = [[2,6],[3,6],[4,6],[4,3],[4,4],[5,4]], initB = [[1,6],[4,2],[2,3],[7,6]];
+    const all = initW.map(([c, r]) => ({ c, r, s: 'W', init: 1 })).concat(initB.map(([c, r]) => ({ c, r, s: 'B', init: 1 })), st.mv);
+    const taken = new Set(all.map(m => m.c + ',' + m.r));
+    const lastIdx = all.length - 1, last = all[lastIdx];
+    const end = ph === 'lost' || ph === 'won';
+    const fv = end ? this.five(all, last) : null;
+    const litMap = {}; if (fv) fv.forEach(([c, r], i) => { litMap[c + ',' + r] = i; });
+    const color = (s) => (s === 'W') !== swap ? '#FBFAF6' : '#1B1A17';
+    const k = ph === 'won' ? 'rgba(242,181,68,.9)' : 'rgba(255,122,107,.9)';
+    const stones = all.map((m, i) => {
+      const key = m.c + ',' + m.r, isLast = i === lastIdx && !m.init, lit = key in litMap;
+      let cls = '';
+      if (st.lifting && isLast) cls = 'liftO'; else if (lit) cls = 'litO'; else if (isLast) cls = 'dropO';
+      return { x: M + m.c * S - 15, y: M + m.r * S - 15, bg: color(m.s), cls, new: isLast && !st.lifting && !lit, k, d: lit ? 0.12 * litMap[key] : 0 };
+    });
+    const want = { d1: [[6, 6]], d2: [[4, 7]], d3: [[7, 2], [2, 7]], a1: [[5, 6]], a2: [[4, 5]], a3: [[6, 3], [2, 7]], a4: st.ends ? [st.ends[1]] : [] }[ph] || [];
+    const glows = want.map(([c, r]) => ({ x: M + c * S - 15, y: M + r * S - 15, c: ph[0] === 'd' ? '#FF7A6B' : '#3CC6B4' }));
+    const cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      if (taken.has(c + ',' + r)) continue;
+      cells.push({ x: M + c * S - 17.5, y: M + r * S - 17.5, label: 'EFGHJKLMN'[c] + (11 - r), pick: () => this.tap(c, r) });
+    }
+    let beam = null;
+    if (fv) {
+      const [a, b] = [fv[0], fv[4]], x1 = M + a[0] * S, y1 = M + a[1] * S, x2 = M + b[0] * S, y2 = M + b[1] * S;
+      beam = { bx: x1 - 5, by: y1 - 5, bw: Math.hypot(x2 - x1, y2 - y1) + 10, ba: Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI };
+    }
+    const T = {
+      intro: ['', '你是黑棋。白要攻過來了……'],
+      d1: ['擋住！', '白排出一條四，只差紅圈那一點就連成五。'],
+      d2: ['又來了！', '新的四，還順便多了一條斜的三。先擋四，不然馬上輸。'],
+      d3: ['兩頭都是洞', '斜線變成活四了：兩頭都能成五。你只有一手。'],
+      wait: ['', ''],
+      lost: ['你輸了', st.early ? '沒擋到那一點，白直接連成五。' : '可是回頭看：你每一手都只能擋那裡，根本沒得選。'],
+      rw: ['倒帶', '回到一開始……'], flipA: ['', ''],
+      swap: ['換你了', '黑白對調。剛才逼你的那串棋，這次由你來下。'],
+      a1: ['先衝一個四', '下一顆子做出四，它就只能擋一個地方。'],
+      a2: ['看那條線', '你的四把它的手拉到唯一的擋點。再來：做出四，同時多一條三。'],
+      a3: ['它又沒得選', '現在把斜線的三，變成兩頭都能成五的活四！'],
+      a4: ['擋不完', '它只擋得了一頭。連成五！'],
+      cpu: ['', '它只能擋那裡……'],
+      won: ['你贏了', '剛才逼你的，現在換你逼它。這種一路衝四、對手只能跟著擋的贏法，叫 VCF。'],
+    }[ph] || ['', ''];
+    const th = st.thread, tx = th ? M + th[0] * S : 0, ty = th ? M + th[1] * S : 0;
+    const bad = ph === 'lost', good = ph === 'won';
+    const btn = { lost: '倒帶看看', swap: '開始', won: '繼續' }[ph];
+    return {
+      notZoom: ph !== 'zoom', isZoom: ph === 'zoom', isRw: ph === 'rw', isWait: ph === 'wait' || ph === 'cpu',
+      boardCls: ph === 'flipA' ? 'flipAO' : ph === 'swap' ? 'flipBO' : end ? 'quakeO' : '',
+      bowlCls: st.tug ? 'tugO' : '',
+      role: swap ? '你：黑（進攻）' : '你：黑（防守）', roleBg: swap ? '#1F3B39' : '#3D1F1F', roleInk: swap ? '#3CC6B4' : '#FFB3A8',
+      oppColor: swap ? '#FBFAF6' : '#FBFAF6',
+      lines: Array.from({ length: 9 }, (_, i) => ({ p: M + i * S + 0.5 })),
+      stones, glows, cells,
+      hasBeam: !!beam, bx: beam ? beam.bx : 0, by: beam ? beam.by : 0, bw: beam ? beam.bw : 0, ba: beam ? beam.ba : 0,
+      beamC: good ? 'rgba(242,181,68,.55)' : 'rgba(255,122,107,.55)',
+      hasThread: !!th, threadStone: th ? color(th[2]) : '#FBFAF6',
+      threadD: th ? `M 318 -62 Q ${Math.round((318 + tx) / 2 + 50)} ${Math.round((ty - 62) / 2 - 40)} ${tx} ${ty}` : '',
+      head: T[0], msg: st.flash || T[1],
+      headInk: bad ? '#FF7A6B' : good ? '#F2B544' : swap ? '#3CC6B4' : '#EDEFF5',
+      msgBg: bad ? '#2A1716' : good ? '#2A2414' : '#161A24', msgLine: bad ? '#6B2E28' : good ? '#5C4A22' : '#252B3A',
+      hasBtn: !!btn, btn: btn || '', btnRw: ph === 'lost',
+      act: () => { if (ph === 'lost') this.rewind(); else if (ph === 'swap') this.setState({ phase: 'a1' }); else if (ph === 'won') this.setState({ phase: 'zoom' }); },
+      big: Array.from({ length: 15 }, (_, i) => ({ p: 10 + i * 20 + 0.5 })),
+      bigWhite: [[3, 4], [10, 2], [6, 9], [12, 7], [2, 11]].map(([c, r], i) => ({ x: 10 + c * 20 - 8.5, y: 10 + r * 20 - 8.5, d: 0.5 + i * 0.08 })),
+    };
+  }
+}
+</script>
+</body>
+</html>

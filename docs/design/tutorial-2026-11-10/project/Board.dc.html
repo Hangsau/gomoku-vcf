@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 教學盤主畫面</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes inM{0%{transform:translateY(-40px) scale(1.8);opacity:0}55%{transform:translateY(0) scale(1.2,.78);opacity:1}72%{transform:translateY(-3px) scale(.92,1.08)}100%{transform:none}}
+@keyframes breathM{0%,100%{box-shadow:0 0 0 1.5px rgba(242,181,68,.35),0 2px 2px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 2.5px rgba(242,181,68,.8),0 2px 2px rgba(0,0,0,.35)}}
+@keyframes beaconM{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+@keyframes coreM{0%,100%{transform:scale(.85)}50%{transform:scale(1.1)}}
+@keyframes linkM{0%{stroke-dashoffset:60;opacity:0}100%{stroke-dashoffset:0;opacity:.75}}
+@keyframes cardM{0%{transform:translateY(24px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes selM{0%{transform:scale(2);opacity:0}100%{transform:none;opacity:1}}
+@keyframes moteM{0%{transform:translate(0,0);opacity:0}20%{opacity:.7}100%{transform:translate(var(--dx),-120px);opacity:0}}
+.inM{animation:inM .6s cubic-bezier(.3,.7,.4,1) both}
+.breathM{animation:breathM 3.2s ease-in-out infinite}
+.beaconM{animation:beaconM 1.8s ease-out infinite}
+.coreM{animation:coreM 1.2s ease-in-out infinite}
+.linkM{stroke-dasharray:60;animation:linkM .7s ease-out both}
+.cardM{animation:cardM .3s ease-out both}
+.selM{animation:selM .25s ease-out both}
+.moteM{animation:moteM 4s ease-out infinite}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,#232C3F 0,#0F121A 62%);"></div>
+
+  <div style="position:absolute;left:12px;right:12px;top:10px;height:48px;display:flex;align-items:center;gap:10px;">
+    <button type="button" aria-label="返回選單" style="width:44px;height:44px;border:0;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <b style="font-size:18px;font-weight:900;">教學盤</b>
+      <span style="font-size:12px;color:#B6BCCB;">已落 <b style="font-family:'Chakra Petch',sans-serif;color:#F2B544;">13</b> 子・還有 20 子</span>
+    </div>
+    <button type="button" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid #5C4A22;background:transparent;color:#F2B544;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>畢業考
+    </button>
+  </div>
+
+  <div style="position:absolute;left:12px;top:70px;width:351px;height:351px;border-radius:12px;background:#E9C98B;box-shadow:0 8px 0 #9C7A45,0 14px 34px rgba(0,0,0,.5);">
+    <svg width="351" height="351" style="position:absolute;left:0;top:0;" aria-hidden="true">
+      <sc-for list="{{grid}}" as="l" hint-placeholder-count="15">
+        <line x1="14" y1="{{l.p}}" x2="337" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+        <line x1="{{l.p}}" y1="14" x2="{{l.p}}" y2="337" stroke="#5B4524" stroke-width="1"/>
+      </sc-for>
+      <sc-for list="{{links}}" as="k" hint-placeholder-count="6">
+        <line class="linkM" x1="{{k.x1}}" y1="{{k.y1}}" x2="{{k.x2}}" y2="{{k.y2}}" stroke="#F2B544" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 5" style="animation-delay:{{k.d}}s;"/>
+      </sc-for>
+    </svg>
+
+    <div style="position:absolute;left:{{nx}}px;top:{{ny}}px;width:22px;height:22px;pointer-events:none;">
+      <div class="beaconM" style="position:absolute;inset:0;border-radius:50%;border:2px solid #3CC6B4;"></div>
+      <div class="beaconM" style="position:absolute;inset:0;border-radius:50%;border:2px solid #3CC6B4;animation-delay:.6s;"></div>
+      <div class="beaconM" style="position:absolute;inset:0;border-radius:50%;border:2px solid #3CC6B4;animation-delay:1.2s;"></div>
+      <div class="coreM" style="position:absolute;inset:5px;border-radius:50%;background:#3CC6B4;box-shadow:0 0 12px #3CC6B4;"></div>
+    </div>
+    <sc-for list="{{motes}}" as="m" hint-placeholder-count="5">
+      <div class="moteM" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:4px;height:4px;border-radius:50%;background:#3CC6B4;--dx:{{m.dx}}px;animation-delay:{{m.d}}s;pointer-events:none;"></div>
+    </sc-for>
+
+    <sc-for list="{{stones}}" as="s" hint-placeholder-count="13">
+      <button type="button" onClick="{{s.pick}}" aria-label="{{s.aria}}" style="position:absolute;left:{{s.bx}}px;top:{{s.by}}px;width:23px;height:23px;padding:0;border:0;background:transparent;cursor:pointer;">
+        <span class="{{s.cls}}" style="position:absolute;left:1.5px;top:1.5px;width:20px;height:20px;border-radius:50%;background:{{s.bg}};animation-delay:{{s.d}}s;"></span>
+        <sc-if value="{{s.sel}}" hint-placeholder-val="{{false}}">
+          <span class="selM" style="position:absolute;left:-3px;top:-3px;width:29px;height:29px;border-radius:50%;border:3px solid #3CC6B4;box-sizing:border-box;"></span>
+        </sc-if>
+      </button>
+    </sc-for>
+    <a href="Rewind.dc.html" aria-label="下一課 4-3 四三" style="position:absolute;left:{{nbx}}px;top:{{nby}}px;width:34px;height:34px;border-radius:50%;"></a>
+  </div>
+
+  <sc-if value="{{showNext}}" hint-placeholder-val="{{true}}">
+    <div class="cardM" style="position:absolute;left:12px;right:12px;top:440px;border-radius:18px;background:#161A24;border:1px solid #2C6B62;padding:14px;box-sizing:border-box;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="height:24px;padding:0 9px;border-radius:12px;background:#1F3B39;color:#3CC6B4;font-size:12px;font-weight:700;display:flex;align-items:center;">下一子</span>
+        <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:#B6BCCB;font-size:14px;">4-3</span>
+      </div>
+      <b style="display:block;margin-top:8px;font-size:20px;font-weight:900;">四三：一子做出四和三</b>
+      <span style="display:block;margin-top:4px;font-size:14px;line-height:1.5;color:#B6BCCB;">從這課開始，每題先看結局，再倒帶回去找每一手。</span>
+    </div>
+    <a href="Rewind.dc.html" style="position:absolute;left:12px;right:12px;bottom:18px;height:60px;border-radius:18px;background:#3CC6B4;color:#06231F;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-shadow:0 5px 0 #1C7F72;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>落下這一子
+    </a>
+  </sc-if>
+
+  <sc-if value="{{showSel}}" hint-placeholder-val="{{false}}">
+    <div class="cardM" style="position:absolute;left:12px;right:12px;top:440px;border-radius:18px;background:#161A24;border:1px solid #5C4A22;padding:14px;box-sizing:border-box;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="width:20px;height:20px;border-radius:50%;background:{{selBg}};box-shadow:0 0 0 2px #F2B544;"></span>
+        <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:#F2B544;font-size:14px;">{{selId}}</span>
+        <span style="flex:1;"></span>
+        <button type="button" onClick="{{close}}" aria-label="關閉" style="width:36px;height:36px;border:0;border-radius:10px;background:#1F2A3D;color:#B6BCCB;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <b style="display:block;margin-top:6px;font-size:20px;font-weight:900;">{{selTitle}}</b>
+      <span style="display:block;margin-top:4px;font-size:14px;line-height:1.5;color:#B6BCCB;">{{selWhy}}</span>
+    </div>
+    <button type="button" style="position:absolute;left:12px;right:12px;bottom:18px;height:60px;border-radius:18px;border:1px solid #F2B544;background:transparent;color:#F2B544;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>再上一次這課
+    </button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = 23, M = 14, sel = this.state ? this.state.sel : null;
+    const L = [
+      ['開場', '先被打敗，再換你打', 'B', 12, 12, '你被逼著擋了三手，然後用同一串棋贏回來。'],
+      ['1-1', '棋盤和輪流', 'B', 7, 7, '黑先，黑白輪流各下一子。'],
+      ['1-2', '連成五就贏', 'B', 8, 7, '橫、直、兩條斜線，五子連成一線。'],
+      ['1-3', '座標', 'B', 9, 8, '橫排 A 到 O、直排 1 到 15。'],
+      ['2-1', '什麼是四', 'B', 8, 8, '再一子就成五的形狀，中間有空也算。'],
+      ['2-2', '擋四', 'W', 9, 6, '這顆是白子：你學會了擋對方的四。'],
+      ['2-3', '活四和衝四', 'B', 6, 8, '兩頭都能成五擋不住，一頭能成五擋得住。'],
+      ['2-4', '做一個四', 'B', 7, 9, '從三子出發，再一子成四。'],
+      ['3-1', '衝四是絕對先手', 'B', 10, 9, '你衝四，對方只能擋那一點。'],
+      ['3-2', '擋點是確定的', 'W', 5, 7, '這顆是白子：對方的擋點，你事先就算得到。'],
+      ['3-3', '亂衝會浪費', 'B', 9, 10, '衝了沒有後續的四，只是幫對方多一顆子。'],
+      ['4-1', '活四', 'B', 6, 6, '下出活四，對方擋一頭你成另一頭。'],
+      ['4-2', '四四', 'B', 10, 7, '一子做出兩個四，對方只能擋一個。'],
+    ];
+    const ghost = [[3, 4], [10, 2], [6, 9], [12, 7], [2, 11]];
+    const nxt = [8, 9];
+    const stones = L.map(([id, t, s, c, r, why], i) => ({
+      bx: M + c * S - 11.5, by: M + r * S - 11.5, bg: s === 'B' ? '#1B1A17' : '#FBFAF6',
+      cls: (i === L.length - 1 ? 'inM ' : '') + (s === 'B' ? 'breathM' : ''), d: i === L.length - 1 ? 0.3 : (i * 0.25) % 3,
+      sel: sel === i, aria: id + ' ' + t, pick: () => this.setState({ sel: sel === i ? null : i }),
+    })).concat(ghost.map(([c, r]) => ({ bx: M + c * S - 11.5, by: M + r * S - 11.5, bg: '#FBFAF6', cls: '', d: 0, sel: false, aria: '白子', pick: () => {} })));
+    const blk = L.filter(x => x[2] === 'B').map(x => [x[3], x[4]]);
+    const has = new Set(blk.map(([c, r]) => c + ',' + r));
+    const links = [];
+    for (const [c, r] of blk) for (const [dc, dr] of [[1, 0], [0, 1], [1, 1], [1, -1]])
+      if (has.has((c + dc) + ',' + (r + dr))) links.push({ x1: M + c * S, y1: M + r * S, x2: M + (c + dc) * S, y2: M + (r + dr) * S, d: 0.8 + links.length * 0.18 });
+    const it = sel != null ? L[sel] : null;
+    return {
+      grid: Array.from({ length: 15 }, (_, i) => ({ p: M + i * S + 0.5 })),
+      stones, links,
+      nx: M + nxt[0] * S - 11, ny: M + nxt[1] * S - 11, nbx: M + nxt[0] * S - 17, nby: M + nxt[1] * S - 17,
+      motes: [0, 1, 2, 3, 4].map(i => ({ x: M + nxt[0] * S - 2 + (i - 2) * 4, y: M + nxt[1] * S - 2, dx: (i - 2) * 14, d: i * 0.8 })),
+      showNext: !it, showSel: !!it,
+      selId: it ? it[0] : '', selTitle: it ? it[1] : '', selWhy: it ? it[5] : '', selBg: it && it[2] === 'W' ? '#FBFAF6' : '#1B1A17',
+      close: () => this.setState({ sel: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

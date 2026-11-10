@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>VCF 教學 倒帶課 四三</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#F2B544}a:hover{color:#FFD27A}
+@keyframes dropR{0%{transform:translateY(-46px) scale(1.5);opacity:0}38%{transform:translateY(-8px) scale(1.12);opacity:1}55%{transform:translateY(0) scale(1.22,.74)}68%{transform:translateY(-5px) scale(.9,1.12)}80%{transform:translateY(0) scale(1.06,.94)}100%{transform:none}}
+@keyframes liftR{0%{transform:none;opacity:1}30%{transform:translateY(4px) scale(1.15,.85)}100%{transform:translateY(-80px) scale(.4) rotate(-50deg);opacity:0}}
+@keyframes scanR{0%{background-position:0 0}100%{background-position:0 12px}}
+@keyframes jitterR{0%,100%{transform:none}25%{transform:translateX(-2px) skewX(-2deg)}75%{transform:translateX(2px) skewX(2deg)}}
+@keyframes ghostR{0%{transform:scale(1.6);opacity:0}100%{transform:none;opacity:.9}}
+@keyframes dashR{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes litR{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1.05)}}
+@keyframes beamR{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+@keyframes noR{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes threadR{0%{stroke-dashoffset:460}100%{stroke-dashoffset:0}}
+@keyframes travelR{0%{offset-distance:0%;transform:scale(.6)}100%{offset-distance:100%;transform:scale(1)}}
+@keyframes msgR{0%{transform:translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes numR{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:none}}
+.dropR{animation:dropR .55s cubic-bezier(.3,.7,.4,1) both}
+.liftR{animation:liftR .3s ease-in both}
+.scanR{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 6px);animation:scanR .3s linear infinite}
+.jitterR{animation:jitterR .12s linear infinite}
+.ghostR{animation:ghostR .3s ease-out both}
+.dashR{animation:dashR 6s linear infinite}
+.litR{animation:litR .5s ease-out both}
+.beamR{transform-origin:left center;animation:beamR .5s ease-out .4s both}
+.noR{animation:noR .35s ease-out}
+.threadR{stroke-dasharray:460;animation:threadR .35s ease-out both}
+.travelR{animation:travelR .5s cubic-bezier(.5,0,.3,1) .25s both;offset-rotate:0deg;offset-anchor:50% 50%}
+.msgR{animation:msgR .28s ease-out both}
+.numR{animation:numR .3s ease-out both}
+</style>
+</helmet>
+<div style="width:375px;height:667px;position:relative;overflow:hidden;background:#0F121A;color:#EDEFF5;font-family:'Noto Sans TC',sans-serif;">
+
+  <div style="position:absolute;left:12px;right:12px;top:10px;height:44px;display:flex;align-items:center;gap:10px;">
+    <a href="Board.dc.html" aria-label="回教學盤" style="width:44px;height:44px;border-radius:12px;background:#161A24;color:#EDEFF5;display:flex;align-items:center;justify-content:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </a>
+    <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:#3CC6B4;">4-3</span>
+    <b style="flex:1;font-size:16px;">四三</b>
+    <span style="height:28px;padding:0 10px;border-radius:14px;background:{{modeBg}};color:{{modeInk}};font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:5px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{modeIco}}"/></svg>{{mode}}
+    </span>
+  </div>
+
+  <div style="position:absolute;left:12px;right:12px;top:62px;height:44px;border-radius:12px;background:#161A24;border:1px solid #252B3A;">
+    <div style="position:absolute;left:14px;right:14px;top:21px;height:2px;background:#2E3546;"></div>
+    <sc-for list="{{tape}}" as="t" hint-placeholder-count="5">
+      <div style="position:absolute;left:{{t.x}}px;top:9px;width:26px;height:26px;border-radius:50%;background:{{t.bg}};border:2px solid {{t.bd}};box-sizing:border-box;color:{{t.ink}};font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:{{t.op}};transition:opacity .3s;">{{t.n}}</div>
+    </sc-for>
+    <div style="position:absolute;left:{{headX}}px;top:-4px;width:4px;height:52px;border-radius:2px;background:#FF7A6B;box-shadow:0 0 8px #FF7A6B;transition:left .35s cubic-bezier(.3,.7,.3,1);"></div>
+  </div>
+
+  <div class="{{boardCls}}" style="position:absolute;left:30px;top:122px;width:316px;height:316px;border-radius:14px;background:#E9C98B;box-shadow:0 8px 0 #9C7A45,0 12px 30px rgba(0,0,0,.45);">
+    <svg width="316" height="316" style="position:absolute;left:0;top:0;" aria-hidden="true">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="9">
+        <line x1="18" y1="{{l.p}}" x2="298" y2="{{l.p}}" stroke="#5B4524" stroke-width="1"/>
+        <line x1="{{l.p}}" y1="18" x2="{{l.p}}" y2="298" stroke="#5B4524" stroke-width="1"/>
+      </sc-for>
+    </svg>
+    <sc-if value="{{hasBeam}}" hint-placeholder-val="{{false}}">
+      <div class="beamR" style="position:absolute;left:83px;top:188px;width:150px;height:10px;border-radius:5px;background:rgba(242,181,68,.6);box-shadow:0 0 16px rgba(242,181,68,.8);pointer-events:none;"></div>
+    </sc-if>
+    <sc-if value="{{hasRing}}" hint-placeholder-val="{{false}}">
+      <svg class="dashR" width="34" height="34" viewBox="0 0 34 34" style="position:absolute;left:{{rx}}px;top:{{ry}}px;pointer-events:none;" aria-hidden="true">
+        <circle cx="17" cy="17" r="14" fill="none" stroke="#FBFAF6" stroke-width="3" stroke-dasharray="6 5"/>
+      </svg>
+    </sc-if>
+    <sc-for list="{{stones}}" as="s" hint-placeholder-count="12">
+      <div class="{{s.cls}}" style="position:absolute;left:{{s.x}}px;top:{{s.y}}px;width:30px;height:30px;border-radius:50%;background:{{s.bg}};box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35){{s.ring}};display:flex;align-items:center;justify-content:center;pointer-events:none;">
+        <sc-if value="{{s.hasN}}" hint-placeholder-val="{{false}}">
+          <span class="numR" style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:15px;color:{{s.ink}};">{{s.n}}</span>
+        </sc-if>
+      </div>
+    </sc-for>
+    <sc-if value="{{hasGhost}}" hint-placeholder-val="{{false}}">
+      <div class="ghostR" style="position:absolute;left:{{gx}}px;top:{{gy}}px;width:30px;height:30px;border-radius:50%;background:#1B1A17;box-shadow:0 0 0 4px #3CC6B4;pointer-events:none;"></div>
+    </sc-if>
+    <sc-if value="{{hasThread}}" hint-placeholder-val="{{false}}">
+      <svg width="316" height="316" style="position:absolute;left:0;top:0;overflow:visible;pointer-events:none;" aria-hidden="true">
+        <path class="threadR" d="{{threadD}}" fill="none" stroke="#3CC6B4" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <div class="travelR" style="position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#FBFAF6;box-shadow:0 0 0 3px #3CC6B4,0 6px 10px rgba(0,0,0,.4);offset-path:path('{{threadD}}');pointer-events:none;"></div>
+    </sc-if>
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+      <button type="button" aria-label="{{c.label}}" onClick="{{c.pick}}" style="position:absolute;left:{{c.x}}px;top:{{c.y}}px;width:35px;height:35px;padding:0;border:0;background:transparent;border-radius:50%;cursor:pointer;"></button>
+    </sc-for>
+    <sc-if value="{{isRw}}" hint-placeholder-val="{{false}}">
+      <div class="scanR" style="position:absolute;inset:0;border-radius:14px;background-color:rgba(20,30,50,.3);pointer-events:none;">
+        <span style="position:absolute;right:10px;top:10px;height:24px;padding:0 9px;border-radius:12px;background:rgba(15,18,26,.75);color:#FF7A6B;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:12px;display:flex;align-items:center;">◀◀ REW</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <div class="msgR" style="position:absolute;left:16px;right:16px;top:456px;min-height:108px;border-radius:18px;background:{{msgBg}};border:1px solid {{msgLine}};padding:13px 15px;box-sizing:border-box;">
+    <b style="display:block;font-size:13px;color:{{tagInk}};">{{tag}}</b>
+    <span style="display:block;margin-top:4px;font-size:16px;line-height:1.55;font-weight:500;">{{msg}}</span>
+  </div>
+
+  <sc-if value="{{hasBtn}}" hint-placeholder-val="{{true}}">
+    <button type="button" onClick="{{act}}" style="position:absolute;left:16px;right:16px;bottom:18px;height:60px;border-radius:18px;border:0;background:{{btnBg}};color:{{btnInk}};font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 5px 0 {{btnSh}};">
+      <sc-if value="{{btnRw}}" hint-placeholder-val="{{true}}">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 6v12L2 12zM21 6v12l-9-6z"/></svg>
+      </sc-if>{{btn}}
+    </button>
+  </sc-if>
+  <sc-if value="{{hasLink}}" hint-placeholder-val="{{false}}">
+    <a href="Board.dc.html" style="position:absolute;left:16px;right:16px;bottom:18px;height:60px;border-radius:18px;background:#3CC6B4;color:#06231F;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 5px 0 #1C7F72;">落下這一子</a>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { phase: 'end', k: 5, got: false, lifting: false, flash: '', no: 0, pm: [], thread: null }; this.tm = []; }
+  componentWillUnmount() { this.tm.forEach(clearTimeout); }
+  later(ms, f) { this.tm.push(setTimeout(f, ms)); }
+  back() {   // 倒帶一手：最上面那顆飛走，播放頭往回滑
+    this.setState({ phase: 'rw', lifting: true, got: false, flash: '' });
+    this.later(320, () => this.setState(st => ({ k: st.k - 1, lifting: false })));
+    this.later(620, () => this.setState({ phase: 'q' }));
+  }
+  cpu(c, r, extra) {
+    this.setState({ thread: [c, r] });
+    this.later(800, () => this.setState(st => Object.assign({ pm: st.pm.concat([[c, r, 'W']]), thread: null }, extra)));
+  }
+  tap(c, r) {
+    const st = this.state, Q = this.Q[st.k];
+    if (st.phase === 'q' && !st.got) {
+      if (Q.ans.some(([a, b]) => a === c && b === r)) this.setState({ got: true, gc: [c, r], flash: '' });
+      else this.setState({ flash: Q.no, no: st.no + 1 });
+      return;
+    }
+    if (st.phase.startsWith('p')) {
+      const is = (a, b) => a === c && b === r, ph = st.phase;
+      if (ph === 'p1') { if (!is(5, 5)) return this.setState({ flash: '第一手要同時做出四和三。', no: st.no + 1 });
+        this.setState({ pm: [[5, 5, 'B']], phase: 'pc', flash: '' }); this.later(550, () => this.cpu(5, 6, { phase: 'p2' })); }
+      else if (ph === 'p2') { if (!is(6, 5) && !is(2, 5)) return this.setState({ flash: '把橫的三變成活四。', no: st.no + 1 });
+        const ends = is(6, 5) ? [[7, 5], [2, 5]] : [[1, 5], [6, 5]];
+        this.setState(s => ({ pm: s.pm.concat([[c, r, 'B']]), phase: 'pc', ends, flash: '' })); this.later(550, () => this.cpu(ends[0][0], ends[0][1], { phase: 'p3' })); }
+      else if (ph === 'p3') { const e = st.ends[1]; if (!is(e[0], e[1])) return this.setState({ flash: '活四的另一頭！', no: st.no + 1 });
+        this.setState(s => ({ pm: s.pm.concat([[c, r, 'B']]), phase: 'done', flash: '' })); }
+    }
+  }
+  renderVals() {
+    const S = 35, M = 18, st = this.state, ph = st.phase, k = st.k;
+    const IB = [[5,2],[5,3],[5,4],[3,5],[4,5],[2,7]], IW = [[5,1],[2,2],[7,7]];
+    const LINE = [[5,5,'B'],[5,6,'W'],[6,5,'B'],[7,5,'W'],[2,5,'B']];
+    this.Q = [
+      { q: '第一手：一子同時做出「四」和「三」。下哪？', ok: '對！這就是四三。白只能擋四，三就變成活四。', no: '提示：直線有三顆、橫線有兩顆，找它們交會的那一點。', ans: [[5, 5]] },
+      { q: '虛線圈是白擋過的地方。是哪條四逼它擋那裡？點那條四上的黑子。', ok: '對！直線的四只差虛線那一點，白非擋不可。', no: '找一條「再一子就成五」的線，虛線圈就在它的盡頭。', ans: [[5, 2], [5, 3], [5, 4], [5, 5]], stone: true, ring: [5, 6] },
+      { q: '這一手把橫線的三變成兩頭都能成五的活四。下哪？', ok: '對！三的兩頭都可以，活四一出現，白就擋不完了。', no: '橫線上有三顆黑子，往左或往右接一顆。', ans: [[6, 5], [2, 5]] },
+      { q: '虛線圈是白擋過的地方。是哪顆黑子逼它擋那裡？', ok: '對！那手做出活四，白只能先擋一頭。', no: '虛線圈在一條四的盡頭，找那條四剛多出來的那顆。', ans: [[6, 5]], stone: true, ring: [7, 5] },
+      { q: '最後一手在哪裡連成五？', ok: '對！活四的另一頭，白已經擋不到了。', no: '找橫線上四顆黑子的空著那一頭。', ans: [[2, 5]] },
+    ];
+    const play = ph.startsWith('p') || ph === 'done';
+    const shown = play ? st.pm : LINE.slice(0, k);
+    const all = IB.map(([c, r]) => ({ c, r, s: 'B' })).concat(IW.map(([c, r]) => ({ c, r, s: 'W' })), shown.map(([c, r, s], i) => ({ c, r, s, n: i + 1, mv: 1 })));
+    const isEnd = ph === 'end' || ph === 'done';
+    const fiveRow = new Set(['2,5', '3,5', '4,5', '5,5', '6,5']);
+    const Q = this.Q[k] || {};
+    const stones = all.map((m, i) => {
+      const last = m.mv && i === all.length - 1;
+      let cls = '';
+      if (st.lifting && last) cls = 'liftR';
+      else if (isEnd && m.s === 'B' && fiveRow.has(m.c + ',' + m.r)) cls = 'litR';
+      else if (last && play) cls = 'dropR';
+      const pickable = ph === 'q' && Q.stone && !st.got && m.s === 'B';
+      return { x: M + m.c * S - 15, y: M + m.r * S - 15, bg: m.s === 'B' ? '#1B1A17' : '#FBFAF6', ink: m.s === 'B' ? '#FBFAF6' : '#1B1A17',
+        hasN: !!m.mv && !play, n: m.n || '', cls, ring: pickable ? ',0 0 0 3px rgba(60,198,180,.55)' : '' };
+    });
+    const taken = new Set(all.map(m => m.c + ',' + m.r));
+    const cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+      const occ = taken.has(c + ',' + r), stoneQ = ph === 'q' && Q.stone;
+      if (occ && !stoneQ) continue;
+      if (!occ && stoneQ) continue;
+      cells.push({ x: M + c * S - 17.5, y: M + r * S - 17.5, label: 'EFGHJKLMN'[c] + (11 - r), pick: () => this.tap(c, r) });
+    }
+    const tape = LINE.map(([c, r, s], i) => ({ x: 14 + i * 66, n: i + 1, bg: s === 'B' ? '#1B1A17' : '#FBFAF6', bd: s === 'B' ? '#FBFAF6' : '#1B1A17', ink: s === 'B' ? '#FBFAF6' : '#1B1A17',
+      op: play ? (i < st.pm.length ? 1 : .25) : (i < k ? 1 : .25) }));
+    const pos = play ? st.pm.length : k;
+    const qa = ph === 'q';
+    let tag = '', msg = '', btn = '', act = null;
+    if (ph === 'end') { tag = '結局'; msg = '黑連成五了。我們倒回去，一手一手看它是怎麼來的。'; btn = '倒帶一手'; act = () => this.back(); }
+    else if (ph === 'rw') { tag = '倒帶中'; msg = '……'; }
+    else if (qa) { tag = st.got ? '答對' : '第 ' + (k + 1) + ' 手是什麼？'; msg = st.got ? Q.ok : (st.flash || Q.q);
+      if (st.got) { btn = k > 0 ? '再倒一手' : '倒帶完成，正著下一遍'; act = k > 0 ? () => this.back() : () => this.setState({ phase: 'p1', got: false, pm: [] }); } }
+    else if (ph === 'p1') { tag = '正著下'; msg = st.flash || '這次沒有數字了。從第一手開始，自己下完。'; }
+    else if (ph === 'p2') { tag = '它只能擋那裡'; msg = st.flash || '線把白的手拉到了唯一的擋點。下一手？'; }
+    else if (ph === 'p3') { tag = '擋不完'; msg = st.flash || '活四！白只擋得了一頭。'; }
+    else if (ph === 'pc') { tag = ''; msg = '它只能擋那裡……'; }
+    else if (ph === 'done') { tag = '完成'; msg = '你先倒著想了一次，又正著下了一次。找 VCF 就是這樣：先看終點，再往回接。'; }
+    const good = qa && st.got || ph === 'done', bad = !!st.flash;
+    const ring = qa && Q.ring ? Q.ring : null;
+    const th = st.thread, tx = th ? M + th[0] * S : 0, ty = th ? M + th[1] * S : 0;
+    return {
+      mode: play ? 'PLAY' : 'REWIND', modeIco: play ? 'M8 5v14l11-7z' : 'M11 6v12L2 12zM21 6v12l-9-6z',
+      modeBg: play ? '#1F3B39' : '#3D1F1F', modeInk: play ? '#3CC6B4' : '#FF7A6B',
+      tape, headX: Math.max(4, 14 + pos * 66 - 20),
+      boardCls: ph === 'rw' ? 'jitterR' : bad ? 'noR' : '',
+      lines: Array.from({ length: 9 }, (_, i) => ({ p: M + i * S + 0.5 })),
+      stones, cells, isRw: ph === 'rw',
+      hasBeam: isEnd,
+      hasRing: !!ring, rx: ring ? M + ring[0] * S - 17 : 0, ry: ring ? M + ring[1] * S - 17 : 0,
+      hasGhost: qa && st.got && !Q.stone, gx: st.gc ? M + st.gc[0] * S - 15 : 0, gy: st.gc ? M + st.gc[1] * S - 15 : 0,
+      hasThread: !!th, threadD: th ? `M 318 -90 Q ${Math.round((318 + tx) / 2 + 50)} ${Math.round((ty - 90) / 2 - 40)} ${tx} ${ty}` : '',
+      tag, msg, tagInk: good ? '#3CC6B4' : bad ? '#FF7A6B' : '#F2B544',
+      msgBg: good ? '#12201F' : bad ? '#2A1716' : '#161A24', msgLine: good ? '#2C6B62' : bad ? '#6B2E28' : '#252B3A',
+      hasBtn: !!btn, btn, act, btnRw: !!btn && btn !== '倒帶完成，正著下一遍',
+      btnBg: '#F2B544', btnInk: '#1A1300', btnSh: '#8A6420',
+      hasLink: ph === 'done',
+    };
+  }
+}
+</script>
+</body>
+</html>
