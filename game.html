@@ -32,6 +32,7 @@ html, body { touch-action: manipulation; margin: 0; background: var(--bg); color
 .icob.gold { color: var(--gold); }
 /* 分享／安裝（2026-11-11） */
 .instbar { margin: 0 16px calc(14px + env(safe-area-inset-bottom)); padding: 10px 6px 10px 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line2); display: flex; align-items: center; gap: 8px; }
+.instbar[hidden] { display: none; }   /* 不加這行 display:flex 會蓋掉 hidden，× 按了收不起來（2026-11-11 使用者回報） */
 .instbar .tx { flex: 1; font-size: 14px; color: var(--text2); text-align: left; }
 .instbar .btn { height: 40px; padding: 0 16px; font-size: 15px; width: auto; flex: none; }
 .instbar .icob { width: 40px; height: 40px; flex: none; color: var(--text2); }
