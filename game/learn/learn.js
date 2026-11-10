@@ -6,6 +6,7 @@
   'use strict';
   const COLS = 'ABCDEFGHJKLMNOP';
   const KEY = 'vcfgame.learn';
+  const DEV = /[?&]dev=1\b/.test(location.search);   // 測試模式（網址加 ?dev=1）：教學盤每課都能直接上、可重置進度
   const UI = {
     zh: { entry: 'VCF 教學', entrySub: '新手從這裡開始', board: '教學盤', placed: '已落 {n} 子・還有 {m} 子', exam: '畢業考', next: '下一子', start: '落下這一子', again: '再上一次這課', soon: '即將推出', soonSub: '這一課還在準備中。', cont: '繼續', nextStep: '下一步', tapBoard: '點棋盤作答', ok: '答對了', no: '再想想', done: '完成', back: '返回', close: '關閉', rewindOne: '倒帶一手', rewindMore: '再倒一手', playFwd: '倒帶完成，正著下一遍', drop: '落下這一子', you: '你', cpu: '電腦', youDef: '你：白（防守）', youAtk: '你：黑（進攻）', lostT: '你輸了', wonT: '你贏了', rw: '倒帶看看', go: '開始', enter: '進入教學盤', firstStone: '這局，是你的第一顆子', firstSub: '每學會一件事，這張棋盤就多一顆子。全部落完的時候，你會看懂它在說什麼。', hint: '提示', unit: '第 {u} 單元', end: '結局', q: '第 {n} 手是什麼？', fwd: '正著下', forced: '它只能擋那裡……', examT: '畢業考', examSub: '這盤棋，是你一路學過來的。現在把它下完。', grad: '畢業了！', gradSub: '你自己解開了一道真正的 VCF。去無限之塔、火眼金睛、明鏡台試試身手吧。', locked: '先完成前面的課' },
     en: { entry: 'VCF Lessons', entrySub: 'New here? Start here', board: 'Lesson Board', placed: '{n} stones placed · {m} to go', exam: 'Final', next: 'Next stone', start: 'Place this stone', again: 'Replay this lesson', soon: 'Coming soon', soonSub: 'This lesson is still being prepared.', cont: 'Continue', nextStep: 'Next', tapBoard: 'Tap the board', ok: 'Correct', no: 'Think again', done: 'Done', back: 'Back', close: 'Close', rewindOne: 'Rewind one move', rewindMore: 'Rewind again', playFwd: 'Now play it forward', drop: 'Place this stone', you: 'You', cpu: 'CPU', youDef: 'You: White (defend)', youAtk: 'You: Black (attack)', lostT: 'You lost', wonT: 'You won', rw: 'Rewind it', go: 'Start', enter: 'Open the Lesson Board', firstStone: 'That game is your first stone', firstSub: 'Each thing you learn adds a stone to this board. When it is full, you will see what it says.', hint: 'Hint', unit: 'Unit {u}', end: 'The ending', q: 'What was move {n}?', fwd: 'Play forward', forced: 'It can only block there…', examT: 'Final', examSub: 'You built this board lesson by lesson. Now finish it.', grad: 'You graduated!', gradSub: 'You solved a real VCF on your own. Try Endless Tower, Fiery Eyes and Mirror Terrace.', locked: 'Finish the earlier lessons first' },
@@ -422,10 +423,15 @@
     const B = makeBoard(f.body, null, 15); B.fit(boardSize(18));
     // 下一課＝落子順序中第一個還沒完成的課
     const nextO = order.find(o => o.lesson !== 'opening' && !doneSet.has(o.lesson));
-    order.forEach(o => { if (o.lesson === 'opening' || doneSet.has(o.lesson)) B.put(o.t, o.c, { anim: false, cls: o.c === 'b' ? 'a-breath' : '' }); });
+    const num = (o) => order.indexOf(o) + 1;   // 子上標第幾顆（2026-11-10 使用者：大盤順序要標）
+    order.forEach(o => { if (o.lesson === 'opening' || doneSet.has(o.lesson)) B.put(o.t, o.c, { anim: false, num: num(o), cls: o.c === 'b' ? 'a-breath' : '' }); });
+    if (DEV) order.forEach(o => {   // 測試模式：還沒落的子也淡淡標出位置與順序，點了就能直接上那課
+      if (o.lesson === 'opening' || doneSet.has(o.lesson)) return;
+      B.mark('ring', o.t, `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 ${Math.round(B.cell * .42)}px var(--num);color:#5B4524">${num(o)}</span>`, 'border:1.5px dashed rgba(91,69,36,.55);animation:none');
+    });
     if (prog().justDone) {   // 剛完成的課：子落到盤上，再轉一圈金光（逐格圖 unit_clear）
       const o = order.find(x => x.lesson === prog().justDone);
-      if (o) { B.take(o.t, true); setTimeout(() => { if (!alive()) return; B.put(o.t, o.c, { cls: o.c === 'b' ? 'a-breath' : '' }); const [px, py] = B.px(o.t); setTimeout(() => alive() && sprite(B.layer, 'unit_clear', px, py, B.cell * 0.88, { ms: 55 }), 650); }, 350); }
+      if (o) { B.take(o.t, true); setTimeout(() => { if (!alive()) return; B.put(o.t, o.c, { num: num(o), cls: o.c === 'b' ? 'a-breath' : '' }); const [px, py] = B.px(o.t); setTimeout(() => alive() && sprite(B.layer, 'unit_clear', px, py, B.cell * 0.88, { ms: 55 }), 650); }, 350); }
       const p = prog(); delete p.justDone; store.set(p);
     }
     const alive = () => my === run;
@@ -445,14 +451,22 @@
     showNext();
     B.onTap = (t) => {
       const o = order.find(x => x.t === t);
-      if (nextO && t === nextO.t) return showNext();
-      if (!o || !(o.lesson === 'opening' || doneSet.has(o.lesson))) return;
+      if (nextO && t === nextO.t && !DEV) return showNext();
+      if (!o || !(DEV || o.lesson === 'opening' || doneSet.has(o.lesson))) return;
       const l = o.lesson === 'opening' ? { id: '0', title: { zh: '開場：先被打敗，再換你打', en: 'Opening: lose first, then win', ja: '開幕：まず負けて、次に勝つ', ko: '오프닝: 먼저 지고, 이기기' } } : byId[o.lesson];
-      card.innerHTML = `<span class="lchip" style="background:#3A2F17;color:var(--gold)">${l.id === '0' ? '★' : l.id}</span><b></b>`;
+      card.innerHTML = `<span class="lchip" style="background:#3A2F17;color:var(--gold)">${num(o)}・${l.id === '0' ? '★' : l.id}</span><b></b>`;
       card.querySelector('b').textContent = TX(l.title);
-      button(f.foot, U('again'), 'ghost', () => (l.id === '0' ? opening() : lesson(l)), IC.redo);
+      const was = o.lesson === 'opening' || doneSet.has(o.lesson);
+      button(f.foot, was ? U('again') : U('start'), was ? 'ghost' : 'teal', () => (l.id === '0' ? opening() : lesson(l)), was ? IC.redo : IC.play);
     };
-    root.querySelector('[data-exam]').onclick = () => (nextO ? (card.innerHTML = '<b></b>', card.querySelector('b').textContent = U('locked'), button(f.foot, U('locked'), '', null)) : exam());
+    root.querySelector('[data-exam]').onclick = () => ((nextO && !DEV) ? (card.innerHTML = '<b></b>', card.querySelector('b').textContent = U('locked'), button(f.foot, U('locked'), '', null)) : exam());
+    if (DEV) {   // 測試模式：重置進度（從開場重新玩）
+      const rs = document.createElement('button'); rs.type = 'button'; rs.className = 'lchip';
+      rs.style.cssText = 'border:1px dashed var(--fail);background:transparent;color:var(--fail);height:32px;align-self:flex-end;margin-top:-30px';
+      rs.textContent = '測試：重置進度';
+      rs.onclick = () => { store.set({}); entryLabel(); opening(); };
+      f.body.insertBefore(rs, B.el);
+    }
   }
 
   // ---------- 一課 ----------
