@@ -111,9 +111,149 @@ C['4-4'] = [
     rewind('再一題。', p44b, s44b, f44b, s44b[-1], 3, '00BBJ3T2（截短 1 手）'),
 ]
 
+# ---------- 第 5–9 單元（題目來自 tools/mine_lessons.py 挖的題，全部是題庫截短、引擎驗證過） ----------
+MINED = json.loads((ROOT / 'docs' / 'design' / 'tutorial-2026-11-10' / 'verify' / 'mined.json').read_text(encoding='utf-8'))
+USED = {'005RSGY4', '0068WG80', '0047T2SY', '00BBJ3T2', '004Z7T4V'}
+def win_of(pts_txt):
+    xy_ = lambda t: (COLS.index(t[0]), int(t[1:]) - 1)
+    pts = [xy_(t) for t in pts_txt]
+    mnx, mxx = min(p[0] for p in pts), max(p[0] for p in pts); mny, mxy = min(p[1] for p in pts), max(p[1] for p in pts)
+    ox = max(0, min(6, mnx - (8 - (mxx - mnx)) // 2)); oy = max(0, min(6, mny - (8 - (mxy - mny)) // 2))
+    return COLS[ox] + str(oy + 1)
+def pick(cond, k=1):
+    out = []
+    for m in sorted(MINED, key=lambda m: (m['n'], m['src'])):
+        if m['fit9'] and m['src'] not in USED and cond(m):
+            out.append(m); USED.add(m['src'])
+            if len(out) == k: break
+    if len(out) < k: raise SystemExit(f'挖到的題不夠：{cond}')
+    return out
+def mpos(m): return P(m['b'], m['w'], m['atk'], win_of(m['b'] + m['w'] + m['sol'] + m['five']))
+def m_rewind(t, m): return rewind(t, mpos(m), m['sol'], m['five'], m['sol'][-1], m['L'], f"{m['src']}（截短）")
+def m_solve(t, m, finish=None):
+    s = {'type': 'solve', 'text': zh(t), 'src': f"{m['src']}（截短）", 'pos': mpos(m), 'L': m['L'], 'line': m['sol']}
+    if finish: s['finish'] = finish
+    else: s['five'] = m['five']
+    return s
+plain = lambda m: not m['lifts'] and not m['counter'] and not m['forb'] and not m['trap']
+
+# 「全部找出來」題的答案要用引擎算（下了會成四的點），只算一次
+_E = None
+def four_points(pos):
+    global _E
+    import sys as _s; _s.path.insert(0, str(Path(__file__).resolve().parent))
+    from check_lessons import Engine, window_points
+    if _E is None: _E = Engine()
+    aw = pos['atk'] == 'w'
+    return sorted(t for t in window_points(pos['win']) if t not in pos['b'] and t not in pos['w']
+                  and _E.move(pos['b'], pos['w'], t, aw).get('r') not in ('notfour', 'forbidden', 'illegal', 'forcedForbidden'))
+def tap_all(t, pos):
+    return {'type': 'tap', 'kind': 'four', 'all': True, 'text': zh(t), 'pos': pos, 'ans': four_points(pos)}
+
+m51 = [m for m in pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 6)]
+m51 = [m for m in m51 if len(four_points(mpos(m))) <= 6][:2]
+C['5-1'] = [
+    say('從這單元開始，自己找 VCF。第一步：找材料。VCF 每一手都要是四，所以能下的點，只有「下了會變成四」的那些。'),
+    tap_all('把所有下了會變成四的點都找出來。', mpos(m51[0])),
+    tap_all('再一題，全部找出來。', mpos(m51[1])),
+]
+m52 = pick(lambda m: m['atk'] == 'b' and m['L'] == 2 and plain(m), 2)
+C['5-2'] = [
+    say('第二步：找終點。終點就是能一手做出「四三」或活四的那一點，通常在兩條線交會的地方。'),
+    {'type': 'tap', 'kind': 'first', 'text': zh('找出終點：哪一點能同時做出四和三？'), 'pos': mpos(m52[0]), 'ans': [m52[0]['sol'][0]]},
+    {'type': 'tap', 'kind': 'first', 'text': zh('再找一次終點。'), 'pos': mpos(m52[1]), 'ans': [m52[1]['sol'][0]]},
+]
+m53 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 2)
+C['5-3'] = [
+    say('第三步：往回接。終點還缺哪顆子？就找一個衝四，把那顆子放上去。'),
+    m_rewind('先看結局，倒回去看看：第一個四是怎麼替終點鋪路的。', m53[0]),
+    m_rewind('再倒一題。', m53[1]),
+]
+m54 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and m['trap'] and not m['forb'] and not m['counter'], 1) or []
+C['5-4'] = [
+    say('第四步：檢查。對方擋下的每一顆子都會留在盤上，它可能剛好擋掉你另一條線。'),
+    m_solve('這題有陷阱：有的四衝下去，對方的擋子會壞了你的路。自己解解看。', m54[0]),
+]
+m55 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and plain(m), 3)
+C['5-5'] = [
+    say('四個步驟一起用：找材料、找終點、往回接、檢查。這次沒有提示。'),
+    m_solve('自己解。', m55[0]), m_solve('再一題。', m55[1]), m_solve('最後一題。', m55[2]),
+]
+m6 = sorted([m for m in MINED if m['fit9'] and m['counter']], key=lambda m: (m['src'], m['L']))
+m6_l2 = [m for m in m6 if m['L'] == 2][:2]; m6_l3 = [m for m in m6 if m['L'] == 3][:2]
+C['6-1'] = [
+    say('對方擋你的時候，那顆擋子可能剛好讓他自己做出四。這叫「反四」。'),
+    m_rewind('這題的對方擋子差點變成反四。倒回去看看順序為什麼要這樣排。', m6_l2[0]),
+]
+C['6-2'] = [
+    say('對方一有四，你就得先擋；你再衝四，他就直接成五。反四一出現，你的先手就沒了。'),
+    m_solve('小心反四，自己解。', m6_l3[0]),
+]
+C['6-3'] = [
+    say('同樣幾個四，換個順序，對方的擋子就不會變成四。'),
+    m_solve('找出不會被反四的順序。', m6_l3[1] if len(m6_l3) > 1 else m6_l2[1]),
+]
+# 7-1：手擺的禁手判斷（每題由 check_lessons 用引擎確認那一點真的是／不是禁手）
+FB = ['是禁手', '不是禁手']
+C['7-1'] = [
+    say('黑棋有三種禁手：長連（六子以上）、四四（一子做出兩個四）、三三（一子做出兩個活三）。白棋沒有禁手。'),
+    {'type': 'choose', 'text': zh('黑下在金圈，同時做出橫的四和直的四。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'L8', 'pos': P('H8 J8 K8 L5 L6 L7', '')},
+    {'type': 'choose', 'text': zh('黑下在金圈，同時做出兩條活三。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'H6', 'pos': P('J6 K6 H7 H8', '')},
+    {'type': 'choose', 'text': zh('黑下在金圈，會連成六顆。'), 'options': [zh(o) for o in FB], 'ans': 0, 'probe': 'J7', 'pos': P('E7 F7 G7 H7 K7', '')},
+    {'type': 'choose', 'text': zh('黑下在金圈，做出一個四和一條活三。'), 'options': [zh(o) for o in FB], 'ans': 1, 'probe': 'L8', 'pos': P('H8 J8 K8 L6 L7', '')},
+]
+C['7-2'] = [
+    say('黑棋這一手如果同時連成五，就算形狀看起來像禁手，也是黑贏。成五最優先。'),
+    tap('five', '這一點看起來會做出兩個四，可是它直接連成五。點下去！', P('F7 G7 H7 J7 K4 K5 K6', 'E7'), 'K7'),
+]
+m73 = pick(lambda m: m['atk'] == 'b' and m['L'] == 2 and m['forb'] and not m['lifts'] and not m['counter'], 1)
+C['7-3'] = [
+    say('黑棋不能用四四贏，所以黑先的題，收尾一定是四三或活四。'),
+    m_rewind('這題有禁點。倒回去看：黑是怎麼避開禁點收尾的。', m73[0]),
+]
+m74 = pick(lambda m: m['atk'] == 'b' and m['L'] == 3 and m['forb'] and not m['lifts'] and not m['counter'], 1)
+C['7-4'] = [
+    say('黑棋路上某一手如果是禁手，那手就不能下，要換一條路。'),
+    m_solve('盤上有禁點（下了會被判負的點）。避開它，自己解。', m74[0]),
+]
+m81 = pick(lambda m: m['atk'] == 'w' and m['L'] == 1 and plain(m), 1)
+m81b = pick(lambda m: m['atk'] == 'w' and m['L'] == 2 and plain(m), 1)
+C['8-1'] = [
+    say('白棋沒有禁手：四四、長連都可以。白先的題，收尾的方式比黑多。'),
+    m_rewind('白一手就擋不住了。倒回去看看。', m81[0]),
+    m_solve('換你當白，自己解。', m81b[0]),
+]
+FORBID_SRC = ['M4YHYJ78', 'W0477G8E', '3TADFNHY', 'ED60S04S']
+m82 = [m for m in MINED if m['src'] in FORBID_SRC and m['fit9'] and m['L'] <= 2]
+m82 = sorted(m82, key=lambda m: (m['L'], m['n']))[:2]
+for m in m82: USED.add(m['src'])
+C['8-2'] = [
+    say('白還有一招：衝一個四，讓黑唯一的擋點剛好是黑的禁手。黑不能下禁手，就擋不了。這叫「逼禁」。'),
+    m_solve('用逼禁贏。', m82[0], finish='forbid'),
+    m_solve('再一題逼禁。', m82[1], finish='forbid'),
+]
+m83 = pick(lambda m: m['atk'] == 'w' and m['L'] == 3 and plain(m), 2)
+C['8-3'] = [say('白先綜合：四四、四三、逼禁都可能是終點。'), m_solve('自己解。', m83[0]), m_solve('再一題。', m83[1])]
+m91 = sorted([m for m in MINED if m['fit9'] and m['atk'] == 'b' and m['lifts'] and m['L'] == 3 and not m['counter']], key=lambda m: m['n'])[:2]
+C['9-1'] = [
+    say('原本是禁手的點，衝了幾個四之後形狀改變，可能變成可以下。這叫「解禁」。'),
+    m_rewind('這題的某一手，一開始是禁點。倒回去看看它什麼時候變成可以下。', m91[0]),
+    m_solve('自己解一題有解禁的。', m91[1]),
+]
+V27 = {r['id']: r for r in json.loads((ROOT / 'docs' / 'design' / 'tutorial-2026-11-10' / 'verify' / 'verified.json').read_text(encoding='utf-8'))}
+def bank_solve(t, src):
+    r = V27[src]; sol = r['sol'].split('(')[0].split()
+    return {'type': 'solve', 'text': zh(t), 'src': src, 'pos': {'b': r['b'].split(), 'w': r['w'].split(), 'atk': 'b'}, 'L': 4, 'line': sol}
+C['9-2'] = [
+    say('手數變多時，方法一樣：找材料、找終點、往回接、檢查。只是往回接要接好幾層。'),
+    bank_solve('4 手題，整個棋盤。自己解。', 'R3WSNQTV'),
+    bank_solve('再一題 4 手題。', 'KPPVPBY9'),
+]
+
 D = json.loads(DATA.read_text(encoding='utf-8'))
 for l in D['lessons']:
     if l['id'] in C: l['steps'] = C[l['id']]
+if _E: _E.close()
 # 套翻譯：game/learn/i18n.json 以中文原文為鍵（中文沒改的句子不用重翻；新句子要再跑翻譯）
 I18N = ROOT / 'game' / 'learn' / 'i18n.json'
 TR = json.loads(I18N.read_text(encoding='utf-8')) if I18N.exists() else {}

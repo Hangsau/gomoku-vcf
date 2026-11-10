@@ -119,6 +119,38 @@
   }
   addEventListener('popstate', () => { if (!root.hidden) { run++; root.hidden = true; root.innerHTML = ''; } });
 
+  // ---------- codex 逐格圖集（2026-11-10 W7）：4×4 圖集逐格硬切播放；沒載到就用上面的 CSS 動畫 ----------
+  // manifest.json 由 tools/art_build.py 產生：anchor＝主體中心相對格心偏移、size＝主體寬／格寬
+  let ART = null;
+  fetch('game/learn/art/manifest.json?v=' + (typeof BUILD !== 'undefined' ? BUILD : Date.now())).then(r => r.ok ? r.json() : null).then(m => {
+    ART = m;
+    if (m) Object.values(m).forEach(s => { const i = new Image(); i.src = 'game/learn/art/' + s.file; });   // 先載好，第一次播放不閃
+  }).catch(() => {});
+  const FRAME_MS = 42;
+  // host：疊在誰上面；cx,cy：主體中心要對準的位置（px）；body：主體要多寬（px）；opt.full＝整張蓋滿 host（特效層）
+  function sprite(host, name, cx, cy, body, opt = {}) {
+    const s = ART && ART[name];
+    if (!s) return null;
+    const cell = opt.full ? Math.max(host.clientWidth, host.clientHeight) : body / s.size;
+    const el = document.createElement('div');
+    const left = opt.full ? 0 : cx - cell / 2 - s.anchor[0] * cell, top = opt.full ? 0 : cy - cell / 2 - s.anchor[1] * cell;
+    el.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${opt.full ? host.clientWidth : cell}px;height:${opt.full ? host.clientHeight : cell}px;pointer-events:none;background:url('game/learn/art/${s.file}') no-repeat;background-size:${s.cols * 100}% ${s.rows * 100}%;z-index:${opt.z || 3};${opt.rot ? `transform:rotate(${opt.rot}deg)` : ''}`;
+    host.appendChild(el);
+    let k = 0;
+    const show = () => { const c = k % s.cols, r = Math.floor(k / s.cols); el.style.backgroundPosition = `${c * 100 / (s.cols - 1)}% ${r * 100 / (s.rows - 1)}%`; };
+    show();
+    const done = new Promise(res => {
+      const tick = setInterval(() => {
+        k++;
+        if (k >= s.frames) { if (opt.loop) k = 0; else { clearInterval(tick); if (!opt.keep) el.remove(); res(); return; } }
+        show();
+      }, opt.ms || FRAME_MS);
+      el._stop = () => { clearInterval(tick); el.remove(); res(); };
+    });
+    el.done = done;
+    return el;
+  }
+
   // ---------- 棋盤（9×9 局部或 15×15 全盤） ----------
   // opts: { win:'D3'|null, n:9|15, size }，回傳物件可以放子、標記、接點擊
   function makeBoard(host, win, n) {
@@ -150,16 +182,31 @@
       s.className = 'lst ' + color + (o.anim === false ? '' : ' a-drop') + (o.cls ? ' ' + o.cls : '');
       s.style.cssText = `left:${px - d / 2}px;top:${py - d / 2}px;width:${d}px;height:${d}px`;
       if (o.num) s.innerHTML = `<span class="n" style="font-size:${Math.round(d * .5)}px">${o.num}</span>`;
-      if (o.anim !== false) { const rp = document.createElement('div'); rp.className = 'ripple'; s.appendChild(rp); snd(color === 'w'); }
       B.layer.appendChild(s); B.stones.set(t, { el: s, color });
+      if (o.anim !== false) {
+        snd(color === 'w');
+        const sp = sprite(B.layer, color === 'b' ? 'drop_black' : 'drop_white', px, py, d);
+        if (sp) { s.classList.remove('a-drop'); s.style.opacity = 0; sp.done.then(() => { s.style.opacity = ''; }); }   // 逐格圖播完才換成真的子
+        else { const rp = document.createElement('div'); rp.className = 'ripple'; s.appendChild(rp); }
+      }
       return s;
     };
-    B.take = (t, silent) => { const s = B.stones.get(t); if (!s) return; B.stones.delete(t); if (silent) { s.el.remove(); return; } s.el.className = s.el.className.replace(' a-drop', '') + ' a-lift'; setTimeout(() => s.el.remove(), 280); };
+    B.take = (t, silent) => {
+      const s = B.stones.get(t); if (!s) return; B.stones.delete(t);
+      if (silent) { s.el.remove(); return; }
+      const [px, py] = B.px(t), sp = sprite(B.layer, s.color === 'b' ? 'lift_black' : 'lift_white', px, py, B.cell * 0.88);
+      if (sp) { s.el.remove(); return; }
+      s.el.className = s.el.className.replace(' a-drop', '') + ' a-lift'; setTimeout(() => s.el.remove(), 280);
+    };
     B.has = (t) => B.stones.has(t);
     B.mark = (cls, t, html, extra) => { const [px, py] = B.px(t), d = B.cell * 0.92, m = document.createElement('div'); m.className = cls; m.style.cssText = `left:${px - d / 2}px;top:${py - d / 2}px;width:${d}px;height:${d}px;${extra || ''}`; if (html) m.innerHTML = html; B.layer.appendChild(m); return m; };
     B.glow = (t, color) => B.mark('glow', t, '', `border-color:${color}`);
-    B.clearMarks = () => B.layer.querySelectorAll('.glow,.ring,.xmark,.beam,.beacon,.travelsvg,.travel,.stamp').forEach(e => e.remove());
-    B.cross = (t) => B.mark('xmark', t, `<svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" fill="none"/></svg>`);
+    B.clearMarks = () => B.layer.querySelectorAll('.glow,.ring,.xmark,.beam,.beacon,.travelsvg,.travel,.stamp').forEach(e => (e._stop ? e._stop() : e.remove()));
+    B.cross = (t) => {   // 答錯：毛筆叉（逐格圖，停在最後一格）
+      const [px, py] = B.px(t), sp = sprite(B.layer, 'brush_x', px, py, B.cell * 0.9, { keep: true });
+      if (sp) { sp.classList.add('xmark'); return sp; }
+      return B.mark('xmark', t, `<svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" fill="none"/></svg>`);
+    };
     B.shake = () => { el.classList.remove('a-no'); void el.offsetWidth; el.classList.add('a-no'); };
     B.beam = (a, b, color) => {
       const [x1, y1] = B.px(a), [x2, y2] = B.px(b), w = Math.hypot(x2 - x1, y2 - y1) + 10, ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
@@ -174,6 +221,15 @@
     };
     B.five = (pts, good) => {   // 連成五：依序點亮＋光束＋震動
       const c = good ? 'rgba(242,181,68,.6)' : 'rgba(255,122,107,.6)';
+      // 橫、直的五：用逐格圖（金＝黑子五連、紅＝白子五連；圖裡的子顏色要對得上才用）
+      if (pts.length === 5) {
+        const s0 = B.stones.get(pts[0]), [x1, y1] = B.px(pts[0]), [x2, y2] = B.px(pts[4]);
+        const name = s0 && (s0.color === 'b' ? 'five_gold' : 'five_red'), horiz = y1 === y2, vert = x1 === x2;
+        if (name && (horiz || vert) && ART && ART[name]) {
+          const sp = sprite(B.layer, name, (x1 + x2) / 2, (y1 + y2) / 2, 4 * B.cell + B.cell * 0.88, { keep: true, rot: vert ? 90 : 0, z: 4 });
+          if (sp) { sp.classList.add('fxk'); el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake'); return; }
+        }
+      }
       pts.forEach((t, i) => { const s = B.stones.get(t); if (s) { s.el.style.animationDelay = (i * .12) + 's'; s.el.classList.remove('a-drop'); s.el.classList.add('a-lit'); s.el.style.boxShadow = `0 0 0 3px ${c}`; } });
       B.beam(pts[0], pts[pts.length - 1], c);
       el.classList.remove('a-quake'); void el.offsetWidth; el.classList.add('a-quake');
@@ -276,10 +332,11 @@
     if (!alive()) return;
     // 倒帶：一顆顆拎走，掃描線
     button(f.foot, '');
-    const scan = document.createElement('div'); scan.className = 'lscan'; B.el.appendChild(scan);
+    const scan = sprite(B.el, 'rewind_fx', 0, 0, 0, { full: true, loop: true, z: 6 }) || Object.assign(document.createElement('div'), { className: 'lscan' });
+    if (!scan.parentNode) B.el.appendChild(scan);
     msg(f.body, '', TX({ zh: '倒帶……', en: 'Rewinding…', ja: '巻き戻し中……', ko: '되감는 중……' }));
     for (let k = played.length - 1; k >= 0; k--) { B.take(played[k]); await sleep(300); if (!alive()) return; }
-    scan.remove();
+    scan._stop ? scan._stop() : scan.remove();
     B.el.classList.add('a-flipA'); await sleep(330); B.el.classList.remove('a-flipA'); B.el.classList.add('a-flipB');
     const role = root.querySelector('[data-role]'); role.textContent = U('youAtk'); role.style.background = '#1F3B39'; role.style.color = '#3CC6B4';
     msg(f.body, '', TX({ zh: '換你了。換到對面：剛才逼你的那串棋，這次由你來下。', en: 'Your turn. Switch sides: play the same moves that just beat you.', ja: '交代。席を替えて、さっきあなたを追い詰めた手順を、今度はあなたが打つ。', ko: '이제 당신 차례. 자리를 바꿔, 방금 당신을 몰아붙인 수순을 직접 두세요.' }), 'good');
@@ -328,7 +385,12 @@
     f.body.appendChild(wrap);
     const BB = makeBoard(wrap, null, 15); BB.fit(Math.min(boardSize(-40), 360)); BB.el.classList.add('a-pull');
     const first = DATA.board.order[0];
-    setTimeout(() => { if (!alive()) return; BB.put(first.t, first.c, { cls: 'a-breath' }); BB.mark('halo', first.t); }, 900);
+    setTimeout(() => {   // 第一顆子從天而降：金色光暈（逐格圖），沒有圖就用 CSS
+      if (!alive()) return;
+      const [px, py] = BB.px(first.t), sp = sprite(BB.layer, 'land_gold', px, py, BB.cell * 0.88);
+      if (sp) { const s = BB.put(first.t, first.c, { anim: false, cls: 'a-breath' }); s.style.opacity = 0; sp.done.then(() => { s.style.opacity = ''; }); }
+      else { BB.put(first.t, first.c, { cls: 'a-breath' }); BB.mark('halo', first.t); }
+    }, 900);
     const t1 = document.createElement('b'); t1.style.cssText = 'font-size:21px;text-align:center'; t1.textContent = U('firstStone');
     const t2 = document.createElement('span'); t2.style.cssText = 'font-size:15px;color:var(--text2);text-align:center;line-height:1.6;max-width:320px'; t2.textContent = U('firstSub');
     wrap.append(t1, t2);
@@ -350,7 +412,11 @@
     order.forEach(o => { if (o.lesson === 'opening' || doneSet.has(o.lesson)) B.put(o.t, o.c, { anim: false, cls: o.c === 'b' ? 'a-breath' : '' }); });
     if (prog().justDone) { const o = order.find(x => x.lesson === prog().justDone); if (o) { B.take(o.t, true); setTimeout(() => alive() && B.put(o.t, o.c, { cls: o.c === 'b' ? 'a-breath' : '' }), 350); } const p = prog(); delete p.justDone; store.set(p); }
     const alive = () => my === run;
-    if (nextO) { const bc = B.mark('beacon', nextO.t, '<i></i><i style="animation-delay:.6s"></i><i style="animation-delay:1.2s"></i><b></b>'); bc.style.transform = 'scale(1.3)'; }
+    if (nextO) {   // 下一課的信標：逐格圖循環，沒有圖就用 CSS 波紋
+      const [px, py] = B.px(nextO.t), sp = sprite(B.layer, 'beacon', px, py, B.cell * 1.1, { loop: true, ms: 70 });
+      if (sp) sp.classList.add('beacon');
+      else { const bc = B.mark('beacon', nextO.t, '<i></i><i style="animation-delay:.6s"></i><i style="animation-delay:1.2s"></i><b></b>'); bc.style.transform = 'scale(1.3)'; }
+    }
     const card = document.createElement('div'); card.className = 'lcard a-msg'; f.body.appendChild(card);
     const showNext = () => {
       if (!nextO) { card.innerHTML = `<b></b>`; card.querySelector('b').textContent = U('examSub'); button(f.foot, U('examT'), 'teal', () => exam(), IC.trophy); return; }
@@ -390,12 +456,14 @@
     const f = frame(TX(l.title), progressChip(l, i));
     const T = st.type;
     if (T === 'rewind') return rewindStep(l, st, i, f, alive);
+    if (T === 'solve') return solveStep(l, st, f, alive);
     const pos = st.pos;
     let B = null;
     if (pos) { B = makeBoard(f.body, pos.win, 9); B.fit(boardSize(T === 'choose' ? (st.options.length * 60) : 0)); pos.b.forEach(t => B.put(t, 'b', { anim: false })); pos.w.forEach(t => B.put(t, 'w', { anim: false })); }
     const text = TX(st.text);
     if (T === 'say') { msg(f.body, '', text); return new Promise(res => button(f.foot, U('cont'), '', res)); }
     if (T === 'choose') {
+      if (st.probe && B) B.glow(st.probe, '#F2B544');   // 禁手判斷題：標出要判斷的那一點
       msg(f.body, '', text);
       const box = document.createElement('div'); box.className = 'lopts'; f.body.appendChild(box);
       button(f.foot, '');
@@ -437,6 +505,18 @@
         const [x, y] = xy(t), cand = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1]].map(([dx, dy]) => nm(x + dx, y + dy)).find(p => { const [a, b] = xy(p); return a >= B.ox && a < B.ox + 9 && b >= B.oy && b < B.oy + 9 && !B.has(p); });
         if (cand) await B.thread(cand, 'w');
         msg(f.body, U('ok'), TX({ zh: '白也下了一手。就是這樣一人一手輪流。', en: 'White answered. That is it: one move each, taking turns.', ja: '白も一手。こうして一手ずつ交代で打つ。', ko: '백도 한 수. 이렇게 한 수씩 번갈아 둡니다.' }), 'good');
+        return new Promise(res => button(f.foot, U('nextStep'), '', res));
+      }
+      if (st.all) {   // 全部找出來：每找到一個標青圈，全部找到才過
+        const found = new Set();
+        while (found.size < st.ans.length) {
+          const t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p) && !found.has(p)) res(p); }; });
+          if (!alive()) return 'quit';
+          if (st.ans.includes(t)) { found.add(t); B.mark('ring', t, '', 'border-color:#3CC6B4;border-style:solid'); msg(f.body, `${found.size} / ${st.ans.length}`, text, 'good'); }
+          else { B.shake(); B.cross(t); msg(f.body, U('no'), TX({ zh: '這點下了不會變成四。', en: 'That point does not make a four.', ja: 'そこでは四にならない。', ko: '거기는 사가 되지 않습니다.' }), 'bad'); }
+        }
+        B.onTap = null;
+        msg(f.body, U('ok'), text, 'good');
         return new Promise(res => button(f.foot, U('nextStep'), '', res));
       }
       let miss = 0;
@@ -484,10 +564,11 @@
     for (let k = line.length - 1; k >= 0; k--) {
       if (!alive()) return 'quit';
       button(f.foot, '');
-      const scan = document.createElement('div'); scan.className = 'lscan'; B.el.appendChild(scan);
+      const scan = sprite(B.el, 'rewind_fx', 0, 0, 0, { full: true, loop: true, z: 6 }) || Object.assign(document.createElement('div'), { className: 'lscan' });
+      if (!scan.parentNode) B.el.appendChild(scan);
       B.take(line[k]); layoutTape(k);
-      await sleep(520); scan.remove(); if (!alive()) return 'quit';
-      B.layer.querySelectorAll('.a-lit').forEach(e => { e.classList.remove('a-lit'); e.style.boxShadow = ''; }); B.layer.querySelectorAll('.beam').forEach(e => e.remove());
+      await sleep(620); scan._stop ? scan._stop() : scan.remove(); if (!alive()) return 'quit';
+      B.layer.querySelectorAll('.a-lit').forEach(e => { e.classList.remove('a-lit'); e.style.boxShadow = ''; }); B.layer.querySelectorAll('.beam,.fxk').forEach(e => (e._stop ? e._stop() : e.remove()));
       const isAtk = k % 2 === 0, t0 = line[k];
       let ans, q, hint, stoneQ = false;
       if (isAtk) {
@@ -544,8 +625,54 @@
       await B.thread(defMoves[m], defC); if (!alive()) return 'quit';
     }
     layoutTape(line.length);
-    const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B.el.appendChild(stamp);
+    if (!sprite(B.el, 'stamp_ok', B.size - 46, 40, 76, { keep: true, z: 7 })) { const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B.el.appendChild(stamp); }
     msg(f.body, U('done'), TX({ zh: '你先倒著想了一次，又正著下了一次。找 VCF 就是這樣：先看終點，再往回接。', en: 'You thought it through backward, then played it forward. That is how to find a VCF: see the end, then link back.', ja: '逆にたどって、順に打った。VCF の探し方はこれ：終点を見て、逆につなぐ。', ko: '거꾸로 생각하고, 순서대로 두었습니다. VCF 찾는 법: 끝을 보고, 거꾸로 잇기.' }), 'good');
+    return new Promise(res => button(f.foot, U('nextStep'), '', res));
+  }
+
+  // ---------- 自己解：9×9 局部盤，引擎即時判定（下錯退回這手） ----------
+  async function solveStep(l, st, f, alive) {
+    const pos = st.pos, aw = pos.atk === 'w', atkC = aw ? 'w' : 'b', defC = aw ? 'b' : 'w';
+    const B = makeBoard(f.body, pos.win || null, pos.win ? 9 : 15); B.fit(boardSize());   // 沒給框＝整盤 15×15（長題）
+    const b = [...pos.b], w = [...pos.w], mine = aw ? w : b, theirs = aw ? b : w;
+    b.forEach(t => B.put(t, 'b', { anim: false })); w.forEach(t => B.put(t, 'w', { anim: false }));
+    msg(f.body, '', TX(st.text)); button(f.foot, '');
+    const why = {
+      forbidden: { zh: '這點是黑棋禁手，不能下。', en: 'That is a forbidden point for Black.', ja: 'そこは黒の禁手。', ko: '거기는 흑의 금수입니다.' },
+      notfour: { zh: '這手不是四。這題每一手都要是四。', en: 'That is not a four. Every move here must be a four.', ja: 'それは四じゃない。毎手が四。', ko: '사가 아닙니다. 매 수가 사여야 합니다.' },
+      defFive: { zh: '對方的擋子變成四，你沒擋，它連成五了（反四）。', en: 'The block made a four for them and you ignored it: they made five (counter-four).', ja: '相手の止めが四になっていた。放置して五にされた（逆四）。', ko: '상대의 막는 돌이 사가 됐는데 무시해서 오목이 됐습니다(역사).' },
+      bad: { zh: '這條路接不下去。退回去再想想。', en: 'That path leads nowhere. Step back and think again.', ja: 'その道は続かない。戻って考え直そう。', ko: '그 길은 이어지지 않습니다. 돌아가서 다시 생각해 보세요.' },
+      nofour: { zh: '下完這手之後你就沒有四可以衝了。換一條路。', en: 'After that you have no fours left. Try another path.', ja: 'その後、四が打てなくなる。別の道を。', ko: '그 다음엔 둘 사가 없습니다. 다른 길로.' },
+    };
+    let miss = 0;
+    while (true) {
+      const t = await new Promise(res => { B.onTap = (p) => { if (!B.has(p)) res(p); }; });
+      if (!alive()) return 'quit';
+      B.onTap = null; B.clearMarks();
+      const r = (await move(b.join(' '), w.join(' '), t, aw)).result || { r: 'illegal' };
+      if (!alive()) return 'quit';
+      if (r.r === 'illegal') continue;
+      if (r.r === 'forbidden' || r.r === 'notfour') { B.shake(); B.cross(t); msg(f.body, U('no'), TX(why[r.r]), 'bad'); continue; }
+      B.put(t, atkC); mine.push(t);
+      if (r.r === 'win') {
+        if (/禁/.test(r.how || '')) { if (r.at) { B.glow(r.at, '#FF7A6B'); B.cross(r.at); } msg(f.body, U('ok'), TX({ zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' }), 'good'); await sleep(1200); }
+        else if (/五/.test(r.how || '')) B.five(fiveLine(new Set(mine), t), true); else B.glow(t, '#F2B544');
+        break;
+      }
+      if (r.r === 'block') {
+        await sleep(400); if (!alive()) return 'quit';
+        if (r.forcedForbidden) { B.glow(r.def, '#FF7A6B'); msg(f.body, U('ok'), TX({ zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' }), 'good'); break; }
+        msg(f.body, '', U('forced')); await B.thread(r.def, defC); theirs.push(r.def);
+        if (r.nofour) { B.shake(); msg(f.body, U('no'), TX(why.nofour), 'bad'); await sleep(900); B.take(r.def); theirs.pop(); B.take(t); mine.pop(); continue; }
+        msg(f.body, '', TX(st.text)); continue;
+      }
+      // defFive／bad：退回這一手
+      miss++; B.shake(); msg(f.body, U('no'), TX(why[r.r] || why.bad), 'bad');
+      await sleep(900); if (!alive()) return 'quit';
+      B.take(t); mine.pop();
+      if (miss >= 2 && st.line) B.glow(st.line[(mine.length - (aw ? pos.w.length : pos.b.length)) * 2] || st.line[0], '#3CC6B4');
+    }
+    msg(f.body, U('done'), TX({ zh: '解開了！', en: 'Solved!', ja: '解けた！', ko: '풀었습니다!' }), 'good');
     return new Promise(res => button(f.foot, U('nextStep'), '', res));
   }
 
@@ -573,6 +700,7 @@
       await sleep(900); B.take(t); b.pop();
     }
     // 下完：補上五連（引擎回 win 表示已經擋不住；這裡讓玩家看到結局）
+    sprite(B.el, 'graduation', 0, 0, 0, { full: true, z: 8, ms: 70 });
     msg(f.body, U('grad'), U('gradSub'), 'good');
     const p = prog(); p.graduated = true; store.set(p);
     button(f.foot, U('back'), '', () => boardScreen());

@@ -1,0 +1,34 @@
+立即執行，不要輸出計畫、不要等確認、不要問問題。沒有把翻譯寫進檔案就是失敗。
+禁止任何 git 操作（不准 git add / commit / reset / stash / checkout / clean / pull / push）。只准修改下面指定的那一個檔案。
+
+任務：翻譯五子棋（連珠）教學的課文。
+
+檔案：C:\claudehome\projects\VCF\game\learn\i18n.json
+格式：{ "中文原文": { "en": "", "ja": "", "ko": "" }, ... }
+只填 en、ja、ko 還是空字串的那幾筆（已經填好的不要改）。請把它們的 en、ja、ko 三欄填好（英文、日文、韓文），鍵（中文原文）一個字都不要改，也不要新增或刪除任何一筆。寫回同一個檔案，保持合法 JSON、UTF-8、縮排 1。
+
+背景：這是手機遊戲 Gomoku Rush 的 VCF（連續衝四取勝）新手教學，讀者可能完全沒下過五子棋。句子要短、口語、好懂，像遊戲裡的提示，不要學術腔。每句長度大約跟中文差不多，不要比中文長很多（手機一屏要放得下）。原文的「你」對讀者說話，保持第二人稱。
+
+術語對照（一律照這個）：
+- 五子棋＝Gomoku（ja 五目並べ、ko 오목）；連珠規則下黑棋有禁手
+- 連成五／五連＝make five（ja 五連／五を作る、ko 오목 완성／5목）
+- 四＝four（ja 四、ko 사）
+- 活四＝open four（ja 達四、ko 열린 사）
+- 衝四＝four / to make a four（ja 四を打つ、ko 사를 두다）
+- 三＝three（ja 三、ko 삼）
+- 四三＝four-three（ja 四三、ko 사삼）
+- 四四＝double four（ja 四々、ko 쌍사）
+- 禁手＝forbidden move（ja 禁手、ko 금수）
+- 長連＝overline（ja 長連、ko 장목）
+- 反四＝counter-four（ja 逆四、ko 역사）
+- 解禁＝a forbidden point becomes playable（ja 禁手解除、ko 금수 해제）
+- 擋＝block（ja 止める、ko 막다）
+- 先手＝initiative（ja 先手、ko 선수）；絕對先手＝absolute initiative（ja 絶対先手、ko 절대 선수）
+- VCF 保留英文縮寫 VCF；日文可在第一次出現時寫「VCF（四追い）」
+- 天元＝center point (tengen)（ja 天元、ko 천원）
+- 座標如 H8、F5、L10 原樣保留
+- 黑、白＝Black, White（ja 黒、白、ko 흑, 백）
+- 教學盤＝Lesson Board（ja 教室の盤、ko 교실 판）
+- 單元＝Unit（ja 単元、ko 단원）
+
+完成後在終端印出一行：翻譯完成 N 筆。

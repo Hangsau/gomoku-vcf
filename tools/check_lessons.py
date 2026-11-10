@@ -134,6 +134,19 @@ def check_step(E, where, st):
     pos = st.get('pos')
     if typ in ('solve', 'rewind', 'opening'):
         if not pos: err(where, '缺 pos'); return
+        if typ == 'solve' and st.get('finish') == 'forbid':   # 逼禁收尾：最後一手引擎要回「禁手」勝
+            r = E.solve(pos['b'], pos['w'], pos.get('atk') == 'w')
+            if not (r.get('vcf') and r.get('unique') and r.get('L') == st.get('L')): err(where, f'逼禁題：引擎 vcf={r.get("vcf")} unique={r.get("unique")} L={r.get("L")}'); return
+            sol = r['solution'].split('(')[0].split()
+            if st.get('line') and st['line'] != sol: err(where, f'逼禁題手順宣告 {st["line"]}，引擎 {sol}')
+            a, d = list(pos['w']), list(pos['b'])
+            for i in range(0, len(sol), 2):
+                m = E.move(d, a, sol[i], True)
+                if i == len(sol) - 1 and not ('禁' in (m.get('how') or '')): err(where, f'逼禁題最後一手 {sol[i]} 引擎回 {m}')
+                a.append(sol[i])
+                if i + 1 < len(sol): d.append(sol[i + 1])
+            if pos.get('win'): in_window(where, list(pos['b']) + list(pos['w']) + sol, pos['win'])
+            return
         check_line(E, where, pos, st); return
     if typ in ('tap', 'predict'):
         if not pos: err(where, '缺 pos'); return
@@ -161,6 +174,10 @@ def check_step(E, where, st):
                 if t in B or t in W: continue
                 m = E.move(B, W, t, aw)
                 if m.get('r') not in ('notfour', 'forbidden', 'illegal', 'forcedForbidden'): got.add(t)
+        elif kind == 'first':   # 點出這題 VCF 的第一手（唯一解）
+            r = E.solve(B, W, aw)
+            if not (r.get('vcf') and r.get('unique')): err(where, 'first 題：引擎說沒有唯一 VCF'); return
+            got = {r['solution'].split()[0]}
         elif kind == 'free':
             return   # 自由點選（例如 1-1 隨意落子），不判
         else:
@@ -171,6 +188,12 @@ def check_step(E, where, st):
     if typ == 'choose':
         opts = st.get('options') or []
         if st.get('ans') not in range(len(opts)): err(where, 'choose 的 ans 不是選項編號')
+        if st.get('probe'):   # 禁手判斷題：probe 那一點黑下去是不是禁手，要跟答案一致（選項 0＝是禁手）
+            if not pos: err(where, 'probe 題缺 pos'); return
+            m = E.move(pos['b'], pos['w'], st['probe'], False)
+            forb = m.get('r') == 'forbidden'
+            if forb != (st.get('ans') == 0): err(where, f'禁手判斷題：{st["probe"]} 引擎回 {m.get("r")}，答案寫 {"是" if st.get("ans") == 0 else "不是"}禁手')
+            in_window(where, list(pos['b']) + list(pos['w']) + [st['probe']], pos.get('win'))
 
 def main():
     need_langs = '--langs' in sys.argv
