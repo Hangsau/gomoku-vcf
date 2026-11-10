@@ -292,6 +292,9 @@
     m.innerHTML = `<span class="tag"></span><span class="tx"></span>`;
     m.querySelector('.tag').textContent = tag || ''; m.querySelector('.tx').textContent = text || '';
     void m.offsetWidth;
+    // 一屏放不下（英文長句在 360×640 會撐高）就把字一級一級縮小，最小 13px
+    const tx = m.querySelector('.tx');
+    for (let fs = 15; fs >= 13 && body.scrollHeight > body.clientHeight + 1; fs--) tx.style.fontSize = fs + 'px';
     return m;
   }
   function button(foot, label, cls, onClick, ico) {
@@ -622,7 +625,9 @@
     const line = [...st.line, st.five[0], st.five[1]];   // 攻、擋、……、攻（活四）、擋一頭、攻方成五
     const colorAt = (k) => (k % 2 === 0 ? atkC : defC);
     const tape = document.createElement('div'); tape.className = 'tape'; f.body.appendChild(tape);
-    const B = makeBoard(f.body, pos.win, 9); B.fit(boardSize(50));
+    const B = makeBoard(f.body, pos.win, 9);
+    msg(f.body, U('end'), TX(st.text));   // 先排好訊息再決定棋盤大小：長句（英文）多一行時棋盤縮一點，不撐出一屏
+    B.fit(Math.min(boardSize(50), f.body.clientHeight - f.body.scrollHeight - 4));
     const head = document.createElement('div'); head.className = 'head'; tape.appendChild(head);
     const dots = line.map((t, k) => { const d = document.createElement('i'); d.textContent = k + 1; const c = colorAt(k); d.style.cssText = `background:${c === 'b' ? '#1B1A17' : '#FBFAF6'};color:${c === 'b' ? '#FBFAF6' : '#1B1A17'};border:2px solid ${c === 'b' ? '#FBFAF6' : '#1B1A17'}`; tape.appendChild(d); return d; });
     const layoutTape = (n) => { const w = tape.clientWidth - 40, gap = w / Math.max(1, line.length - 1); dots.forEach((d, k) => { d.style.left = (8 + k * gap) + 'px'; d.style.opacity = k < n ? 1 : .25; }); head.style.left = Math.max(4, Math.min(tape.clientWidth - 8, 8 + n * gap - gap / 2 + 10)) + 'px'; };
@@ -631,7 +636,6 @@
     layoutTape(line.length);
     const atkSet = new Set([...(atkC === 'b' ? pos.b : pos.w), ...line.filter((_, k) => k % 2 === 0)]);
     B.five(fiveLine(atkSet, line[line.length - 1]), true, { keepNumbers: true });
-    msg(f.body, U('end'), TX(st.text));
     await new Promise(res => button(f.foot, U('rewindOne'), '', res, IC.rew));
     let have = line.length;
     for (const sg of st.stages) {   // sg.keep：退到剩幾手（都是輪攻方下）；sg.accept：這時下了還能贏的點
@@ -666,7 +670,7 @@
     // 往前下：跟「自己解」同一套（引擎判定、走錯有說明、可退一手／重來／提示）
     if (!alive()) return 'quit';
     f.body.innerHTML = '';
-    const B2 = await solveCore({ pos: st.pos, text: { zh: '從第一手往前下到贏。', en: 'Play forward from the first move to the win.', ja: '一手目から勝ちまで打とう。', ko: '첫 수부터 이길 때까지 두세요.' }, line: st.line }, f, alive);
+    const B2 = await solveCore({ pos: st.pos, text: { zh: '從第一手往前下到贏。', en: 'Play forward from the first move to the win.', ja: '一手目から勝ちまで打とう。', ko: '첫 수부터 이길 때까지 두세요.' }, line: st.line, toFive: st.toFive }, f, alive);
     if (!B2 || !alive()) return 'quit';
     if (!sprite(B2.el, 'stamp_ok', B2.size - 46, 40, 76, { keep: true, z: 7 })) { const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = '✓'; B2.el.appendChild(stamp); }
     msg(f.body, U('done'), TX({ zh: '從快贏的局面一層一層往回想下一手，再從頭下一遍。找 VCF 就是這樣想的。', en: 'You worked back layer by layer from the winning position, then played it from the start. That is how to think about VCF.', ja: '勝ちの局面から一層ずつ次の一手を考え、最初から打ち直した。VCF の考え方はこれ。', ko: '이기기 직전 국면부터 한 층씩 다음 수를 생각하고, 처음부터 다시 두었습니다. VCF는 이렇게 생각합니다.' }), 'good');
@@ -712,8 +716,13 @@
     };
     const WIN_FORBID = { zh: '黑唯一的擋點是禁手：黑擋不了，白贏！', en: 'Black’s only block is a forbidden point: White wins!', ja: '黒の唯一の止めが禁手。白の勝ち！', ko: '흑의 유일한 막는 자리가 금수: 백 승리!' };
     let miss = 0;
+    let needFive = null;   // 初學（st.toFive）：下到活四／四四後，電腦擋一頭，要玩家自己連成五
     B.onTap = async (t) => {
       if (busy || B.has(t) || !alive()) return;
+      if (needFive) {
+        if (!needFive.includes(t)) { B.shake(); return; }
+        B.clearMarks(); B.put(t, atkC); mine.push(t); B.five(fiveLine(new Set(mine), t), true); B.onTap = null; finish(B); return;
+      }
       busy = true; B.clearMarks();
       try {
         const r = (await move(b.join(' '), w.join(' '), t, aw)).result || { r: 'illegal' };
@@ -722,7 +731,23 @@
         B.put(t, atkC); mine.push(t);
         if (r.r === 'win') {
           if (/禁/.test(r.how || '')) { if (r.at) { B.glow(r.at, '#FF7A6B'); B.cross(r.at); } msg(f.body, U('ok'), TX(WIN_FORBID), 'good'); await sleep(1200); }
-          else if (/五/.test(r.how || '')) B.five(fiveLine(new Set(mine), t), true); else B.glow(t, '#F2B544');
+          else if (/五/.test(r.how || '')) B.five(fiveLine(new Set(mine), t), true);
+          else if (st.toFive) {   // 2026-11-10 使用者：初學時要知道活四的下一手一定能連五 → 電腦擋一頭，玩家自己連成五
+            const occ = () => new Set([...b, ...w]);
+            const fp = fivePoints(new Set(mine), occ(), atkC === 'b');
+            if (fp.length) {
+              msg(f.body, '', TX({ zh: '活四（或四四）！對方只擋得了一頭……', en: 'Open four (or double four)! The opponent can block only one end…', ja: '活四（または四々）！相手は片方しか止められない……', ko: '활사(또는 쌍사)! 상대는 한쪽밖에 못 막아요……' }));
+              await sleep(500); if (!alive()) return;
+              await B.thread(fp[0], defC); theirs.push(fp[0]);
+              const rest = fivePoints(new Set(mine), occ(), atkC === 'b');
+              if (rest.length) {
+                needFive = rest; rest.forEach(p => B.glow(p, '#3CC6B4'));
+                msg(f.body, U('ok'), TX({ zh: '另一頭還空著，連成五！', en: 'The other end is still open. Make five!', ja: 'もう片方が空いている。五を作れ！', ko: '다른 쪽이 아직 비어 있어요. 오목을 만드세요!' }), 'good');
+                return;
+              }
+            }
+            B.glow(t, '#F2B544');
+          } else B.glow(t, '#F2B544');
           B.onTap = null; finish(B); return;
         }
         if (r.r === 'block') {

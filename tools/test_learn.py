@@ -72,6 +72,9 @@ try:
                 elif T == 'solve':   # 照驗證過的手順下，電腦用引擎擋
                     for j in range(0, len(st['line']), 2):
                         pg.wait_for_timeout(300); tap(pg, st['line'][j]); pg.wait_for_timeout(1600)
+                    if st.get('toFive') and st.get('five'):
+                        pg.wait_for_timeout(1500)
+                        for p5 in st['five']: tap(pg, p5); pg.wait_for_timeout(500)
                     pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)   # 解完才只剩「下一步」；別按到退一手
                     overflow(pg, where + ' 解完'); btn(pg, timeout=12000)
                 elif T == 'rewind':   # v2：先退成五那手，之後每次退兩手，每關點一個可接受點；最後自己往前下
@@ -83,6 +86,9 @@ try:
                     pg.wait_for_timeout(600)
                     for j in range(0, len(st['line']), 2):
                         tap(pg, st['line'][j]); pg.wait_for_timeout(2200)
+                    if st.get('toFive'):   # 初學：活四後電腦擋一頭，再補成五（擋掉的那頭點了會被忽略）
+                        pg.wait_for_timeout(1500)
+                        for p5 in st['five']: tap(pg, p5); pg.wait_for_timeout(500)
                     pg.wait_for_function("document.querySelectorAll('#learn .lfoot .lbtn').length === 1", timeout=20000)
                     overflow(pg, where + ' 正著下完'); btn(pg)
             pg.wait_for_timeout(700); overflow(pg, f"{l['id']} 完成後回教學盤")

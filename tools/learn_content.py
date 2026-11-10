@@ -363,6 +363,7 @@ for lid, u, title in TITLES:
     if lid == '9-3': L['noStone'] = True
     for st in L['steps']:
         if st.get('type') == 'rewind': st['stages'] = stages_of(st)
+        if st.get('type') in ('rewind', 'solve') and u <= 5: st['toFive'] = True   # 初學下到連成五；第 6 單元起下到活四就算解開
     lessons.append(L)
 D['lessons'] = lessons
 # 教學盤：32 子黑白輪流、由中心往外，依新課程順序對應（盤面不變）
