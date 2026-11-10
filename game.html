@@ -1215,23 +1215,23 @@ async function eyPlace(t) {
   if (!g || g.hold || g.over || g.eyBusy || !t) return;
   if (g.black.includes(t) || g.white.includes(t)) return;
   if (t === g.eySol) return eyAnswer(t, true);
-  g.eyBusy = true;   // 不是解的點：問引擎是不是四／禁手；時間照跑（不設 hold）
+  // 不是解的點：秒數凍結（使用者 2026-11-10），背景問引擎是不是四／禁手、是不是別解；算完再判，不吃玩家的秒數
+  g.hold = true; g.eyBusy = true;
+  const resume = () => { g.eyBusy = false; if (!g.over) g.hold = false; };
   const res = (await move(g.black.join(' '), g.white.join(' '), t, g.p.atkWhite)).result || { r: 'illegal' };
-  g.eyBusy = false;
-  if (g.hold || g.over) return;   // 等引擎的時候時間到了
-  if (res.r === 'illegal') return;
+  if (g.over) return;
+  if (res.r === 'illegal') return resume();
   if (res.r === 'forbidden' || res.r === 'notfour') {
     if (res.r === 'forbidden') g.wf++; else g.wn++;
+    resume();
     flash(T('why_' + res.r) + '<br><small>' + T('noMiss') + '</small>', 'warn', WARN_MS);
     return;
   }
   // 別解（使用者 2026-11-10：第一個四和第二個四常可對調）：試走這手、電腦擋完，還能在剩下 L−1 手內贏就算對
   if (res.r === 'win') return eyAnswer(t, true);
   if (res.r === 'block' && !res.nofour) {
-    g.eyBusy = true;
     const tr = (await play(g.black.join(' '), g.white.join(' '), t, g.p.atkWhite)).result || {};
-    g.eyBusy = false;
-    if (g.hold || g.over) return;
+    if (g.over) return;
     if (tr.r === 'win' || (tr.r === 'block' && !tr.lost && tr.vcf >= 1 && tr.vcf <= (g.p.L || 4) - 1)) return eyAnswer(t, true);
   }
   return eyAnswer(t, false);
