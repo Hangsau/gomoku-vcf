@@ -107,6 +107,9 @@ header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 1px; d
 .chip.dim { background: transparent; border: 1px solid var(--line2); color: var(--text3); }
 /* 輸入 */
 .inputRow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.idRow { display: flex; gap: 10px; margin-top: 8px; }
+.idRow input { flex: 1 1 auto; min-width: 0; min-height: 44px; background: #10141D; color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 0 12px; font-family: var(--mono); font-size: 16px; text-transform: uppercase; }
+.idRow input::placeholder { text-transform: none; }
 .inputRow textarea { flex: 1 1 360px; min-height: 64px; background: #10141D; color: var(--text); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 12px; font-family: var(--mono); font-size: 14px; resize: vertical; }
 .hint { font-size: 12px; color: var(--text3); line-height: 1.6; }
 .strip { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
@@ -262,7 +265,12 @@ section.panel[aria-label] { position: relative; }
 
   <section class="panel" id="inputSec" aria-label="輸入題目">
     <button class="icob sheetX mOnly" type="button" data-sheet-close aria-label="關閉"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <label for="txt" class="label">貼上題目</label>
+    <label for="idIn" class="label">用題號找題目</label>
+    <div class="idRow">
+      <input id="idIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="題號（例：0015P5B9）" aria-label="題號">
+      <button class="tool" type="button" id="btnFindId">找題目</button>
+    </div>
+    <label for="txt" class="label" style="margin-top:14px;display:block">貼上題目</label>
     <div class="inputRow" style="margin-top:8px">
       <textarea id="txt" placeholder="黑 H8 G7 J7 ｜ 白 J9 K8　或　文字棋盤（┌┬┐├┼┤ 畫的 15×15，●黑 ○白，貼上就會放上棋盤）　或　題庫 JSON"></textarea>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -506,6 +514,40 @@ function loadPosition(b, w) {
   [...black].forEach(t => white.delete(t));
   boardChanged();
 }
+// 用題號找題目（2026-11-10）：題號＝覆盤清單上的 #XXXXXXXX（Crockford Base32 八碼）。逐檔讀題庫 game/p/N.json，找到就停；讀過的檔留在記憶體不重抓。
+// 攻方不另存：放上棋盤後照一般流程由評分器判黑先／白先。
+const ID_RE = /^[0-9A-HJKMNP-TV-Z]{8}$/;
+function normId(s) { s = String(s || '').trim().toUpperCase().replace(/^#/, '').replace(/O/g, '0').replace(/[IL]/g, '1'); return ID_RE.test(s) ? s : null; }
+let idIndex = null, idBusy = false;
+const idFiles = {};
+const idFetch = (url) => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+async function findById(raw) {
+  if (idBusy) return;
+  const id = normId(raw);
+  if (!id) { $('status').textContent = '題號格式不對：要 8 碼英數字（例：0015P5B9）'; return; }
+  idBusy = true; $('btnFindId').disabled = true; $('idIn').value = id;
+  try {
+    if (!idIndex) idIndex = await idFetch('game/p/index.json');
+    const dans = idIndex.dans || [];
+    for (let k = 0; k < dans.length; k++) {
+      $('status').textContent = `搜尋題號 #${id}…（題庫第 ${k + 1} / ${dans.length} 個檔）`;
+      const f = dans[k].file;
+      if (!idFiles[f]) idFiles[f] = await idFetch('game/p/' + f);
+      const q = idFiles[f].find(x => x[5] === id);
+      if (q) {
+        stopAuto(); trial = null; step = 0; document.body.classList.remove('editing');
+        loadPosition(q[0], q[1]);
+        $('status').textContent = `找到題號 #${id}：${dans[k].dan}、${q[2]} 手、攻方 ${q[4] === 'w' ? '白' : '黑'}`;
+        if (mobile()) closeSheets();
+        return;
+      }
+    }
+    $('status').textContent = `找不到題號 #${id}（已查完 ${dans.length} 個題庫檔）`;
+  } catch (e) { $('status').textContent = '題庫讀不到，請稍後再試'; }
+  finally { idBusy = false; $('btnFindId').disabled = false; }
+}
+$('btnFindId').onclick = () => findById($('idIn').value);
+$('idIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); findById($('idIn').value); } });
 $('btnLoad').onclick = () => { const p = parseInput($('txt').value); if (!p) { $('status').textContent = '看不懂這段輸入：請用「黑 H8 G7 ｜ 白 J9」、文字棋盤（●○）或題庫 JSON。'; return; } loadPosition(p[0], p[1]); };
 $('txt').addEventListener('paste', () => setTimeout(() => { const s = $('txt').value; if (parseTextBoard(s)) { const p = parseTextBoard(s); loadPosition(p[0], p[1]); $('status').textContent = `已讀入文字棋盤：黑 ${black.size}、白 ${white.size}。`; } }, 0));   // 貼上文字棋盤就直接放上棋盤
 $('btnCopy').onclick = async () => { const s = `黑 ${[...black].join(' ')} ｜ 白 ${[...white].join(' ')}`; $('txt').value = s; try { await navigator.clipboard.writeText(s); $('status').textContent = '已複製盤面。'; } catch { } };
@@ -1230,15 +1272,10 @@ function renderAll() { drawBoard(); renderStages(); renderRate(); renderSrc(); r
   const ok = t => /^[A-HJ-P](1[0-5]|[1-9])$/.test(t);
   black = new Set(b.filter(ok)); white = new Set(w.filter(ok).filter(t => !black.has(t)));
   renderAll();
+  const hid = h.get('id');
+  if (hid && !b.length && !w.length) { $('idIn').value = hid; findById(hid); }   // score.html#id=0015P5B9：進頁面就找（#b=…&w=… 優先）
 })();
 </script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
-<script>
-// 從 Gomoku Rush 覆盤打開時，試煉場是蓋在遊戲上的一層：回 Gomoku Rush 的鈕改成收起這層（2026-11-10）
-try {
-  if (window.parent !== window && typeof parent.closeLab === 'function')
-    document.querySelectorAll('a[href="game.html"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); parent.closeLab(); }));
-} catch (e) {}
-</script>
 </body>
 </html>

@@ -124,12 +124,6 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 /* 浮層：排行榜、看我解的題 */
 .modal { position: fixed; inset: 0; background: rgba(5,7,12,.7); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
 .modal[hidden] { display: none; }
-/* 覆盤打開的試煉場：蓋在遊戲上的全螢幕層（2026-11-10 使用者：另開視窗在手機上一滑就消失） */
-#lab { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; }
-#lab[hidden] { display: none; }
-.labbar { display: flex; align-items: center; gap: 10px; padding: calc(4px + env(safe-area-inset-top)) 8px 4px; border-bottom: 1px solid var(--line); }
-.labback { min-height: 44px; padding: 0 14px 0 8px; border: 0; border-radius: 12px; background: var(--panel2); color: var(--text); font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
-#lab iframe { flex: 1; width: 100%; border: 0; display: block; background: var(--bg); }
 .modal .box { width: 100%; max-width: 520px; max-height: 88dvh; overflow-y: auto; border-radius: 24px 24px 0 0; background: var(--panel); padding: 10px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
 .modal h2 { margin: 4px 0 0; font-size: 20px; }
 .rev { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-top: 1px solid var(--line); font-size: 15px; }
@@ -224,6 +218,12 @@ body.tw #sStart .thumb { padding-top: 6px; }
   .twcard .big { font-size: 26px; } .twcard .sc { font-size: 22px; }
 }
 .trev .hd b, .trev .hd span { min-height: 1.3em; }
+/* 覆盤研究盤（2026-11-10）：借解題畫面的棋盤＋象牙塔研究盤面板；body.rv 時解題畫面只留棋盤與面板，所有模式一樣 */
+body.rv #sPlay > *:not(#boardWrap):not(#twRev) { display: none !important; }
+body.rv #twRev:not([hidden]) { display: flex !important; }
+body.rv #boardWrap { margin-top: calc(10px + env(safe-area-inset-top)); }
+body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { display: none !important; }
+.trev .bt .btn { padding: 0 6px; white-space: nowrap; }
 @media (max-height: 640px) {   /* 矮螢幕：解題畫面上方數字、研究盤按鈕收小，棋盤才不會縮太多 */
   .twhud { padding-top: calc(4px + env(safe-area-inset-top)); padding-bottom: 2px; }
   .twhud b { font-size: 24px; }
@@ -432,6 +432,9 @@ body.tw #sStart .thumb { padding-top: 6px; }
       <button type="button" class="btn ghost" id="twLeave2" style="flex: 1; height: 56px; font-size: 15px;" data-i18n="twLeave">先離開</button>
       <button type="button" class="btn ghost" id="twEnd2" style="flex: 1; height: 56px; font-size: 15px;" data-i18n="twEnd">結束今天</button>
       <button type="button" class="btn gold" id="twGoNext" style="flex: 1.4; height: 56px;">下一題</button>
+      <button type="button" class="btn ghost rvonly" id="rvPrevQ" style="flex: 1; height: 56px; font-size: 15px;" data-i18n="rvPrevQ">上一題</button>
+      <button type="button" class="btn gold rvonly" id="rvBack" style="flex: 1.2; height: 56px;" data-i18n="rvBack">返回</button>
+      <button type="button" class="btn ghost rvonly" id="rvNextQ" style="flex: 1; height: 56px; font-size: 15px;" data-i18n="rvNextQ">下一題</button>
     </div>
   </div>
   <div class="tools only-p">
@@ -503,9 +506,6 @@ body.tw #sStart .thumb { padding-top: 6px; }
 <div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
   <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="revList"></div></div>
 </div>
-<div id="lab" hidden role="dialog" aria-modal="true" aria-label="詰題試煉場" data-i18n-aria="backA">
-  <div class="labbar"><button type="button" class="labback" id="labBack"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="labBack">返回</span></button></div>
-</div>
 
 <script>
 'use strict';
@@ -558,7 +558,7 @@ const I18N = {
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
     boardT: '排行榜', close: '關閉', msgBtn: '給作者留言', msgT: '給作者留言', msgHint: '建議、遇到的問題、想要的功能都可以寫，只有作者看得到。', msgPh: '想說的話', msgContactPh: '聯絡方式（選填，想收到回覆再填，例如 IG 或 email）', msgSend: '送出', msgOk: '收到了，謝謝！', msgFail: '沒送出去，請稍後再試。', msgEmpty: '請先寫點什麼。', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
-    tabRank: '煉獄之門', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', alchemy: '邪修煉丹爐', todayNo: '今天第', boardShort: '排行', revShort: '題目', lastRev: '上一局的題目', labBack: '返回', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
+    tabRank: '煉獄之門', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', alchemy: '邪修煉丹爐', todayNo: '今天第', boardShort: '排行', revShort: '題目', lastRev: '上一局的題目', rvBack: '返回', rvPrevQ: '上一題', rvNextQ: '下一題', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
     moves: '{n} 手', secs: '{s} 秒', pscore: '題目 {s} 分', abDelta: '能力分 {d}', sep: '・',
     modeTower: '象牙塔', tabTower: '象牙塔', twDate: '{d}・今天 100 題', twR1: '由易到難・大家同一組', twR2: '答錯換下一題・離開時暫停', twR3: '按「結束今天」結算・第一輪才上排行', twLeave: '先離開', twGo: '開始爬塔', twCont: '繼續爬塔', twAgain: '再爬一次（練習）', twNoP: '今天的題目讀不到，稍後再試', twProg: '今天的進度', twDone: '{n} / 100 題', twPlaceL: '第 {p} 名', twCardLine: '正確率 {a}%・提示剩 {h} 次', twFloorS: '{n} 層', twCardTime: '累積 {t}', twEndedNote: '今天已經結束，再爬只算練習', twScoreL: '分數', twNoL: '第幾題', twTimeL: '累積時間', twAccL: '正確率 {p}%', twHintN: '提示（剩 {n}）', twEnd: '結束今天', twOk: '解開！+{p}', twMissT: '第 {n} 題沒解開', twOkT: '第 {n} 題解開！+{p}', twPaused: '研究中・時間暫停', twAns: '看答案', twMine: '我的下法', twNext: '下一題', twFinishBtn: '看結果', twDayOver: '過了 00:00，今天的塔已經結算', twNet: '連線中斷，重試中…', twTop: '爬到塔頂了！', twEndWhy: '今天到這裡', twPracEnd: '練習結束', twSolvedN: '解開 {n} / {m} 題', twPracNote: '練習不上排行', twBack: '回象牙塔', yday: '昨天', accL: '正確率', twPrev: '上一手', twNextMv: '下一手', twRevHint: '點棋盤可以自由擺子', twSolving: '算答案中…',
@@ -587,7 +587,7 @@ const I18N = {
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
     boardT: 'Leaderboard', close: 'Close', msgBtn: 'Message the developer', msgT: 'Message the developer', msgHint: 'Suggestions, problems, feature ideas: only the developer can read this.', msgPh: 'Your message', msgContactPh: 'Contact (optional, only if you want a reply, e.g. Instagram or email)', msgSend: 'Send', msgOk: 'Got it, thank you!', msgFail: "Couldn't send. Please try again later.", msgEmpty: 'Please write something first.', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
-    tabRank: 'Purgatory Gate', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', alchemy: 'Rogue Alchemy Furnace', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', lastRev: 'Last run’s puzzles', labBack: 'Back', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
+    tabRank: 'Purgatory Gate', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', alchemy: 'Rogue Alchemy Furnace', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', lastRev: 'Last run’s puzzles', rvBack: 'Back', rvPrevQ: 'Prev', rvNextQ: 'Next', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
     moves: '{n} moves', secs: '{s}s', pscore: 'puzzle {s}', abDelta: 'rating {d}', sep: ' · ',
     modeTower: 'Ivory Tower', tabTower: 'Ivory Tower', twDate: '{d} · 100 puzzles today', twR1: 'Easy to hard · same set for everyone', twR2: 'A miss moves you on · clock pauses when you leave', twR3: 'Tap End today to finish · first climb is ranked', twLeave: 'Leave for now', twGo: 'Start climbing', twCont: 'Keep climbing', twAgain: 'Climb again (practice)', twNoP: "Couldn't load today's puzzles. Try again later.", twProg: 'Today', twDone: '{n} / 100', twPlaceL: '#{p}', twCardLine: 'Accuracy {a}% · {h} hints left', twFloorS: 'Floor {n}', twCardTime: 'Time {t}', twEndedNote: "Today's climb is done. Climbing again is practice.", twScoreL: 'Score', twNoL: 'Puzzle', twTimeL: 'Total time', twAccL: 'Accuracy {p}%', twHintN: 'Hint ({n} left)', twEnd: 'End today', twOk: 'Solved! +{p}', twMissT: 'Puzzle {n} not solved', twOkT: 'Puzzle {n} solved! +{p}', twPaused: 'Studying · clock stopped', twAns: 'Show answer', twMine: 'My moves', twNext: 'Next puzzle', twFinishBtn: 'See results', twDayOver: "It's past 00:00; today's tower is closed.", twNet: 'Connection lost, retrying…', twTop: 'You reached the top!', twEndWhy: 'Done for today', twPracEnd: 'Practice over', twSolvedN: '{n} of {m} solved', twPracNote: 'Practice is not ranked', twBack: 'Back to the tower', yday: 'Yesterday', accL: 'Accuracy', twPrev: 'Previous move', twNextMv: 'Next move', twRevHint: 'Tap the board to place stones freely', twSolving: 'Finding the answer…',
@@ -616,7 +616,7 @@ const I18N = {
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
     boardT: 'ランキング', close: '閉じる', msgBtn: '作者にメッセージ', msgT: '作者にメッセージ', msgHint: '提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。', msgPh: 'メッセージ', msgContactPh: '連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）', msgSend: '送信', msgOk: '受け取りました。ありがとうございます！', msgFail: '送信できませんでした。しばらくしてからもう一度お試しください。', msgEmpty: 'まず何か書いてください。', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
-    tabRank: '煉獄の門', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', alchemy: '邪道の錬丹炉', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', lastRev: '前回の問題', labBack: '戻る', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
+    tabRank: '煉獄の門', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', alchemy: '邪道の錬丹炉', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', lastRev: '前回の問題', rvBack: '戻る', rvPrevQ: '前の問題', rvNextQ: '次の問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
     moves: '{n} 手', secs: '{s} 秒', pscore: '問題 {s} 点', abDelta: 'レーティング {d}', sep: '・',
     modeTower: '象牙の塔', tabTower: '象牙の塔', twDate: '{d}・今日の 100 問', twR1: '易しい順・全員同じ問題', twR2: 'ミスしたら次の問題へ・離れると時間停止', twR3: '「今日はここまで」で確定・ランキングは初回のみ', twLeave: 'いったん離れる', twGo: '登り始める', twCont: '続きから登る', twAgain: 'もう一度登る（練習）', twNoP: '今日の問題を読み込めません。後でもう一度お試しください', twProg: '今日の進捗', twDone: '{n} / 100 問', twPlaceL: '{p} 位', twCardLine: '正答率 {a}%・ヒント残り {h} 回', twFloorS: '{n} 階', twCardTime: '累計 {t}', twEndedNote: '今日は終了しました。もう一度登ると練習扱いです', twScoreL: 'スコア', twNoL: '問題', twTimeL: '累計時間', twAccL: '正答率 {p}%', twHintN: 'ヒント（残り {n}）', twEnd: '今日はここまで', twOk: '正解！+{p}', twMissT: '第 {n} 問 失敗', twOkT: '第 {n} 問 正解！+{p}', twPaused: '研究中・時間停止', twAns: '答えを見る', twMine: '自分の手', twNext: '次の問題', twFinishBtn: '結果を見る', twDayOver: '00:00 を過ぎたので今日の塔は締め切りました', twNet: '接続が切れました。再試行中…', twTop: '頂上に到達！', twEndWhy: '今日はここまで', twPracEnd: '練習終了', twSolvedN: '{m} 問中 {n} 問正解', twPracNote: '練習はランキング対象外', twBack: '塔に戻る', yday: '昨日', accL: '正答率', twPrev: '前の手', twNextMv: '次の手', twRevHint: '盤をタップすると自由に置けます', twSolving: '答えを計算中…',
@@ -645,7 +645,7 @@ const I18N = {
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
     boardT: '순위표', close: '닫기', msgBtn: '개발자에게 메시지', msgT: '개발자에게 메시지', msgHint: '제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.', msgPh: '메시지', msgContactPh: '연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)', msgSend: '보내기', msgOk: '잘 받았습니다. 감사합니다!', msgFail: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.', msgEmpty: '먼저 내용을 적어 주세요.', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
-    tabRank: '연옥의 문', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', alchemy: '사파 연단로', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', lastRev: '지난 판 문제', labBack: '뒤로', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
+    tabRank: '연옥의 문', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', alchemy: '사파 연단로', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', lastRev: '지난 판 문제', rvBack: '뒤로', rvPrevQ: '이전 문제', rvNextQ: '다음 문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
     moves: '{n}수', secs: '{s}초', pscore: '문제 {s}점', abDelta: '능력 점수 {d}', sep: ' · ',
     modeTower: '상아탑', tabTower: '상아탑', twDate: '{d} · 오늘 100문제', twR1: '쉬운 문제부터 · 모두 같은 문제', twR2: '틀리면 다음 문제로 · 나가면 시간 멈춤', twR3: '「오늘 끝내기」로 확정 · 첫 도전만 순위', twLeave: '잠시 나가기', twGo: '오르기 시작', twCont: '이어서 오르기', twAgain: '다시 오르기 (연습)', twNoP: '오늘 문제를 불러오지 못했어요. 잠시 후 다시 시도하세요', twProg: '오늘 진행', twDone: '{n} / 100문제', twPlaceL: '{p}위', twCardLine: '정답률 {a}% · 힌트 {h}번 남음', twFloorS: '{n}층', twCardTime: '누적 {t}', twEndedNote: '오늘은 끝났어요. 다시 오르면 연습이에요', twScoreL: '점수', twNoL: '문제', twTimeL: '누적 시간', twAccL: '정답률 {p}%', twHintN: '힌트 ({n}번 남음)', twEnd: '오늘 끝내기', twOk: '성공! +{p}', twMissT: '{n}번 문제 실패', twOkT: '{n}번 문제 성공! +{p}', twPaused: '연구 중 · 시간 정지', twAns: '답 보기', twMine: '내 수', twNext: '다음 문제', twFinishBtn: '결과 보기', twDayOver: '00:00이 지나 오늘 탑은 마감됐어요', twNet: '연결 끊김, 다시 시도 중…', twTop: '정상에 도착!', twEndWhy: '오늘은 여기까지', twPracEnd: '연습 종료', twSolvedN: '{m}문제 중 {n}문제 해결', twPracNote: '연습은 순위에 오르지 않아요', twBack: '탑으로', yday: '어제', accL: '정답률', twPrev: '이전 수', twNextMv: '다음 수', twRevHint: '판을 눌러 자유롭게 둘 수 있어요', twSolving: '답 계산 중…',
@@ -901,12 +901,13 @@ applyLang();
 // ---------- 棋盤 ----------
 const cv = $('board'), ctx = cv.getContext('2d');
 let px = 390, cell = 24, pad = 14;
+let rvw = null, rvScreen = null;   // 覆盤研究盤狀態（見「覆盤」一節）
 function layout() {
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
   setBoardPx(Math.max(300, Math.min(w - 16, window.innerHeight - 340)));   // 左右各留 8px，邊線的子才點得到
   // 一屏放得下（使用者 2026-11-09）：量整頁有沒有超出視窗，超出多少就把棋盤縮多少（最小 240）
   if ($('sPlay').hidden) return;
-  const tw = g && g.tw && !g.rev;
+  const tw = g && g.tw && !g.rev && !rvw;
   if (tw) { $('twRev').hidden = false; $('twTools').hidden = true; }   // 象牙塔照研究盤（比較高）的版面量
   const over = document.documentElement.scrollHeight - window.innerHeight;
   if (tw) { $('twRev').hidden = true; $('twTools').hidden = false; }
@@ -943,12 +944,13 @@ function draw() {
   }
   ctx.fillStyle = '#5B4524';
   for (const t of ['D4', 'D12', 'L4', 'L12', 'H8']) { const [x, y] = xy(t); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
-  if (!g || !g.p) return;
-  if (g.rev) {   // 象牙塔研究盤：題目＋目前這條線（我的下法或答案，可自由改），標手順
-    for (const t of g.p.black) stone(t, true);
-    for (const t of g.p.white) stone(t, false);
-    g.rev.seq.slice(0, g.rev.cur).forEach((t, k) => {
-      const blk = (k % 2 === 0) !== g.p.atkWhite, [x, y] = xy(t);
+  const V = revView();
+  if (!V && (!g || !g.p)) return;
+  if (V) {   // 研究盤（象牙塔每題後、各模式覆盤共用）：題目＋目前這條線（我的下法或答案，可自由改），標手順
+    for (const t of V.p.black) stone(t, true);
+    for (const t of V.p.white) stone(t, false);
+    V.r.seq.slice(0, V.r.cur).forEach((t, k) => {
+      const blk = (k % 2 === 0) !== V.p.atkWhite, [x, y] = xy(t);
       stone(t, blk);
       ctx.fillStyle = blk ? '#F2B544' : '#1B1A17';
       ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
@@ -1110,7 +1112,7 @@ async function nextPuzzle() {
   let p;
   try { p = await (g.b4 ? pickFour(g.used, g.p && g.p.score, g.b4Dir || 0) : g.mj && !g.mjInf ? pickRank(g.start, g.used) : pickPuzzle(g.ab, g.used)); }
   catch { endGame(T('endNoPuzzle')); return; }
-  g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.wf = 0; g.wn = 0;
+  g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.seq = []; g.wf = 0; g.wn = 0;   // seq：攻守交替的完整手順，覆盤研究盤用（各模式都記）
   if (g.mj) { g.armed = false; g.think = 0; g.left = MJ_START; }   // 明鏡台每題重新計時
   g.hist = []; g.helped = false; g.undos = 0; g.hints = 0; g.mist = 0; g.dead = false; g.hintPt = null;   // 練習場每題重設
   setGhost(null);
@@ -1222,7 +1224,7 @@ async function solved(how) {
   const d = updateAbility(helped ? 'half' : true);
   g.total += g.b4 ? p.score / p.L : p.score; g.left += BONUS_SEC; g.solved++; g.b4Dir = 1;   // 無限之塔累積單手分數（題目分÷手數，使用者 2026-11-08）
   if (g.prac) { if (helped) g.helpedN++; else g.own++; }
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields() });
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, ...pracFields() });
   plusFx('+' + BONUS_SEC);
   renderHud();
   await flash(helped ? T('tagHelp') + '・' + T('abDelta', { d }) : T('ok', { b: BONUS_SEC }), 'good', FEED_MS);
@@ -1233,7 +1235,7 @@ async function mjSolved(p, sec, how) {
   const lf = Math.floor(g.left), pts = Math.round(p.score * (1 + MJ_BONUS * lf));
   g.total += pts; g.solved++;
   if (g.mjInf) { g.ab *= MJ_GROW; g.cur = rankOf(g.ab); }
-  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn, pts, ...mjFields() });
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, pts, ...mjFields() });
   renderHud();
   await flash(T('mjOk', { p: pts }) + '<small>' + T('mjOkS', { s: lf }) + '</small>', 'good', FEED_MS);
   if (!g.over) nextPuzzle();
@@ -1259,7 +1261,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   const p = g.p;
   g.wrong++; g.b4Dir = -1;   // 無限之塔：下一題抽簡單一點
   const d = updateAbility(false);
-  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() };
+  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() };
   g.log.push(x);
   renderHud();
   const end = !g.prac && g.wrong >= MAX_WRONG;   // 練習場錯幾題都不結束
@@ -1279,11 +1281,11 @@ function logTimeUp(quit) {
   if (last && last.b === b && last.w === w) return;
   let e = 0;
   if (!quit) { g.wrong++; e = updateAbility(false); }
-  g.log.push({ b, w, a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e, ok: 0, sec: +g.psec.toFixed(1), wk: quit ? 'quit' : 'time', wa: '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() });
+  g.log.push({ b, w, a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e, ok: 0, sec: +g.psec.toFixed(1), wk: quit ? 'quit' : 'time', wa: '', m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() });
 }
 
 cv.addEventListener('click', (ev) => {
-  if (g && g.tw && g.rev) { const t = cellAt(ev); if (t) twRevTap(t); return; }   // 象牙塔研究盤：自由擺子
+  if (revView()) { const t = cellAt(ev); if (t) twRevTap(t); return; }   // 研究盤：自由擺子
   if (!g || g.hold || g.over) return;
   const t = cellAt(ev);
   if (!t || g.black.includes(t) || g.white.includes(t)) return;
@@ -1304,6 +1306,8 @@ window.addEventListener('resize', () => { if (!$('sPlay').hidden) layout(); });
 
 // ---------- 結算＋排行榜 ----------
 let lastRun = null, myId = null;
+// q（完整手順）只留本機給覆盤研究盤；送伺服器的複本不含 q，免得 detail 撐爆長度上限
+const noQ = (run) => ({ ...run, detail: run.detail.map(({ q, ...x }) => x) });
 function endGame(why) {
   if (g.over) return;
   g.over = true; g.hold = true;
@@ -1338,7 +1342,7 @@ async function submit() {
   $('ePlace').textContent = !lastRun.solved ? T('placeNone') : lastRun.demoted ? T('placeDemoted', { r: rankName(lastRun.startRank) }) : T('sending');
   myId = null;
   try {
-    const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
+    const r = await fetch(API + '/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(noQ(lastRun)) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
@@ -1368,7 +1372,7 @@ async function submitBlitz() {
   $('ePlace').textContent = lastRun.solved ? T('sending') : T('placeNone');
   myId = null;
   try {
-    const r = await fetch(API + '/blitz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
+    const r = await fetch(API + '/blitz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(noQ(lastRun)) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
@@ -1402,7 +1406,7 @@ async function submitMirror() {
   myId = null;
   if (!lastRun.detail.length) return;
   try {
-    const r = await fetch(API + '/mirror', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
+    const r = await fetch(API + '/mirror', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(noQ(lastRun)) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     myId = j.id;
@@ -1431,7 +1435,7 @@ function endPractice(why) {
   $('ePlace').textContent = ''; $('retrySubmit').hidden = true;
   $('again').textContent = T('againP');
   show('sEnd');
-  if (g.log.length) fetch(API + '/practice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) }).catch(() => {});
+  if (g.log.length) fetch(API + '/practice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(noQ(lastRun)) }).catch(() => {});
 }
 
 const boardKind = (m) => m === 'b4' ? 'b4' : m === 'tw' ? 'tower' : m === 'mj' ? 'mj' : 'rank';
@@ -1591,7 +1595,7 @@ async function twOpen() {
 async function twStep(ok, wk, wa) {   // 交這一題；回傳這題得分
   const p = g.p, i = g.n;
   const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: ok ? 1 : 0, sec: +g.psec.toFixed(1),
-    wk: wk || '', wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, h: g.hints || g.undos ? 1 : 0, u: g.undos, hi: g.hints, mk: 0 };
+    wk: wk || '', wa: wa || '', m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, h: g.hints || g.undos ? 1 : 0, u: g.undos, hi: g.hints, mk: 0 };
   let pts = ok ? Math.round(p.score) / 10 : 0;
   if (ok && !g.twPrac) xiexiuXP(p.score);   // 今天結算後重爬（練習）不加修為：題目一樣、答案已知
   if (g.twPrac) {
@@ -1638,34 +1642,38 @@ function twShowRev(on) {
   $('twGoNext').textContent = T(g.n >= TW_N || g.dayOver ? 'twFinishBtn' : 'twNext');
   twRenderRev();
 }
+// 研究盤的資料來源：覆盤（rvw）優先，否則是象牙塔進行中這題的 g.rev；兩邊都是 { r: 手順狀態, p: 題目 }
+function revView() { return rvw || (g && g.rev && g.p ? { r: g.rev, p: g.p } : null); }
 function twRenderRev() {
-  const r = g.rev;
+  const r = revView().r;
   $('twStep').textContent = `${r.cur} / ${r.seq.length}`;
   $('twPrev').disabled = r.cur <= 0;
   $('twNextMv').disabled = r.cur >= r.seq.length;
   $('twAns').textContent = T(r.ans ? 'twMine' : 'twAns');
 }
 function twRevTap(t) {
-  const r = g.rev;
-  if (g.p.black.includes(t) || g.p.white.includes(t) || r.seq.slice(0, r.cur).includes(t)) return;
+  const { r, p } = revView();
+  if (p.black.includes(t) || p.white.includes(t) || r.seq.slice(0, r.cur).includes(t)) return;
   r.seq = r.seq.slice(0, r.cur).concat(t); r.cur++;
   stoneSound(r.cur % 2 === 0);
   draw(); twRenderRev();
 }
-$('twPrev').onclick = () => { if (g && g.rev && g.rev.cur > 0) { g.rev.cur--; draw(); twRenderRev(); } };
-$('twNextMv').onclick = () => { if (g && g.rev && g.rev.cur < g.rev.seq.length) { g.rev.cur++; draw(); twRenderRev(); } };
+$('twPrev').onclick = () => { const V = revView(); if (V && V.r.cur > 0) { V.r.cur--; draw(); twRenderRev(); } };
+$('twNextMv').onclick = () => { const V = revView(); if (V && V.r.cur < V.r.seq.length) { V.r.cur++; draw(); twRenderRev(); } };
 $('twAns').onclick = async () => {
-  const r = g && g.rev;
-  if (!r) return;
+  const V = revView();
+  if (!V) return;
+  const r = V.r;
   if (r.ans) { r.ans = false; r.seq = r.mine.seq; r.cur = r.mine.cur; draw(); twRenderRev(); return; }
   if (!r.sol) {
     $('twAns').disabled = true; $('twAns').textContent = T('twSolving');
     try {
-      const res = await solveFrom(g.p.black.join(' '), g.p.white.join(' '), g.p.atkWhite);
+      const res = await solveFrom(V.p.black.join(' '), V.p.white.join(' '), V.p.atkWhite);
       r.sol = res && res.result && res.result.solution ? String(res.result.solution).replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : [];
     } catch { r.sol = []; }
     $('twAns').disabled = false;
-    if (!g.rev) return;
+    const V2 = revView();
+    if (!V2 || V2.r !== r) return;   // 等答案的時候已經換題／離開
   }
   r.mine = { seq: r.seq, cur: r.cur };
   r.ans = true; r.seq = [...r.sol]; r.cur = r.sol.length;
@@ -1770,43 +1778,69 @@ function savedRev() { try { const r = JSON.parse(localStorage.getItem('vcfgame.l
 function homeRevSync() { $('homeRev').hidden = !savedRev(); }
 homeRevSync();
 $('homeRev').onclick = () => openRev(savedRev());
-// 試煉場蓋在遊戲上：每次換新的 iframe（不留瀏覽紀錄），手機返回手勢先關試煉場而不是離開遊戲
-function openLab(href) {
-  const old = $('lab').querySelector('iframe'); if (old) old.remove();
-  const f = document.createElement('iframe'); f.title = T('backA'); f.src = href;
-  $('lab').appendChild(f); $('lab').hidden = false;
-  history.pushState({ lab: 1 }, '');
-  $('labBack').focus();
-}
-function closeLab(fromPop) {
-  if ($('lab').hidden) return;
-  $('lab').hidden = true;
-  const f = $('lab').querySelector('iframe'); if (f) f.remove();
-  if (!fromPop && history.state && history.state.lab) history.back();
-}
-window.closeLab = closeLab;   // 試煉場裡的「Gomoku Rush」鈕在這層裡時改成呼叫它
-$('labBack').onclick = () => closeLab();
-addEventListener('popstate', () => closeLab(true));
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLab(); });
 $('openReview').onclick = () => openRev(lastRun);
 function openRev(run) {
   const list = $('revList'); list.innerHTML = '';
   if (!run || !run.detail.length) list.innerHTML = `<span class="muted">${T('noPuzzles')}</span>`;
-  for (const x of (run ? run.detail : [])) {
+  (run ? run.detail : []).forEach((x, i) => {
     const d = document.createElement('div'); d.className = 'rev';
-    const href = `score.html#b=${x.b.split(' ').join(',')}&w=${x.w.split(' ').join(',')}`;
-    const tag = x.ok && x.h ? ['hp', T('tagHelp')] : x.ok ? ['ok', T('tagOk')] : ['ng', T('tagNg')];
-    d.innerHTML = `<span class="tag ${tag[0]}">${tag[1]}</span><span class="tx"><span class="info"></span><span class="pid"></span></span><a target="_blank" rel="noopener">${T('open')}</a><button type="button" class="rpt">${T('report')}</button>`;
+    d.innerHTML = `<span class="tag ${revTag(x)[0]}">${revTag(x)[1]}</span><span class="tx"><span class="info"></span><span class="pid"></span></span><a href="#" role="button">${T('open')}</a><button type="button" class="rpt">${T('report')}</button>`;
     d.querySelector('.info').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]),
       ...(x.h ? [T('helpInfo', { u: x.u || 0, h: x.hi || 0, m: x.mk || 0 })] : []), ...(run.mode === 'b4' || run.mode === 'tw' || run.mode === 'mj' ? [] : [T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })])].join(T('sep'));   // 無限之塔沒有能力分
-    d.querySelector('a').href = href;
-    d.querySelector('a').onclick = (e) => { e.preventDefault(); openLab(href); };
-    (x.id ? Promise.resolve(x.id) : puzzleId(x.b, x.w, x.a)).then(id => { x.id = id; d.querySelector('.pid').textContent = '#' + id; });
+    d.querySelector('a').onclick = (e) => { e.preventDefault(); openRv(run, i); };
+    ensureId(x).then(id => { d.querySelector('.pid').textContent = '#' + id; });
     d.querySelector('.rpt').onclick = () => reportForm(d, x);
     list.appendChild(d);
-  }
+  });
   openModal('mReview');
 }
+const revTag = (x) => x.ok && x.h ? ['hp', T('tagHelp')] : x.ok ? ['ok', T('tagOk')] : ['ng', T('tagNg')];
+const ensureId = (x) => x.id ? Promise.resolve(x.id) : puzzleId(x.b, x.w, x.a).then(id => (x.id = id));
+// 覆盤研究盤（2026-11-10 使用者：覆盤不再連到試煉場，改成遊戲內跟象牙塔同一套研究盤；各模式一樣）
+// 借解題畫面的棋盤與象牙塔研究盤面板（body.rv 藏掉其他元件）；只在一局結束後從覆盤清單進來，不碰進行中的流程。
+// 返回／瀏覽器返回鍵／Esc 回到覆盤清單；進入時 pushState 一筆，所以手機返回手勢先退研究盤、不會離開遊戲。
+function openRv(run, i) {
+  const first = !rvw;
+  if (first) {
+    rvScreen = curScreen();
+    $('mReview').hidden = true;
+    if (rvScreen) $(rvScreen).hidden = true;
+    $('sPlay').hidden = false; document.body.classList.add('rv');
+    history.pushState({ rv: 1 }, '');
+  }
+  const x = run.detail[i];
+  rvw = { run, i, p: { black: x.b.split(' ').filter(Boolean), white: x.w.split(' ').filter(Boolean), atkWhite: x.a === 'w' },
+    r: { seq: (x.q || '').split(' ').filter(Boolean), cur: 0, mine: null, ans: false, sol: null } };
+  rvw.r.cur = rvw.r.seq.length;
+  const hd = $('twRevT'), tag = revTag(x), head = () => `${tag[1]}　${x.id ? '#' + x.id : ''}　${i + 1}/${run.detail.length}`;
+  hd.textContent = head();
+  hd.classList.toggle('ok', !!x.ok);
+  $('twRevWhy').textContent = x.ok ? T('twRevHint') : whyText(x) + T('sep') + T('twRevHint');
+  if (!x.id) ensureId(x).then(() => { if (rvw && rvw.run.detail[rvw.i] === x) hd.textContent = head(); });
+  $('rvPrevQ').disabled = i <= 0; $('rvNextQ').disabled = i >= run.detail.length - 1;
+  $('twRev').hidden = false;
+  twRenderRev();
+  layout(); setTimeout(layout);
+  if (first) wakeSync();
+}
+function closeRv(fromPop) {
+  if (!rvw) return;
+  rvw = null;
+  $('twRev').hidden = !(g && g.rev);
+  document.body.classList.remove('rv');
+  $('sPlay').hidden = true;
+  if (rvScreen) $(rvScreen).hidden = false;
+  rvScreen = null;
+  $('mReview').hidden = false;
+  window.scrollTo(0, 0);
+  wakeSync();
+  if (!fromPop && history.state && history.state.rv) history.back();
+}
+$('rvBack').onclick = () => closeRv();
+$('rvPrevQ').onclick = () => { if (rvw && rvw.i > 0) openRv(rvw.run, rvw.i - 1); };
+$('rvNextQ').onclick = () => { if (rvw && rvw.i < rvw.run.detail.length - 1) openRv(rvw.run, rvw.i + 1); };
+addEventListener('popstate', () => closeRv(true));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRv(); });
 </script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 </body>
