@@ -151,6 +151,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 body.prac .only-r, body:not(.prac) .only-p { display: none !important; }
 /* 無限之塔（原名 4 手無限，2026-11-08）：body.b4 時藏 .not-b、只在 b4 顯示 .only-b；其他跟競速一樣 */
 body.b4 .not-b, body:not(.b4) .only-b { display: none !important; }
+/* 明鏡台（2026-11-10 使用者）：body.mj 時藏 .not-m、只在明鏡台顯示 .only-m；mjinf＝無限（藏段位選擇 .not-mi），分級藏暱稱 .not-ml */
+body.mj .not-m, body:not(.mj) .only-m, body.mjinf .not-mi, body.mj:not(.mjinf) .not-ml { display: none !important; }
 .mode { display: flex; align-items: center; gap: 16px; min-height: 128px; padding: 18px 18px; border-radius: 22px; border: 2px solid var(--line2); background: var(--panel); color: var(--text); text-align: left; }
 .mode.r { border-color: var(--gold); } .mode.p { border-color: var(--teal); }
 .mode .big { width: 84px; flex: none; display: flex; justify-content: center; font-family: var(--num); font-size: 56px; font-weight: 700; line-height: 1; color: var(--gold); }
@@ -165,6 +167,7 @@ body.prac #sStart .big60 { color: var(--teal); }
   #sStart .bigIco { width: 64px; height: 64px; }
   #sStart .big60 { font-size: 72px; }
 }
+@media (max-height: 600px) { body.mj #sStart .bigIco { display: none; } }   /* 明鏡台說明多一行，小手機藏圖示才放得下 */
 .chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .chips button { height: 48px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 16px; }
 .chips button[aria-pressed="true"] { border: 2px solid var(--teal); background: var(--tealBg); font-weight: 700; }
@@ -288,6 +291,10 @@ body.tw #sStart .thumb { padding-top: 6px; }
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V10a7 7 0 0 1 14 0v11M3 21h18M9 21v-6a3 3 0 0 1 6 0v6M12 3v2"/></svg></span>
       <span class="tx"><b data-i18n="modeHell">煉獄之門</b></span>
     </button>
+    <button type="button" class="mode r slim" id="modeM">
+      <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M12 15v4M7 21h10M9.5 6.5a3.5 3.5 0 0 1 2.5-1"/></svg></span>
+      <span class="tx"><b data-i18n="modeMirror">明鏡台</b></span>
+    </button>
   </div>
   <div style="flex: 1;"></div>
 </section>
@@ -319,7 +326,17 @@ body.tw #sStart .thumb { padding-top: 6px; }
     <div class="pb" aria-hidden="true"><div id="twCardBar"></div></div>
     <div class="r" style="font-size: 13px;"><span id="twCardL"></span><span id="twCardT"></span></div>
   </div>
-  <div class="hero pad only-r not-b not-t" style="padding-top: 14px;">
+  <div class="hero pad only-m" style="padding-top: 14px;">
+    <svg class="bigIco" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M12 15v4M7 21h10M9.5 6.5a3.5 3.5 0 0 1 2.5-1"/></svg>
+    <span style="font-size: 18px; font-weight: 700;" data-i18n="mjSub">先算完，再落子</span>
+    <span class="muted" style="margin-top: 6px; font-size: 15px;" data-i18n="mjR1">第一手落下才開始計時</span>
+    <span class="muted" style="margin-top: 2px; font-size: 15px;" data-i18n="mjR2">起始 5 秒・每手 +1 秒・錯 3 題結束</span>
+    <span class="muted" style="margin-top: 2px; font-size: 15px;" id="mjNote"></span>
+  </div>
+  <div class="pad only-m" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+    <div class="chips" id="mjVar" style="grid-template-columns: repeat(2, minmax(0, 1fr));"></div>
+  </div>
+  <div class="hero pad only-r not-b not-t not-m" style="padding-top: 14px;">
     <svg class="bigIco" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V10a7 7 0 0 1 14 0v11M3 21h18M9 21v-6a3 3 0 0 1 6 0v6M12 3v2"/></svg>
     <span style="font-size: 18px; font-weight: 700;" data-i18n="heroSub">秒・VCF 衝分</span>
     <span class="muted" style="margin-top: 6px; font-size: 15px;" data-i18n="heroRule">答對 +20 秒・錯 3 題結束</span>
@@ -334,8 +351,8 @@ body.tw #sStart .thumb { padding-top: 6px; }
     <span class="muted" style="font-size: 15px;" data-i18n="pTimeLbl">練習時間</span>
     <div class="chips" id="pMins"></div>
   </div>
-  <div class="pad not-b not-t" style="padding-top: 24px; display: flex; flex-direction: column; gap: 8px;">
-    <span class="muted" style="font-size: 15px;" data-i18n="startRank">起始段位</span>
+  <div class="pad not-b not-t not-mi" style="padding-top: 24px; display: flex; flex-direction: column; gap: 8px;">
+    <span class="muted" style="font-size: 15px;" id="rkLbl" data-i18n="startRank">起始段位</span>
     <div class="stepper">
       <button type="button" id="rkDown" aria-label="降一段" data-i18n-aria="rkDown">−</button>
       <div class="val" aria-live="polite"><b id="rkName">三段</b><span id="rkBand" style="font-size: 13px;"></span></div>
@@ -347,7 +364,7 @@ body.tw #sStart .thumb { padding-top: 6px; }
     <span class="muted" style="font-size: 15px;" data-i18n="tapLbl">落子方式</span>
     <div class="chips" id="tapModes" style="grid-template-columns: repeat(2, minmax(0, 1fr));"></div>
   </div>
-  <div class="pad only-r nickrow" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+  <div class="pad only-r nickrow not-ml" style="padding-top: 20px; display: flex; flex-direction: column; gap: 8px;">
     <label for="nick" class="muted" style="font-size: 15px;" data-i18n="nick">暱稱</label>
     <input id="nick" class="nick" maxlength="12" autocomplete="nickname" placeholder="上排行榜用的名字" data-i18n-ph="nickPh">
   </div>
@@ -395,6 +412,7 @@ body.tw #sStart .thumb { padding-top: 6px; }
   <div style="flex: 1;"></div>
   <div class="thumb only-r not-t">
     <button type="button" class="btn ghost" id="skip" style="flex: 1; height: 56px; font-size: 16px; color: var(--text2);" data-i18n="skip">跳過</button>
+    <button type="button" class="btn ghost only-m" id="mjQuit" style="flex: 1; height: 56px; font-size: 16px; color: var(--text2);" data-i18n="mjQuit">退出</button>
   </div>
   <div class="tools tw3 only-t" id="twTools">
     <button type="button" id="twUndo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span data-i18n="undo">悔棋</span></button>
@@ -435,7 +453,12 @@ body.tw #sStart .thumb { padding-top: 6px; }
       <div><span data-i18n="b4Time">用時</span><b id="tSec">–</b></div>
       <div><span data-i18n="todayNo">今天第</span><b id="tPlace" style="color: var(--gold);">–</b></div>
     </div>
-    <div class="tiles only-r not-b not-t">
+    <div class="tiles only-m">
+      <div><span data-i18n="solvedN">答對</span><b id="mSolved">0</b></div>
+      <div><span data-i18n="mTopL">最高段</span><b id="mTop">–</b></div>
+      <div><span id="mThirdL">今天第</span><b id="mThird" style="color: var(--gold);">–</b></div>
+    </div>
+    <div class="tiles only-r not-b not-t not-m">
       <div><span data-i18n="abLbl">能力分</span><b id="eAb">0</b></div>
       <div><span data-i18n="solvedN">答對</span><b id="eSolved">0</b></div>
       <div><span data-i18n="todayNo">今天第</span><b id="eToday" style="color: var(--gold);">–</b></div>
@@ -506,6 +529,9 @@ const rankOf = (ab) => { let k = 0; while (k < TOP_RANK && ab >= LOW[k + 1]) k++
 const expectP = (ab, d) => 1 / (1 + Math.exp((Math.log(d) - Math.log(ab)) / SPREAD));
 const MAX_START = 7, TOP_RANK = 10, FILE_MIN = 1, FILE_MAX = 10;    // 題庫檔 game/p/1..10.json ＝ 初段..九段、傳說（2026-11-08a；見習生併進初段）
 const START_SEC = 60, BONUS_SEC = 20, MAX_WRONG = 3;
+// 明鏡台（2026-11-10 使用者）：落第一手才開始計時，起始 MJ_START 秒、之後每下一手 +MJ_STEP 秒；時間到算錯一題。
+// 解開得分＝題目分＋題目分×MJ_BONUS×剩餘整秒數；無限從初段開始，每解開一題抽題難度 ×MJ_GROW；分級整局同一段位、不上排行。
+const MJ_START = 5, MJ_STEP = 1, MJ_BONUS = 0.1, MJ_GROW = 1.15;
 const WARN_MS = 800;
 const FLASH_MS = 600, FEED_MS = 900, MAX_DT = 0.25;
 const COLS = 'ABCDEFGHJKLMNOP', N = 15;
@@ -538,6 +564,7 @@ const I18N = {
     modeTower: '象牙塔', tabTower: '象牙塔', twDate: '{d}・今天 100 題', twR1: '由易到難・大家同一組', twR2: '答錯換下一題・離開時暫停', twR3: '按「結束今天」結算・第一輪才上排行', twLeave: '先離開', twGo: '開始爬塔', twCont: '繼續爬塔', twAgain: '再爬一次（練習）', twNoP: '今天的題目讀不到，稍後再試', twProg: '今天的進度', twDone: '{n} / 100 題', twPlaceL: '第 {p} 名', twCardLine: '正確率 {a}%・提示剩 {h} 次', twFloorS: '{n} 層', twCardTime: '累積 {t}', twEndedNote: '今天已經結束，再爬只算練習', twScoreL: '分數', twNoL: '第幾題', twTimeL: '累積時間', twAccL: '正確率 {p}%', twHintN: '提示（剩 {n}）', twEnd: '結束今天', twOk: '解開！+{p}', twMissT: '第 {n} 題沒解開', twOkT: '第 {n} 題解開！+{p}', twPaused: '研究中・時間暫停', twAns: '看答案', twMine: '我的下法', twNext: '下一題', twFinishBtn: '看結果', twDayOver: '過了 00:00，今天的塔已經結算', twNet: '連線中斷，重試中…', twTop: '爬到塔頂了！', twEndWhy: '今天到這裡', twPracEnd: '練習結束', twSolvedN: '解開 {n} / {m} 題', twPracNote: '練習不上排行', twBack: '回象牙塔', yday: '昨天', accL: '正確率', twPrev: '上一手', twNextMv: '下一手', twRevHint: '點棋盤可以自由擺子', twSolving: '算答案中…',
     ranks: ['見習生', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '傳說'],
     bandFirst: '入門', band: '{lo}–{hi} 分', bandLast: '{lo} 分以上',
+    modeMirror: '明鏡台', tabMj: '明鏡台', mjSub: '先算完，再落子', mjR1: '第一手落下才開始計時', mjR2: '起始 5 秒・每手 +1 秒・錯 3 題結束', mjVarInf: '無限（排名）', mjVarLv: '分級（練功）', mjInfNote: '從初段開始・越解越難・剩餘秒數加分', mjLvNote: '整局同一段位・不上排行榜', mjRankLbl: '題目段位', mjThink: '想好再落子', mjOk: '解開！+{p}', mjOkS: '剩 {s} 秒', mjQuit: '退出', mjQuitWhy: '退出', mjNoBoard: '分級不上排行榜', mTopL: '最高段',
     modeHell: '煉獄之門', cardHell: '選起始段位，答完看結算段位', cardB4b: '答對往上爬、答錯往下掉・累積每手分數', cardRushSub: '煉獄之門・無限之塔', modeB4: '無限之塔', cardB4: '做出活四、雙四或抓禁', b4Sub: '全是 4 手題', b4Rule: '60 秒・答對 +20 秒・錯 3 題結束', b4Score: '分數', b4Secs: '解開 {n} 題', b4Time: '用時', b4Avg: '平均每題', tabB4: '無限之塔', modeRush: '挑戰', modePrac: '練習', pSub: '分鐘・練習', pSubInf: '不限時・練習', pRule1: '可悔棋、提示、加時', pRule2: '答錯不結束・不上排行',
     pTimeLbl: '練習時間', tapLbl: '落子方式', tap1: '點一下就下', tap2: '點兩下', hint2: '點一下預覽、同一點再點一下落子；禁手或不是四的點只會提醒，不算錯', pMinBtn: '{n} 分', pInf: '不限', goPrac: '開始練習', pNoBoard: '不計排行', pEnd: '結束練習', pHint: '下錯可以悔棋再試；用了悔棋或提示，這題不加分、只扣一半',
     undo: '悔棋', hintBtn: '提示', unitSec: '秒', unitMin: '分', timeLeft2: '剩餘時間', elapsed: '已練習', ownN: '自己解開', helpN: '靠提示／悔棋', missN: '錯／跳過',
@@ -566,6 +593,7 @@ const I18N = {
     modeTower: 'Ivory Tower', tabTower: 'Ivory Tower', twDate: '{d} · 100 puzzles today', twR1: 'Easy to hard · same set for everyone', twR2: 'A miss moves you on · clock pauses when you leave', twR3: 'Tap End today to finish · first climb is ranked', twLeave: 'Leave for now', twGo: 'Start climbing', twCont: 'Keep climbing', twAgain: 'Climb again (practice)', twNoP: "Couldn't load today's puzzles. Try again later.", twProg: 'Today', twDone: '{n} / 100', twPlaceL: '#{p}', twCardLine: 'Accuracy {a}% · {h} hints left', twFloorS: 'Floor {n}', twCardTime: 'Time {t}', twEndedNote: "Today's climb is done. Climbing again is practice.", twScoreL: 'Score', twNoL: 'Puzzle', twTimeL: 'Total time', twAccL: 'Accuracy {p}%', twHintN: 'Hint ({n} left)', twEnd: 'End today', twOk: 'Solved! +{p}', twMissT: 'Puzzle {n} not solved', twOkT: 'Puzzle {n} solved! +{p}', twPaused: 'Studying · clock stopped', twAns: 'Show answer', twMine: 'My moves', twNext: 'Next puzzle', twFinishBtn: 'See results', twDayOver: "It's past 00:00; today's tower is closed.", twNet: 'Connection lost, retrying…', twTop: 'You reached the top!', twEndWhy: 'Done for today', twPracEnd: 'Practice over', twSolvedN: '{n} of {m} solved', twPracNote: 'Practice is not ranked', twBack: 'Back to the tower', yday: 'Yesterday', accL: 'Accuracy', twPrev: 'Previous move', twNextMv: 'Next move', twRevHint: 'Tap the board to place stones freely', twSolving: 'Finding the answer…',
     ranks: ['Apprentice', '1 dan', '2 dan', '3 dan', '4 dan', '5 dan', '6 dan', '7 dan', '8 dan', '9 dan', 'Legend'],
     bandFirst: 'Beginner', band: '{lo}–{hi} pts', bandLast: '{lo}+ pts',
+    modeMirror: 'Mirror Terrace', tabMj: 'Mirror', mjSub: 'Read it all, then play', mjR1: 'Clock starts on your first move', mjR2: 'Start 5 s · +1 s a move · 3 misses ends', mjVarInf: 'Endless (ranked)', mjVarLv: 'Levels (training)', mjInfNote: 'From 1 dan · gets harder · time left = bonus', mjLvNote: 'Same rank all run · not ranked', mjRankLbl: 'Puzzle rank', mjThink: 'Read first', mjOk: 'Solved! +{p}', mjOkS: '{s} s left', mjQuit: 'Quit', mjQuitWhy: 'You quit', mjNoBoard: 'Level runs are not ranked', mTopL: 'Top rank',
     modeHell: 'Purgatory Gate', cardHell: 'Pick a starting rank, get your rank at the end', cardB4b: 'Solve to climb, miss to drop · points per move add up', cardRushSub: 'Purgatory Gate · Endless Tower', modeB4: 'Endless Tower', cardB4: 'Make an open four, a double four, or a forbidden trap', b4Sub: 'All 4-move puzzles', b4Rule: '60s · solve +20s · 3 misses ends', b4Score: 'Score', b4Secs: '{n} solved', b4Time: 'Time', b4Avg: 'Avg/puzzle', tabB4: 'Tower', modeRush: 'Challenge', modePrac: 'Practice', pSub: 'min · Practice', pSubInf: 'No time limit · Practice', pRule1: 'Undo, hints, extra time', pRule2: 'Misses don’t end it · not ranked',
     pTimeLbl: 'Practice time', tapLbl: 'Placing stones', tap1: 'Single tap', tap2: 'Double tap', hint2: 'Tap to preview, tap the same point again to play. Forbidden or non-four points only warn you; no miss.', pMinBtn: '{n} min', pInf: 'No limit', goPrac: 'Start practice', pNoBoard: 'not ranked', pEnd: 'End practice', pHint: 'Missed? Undo and try again. Using undo or a hint gives no gain and half the loss for that puzzle.',
     undo: 'Undo', hintBtn: 'Hint', unitSec: 'sec', unitMin: 'min', timeLeft2: 'Time left', elapsed: 'Practiced', ownN: 'Solved alone', helpN: 'With help', missN: 'Missed',
@@ -594,6 +622,7 @@ const I18N = {
     modeTower: '象牙の塔', tabTower: '象牙の塔', twDate: '{d}・今日の 100 問', twR1: '易しい順・全員同じ問題', twR2: 'ミスしたら次の問題へ・離れると時間停止', twR3: '「今日はここまで」で確定・ランキングは初回のみ', twLeave: 'いったん離れる', twGo: '登り始める', twCont: '続きから登る', twAgain: 'もう一度登る（練習）', twNoP: '今日の問題を読み込めません。後でもう一度お試しください', twProg: '今日の進捗', twDone: '{n} / 100 問', twPlaceL: '{p} 位', twCardLine: '正答率 {a}%・ヒント残り {h} 回', twFloorS: '{n} 階', twCardTime: '累計 {t}', twEndedNote: '今日は終了しました。もう一度登ると練習扱いです', twScoreL: 'スコア', twNoL: '問題', twTimeL: '累計時間', twAccL: '正答率 {p}%', twHintN: 'ヒント（残り {n}）', twEnd: '今日はここまで', twOk: '正解！+{p}', twMissT: '第 {n} 問 失敗', twOkT: '第 {n} 問 正解！+{p}', twPaused: '研究中・時間停止', twAns: '答えを見る', twMine: '自分の手', twNext: '次の問題', twFinishBtn: '結果を見る', twDayOver: '00:00 を過ぎたので今日の塔は締め切りました', twNet: '接続が切れました。再試行中…', twTop: '頂上に到達！', twEndWhy: '今日はここまで', twPracEnd: '練習終了', twSolvedN: '{m} 問中 {n} 問正解', twPracNote: '練習はランキング対象外', twBack: '塔に戻る', yday: '昨日', accL: '正答率', twPrev: '前の手', twNextMv: '次の手', twRevHint: '盤をタップすると自由に置けます', twSolving: '答えを計算中…',
     ranks: ['見習い', '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '伝説'],
     bandFirst: '入門', band: '{lo}–{hi} 点', bandLast: '{lo} 点以上',
+    modeMirror: '明鏡台', tabMj: '明鏡台', mjSub: '読み切ってから打つ', mjR1: '初手を打つと計時開始', mjR2: '持ち時間 5 秒・1 手 +1 秒・3 ミスで終了', mjVarInf: '無限（ランキング）', mjVarLv: '段位別（修行）', mjInfNote: '初段から・解くほど難しく・残り秒数でボーナス', mjLvNote: '同じ段位で通し・ランキングなし', mjRankLbl: '問題の段位', mjThink: '読んでから打つ', mjOk: '正解！+{p}', mjOkS: '残り {s} 秒', mjQuit: '退出', mjQuitWhy: '退出しました', mjNoBoard: '段位別はランキング対象外', mTopL: '最高段位',
     modeHell: '煉獄の門', cardHell: '開始段位を選び、終わったら最終段位', cardB4b: '正解で上へ、ミスで下へ・1手あたりの点数を積み上げ', cardRushSub: '煉獄の門・無限の塔', modeB4: '無限の塔', cardB4: '活四、四四、または禁手で勝つ', b4Sub: '全部 4 手題', b4Rule: '60 秒・正解で +20 秒・3 回ミスで終了', b4Score: 'スコア', b4Secs: '{n} 問正解', b4Time: '時間', b4Avg: '1問平均', tabB4: '無限の塔', modeRush: 'チャレンジ', modePrac: '練習', pSub: '分・練習', pSubInf: '時間無制限・練習', pRule1: '待った・ヒント・時間追加あり', pRule2: 'ミスしても続く・ランキング外',
     pTimeLbl: '練習時間', tapLbl: '着手方法', tap1: '1 回タップ', tap2: '2 回タップ', hint2: 'タップで仮置き、同じ点をもう一度で着手。禁手や四にならない点は警告だけで、ミスになりません', pMinBtn: '{n} 分', pInf: '無制限', goPrac: '練習開始', pNoBoard: 'ランキング対象外', pEnd: '練習終了', pHint: '間違えたら待ったでやり直せます。待ったやヒントを使った問題は加点なし・減点は半分',
     undo: '待った', hintBtn: 'ヒント', unitSec: '秒', unitMin: '分', timeLeft2: '残り時間', elapsed: '練習時間', ownN: '自力で正解', helpN: 'ヒント等で正解', missN: 'ミス／スキップ',
@@ -622,6 +651,7 @@ const I18N = {
     modeTower: '상아탑', tabTower: '상아탑', twDate: '{d} · 오늘 100문제', twR1: '쉬운 문제부터 · 모두 같은 문제', twR2: '틀리면 다음 문제로 · 나가면 시간 멈춤', twR3: '「오늘 끝내기」로 확정 · 첫 도전만 순위', twLeave: '잠시 나가기', twGo: '오르기 시작', twCont: '이어서 오르기', twAgain: '다시 오르기 (연습)', twNoP: '오늘 문제를 불러오지 못했어요. 잠시 후 다시 시도하세요', twProg: '오늘 진행', twDone: '{n} / 100문제', twPlaceL: '{p}위', twCardLine: '정답률 {a}% · 힌트 {h}번 남음', twFloorS: '{n}층', twCardTime: '누적 {t}', twEndedNote: '오늘은 끝났어요. 다시 오르면 연습이에요', twScoreL: '점수', twNoL: '문제', twTimeL: '누적 시간', twAccL: '정답률 {p}%', twHintN: '힌트 ({n}번 남음)', twEnd: '오늘 끝내기', twOk: '성공! +{p}', twMissT: '{n}번 문제 실패', twOkT: '{n}번 문제 성공! +{p}', twPaused: '연구 중 · 시간 정지', twAns: '답 보기', twMine: '내 수', twNext: '다음 문제', twFinishBtn: '결과 보기', twDayOver: '00:00이 지나 오늘 탑은 마감됐어요', twNet: '연결 끊김, 다시 시도 중…', twTop: '정상에 도착!', twEndWhy: '오늘은 여기까지', twPracEnd: '연습 종료', twSolvedN: '{m}문제 중 {n}문제 해결', twPracNote: '연습은 순위에 오르지 않아요', twBack: '탑으로', yday: '어제', accL: '정답률', twPrev: '이전 수', twNextMv: '다음 수', twRevHint: '판을 눌러 자유롭게 둘 수 있어요', twSolving: '답 계산 중…',
     ranks: ['견습생', '초단', '2단', '3단', '4단', '5단', '6단', '7단', '8단', '9단', '전설'],
     bandFirst: '입문', band: '{lo}–{hi}점', bandLast: '{lo}점 이상',
+    modeMirror: '명경대', tabMj: '명경대', mjSub: '끝까지 읽고 두기', mjR1: '첫 수를 두면 시간이 흐릅니다', mjR2: '시작 5초 · 수마다 +1초 · 3번 틀리면 끝', mjVarInf: '무한 (랭킹)', mjVarLv: '단계별 (수련)', mjInfNote: '초단부터 · 풀수록 어려움 · 남은 시간 보너스', mjLvNote: '같은 단으로 계속 · 랭킹 없음', mjRankLbl: '문제 단', mjThink: '읽고 두세요', mjOk: '정답! +{p}', mjOkS: '{s}초 남음', mjQuit: '나가기', mjQuitWhy: '나갔습니다', mjNoBoard: '단계별은 랭킹에 안 올라갑니다', mTopL: '최고 단',
     modeHell: '연옥의 문', cardHell: '시작 단을 고르고 끝나면 최종 단', cardB4b: '맞히면 위로, 틀리면 아래로 · 수당 점수 누적', cardRushSub: '연옥의 문 · 무한의 탑', modeB4: '무한의 탑', cardB4: '열린 4, 쌍4, 또는 금수 유도', b4Sub: '모두 4수 문제', b4Rule: '60초 · 정답 +20초 · 3번 틀리면 종료', b4Score: '점수', b4Secs: '{n}문제 해결', b4Time: '시간', b4Avg: '문제당 평균', tabB4: '무한의 탑', modeRush: '도전', modePrac: '연습', pSub: '분 · 연습', pSubInf: '시간 제한 없음 · 연습', pRule1: '무르기 · 힌트 · 시간 추가', pRule2: '틀려도 계속 · 순위 없음',
     pTimeLbl: '연습 시간', tapLbl: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭', hint2: '탭하면 미리보기, 같은 자리를 다시 탭하면 둡니다. 금수나 4가 아닌 자리는 경고만 하고 실수로 치지 않습니다', pMinBtn: '{n}분', pInf: '무제한', goPrac: '연습 시작', pNoBoard: '순위 미반영', pEnd: '연습 끝내기', pHint: '틀리면 무르고 다시 둘 수 있습니다. 무르기나 힌트를 쓴 문제는 점수가 오르지 않고 절반만 깎입니다',
     undo: '무르기', hintBtn: '힌트', unitSec: '초', unitMin: '분', timeLeft2: '남은 시간', elapsed: '연습한 시간', ownN: '혼자 풂', helpN: '도움 받아 풂', missN: '실패/건너뜀',
@@ -640,7 +670,7 @@ function pickLang() {
 let lang = pickLang();
 const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
 const rankName = (k) => I18N[lang].ranks[k];
-const maxStart = () => mode === 'prac' ? TOP_RANK : MAX_START;   // 練習場起始段位可選到傳說（2026-11-08 使用者：練習全開），競速仍到七段
+const maxStart = () => mode === 'prac' || mode === 'mj' ? TOP_RANK : MAX_START;   // 練習場起始段位可選到傳說（2026-11-08 使用者：練習全開），競速仍到七段
 const bandText = (k) => k === 0 ? T('bandFirst') : k === maxStart() || k === TOP_RANK ? T('bandLast', { lo: LOW[k] }) : T('band', { lo: LOW[k], hi: LOW[k + 1] });
 const whyText = (x) => T('why_' + x.wk, { at: x.wa });
 function applyLang() {
@@ -767,6 +797,19 @@ async function pickFour(used, ref, dir) {
   const [black, white, L, score, atk, id] = x;
   return { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w', id: id || '' };
 }
+// 明鏡台分級：只抽這一段的題（題目分在 LOW[k]～LOW[k+1]）；這段抽完才退回一般抽題
+async function pickRank(k, used) {
+  const lo = LOW[k], hi = k < TOP_RANK ? LOW[k + 1] : Infinity, cands = [];
+  for (const f of filesFor(lo, hi)) {
+    const list = await loadFile(f);
+    list.forEach((x, j) => { if (x[3] >= lo && x[3] < hi && !used.has(f + ':' + j) && !(x[5] && BLOCKED.has(x[5]))) cands.push([f, j, x]); });
+  }
+  if (!cands.length) return pickPuzzle(START_AB[k], used);
+  const [f, j, x] = cands[Math.floor(Math.random() * cands.length)];
+  used.add(f + ':' + j);
+  const [black, white, L, score, atk, id] = x;
+  return { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w', id: id || '' };
+}
 async function pickPuzzle(ab, used) {
   for (const f of [1.25, 1.6, 2.5, 1e9]) {
     const lo = ab / f, hi = ab * f, cands = [];
@@ -787,10 +830,15 @@ async function pickPuzzle(ab, used) {
 // 練習場（2026-11-08 使用者定）：同一個開始畫面分「競速／練習」。練習的起始段位另外記（vcfgame.prank），不會改到競速的設定。
 const P_MINS = [3, 5, 10, 0];   // 0＝不限時
 const clampRank = (v, d, mx = MAX_START) => { const n = Number(v ?? d); return Number.isFinite(n) ? Math.min(mx, Math.max(0, n)) : d; };
-let mode = ['prac', 'b4', 'tw'].includes(store.get('vcfgame.mode')) ? store.get('vcfgame.mode') : 'rush';
+let mode = ['prac', 'b4', 'tw', 'mj'].includes(store.get('vcfgame.mode')) ? store.get('vcfgame.mode') : 'rush';
+// 各模式各記各的段位：練習 prank、明鏡台分級 mrank（初段起）、其他 rank
+const rankKey = (m) => m === 'prac' ? 'vcfgame.prank' : m === 'mj' ? 'vcfgame.mrank' : 'vcfgame.rank';
+const loadRank = (m) => m === 'prac' ? clampRank(store.get('vcfgame.prank'), clampRank(store.get('vcfgame.rank'), 3), TOP_RANK)
+  : m === 'mj' ? Math.max(1, clampRank(store.get('vcfgame.mrank'), 3, TOP_RANK)) : clampRank(store.get('vcfgame.rank'), 3);
+let mjInf = store.get('vcfgame.mjv') !== 'lv';   // 明鏡台：true＝無限（排名）、false＝分級
 const pmSaved = store.get('vcfgame.pmin');
 let pMin = pmSaved !== null && P_MINS.includes(Number(pmSaved)) ? Number(pmSaved) : 5;
-let startRank = mode === 'prac' ? clampRank(store.get('vcfgame.prank'), clampRank(store.get('vcfgame.rank'), 3), TOP_RANK) : clampRank(store.get('vcfgame.rank'), 3);
+let startRank = loadRank(mode);
 $('nick').value = store.get('vcfgame.nick') || '';
 // 落子方式（2026-11-09 使用者：競速點一下下得快，練習／爬塔點兩下比較安全）：每個模式各記各的
 const tapTwo = () => { const v = store.get('vcfgame.tap.' + mode); return v ? v === '2' : (mode === 'prac' || mode === 'tw'); };
@@ -799,10 +847,16 @@ function renderStart() {
   document.body.classList.toggle('prac', prac);
   document.body.classList.toggle('b4', mode === 'b4');
   document.body.classList.toggle('tw', mode === 'tw');
-  $('startTitle').textContent = T(prac ? 'modePrac' : mode === 'b4' ? 'modeB4' : mode === 'tw' ? 'modeTower' : 'modeHell');
+  document.body.classList.toggle('mj', mode === 'mj');
+  document.body.classList.toggle('mjinf', mode === 'mj' && mjInf);
+  $('startTitle').textContent = T(prac ? 'modePrac' : mode === 'b4' ? 'modeB4' : mode === 'tw' ? 'modeTower' : mode === 'mj' ? 'modeMirror' : 'modeHell');
+  $('rkLbl').textContent = T(mode === 'mj' ? 'mjRankLbl' : 'startRank');
+  $('mjNote').textContent = T(mjInf ? 'mjInfNote' : 'mjLvNote');
+  $('mjVar').innerHTML = [['inf', 'mjVarInf'], ['lv', 'mjVarLv']].map(([v, n]) => `<button type="button" data-v="${v}" aria-pressed="${(v === 'inf') === mjInf}">${T(n)}</button>`).join('');
+  $('mjVar').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { mjInf = b.dataset.v === 'inf'; store.set('vcfgame.mjv', b.dataset.v); renderStart(); });
   $('rkName').textContent = rankName(startRank);
   $('rkBand').textContent = bandText(startRank);
-  $('rkDown').disabled = startRank === 0;
+  $('rkDown').disabled = startRank <= (mode === 'mj' ? 1 : 0);
   $('rkUp').disabled = startRank >= maxStart();
   $('rkKeep').textContent = '';   // 使用者 2026-11-07：不用跟玩家解釋計分
   $('pBig').textContent = pMin ? pMin : '∞';
@@ -819,26 +873,27 @@ function renderStart() {
 }
 function setMode(m) {
   if (m === mode) return;
-  if (mode !== 'b4' && mode !== 'tw') store.set(mode === 'prac' ? 'vcfgame.prank' : 'vcfgame.rank', String(startRank));   // 切換前記住這個模式的段位（無限之塔沒有段位）
+  if (mode !== 'b4' && mode !== 'tw') store.set(rankKey(mode), String(startRank));   // 切換前記住這個模式的段位（無限之塔、象牙塔沒有段位）
   mode = m; store.set('vcfgame.mode', m);
-  startRank = m === 'prac' ? clampRank(store.get('vcfgame.prank'), clampRank(store.get('vcfgame.rank'), 3), TOP_RANK) : clampRank(store.get('vcfgame.rank'), 3);
+  startRank = loadRank(m);
   renderStart();
 }
 $('modeR').onclick = () => { setMode('rush'); show('sStart'); };
 $('modeP').onclick = () => { setMode('prac'); show('sStart'); };
 $('modeB').onclick = () => { setMode('b4'); show('sStart'); };
+$('modeM').onclick = () => { setMode('mj'); show('sStart'); };
 $('modeT').onclick = () => { if (mode === 'tw') renderStart(); else setMode('tw'); show('sStart'); };
 $('toHome').onclick = () => show(mode === 'prac' ? 'sHome' : 'sPick');   // 煉獄之門／無限之塔回競速選模式頁
 $('toPick').onclick = () => show('sPick');
 $('pickBack').onclick = () => show('sHome');
 $('pickBoard').onclick = () => { boardView($('startBoard'), 'today', 'rank'); openModal('mBoard'); };
-$('rkDown').onclick = () => { startRank = Math.max(0, startRank - 1); renderStart(); };
+$('rkDown').onclick = () => { startRank = Math.max(mode === 'mj' ? 1 : 0, startRank - 1); renderStart(); };
 $('rkUp').onclick = () => { startRank = Math.min(maxStart(), startRank + 1); renderStart(); };
 applyLang();
 (() => {   // 自動更新後回到原本的畫面（設定畫面連同段位）
   let r = null;
   try { r = JSON.parse(sessionStorage.getItem('vcfgame.resume') || 'null'); sessionStorage.removeItem('vcfgame.resume'); } catch {}
-  if (r && Number.isFinite(r.rank)) startRank = clampRank(r.rank, startRank, mode === 'prac' ? TOP_RANK : MAX_START);
+  if (r && Number.isFinite(r.rank)) startRank = clampRank(r.rank, startRank, maxStart());
   renderStart();
   if (r && SAFE_SCREENS.includes(r.id) && r.id !== 'sHome') show(r.id);
 })();
@@ -931,23 +986,25 @@ function cellAt(ev) {
 let g = null;
 function newGame(nick) {
   const prac = mode === 'prac';
-  return { nick, prac, b4: mode === 'b4', limit: prac ? pMin : 0, start: startRank, cur: startRank, total: 0, left: prac ? (pMin ? pMin * 60 : Infinity) : START_SEC, elapsed: 0, wrong: 0, solved: 0,
+  const mj = mode === 'mj', st = mj && mjInf ? 1 : startRank;   // 明鏡台無限一律從初段開始
+  return { nick, prac, b4: mode === 'b4', mj, mjInf: mj && mjInf, armed: false, think: 0, thinkAll: 0, quit: false,
+    limit: prac ? pMin : 0, start: st, cur: st, total: 0, left: prac ? (pMin ? pMin * 60 : Infinity) : mj ? MJ_START : START_SEC, elapsed: 0, wrong: 0, solved: 0,
     own: 0, helpedN: 0, added: 0, addedSec: 0,
-    ab: START_AB[startRank], used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
+    ab: START_AB[st], used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
 }
 $('go').onclick = async () => {
   audio();
   if (mode === 'tw') return twStart();
   const prac = mode === 'prac';
-  const nick = $('nick').value.trim();
-  if (!prac && !nick) { $('startMsg').textContent = T('needNick'); $('nick').focus(); return; }
-  if (!prac) store.set('vcfgame.nick', nick);
-  if (mode !== 'b4') store.set(prac ? 'vcfgame.prank' : 'vcfgame.rank', String(startRank));
+  const nick = $('nick').value.trim(), needNick = !prac && !(mode === 'mj' && !mjInf);   // 明鏡台分級不上排行，不用暱稱
+  if (needNick && !nick) { $('startMsg').textContent = T('needNick'); $('nick').focus(); return; }
+  if (needNick) store.set('vcfgame.nick', nick);
+  if (mode !== 'b4') store.set(rankKey(mode), String(startRank));
   $('startMsg').textContent = T('loading'); $('go').disabled = true;
-  try { if (mode === 'b4') await Promise.all(B4_FILES.map(loadFile)); else { const a = START_AB[startRank]; await Promise.all(filesFor(a / 1.25, a * 1.25).map(loadFile)); } }
+  try { if (mode === 'b4') await Promise.all(B4_FILES.map(loadFile)); else { const a = START_AB[mode === 'mj' && mjInf ? 1 : startRank]; await Promise.all(filesFor(a / 1.25, a * 1.25).map(loadFile)); } }
   catch { $('startMsg').textContent = T('loadFail'); $('go').disabled = false; return; }
   $('startMsg').textContent = ''; $('go').disabled = false;
-  g = newGame(prac ? (store.get('vcfgame.nick') || '') : nick);
+  g = newGame(needNick ? nick : (store.get('vcfgame.nick') || ''));
   show('sPlay'); layout(); renderHud();
   requestAnimationFrame(tick);
   nextPuzzle();
@@ -994,12 +1051,17 @@ function tick(t) {
   if (!g || g.over) return;
   const dt = g.lastT ? Math.min(MAX_DT, (t - g.lastT) / 1000) : 0;
   g.lastT = t;
-  if (!g.hold) {
+  if (!g.hold && g.mj && !g.armed) { g.think += dt; g.thinkAll += dt; }   // 明鏡台：落第一手前不計時（只記想了多久）
+  else if (!g.hold) {
     const before = Math.ceil(g.left);
     g.left -= dt; g.elapsed += dt; g.psec += dt;
     const now = Math.ceil(g.left);
-    if (now !== before && now >= 1 && now <= 5) beep(now === 1);   // 最後 5 秒每秒一聲（不限時的練習 left 是 Infinity，不會響）
-    if (g.left <= 0) { g.left = 0; renderHud(); logTimeUp(); endGame(T('endTime')); return; }
+    if (now !== before && now >= 1 && now <= (g.mj ? 3 : 5)) beep(now === 1);   // 最後 5 秒每秒一聲（明鏡台秒數少，只響最後 3 秒；不限時的練習 left 是 Infinity，不會響）
+    if (g.left <= 0) {
+      g.left = 0;
+      if (g.mj) { g.hold = true; wrong('time'); }   // 明鏡台：時間到算錯這一題，換下一題
+      else { renderHud(); logTimeUp(); endGame(T('endTime')); return; }
+    }
   }
   renderHud();
   requestAnimationFrame(tick);
@@ -1021,10 +1083,11 @@ function renderHud() {
     for (const id of ['pAdd30', 'pAdd60']) $(id).disabled = inf || g.over;
     $('pUndo').disabled = !g.p || !(g.hist && g.hist.length);
   } else {
-    $('tLbl').textContent = T('timeLeft');
+    $('tLbl').textContent = T(g.mj && !g.armed ? 'mjThink' : 'timeLeft');
     $('tLeft').textContent = Math.ceil(g.left);
-    $('solvedLbl').textContent = T(g.b4 ? 'b4Score' : 'solvedN');
-    $('tot').textContent = g.b4 ? Math.round(g.total) : g.solved;
+    const pts = g.b4 || g.mjInf;
+    $('solvedLbl').textContent = T(pts ? 'b4Score' : 'solvedN');
+    $('tot').textContent = pts ? Math.round(g.total) : g.solved;
     $('lives').innerHTML = Array.from({ length: MAX_WRONG }, (_, i) => `<i class="${i < MAX_WRONG - g.wrong ? '' : 'off'}"></i>`).join('');
   }
   if (g.p) {
@@ -1045,9 +1108,10 @@ function plusFx(txt) { $('tPlus').textContent = txt; $('tPlus').classList.add('o
 async function nextPuzzle() {
   g.hold = true;
   let p;
-  try { p = await (g.b4 ? pickFour(g.used, g.p && g.p.score, g.b4Dir || 0) : pickPuzzle(g.ab, g.used)); }
+  try { p = await (g.b4 ? pickFour(g.used, g.p && g.p.score, g.b4Dir || 0) : g.mj && !g.mjInf ? pickRank(g.start, g.used) : pickPuzzle(g.ab, g.used)); }
   catch { endGame(T('endNoPuzzle')); return; }
   g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.wf = 0; g.wn = 0;
+  if (g.mj) { g.armed = false; g.think = 0; g.left = MJ_START; }   // 明鏡台每題重新計時
   g.hist = []; g.helped = false; g.undos = 0; g.hints = 0; g.mist = 0; g.dead = false; g.hintPt = null;   // 練習場每題重設
   setGhost(null);
   $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
@@ -1084,6 +1148,7 @@ async function placeAt(t) {
     draw();
     if (res.nofour) return miss(res.forcedForbidden ? 'forbid' : 'nofour');   // 輪到你時一個四都沒有
     if (g.prac || g.tw) { g.hist.push(snap); renderHud(); }
+    if (g.mj) { if (!g.armed) g.armed = true; else { g.left += MJ_STEP; plusFx('+' + MJ_STEP); } renderHud(); }   // 明鏡台：第一手開錶，之後每手 +1 秒
     g.hold = false;
     return;
   }
@@ -1153,6 +1218,7 @@ async function solved(how) {
   if (g.tw) return twSolved();
   const p = g.p, sec = g.psec, helped = g.prac && g.helped;
   xiexiuXP(helped ? p.score / 2 : p.score);   // 練習用過提示／悔棋只算一半
+  if (g.mj) return mjSolved(p, sec, how);   // 煉丹爐修為只算題目分，明鏡台的剩餘秒數獎勵不算
   const d = updateAbility(helped ? 'half' : true);
   g.total += g.b4 ? p.score / p.L : p.score; g.left += BONUS_SEC; g.solved++; g.b4Dir = 1;   // 無限之塔累積單手分數（題目分÷手數，使用者 2026-11-08）
   if (g.prac) { if (helped) g.helpedN++; else g.own++; }
@@ -1162,11 +1228,22 @@ async function solved(how) {
   await flash(helped ? T('tagHelp') + '・' + T('abDelta', { d }) : T('ok', { b: BONUS_SEC }), 'good', FEED_MS);
   if (!g.over) nextPuzzle();
 }
+// 明鏡台解開：得分＝題目分＋題目分×10%×剩餘整秒數；無限之後抽更難的題（×MJ_GROW）
+async function mjSolved(p, sec, how) {
+  const lf = Math.floor(g.left), pts = Math.round(p.score * (1 + MJ_BONUS * lf));
+  g.total += pts; g.solved++;
+  if (g.mjInf) { g.ab *= MJ_GROW; g.cur = rankOf(g.ab); }
+  g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), wf: g.wf, wn: g.wn, pts, ...mjFields() });
+  renderHud();
+  await flash(T('mjOk', { p: pts }) + '<small>' + T('mjOkS', { s: lf }) + '</small>', 'good', FEED_MS);
+  if (!g.over) nextPuzzle();
+}
+const mjFields = () => g.mj ? { th: +g.think.toFixed(1), lf: +g.left.toFixed(1) } : {};   // 明鏡台：落第一手前想了幾秒、剩幾秒
 // 練習場每題多記的欄位（送後台分析大家怎麼練）：h＝用過幫助、u＝悔棋次數、hi＝提示次數、mk＝下錯次數
 const pracFields = () => g.prac ? { h: g.helped ? 1 : 0, u: g.undos, hi: g.hints, mk: g.mist } : {};
 
 function updateAbility(ok) {   // 回傳能力分變化（整數）；ok＝true 解開、false 答錯、'half' 練習場靠幫助解開（答錯幅度的一半）
-  if (g.b4) return 0;   // 無限之塔沒有能力分
+  if (g.b4 || g.mj) return 0;   // 無限之塔、明鏡台沒有能力分
   const before = g.ab, P = expectP(g.ab, g.p.score);
   if (ok === 'half') {
     const k = g.solved === 0 ? K_FAST : K_STEP;   // 跟這時答錯會用的幅度一樣，再打對折
@@ -1182,7 +1259,7 @@ async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋�
   const p = g.p;
   g.wrong++; g.b4Dir = -1;   // 無限之塔：下一題抽簡單一點
   const d = updateAbility(false);
-  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields() };
+  const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() };
   g.log.push(x);
   renderHud();
   const end = !g.prac && g.wrong >= MAX_WRONG;   // 練習場錯幾題都不結束
@@ -1202,7 +1279,7 @@ function logTimeUp(quit) {
   if (last && last.b === b && last.w === w) return;
   let e = 0;
   if (!quit) { g.wrong++; e = updateAbility(false); }
-  g.log.push({ b, w, a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e, ok: 0, sec: +g.psec.toFixed(1), wk: quit ? 'quit' : 'time', wa: '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields() });
+  g.log.push({ b, w, a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e, ok: 0, sec: +g.psec.toFixed(1), wk: quit ? 'quit' : 'time', wa: '', m: g.moves.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() });
 }
 
 cv.addEventListener('click', (ev) => {
@@ -1221,6 +1298,7 @@ $('pUndo').onclick = () => undo();
 $('pHintBtn').onclick = () => hint();
 $('pAdd30').onclick = () => addTime(30);
 $('pAdd60').onclick = () => addTime(60);
+$('mjQuit').onclick = () => { if (g && g.mj && !g.over && !g.hold) { g.quit = true; logTimeUp(true); endGame(T('mjQuitWhy')); } };   // 明鏡台退出：做到一半的題記成 quit、不算錯
 $('pEnd').onclick = () => { if (g && g.prac && !g.over) { logTimeUp(true); endGame(T('pEndWhy')); } };
 window.addEventListener('resize', () => { if (!$('sPlay').hidden) layout(); });
 
@@ -1231,6 +1309,7 @@ function endGame(why) {
   g.over = true; g.hold = true;
   if (g.prac) return endPractice(why);
   if (g.b4) return endBlitz(why);
+  if (g.mj) return endMirror(why);
   $('finalLbl').textContent = T('finalLbl');
   $('again').textContent = T('again'); $('again').className = 'btn gold'; $('stamp').classList.remove('prac');
   // 結算段位（2026-11-07 使用者：沒證明過的段位不能算）＝能力分的段位、這局解開過的最高題目段位，兩者取低；一題都沒解開＝不判段位
@@ -1296,7 +1375,41 @@ async function submitBlitz() {
     if (j.place) { $('bToday').textContent = j.place.today; $('ePlace').textContent = T('placeAll', { b: j.place.all }); }
   } catch { if (lastRun.solved) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; } }
 }
-$('retrySubmit').onclick = () => (lastRun && lastRun.mode === 'b4' ? submitBlitz() : submit());
+// 明鏡台結算：無限的分數上明鏡台排行榜；分級只記後台（inf 0），不排名。兩種都送 Worker /mirror
+function endMirror(why) {
+  const top = g.log.filter(x => x.ok).reduce((m, x) => Math.max(m, x.r), -1);
+  lastRun = { mode: 'mj', inf: g.mjInf ? 1 : 0, nick: g.nick, lang, start: g.start, total: Math.round(g.total), solved: g.solved, wrong: g.wrong, top: Math.max(top, 0),
+    seconds: Math.round(g.elapsed * 10) / 10, think: Math.round(g.thinkAll * 10) / 10, quit: g.quit ? 1 : 0, detail: g.log };
+  $('endWhy').textContent = why;
+  const big = g.mjInf ? Math.round(g.total) : g.solved;
+  $('finalLbl').textContent = T(g.mjInf ? 'b4Score' : 'solvedN');
+  $('endRank').textContent = big; $('endRank').style.fontSize = String(big).length > 4 ? '34px' : '';
+  $('endNote').textContent = g.mjInf ? T('b4Secs', { n: g.solved }) : rankName(g.start);
+  $('stamp').classList.remove('down', 'prac');
+  $('mSolved').textContent = g.solved;
+  $('mTop').textContent = top >= 0 ? rankName(top) : '–';
+  $('mThirdL').textContent = T(g.mjInf ? 'todayNo' : 'b4Time');
+  $('mThird').textContent = g.mjInf ? '–' : Math.round(g.elapsed);
+  $('ePts').textContent = '';
+  $('again').textContent = T('again'); $('again').className = 'btn gold';
+  show('sEnd');
+  submitMirror();
+}
+async function submitMirror() {
+  const inf = lastRun.inf;
+  $('retrySubmit').hidden = true;
+  $('ePlace').textContent = !inf ? T('mjNoBoard') : lastRun.solved ? T('sending') : T('placeNone');
+  myId = null;
+  if (!lastRun.detail.length) return;
+  try {
+    const r = await fetch(API + '/mirror', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    myId = j.id;
+    if (inf && j.place) { $('mThird').textContent = j.place.today; $('ePlace').textContent = T('placeAll', { b: j.place.all }); }
+  } catch { if (inf && lastRun.solved) { $('ePlace').textContent = T('sendFail'); $('retrySubmit').hidden = false; } }
+}
+$('retrySubmit').onclick = () => (lastRun && lastRun.mode === 'b4' ? submitBlitz() : lastRun && lastRun.mode === 'mj' ? submitMirror() : submit());
 $('again').onclick = () => { g = null; show('sStart'); renderStart(); };
 $('toRush').onclick = () => { g = null; show('sPick'); };   // 練習結算的「去競速」→ 競速選模式頁
 
@@ -1321,10 +1434,11 @@ function endPractice(why) {
   if (g.log.length) fetch(API + '/practice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lastRun) }).catch(() => {});
 }
 
-function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段位榜（挑戰）、b4＝無限之塔、tower＝象牙塔（今天／昨天）
+const boardKind = (m) => m === 'b4' ? 'b4' : m === 'tw' ? 'tower' : m === 'mj' ? 'mj' : 'rank';
+function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段位榜（挑戰）、b4＝無限之塔、tower＝象牙塔（今天／昨天）、mj＝明鏡台（無限）
   if (kind === 'tower' && scope === 'all') scope = 'today';
   if (kind !== 'tower' && scope === 'yday') scope = 'today';
-  el.innerHTML = `<div class="tabs">${[['b4', 'tabB4'], ['tower', 'tabTower'], ['rank', 'tabRank']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-selected="${k === kind}">${T(n)}</button>`).join('')}</div>
+  el.innerHTML = `<div class="tabs">${[['b4', 'tabB4'], ['tower', 'tabTower'], ['mj', 'tabMj'], ['rank', 'tabRank']].map(([k, n]) => `<button type="button" data-kind="${k}" aria-selected="${k === kind}">${T(n)}</button>`).join('')}</div>
     <div class="scope">${(kind === 'tower' ? [['today', 'today'], ['yday', 'yday']] : [['today', 'today'], ['all', 'all']]).map(([k, n]) => `<button type="button" data-scope="${k}" aria-pressed="${k === scope}">${T(n)}</button>`).join('')}</div>
     <div class="rows" aria-live="polite"><span class="muted" style="padding:12px 6px">${T('loadingRows')}</span></div>`;
   el.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => boardView(el, b.dataset.scope, kind));
@@ -1337,7 +1451,7 @@ function boardView(el, scope = 'today', kind = 'rank') {   // kind：rank＝段�
     j.rows.forEach((x, i) => {
       const d = document.createElement('div');
       d.className = 'row' + (x.id === myId ? ' me' : '');
-      d.innerHTML = kind === 'b4'
+      d.innerHTML = kind === 'b4' || kind === 'mj'
         ? `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${T('b4Secs', { n: x.solved })}</span><span class="vl">${Math.round(x.total)}</span>`
         : `<span class="no">${i + 1}</span><span class="nm"></span><span class="rk">${rankName(x.final_rank) || ''}</span><span class="vl">${Math.round(x.ab)}</span>`;
       d.querySelector('.nm').textContent = x.nick;
@@ -1351,8 +1465,8 @@ document.querySelectorAll('.modal').forEach(m => {
   m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.hidden = true; });
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
-$('openBoard').onclick = () => { boardView($('startBoard'), 'today', mode === 'b4' ? 'b4' : mode === 'tw' ? 'tower' : 'rank'); openModal('mBoard'); };
-$('endBoardBtn').onclick = () => { boardView($('startBoard'), 'today', lastRun && lastRun.mode === 'b4' ? 'b4' : lastRun && lastRun.mode === 'tw' ? 'tower' : 'rank'); openModal('mBoard'); };
+$('openBoard').onclick = () => { boardView($('startBoard'), 'today', boardKind(mode)); openModal('mBoard'); };
+$('endBoardBtn').onclick = () => { boardView($('startBoard'), 'today', boardKind(lastRun && lastRun.mode)); openModal('mBoard'); };
 // 給作者留言（2026-11-08 使用者：給玩家一個留言的地方，只有作者看得到）→ Worker /feedback；作者在 rush.hangsau.app/admin 看
 $('openMsg').onclick = () => { $('msgStatus').textContent = ''; $('msgSend').disabled = false; openModal('mMsg'); };
 $('msgSend').onclick = async () => {
@@ -1684,7 +1798,7 @@ function openRev(run) {
     const tag = x.ok && x.h ? ['hp', T('tagHelp')] : x.ok ? ['ok', T('tagOk')] : ['ng', T('tagNg')];
     d.innerHTML = `<span class="tag ${tag[0]}">${tag[1]}</span><span class="tx"><span class="info"></span><span class="pid"></span></span><a target="_blank" rel="noopener">${T('open')}</a><button type="button" class="rpt">${T('report')}</button>`;
     d.querySelector('.info').textContent = [rankName(x.r), x.a === 'w' ? T('white') : T('black'), T('moves', { n: x.L }), T('secs', { s: x.sec }), T('pscore', { s: x.s }), ...(x.ok ? [] : [whyText(x)]),
-      ...(x.h ? [T('helpInfo', { u: x.u || 0, h: x.hi || 0, m: x.mk || 0 })] : []), ...(run.mode === 'b4' || run.mode === 'tw' ? [] : [T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })])].join(T('sep'));   // 無限之塔沒有能力分
+      ...(x.h ? [T('helpInfo', { u: x.u || 0, h: x.hi || 0, m: x.mk || 0 })] : []), ...(run.mode === 'b4' || run.mode === 'tw' || run.mode === 'mj' ? [] : [T('abDelta', { d: (x.e > 0 ? '+' : '') + x.e })])].join(T('sep'));   // 無限之塔沒有能力分
     d.querySelector('a').href = href;
     d.querySelector('a').onclick = (e) => { e.preventDefault(); openLab(href); };
     (x.id ? Promise.resolve(x.id) : puzzleId(x.b, x.w, x.a)).then(id => { x.id = id; d.querySelector('.pid').textContent = '#' + id; });

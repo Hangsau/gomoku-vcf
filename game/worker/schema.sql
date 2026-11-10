@@ -57,3 +57,12 @@ CREATE INDEX IF NOT EXISTS tower_pool_dan ON tower_pool(dan, score);
 -- tower_used＝哪題哪天出過（90 天內不重複用）
 CREATE TABLE IF NOT EXISTS tower_used(id TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY(id, day));
 CREATE INDEX IF NOT EXISTS tower_used_day ON tower_used(day);
+
+-- 2026-11-10：明鏡台（落第一手才計時、起始 5 秒＋每手 1 秒、錯 3 題結束、可退出）。inf 1＝無限（初段起、上排行）、0＝分級（start_rank 固定，不排名）；
+-- total＝解開題目的（題目分＋題目分×10%×剩餘整秒數）加總；seconds＝開錶後用時；think＝落第一手前想的時間加總；quit 1＝按退出結束；detail 每題多 th（想幾秒）、lf（剩幾秒）、pts
+CREATE TABLE IF NOT EXISTS mirror(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, nick TEXT NOT NULL, lang TEXT, inf INTEGER NOT NULL,
+  start_rank INTEGER NOT NULL, top_rank INTEGER NOT NULL, total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL,
+  seconds REAL NOT NULL, think REAL NOT NULL, quit INTEGER NOT NULL, detail TEXT);
+CREATE INDEX IF NOT EXISTS mirror_rank ON mirror(inf, total DESC, seconds ASC);
+CREATE INDEX IF NOT EXISTS mirror_day ON mirror(day);

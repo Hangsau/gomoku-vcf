@@ -8,6 +8,7 @@
 // POST /feedback {text, contact, nick, lang} → 玩家給作者留言（2026-11-08）；GET /admin/feedback、POST /admin/feedback {id, status: open|done}
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
+// POST /mirror 明鏡台一局（2026-11-10）→ {id, place:{today,all}}（inf=1 無限才排名；inf=0 分級只存後台）；GET /board?by=mj → 明鏡台無限排行；GET /admin/mirror
 // 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
@@ -105,7 +106,46 @@ async function adminBlitz(req, env) {
   return json({ rows: results });
 }
 
+// 明鏡台（2026-11-10 使用者：落第一手才計時、起始 5 秒每手 +1 秒、錯 3 題結束、可退出）：獨立的 mirror 表
+// 分數＝解開題目的（題目分＋題目分×10%×剩餘整秒數）加總；同分用時短的在前；只有 inf=1（無限，從初段開始）上排行
+async function postMirror(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  const inf = b.inf ? 1 : 0;
+  const solved = num(b.solved, 0, 1000), wrong = num(b.wrong, 0, 3), seconds = num(b.seconds, 0, 50000), think = num(b.think, 0, 1000000),
+    total = num(b.total, 0, 100000000), start = num(b.start, 0, 10), top = num(b.top, 0, 10);
+  if ((inf && !nick) || [solved, wrong, seconds, think, total, start, top].some(v => v === null)) return json({ error: "bad fields" }, 400);
+  if (total > solved * 30000) return json({ error: "bad total" }, 400);
+  const now = Date.now(), day = taipeiDay(now);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM mirror WHERE t > ?").bind(now - 60000).first();
+  if (recent.n >= 60) return json({ error: "too many" }, 429);
+  const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 1000) : []).slice(0, 200000);
+  const res = await env.DB.prepare("INSERT INTO mirror(t, day, nick, lang, inf, start_rank, top_rank, total, solved, wrong, seconds, think, quit, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    .bind(now, day, nick, lang, inf, start, top, total, solved, wrong, seconds, think, b.quit ? 1 : 0, detail).run();
+  const id = res.meta.last_row_id;
+  if (!inf || !solved) return json({ id, day, place: null });
+  const better = "inf = 1 AND solved > 0 AND (total > ? OR (total = ? AND seconds < ?))";
+  const today = await env.DB.prepare(`SELECT COUNT(*) AS n FROM mirror WHERE day = ? AND ${better}`).bind(day, total, total, seconds).first();
+  const all = await env.DB.prepare(`SELECT COUNT(*) AS n FROM mirror WHERE ${better}`).bind(total, total, seconds).first();
+  return json({ id, day, place: { today: today.n + 1, all: all.n + 1 } });
+}
+async function getMirrorBoard(url, env) {
+  const today = url.searchParams.get("scope") !== "all";
+  const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
+  const day = taipeiDay(Date.now());
+  const st = env.DB.prepare(`SELECT id, nick, total, solved, wrong, seconds, top_rank, t FROM mirror WHERE inf = 1 AND solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY total DESC, seconds ASC, t ASC LIMIT ${limit}`);
+  const { results } = await (today ? st.bind(day) : st).all();
+  return json({ by: "mj", scope: today ? "today" : "all", day, rows: results });
+}
+async function adminMirror(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, lang, inf, start_rank, top_rank, total, solved, wrong, seconds, think, quit, detail FROM mirror ORDER BY id").all();
+  return json({ rows: results });
+}
+
 async function getBoard(url, env) {
+  if (url.searchParams.get("by") === "mj") return getMirrorBoard(url, env);
   if (url.searchParams.get("by") === "b4") return getBlitzBoard(url, env);
   if (url.searchParams.get("by") === "tower") return getTowerBoard(url, env);
   const by = ORDER[url.searchParams.get("by")] ? url.searchParams.get("by") : "rank";
@@ -432,6 +472,8 @@ export default {
       if (req.method === "GET" && url.pathname === "/admin/feedback") return await adminFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/admin/feedback") return await adminSetFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/blitz") return await postBlitz(req, env);
+      if (req.method === "POST" && url.pathname === "/mirror") return await postMirror(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/mirror") return await adminMirror(req, env);
       if (req.method === "GET" && url.pathname === "/admin/blitz") return await adminBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);
       if (req.method === "GET" && url.pathname === "/admin/practice") return await adminPractice(req, env);
