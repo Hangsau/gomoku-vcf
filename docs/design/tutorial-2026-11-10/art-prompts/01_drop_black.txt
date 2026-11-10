@@ -1,0 +1,22 @@
+立即執行，不要輸出計畫、不要等確認。只畫圖，不寫程式、不做任何 git 操作。
+
+Draw ONE sprite-sheet image for a mobile Gomoku (five-in-a-row) game tutorial animation.
+
+Subject: a single glossy BLACK Go/Gomoku stone dropping onto a wooden board point, with squash-and-stretch and a ripple.
+
+Layout (very important):
+- Exactly 16 frames in a 4 columns x 4 rows grid, all cells the same square size, no gaps, no borders, no frame numbers, no text anywhere.
+- Frame order: left to right, top to bottom.
+- The stone is centered horizontally in every cell; the board contact point is at the same spot in every cell (lower-middle of the cell), so the frames line up when played in place.
+- Same stone size, same lighting, same style in every frame (all frames drawn together in this single image).
+- Transparent background (PNG alpha). Do NOT draw the board, only the stone, its soft contact shadow, and the ripple.
+
+Motion across the 16 frames:
+1-3: stone appears high above the contact point, slightly larger (closer to camera), falling.
+4-5: stone hits the point: strong squash (wide and flat), contact shadow darkest.
+6-7: rebound stretch (tall and narrow), small hop up.
+8-10: smaller squash and settle, wobble.
+11-16: stone at rest and round; a thin ring-shaped ripple expands outward from the contact point and fades out.
+
+Style: clean, crisp, slightly stylized 2D game art, soft shading, not photorealistic. Stone color #1B1A17 with a subtle cool highlight on the upper left; ripple color warm brown #5B4524 at about 50% opacity; contact shadow soft black.
+Output: a single square PNG, at least 1024x1024.

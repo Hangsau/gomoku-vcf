@@ -49,13 +49,13 @@
 
 | W | 內容 | 派工 | 驗收 | 狀態 |
 |---|---|---|---|---|
-| W1 | **資料格式＋檢查程式**：`game/learn/lessons.json`（課程、盤面、任務、文字四語欄位）＋ `tools/check_lessons.py`（Playwright＋引擎逐題驗證；格式、cross-ref、四語欄位齊全） | [sonnet] | 對故意放錯的題報錯；對 W2/W3 的題全過 | 未開始 |
-| W2 | **教學盤**：P967KE41 的 32 子排落子順序（開場 1＋31 課），每子標所屬課；寫進 lessons.json 的 `board` 段；連線提示（相鄰黑子連金虛線）由資料算 | [claude] | check_lessons 通過；整盤再驗一次唯一解 | 未開始 |
+| W1 | **資料格式＋檢查程式**：`game/learn/lessons.json`（課程、盤面、任務、文字四語欄位）＋ `tools/check_lessons.py`（Playwright＋引擎逐題驗證；格式、cross-ref、四語欄位齊全） | [claude] | 對故意放錯的題報錯；對 W2/W3 的題全過 | 完成初版（tools/check_lessons.py、game/learn/lessons.json；跑過 32 課 0 錯）；還沒做「故意放錯」測試 |
+| W2 | **教學盤**：P967KE41 的 32 子排落子順序（開場 1＋31 課），每子標所屬課；寫進 lessons.json 的 `board` 段；連線提示（相鄰黑子連金虛線）由資料算 | [claude] | check_lessons 通過；整盤再驗一次唯一解 | 完成：黑白輪流、由中心往外；開場題與 4-3 倒帶題已入檔並通過 |
 | W3 | **第 1–4 單元課文與題目**（13 課＋開場）：中文課文我寫；盤面派 sonnet 擺＋截短，全部過 W1 檢查 | [claude] 課文／[sonnet] 盤面 | check_lessons 全過；每課至少 3 題 | 未開始 |
 | W4 | **教學引擎**（新檔 `game/learn/learn.js`＋`game.html` 掛入口）：9×9 局部盤渲染、五種任務（點一點／預測／選擇／解題／看回放）＋倒帶課流程、木偶線、落子壓扁回彈、連五依序點亮、倒帶掃描線、整盤翻面 | [sonnet] | 照 `Opening.dc.html`／`Rewind.dc.html` 的互動逐步比對；四語 × 375×667、360×640 不捲動 | 未開始 |
 | W5 | **開場**（照 `Opening.dc.html`，資料用 #004Z7T4V 截短題） | [sonnet]（併 W4） | 從頭玩到「進入教學盤」 | 未開始 |
 | W6 | **教學盤主畫面**（照 `Board.dc.html`，盤面換 W2 的真題；點子跳小卡、信標進下一課、畢業考入口） | [sonnet] | 13 課完成後盤上 13 子位置與 W2 一致 | 未開始 |
-| W7 | **逐格動畫素材**（使用者 2026-11-10：美術圖跟 codex 要，張數多一點、順暢一點沒關係）：①落子壓扁回彈＋漣漪（黑、白各一套，12–16 格）②木偶線：從棋盒拉出、拖子、繃緊彈回（16–24 格）③連五光：五顆依序點亮＋光束掃過（12–16 格）④倒帶：錄影帶掃描線、播放頭、子被拎起飛走（12–16 格）⑤整盤翻面換邊（12–16 格）⑥拉遠＋第一顆子落到教學盤（16–24 格）⑦教學盤信標波紋、子呼吸光（8–12 格循環）⑧答對印章／答錯毛筆叉（8–12 格）。同一套素材用同一張圖集生成，逐格硬切不淡入淡出（memory：feedback_sprite_hard_cuts_no_crossfade、feedback_check_reference_impl_before_claiming_hard）；配色照 game.html 的 :root 色票＋棋盤 #E9C98B／線 #5B4524。先做 CSS 版上線，codex 版替換加強 | [codex] | 使用者實看；逐格硬切 | 待使用者說派（派前查 codex 額度） |
+| W7 | **逐格動畫素材**（使用者 2026-11-10：美術圖跟 codex 要，張數多一點、順暢一點沒關係）：①落子壓扁回彈＋漣漪（黑、白各一套，12–16 格）②木偶線：從棋盒拉出、拖子、繃緊彈回（16–24 格）③連五光：五顆依序點亮＋光束掃過（12–16 格）④倒帶：錄影帶掃描線、播放頭、子被拎起飛走（12–16 格）⑤整盤翻面換邊（12–16 格）⑥拉遠＋第一顆子落到教學盤（16–24 格）⑦教學盤信標波紋、子呼吸光（8–12 格循環）⑧答對印章／答錯毛筆叉（8–12 格）。同一套素材用同一張圖集生成，逐格硬切不淡入淡出（memory：feedback_sprite_hard_cuts_no_crossfade、feedback_check_reference_impl_before_claiming_hard）；配色照 game.html 的 :root 色票＋棋盤 #E9C98B／線 #5B4524。先做 CSS 版上線，codex 版替換加強 | [codex] | 使用者實看；逐格硬切 | 試畫第 1 張完成：game/learn/art/drop_black.png（1254² RGBA、背景透明），待看原圖驗收格子對齊後再派其餘 7 套（prompt 範本 docs/design/tutorial-2026-11-10/art-prompts/01_drop_black.txt） |
 | W8 | **英日韓翻譯** | [codex] | 四語欄位齊全、無捲動 | 未開始 |
 | W9 | **驗收**：check_lessons、四語無捲動、從清空本機紀錄的狀態玩完第 1–4 單元、console 無錯 | [claude] | 全過 | 未開始 |
 | W10 | **上線第一階段**：開場＋教學盤＋第 1–4 單元；5–9 單元的點在盤上顯示但鎖住 | [claude] | 部署指令逐字：`bash C:/claudehome/projects/VCF/tools/deploy_rush.sh`（push GitHub 不等於上線） | 未開始 |
