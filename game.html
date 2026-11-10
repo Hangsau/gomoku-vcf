@@ -1225,6 +1225,15 @@ async function eyPlace(t) {
     flash(T('why_' + res.r) + '<br><small>' + T('noMiss') + '</small>', 'warn', WARN_MS);
     return;
   }
+  // 別解（使用者 2026-11-10：第一個四和第二個四常可對調）：試走這手、電腦擋完，還能在剩下 L−1 手內贏就算對
+  if (res.r === 'win') return eyAnswer(t, true);
+  if (res.r === 'block' && !res.nofour) {
+    g.eyBusy = true;
+    const tr = (await play(g.black.join(' '), g.white.join(' '), t, g.p.atkWhite)).result || {};
+    g.eyBusy = false;
+    if (g.hold || g.over) return;
+    if (tr.r === 'win' || (tr.r === 'block' && !tr.lost && tr.vcf >= 1 && tr.vcf <= (g.p.L || 4) - 1)) return eyAnswer(t, true);
+  }
   return eyAnswer(t, false);
 }
 async function eyAnswer(t, ok) {   // t＝下的點（時間到＝null）
