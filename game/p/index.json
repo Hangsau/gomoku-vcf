@@ -1,6 +1,6 @@
 {
  "ver": "2026-11-09b",
- "at": "2026-11-10 14:35",
+ "at": "2026-11-10 15:09",
  "blocked": 0,
  "dans": [
   {
@@ -20,57 +20,57 @@
    "white": 1806,
    "trained": 5416,
    "bank": 25737,
-   "pool": 27093,
+   "pool": 27097,
    "blocked": 0
   },
   {
    "dan": "三段",
    "file": "3.json",
-   "n": 23786,
+   "n": 23788,
    "white": 3468,
    "trained": 7988,
-   "bank": 15798,
-   "pool": 18838,
+   "bank": 15800,
+   "pool": 18877,
    "blocked": 0
   },
   {
    "dan": "四段",
    "file": "4.json",
-   "n": 29184,
+   "n": 29197,
    "white": 4770,
    "trained": 11310,
-   "bank": 17874,
-   "pool": 20022,
+   "bank": 17887,
+   "pool": 20104,
    "blocked": 0
   },
   {
    "dan": "五段",
    "file": "5.json",
-   "n": 20437,
+   "n": 20449,
    "white": 4150,
-   "trained": 8910,
-   "bank": 11527,
-   "pool": 11987,
+   "trained": 8912,
+   "bank": 11537,
+   "pool": 12106,
    "blocked": 0
   },
   {
    "dan": "六段",
    "file": "6.json",
-   "n": 13674,
+   "n": 13690,
    "white": 2498,
-   "trained": 6176,
-   "bank": 7498,
-   "pool": 7864,
+   "trained": 6184,
+   "bank": 7506,
+   "pool": 7973,
    "blocked": 0
   },
   {
    "dan": "七段",
    "file": "7.json",
-   "n": 5285,
+   "n": 5293,
    "white": 662,
-   "trained": 1856,
-   "bank": 3429,
-   "pool": 3813,
+   "trained": 1869,
+   "bank": 3424,
+   "pool": 3871,
    "blocked": 0
   },
   {
@@ -78,9 +78,9 @@
    "file": "8.json",
    "n": 1559,
    "white": 75,
-   "trained": 277,
-   "bank": 1282,
-   "pool": 1477,
+   "trained": 284,
+   "bank": 1275,
+   "pool": 1486,
    "blocked": 0
   },
   {
@@ -88,9 +88,9 @@
    "file": "9.json",
    "n": 609,
    "white": 15,
-   "trained": 47,
-   "bank": 562,
-   "pool": 715,
+   "trained": 51,
+   "bank": 558,
+   "pool": 719,
    "blocked": 0
   },
   {
@@ -98,11 +98,11 @@
    "file": "10.json",
    "n": 887,
    "white": 0,
-   "trained": 24,
-   "bank": 863,
-   "pool": 1023,
+   "trained": 25,
+   "bank": 862,
+   "pool": 1025,
    "blocked": 0
   }
  ],
- "total": 187423
+ "total": 187474
 }
