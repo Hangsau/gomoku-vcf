@@ -257,6 +257,19 @@
     }
     return out;
   }
+  // 攻方還有沒有 VCF（2026-11-10）：引擎的單獨解題在「對方已經有四」的局面會漏掉「擋他的成五點、同時自己成四」的贏法，
+  // 所以外面補一層：對方有兩個以上成五點＝擋不完；只有一個＝攻方只能下那裡，那手要是四（活四／四四直接贏），再讓對方擋、繼續判斷
+  async function hasVcf(b, w, aw, depth = 0) {
+    const occ = new Set([...b, ...w]), def = aw ? b : w, defBlack = aw;
+    const cf = fivePoints(new Set(def), occ, defBlack);
+    if (!cf.length) { const r = ((await solveFrom(b.join(' '), w.join(' '), aw)) || {}).result; return !!(r && r.vcf); }
+    if (cf.length > 1 || depth > 8) return false;
+    const r = ((await move(b.join(' '), w.join(' '), cf[0], aw)) || {}).result || {};
+    if (r.r === 'win') return true;
+    if (r.r !== 'block' || r.nofour) return false;
+    const b2 = [...b], w2 = [...w]; (aw ? w2 : b2).push(cf[0]); (aw ? b2 : w2).push(r.def);
+    return hasVcf(b2, w2, aw, depth + 1);
+  }
   function fiveLine(stones, last) {   // stones：Set(座標)，找最後一手連成的五
     const [x, y] = xy(last);
     for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
@@ -718,8 +731,7 @@
           msg(f.body, '', U('forced')); await B.thread(r.def, defC); theirs.push(r.def); hist.push([t, r.def]);
           if (!alive()) return;
           // 這一擋之後還有沒有 VCF？沒有＝走進死路：標出擋子、說明、退回這一手
-          // 還走在驗證過的正解上就不必再問引擎（對方已有四時，引擎單獨解題看不到「擋四同時做活四」的贏法，會誤判成死路）
-          const v = r.nofour ? null : onLine() ? { vcf: true } : ((await solveFrom(b.join(' '), w.join(' '), aw)) || {}).result;
+          const v = r.nofour ? null : { vcf: await hasVcf(b, w, aw) };
           if (!alive()) return;
           if (!v || !v.vcf) {
             miss++; B.shake(); B.glow(r.def, '#FF7A6B');

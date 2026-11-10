@@ -338,7 +338,7 @@ TITLES = [
 def stages_of(st):
     """倒帶 v2：先拿掉成五那手，之後每次退兩手；每關（輪攻方下）算出所有「下了還能贏」的點"""
     four_points(st['pos'])   # 確保引擎已開
-    from check_lessons import window_points
+    from check_lessons import window_points, has_vcf
     pos = st['pos']; aw = pos['atk'] == 'w'
     full = st['line'] + [st['five'][0], st['five'][1]]
     out = []
@@ -352,8 +352,8 @@ def stages_of(st):
             if m.get('r') == 'win': acc.append(t)
             elif m.get('r') == 'block' and not m.get('nofour'):
                 b2, w2 = (d + [m['def']], a + [t]) if aw else (a + [t], d + [m['def']])
-                if _E.solve(b2, w2, aw).get('vcf'): acc.append(t)
-        if full[keep] not in acc: acc.append(full[keep])   # 正解本身由逐手重放驗證（對方已有四時，引擎單獨解題看不到「擋四同時做活四」的贏法）
+                if has_vcf(_E, b2, w2, aw): acc.append(t)
+        if full[keep] not in acc: raise SystemExit(f'倒帶關卡算錯（{st.get("src")}）：保留 {keep} 手時正解 {full[keep]} 判定贏不了')
         out.append({'keep': keep, 'accept': sorted(acc)})
     return out
 D = json.loads(DATA.read_text(encoding='utf-8'))

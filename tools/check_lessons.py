@@ -128,6 +128,18 @@ def check_line(E, where, pos, step):
     if (r.get('facts') or {}).get('lifts') and not aw: uses_forbid.append((9, '解法裡有解禁，解禁第 9 單元才教'))
     return uses_forbid
 
+def has_vcf(E, b, w, aw, depth=0):
+    """攻方還有沒有 VCF：引擎單獨解題在「對方已有四」時會漏掉「擋他成五點同時自己成四」的贏法，外面補一層（遊戲 learn.js 的 hasVcf 同一套）"""
+    occ = set(b) | set(w); dfn = b if aw else w
+    cf = sorted(fives(dfn, w if aw else b, aw))
+    if not cf: return bool(E.solve(b, w, aw).get('vcf'))
+    if len(cf) > 1 or depth > 8: return False
+    r = E.move(b, w, cf[0], aw)
+    if r.get('r') == 'win': return True
+    if r.get('r') != 'block' or r.get('nofour'): return False
+    b2, w2 = list(b), list(w); (w2 if aw else b2).append(cf[0]); (b2 if aw else w2).append(r['def'])
+    return has_vcf(E, b2, w2, aw, depth + 1)
+
 def check_stages(E, where, pos, st):
     """倒帶 v2：每一關（輪攻方下）宣告的可接受點＝引擎算的「下了還能贏」的所有點；關卡要從成五那手一路退到開頭"""
     aw = pos.get('atk') == 'w'
@@ -146,8 +158,8 @@ def check_stages(E, where, pos, st):
             if m.get('r') == 'win': acc.add(t)
             elif m.get('r') == 'block' and not m.get('nofour'):
                 b2, w2 = (d + [m['def']], a + [t]) if aw else (a + [t], d + [m['def']])
-                if E.solve(b2, w2, aw).get('vcf'): acc.add(t)
-        acc.add(full[keep])   # 正解本身由 check_line 逐手重放驗證過
+                if has_vcf(E, b2, w2, aw): acc.add(t)
+        if full[keep] not in acc: err(where, f'倒帶保留 {keep} 手那一關：正解 {full[keep]} 引擎判定贏不了')
         if acc != set(sg.get('accept') or []): err(where, f'倒帶保留 {keep} 手那一關：可接受點寫 {sorted(sg.get("accept") or [])}，引擎 {sorted(acc)}')
 
 def window_points(win):
