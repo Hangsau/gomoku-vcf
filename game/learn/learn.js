@@ -105,7 +105,7 @@
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true');
   document.body.appendChild(root);
   let DATA = null, run = 0;   // run：每換一個畫面 +1，舊畫面的計時器看到就停
-  const load = async () => DATA || (DATA = await fetch('game/learn/lessons.json?v=' + (typeof BUILD !== 'undefined' ? BUILD : Date.now())).then(r => r.json()));
+  const load = async () => DATA || (DATA = await fetch('game/learn/lessons.json?v=' + (typeof BUILD !== 'undefined' && BUILD !== 'dev' ? BUILD : Date.now())).then(r => r.json()));
   const svgIco = (d, fill) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
   const IC = { x: 'M6 6l12 12M18 6L6 18', back: 'M15 18l-6-6 6-6', play: 'M8 5v14l11-7z', rew: 'M11 6v12L2 12zM21 6v12l-9-6z', trophy: 'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8', redo: 'M3 12a9 9 0 1 0 3-6.7M3 3v5h5' };
   function frame(title, chip) {
@@ -122,7 +122,7 @@
   // ---------- codex 逐格圖集（2026-11-10 W7）：4×4 圖集逐格硬切播放；沒載到就用上面的 CSS 動畫 ----------
   // manifest.json 由 tools/art_build.py 產生：anchor＝主體中心相對格心偏移、size＝主體寬／格寬
   let ART = null, artP = null;
-  const loadArt = () => artP || (artP = fetch('game/learn/art/manifest.json?v=' + (typeof BUILD !== 'undefined' ? BUILD : Date.now())).then(r => r.ok ? r.json() : null).then(m => {
+  const loadArt = () => artP || (artP = fetch('game/learn/art/manifest.json?v=' + (typeof BUILD !== 'undefined' && BUILD !== 'dev' ? BUILD : Date.now())).then(r => r.ok ? r.json() : null).then(m => {
     ART = m;
     if (m) Object.values(m).forEach(s => { const i = new Image(); i.src = 'game/learn/art/' + s.file; });   // 打開教學才載（約 3 MB），先載好第一次播放不閃
   }).catch(() => {}));
