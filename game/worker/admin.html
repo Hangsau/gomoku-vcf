@@ -59,6 +59,19 @@ td.r .small { white-space: nowrap; }
 .paths { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
 .path { background: var(--bg); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+/* 題庫分頁（2026-11-11 使用者：依段位、黑白先、手數、盤面子數、題號找題） */
+.pzf { display: flex; flex-direction: column; gap: 10px; }
+.pzf .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.pzf .row > span:first-child { width: 64px; color: var(--text2); flex: none; }
+.pzf .chip { min-height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text2); font: inherit; font-size: 14px; }
+.pzf .chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.pzf input, .pzf select { min-height: 36px; width: 70px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; padding: 0 8px; }
+.pzf input.id { width: 140px; text-transform: uppercase; } .pzf select { width: auto; }
+.pz { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.pz svg { flex: none; border-radius: 6px; background: #E9C98B; }
+.pz .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.pz .info b { font-variant-numeric: tabular-nums; }
+.pz .acts a, .pz .acts button { min-height: 34px; padding: 0 10px; font-size: 13px; }
 .mini { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ng); background: transparent; color: var(--ng); font: inherit; font-size: 13px; }
 </style>
 </head>
@@ -70,6 +83,7 @@ details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; displ
     <button type="button" data-tab="rp" aria-pressed="false">題目回報<span class="n" id="nRp"></span></button>
     <button type="button" data-tab="st" aria-pressed="false">數據</button>
     <button type="button" data-tab="sc" aria-pressed="false">計分</button>
+    <button type="button" data-tab="pz" aria-pressed="false">題庫</button>
   </div>
   <div class="filt" id="filt" role="group" aria-label="篩選">
     <button type="button" data-f="open" aria-pressed="true">未處理</button>
@@ -106,7 +120,8 @@ function groups() {   // 同一題的回報併成一張卡
     .sort((x, y) => y.t - x.t);
 }
 function render() {
-  $('filt').hidden = tab === 'st' || tab === 'sc';
+  $('filt').hidden = tab === 'st' || tab === 'sc' || tab === 'pz';
+  if (tab === 'pz') return renderBank();
   if (tab === 'st') return renderStats();
   if (tab === 'sc') return renderScoring();
   const g = groups();
@@ -517,6 +532,79 @@ function renderStats() {
   });
 }
 document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') loadStMode(true); if (tab === 'sc' && !sc) loadScoring(); render(); });
+// ---------- 題庫（2026-11-11 使用者：後台找題，段位、黑先白先、手數、盤面子數、題號）----------
+// 資料：網站上的遊戲題庫 game/p/1..10.json（初段..傳說），每題 [黑子, 白子, 手數, 題目分, 攻方 b/w, 題號]；選了哪段才下載那段
+const BANK_FILES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], PZ_PAGE = 50, COLS = 'ABCDEFGHJKLMNOP';
+const bankCache = {};
+const pzF = { ranks: new Set([1]), side: 'all', lmin: '', lmax: '', smin: '', smax: '', id: '', sort: 's', shown: PZ_PAGE };   // sort 用題目物件的欄位名：s 分數、L 手數、n 子數、id 題號
+let pzBuilt = false, pzLoading = 0;
+const loadBank = (k) => bankCache[k] || (bankCache[k] = fetch(`${SITE}/game/p/${k}.json`, { cache: 'no-store' }).then(r => r.json()).then(a => a.map(x => {
+  const b = String(x[0] || '').split(' ').filter(Boolean), w = String(x[1] || '').split(' ').filter(Boolean);
+  return { k, b, w, L: x[2], s: x[3], a: x[4], id: x[5] || '', n: b.length + w.length };
+})));
+function boardSvg(x, size = 92) {
+  const c = size / 15, at = (t) => [(COLS.indexOf(t[0]) + 0.5) * c, (15 - parseInt(t.slice(1), 10) + 0.5) * c];
+  let g = '';
+  for (let i = 0; i < 15; i++) { const o = (i + 0.5) * c; g += `<line x1="${c / 2}" y1="${o}" x2="${size - c / 2}" y2="${o}"/><line x1="${o}" y1="${c / 2}" x2="${o}" y2="${size - c / 2}"/>`; }
+  const st = (t, black) => { const [cx, cy] = at(t); return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(c * 0.45).toFixed(1)}" fill="${black ? '#1B1A17' : '#FBFAF6'}" stroke="#1B1A17" stroke-width="${black ? 0 : 0.6}"/>`; };
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true"><g stroke="#5B4524" stroke-width="0.4" opacity=".7">${g}</g>${x.b.map(t => st(t, true)).join('')}${x.w.map(t => st(t, false)).join('')}</svg>`;
+}
+function renderBank() {
+  const list = $('list');
+  if (!pzBuilt) {
+    pzBuilt = true;
+    list.innerHTML = `<section class="sec"><h2>找題</h2><div class="pzf">
+      <div class="row"><span>段位</span>${BANK_FILES.map(k => `<button type="button" class="chip" data-rk="${k}">${RANKS[k]}</button>`).join('')}</div>
+      <div class="row"><span>先手</span>${[['all', '全部'], ['b', '黑先'], ['w', '白先']].map(([v, n]) => `<button type="button" class="chip" data-sd="${v}">${n}</button>`).join('')}</div>
+      <div class="row"><span>手數</span><input type="number" inputmode="numeric" min="1" id="pzLmin" placeholder="最少">～<input type="number" inputmode="numeric" min="1" id="pzLmax" placeholder="最多"></div>
+      <div class="row"><span>盤面子數</span><input type="number" inputmode="numeric" min="1" id="pzSmin" placeholder="最少">～<input type="number" inputmode="numeric" min="1" id="pzSmax" placeholder="最多"><span class="small">黑白合計</span></div>
+      <div class="row"><span>題號</span><input class="id" id="pzId" placeholder="例 D5Z5" autocomplete="off"><span class="small">打開頭幾碼就好；沒選段位會載入全部（約 17MB）</span></div>
+      <div class="row"><span>排序</span><select id="pzSort"><option value="s">分數 低→高</option><option value="-s">分數 高→低</option><option value="L">手數 少→多</option><option value="-L">手數 多→少</option><option value="n">子數 少→多</option><option value="-n">子數 多→少</option><option value="id">題號</option></select></div>
+    </div></section><section class="sec" id="pzOut"><p class="msg">載入中…</p></section>`;
+    list.querySelectorAll('[data-rk]').forEach(b => b.onclick = () => { const k = +b.dataset.rk; pzF.ranks.has(k) ? pzF.ranks.delete(k) : pzF.ranks.add(k); pzF.shown = PZ_PAGE; bankSearch(); });
+    list.querySelectorAll('[data-sd]').forEach(b => b.onclick = () => { pzF.side = b.dataset.sd; pzF.shown = PZ_PAGE; bankSearch(); });
+    let t = 0;
+    const onIn = () => { clearTimeout(t); t = setTimeout(() => { pzF.lmin = $('pzLmin').value; pzF.lmax = $('pzLmax').value; pzF.smin = $('pzSmin').value; pzF.smax = $('pzSmax').value; pzF.id = $('pzId').value.trim().toUpperCase(); pzF.shown = PZ_PAGE; bankSearch(); }, 250); };
+    ['pzLmin', 'pzLmax', 'pzSmin', 'pzSmax', 'pzId'].forEach(id => $(id).addEventListener('input', onIn));
+    $('pzSort').onchange = () => { pzF.sort = $('pzSort').value; pzF.shown = PZ_PAGE; bankSearch(); };
+    $('pzLmin').value = pzF.lmin; $('pzLmax').value = pzF.lmax; $('pzSmin').value = pzF.smin; $('pzSmax').value = pzF.smax; $('pzId').value = pzF.id; $('pzSort').value = pzF.sort;   // 切回來時畫面照目前條件
+  } else if (!$('pzOut')) { pzBuilt = false; return renderBank(); }
+  bankSearch();
+}
+async function bankSearch() {
+  if (tab !== 'pz' || !$('pzOut')) return;
+  document.querySelectorAll('[data-rk]').forEach(b => b.setAttribute('aria-pressed', String(pzF.ranks.has(+b.dataset.rk))));
+  document.querySelectorAll('[data-sd]').forEach(b => b.setAttribute('aria-pressed', String(pzF.side === b.dataset.sd)));
+  const files = pzF.ranks.size ? [...pzF.ranks].sort((x, y) => x - y) : (pzF.id ? BANK_FILES : []);
+  const out = $('pzOut');
+  if (!files.length) { out.innerHTML = '<p class="msg">選一個以上的段位，或輸入題號。</p>'; return; }
+  const my = ++pzLoading;
+  if (files.some(k => !bankCache[k] || !bankCache[k].done)) out.innerHTML = `<p class="msg">下載題庫中…（${files.map(k => RANKS[k]).join('、')}）</p>`;
+  let all;
+  try { all = (await Promise.all(files.map(k => loadBank(k).then(a => { bankCache[k].done = true; return a; })))).flat(); }
+  catch (e) { if (my === pzLoading) out.innerHTML = `<p class="msg">讀不到題庫：${esc(e.message)}</p>`; return; }
+  if (my !== pzLoading) return;
+  const num = (v) => (v === '' || v == null ? null : Number(v));
+  const [lmin, lmax, smin, smax] = [num(pzF.lmin), num(pzF.lmax), num(pzF.smin), num(pzF.smax)];
+  const blocked = new Set(rp.filter(r => r.status === 'blocked').map(r => r.pid));
+  const hit = all.filter(x => (pzF.side === 'all' || x.a === pzF.side) && (lmin == null || x.L >= lmin) && (lmax == null || x.L <= lmax)
+    && (smin == null || x.n >= smin) && (smax == null || x.n <= smax) && (!pzF.id || x.id.startsWith(pzF.id)));
+  const key = pzF.sort.replace('-', ''), dir = pzF.sort.startsWith('-') ? -1 : 1;
+  hit.sort((x, y) => (key === 'id' ? x.id.localeCompare(y.id) : (x[key] - y[key]) * dir) || x.s - y.s);
+  const shown = hit.slice(0, pzF.shown);
+  out.innerHTML = `<h2>找到 ${hit.length.toLocaleString()} 題</h2><span class="note">從 ${all.length.toLocaleString()} 題裡找；顯示前 ${shown.length} 題。子數＝盤面黑白合計。</span>
+    ${shown.map(x => `<div class="pz">${boardSvg(x)}<div class="info"><span><b>#${esc(x.id)}</b>${blocked.has(x.id) ? ' <span class="tag blocked">已停用</span>' : ''}</span><span class="small">${esc(RANKS[x.k])}・${x.a === 'w' ? '白先' : '黑先'}・${x.L} 手・${x.n} 子（黑 ${x.b.length}／白 ${x.w.length}）・${x.s} 分</span>
+      <div class="acts"><a href="${esc(scoreHref(x.b.join(' '), x.w.join(' ')))}" target="_blank" rel="noopener">在試煉場打開</a>${blocked.has(x.id) ? '' : `<button type="button" class="ng" data-pzblock="${esc(x.id)}">停用</button>`}</div></div></div>`).join('')}
+    ${hit.length > shown.length ? `<div class="acts" style="justify-content:center;padding-top:8px"><button type="button" class="gold" id="pzMore">再多 ${Math.min(PZ_PAGE, hit.length - shown.length)} 題</button></div>` : ''}`;
+  if ($('pzMore')) $('pzMore').onclick = () => { pzF.shown += PZ_PAGE; bankSearch(); };
+  out.querySelectorAll('[data-pzblock]').forEach(b => b.onclick = async () => {
+    const x = hit.find(p => p.id === b.dataset.pzblock);
+    if (!x || !confirm(`停用 #${x.id}？遊戲會不再出這題（題目回報分頁可以重新打開）。`)) return;
+    b.disabled = true;
+    try { await api('/admin/report', { pid: x.id, status: 'blocked', b: x.b.join(' '), w: x.w.join(' '), a: x.a }); rp = (await api('/admin/reports')).rows; bankSearch(); }
+    catch (e) { alert('停用失敗：' + e.message); b.disabled = false; }
+  });
+}
 document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
 load();
 </script>
