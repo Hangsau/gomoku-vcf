@@ -6,7 +6,7 @@
 
 const VCF_THINK = [60, 180, 300];   // 每題思考上限（秒），預設 180
 const VCF_TARGET = [3, 5, 10];      // 先解開幾題獲勝
-export const VCF_MAX_L = 20;
+const VCF_MAX_L = 20;
 const RANK_MIN = 1, RANK_MAX = 10;         // 題庫檔 1..10＝初段..傳說
 export const COUNT_MS = 3000;              // 開局倒數
 export const NEXT_MS = 1200;               // 一題結束（解開／失敗）停多久換下一題
@@ -47,7 +47,7 @@ const newSeat = () => ({ i: 0, at: 0, deadline: 0, s: 'think', moves: 0, why: nu
 export const newVs = () => ({ score: [0, 0], list: [], bank: null, used: new Set(), startAt: 0, p: [newSeat(), newSeat()], result: null, token: Math.random() });
 
 // 題目串：確保第 i 題後面還有 LIST_AHEAD 題
-export function ensureList(vs, i) {
+function ensureList(vs, i) {
   while (vs.list.length < i + 1 + LIST_AHEAD) vs.list.push(pickPuzzle(vs.bank, vs.used));
 }
 export function initList(vs, bank, target) {
