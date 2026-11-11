@@ -333,7 +333,7 @@
 
   // ---------- 入口：首頁「挑戰」上方插一張教學卡（還沒看過開場的人多一行「新手從這裡開始」） ----------
   const entry = document.createElement('button'); entry.type = 'button'; entry.id = 'toLearn'; entry.className = 'mode slim';
-  entry.style.cssText = 'border-color:#3CC6B4;border-style:dashed;min-height:84px';
+  entry.style.cssText = 'border-color:#3CC6B4;border-style:dashed;padding-top:9px;padding-bottom:9px';   // 高度跟首頁其他卡一樣（2026-11-11 使用者：選單大小對齊）；多一行副標所以上下留白收小
   const entryLabel = () => {
     entry.innerHTML = `<span class="big" style="color:#3CC6B4"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><circle cx="15" cy="9" r="2.2" fill="currentColor"/></svg></span><span class="tx"><b></b><span></span></span>`;
     entry.querySelector('b').textContent = U('entry');

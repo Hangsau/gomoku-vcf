@@ -160,7 +160,7 @@ body.mj .not-m, body:not(.mj) .only-m, body.mjinf .not-mi, body.mj:not(.mjinf) .
 /* 火眼金睛（2026-11-10 使用者）：body.ey 時藏 .not-e、只在火眼金睛顯示 .only-e；.only-be＝無限之塔或火眼金睛都顯示（結算的用時／平均格） */
 body.ey .not-e, body:not(.ey) .only-e, body:not(.b4):not(.ey) .only-be { display: none !important; }
 .hud .n.low { color: var(--fail); }
-@media (max-height: 660px) { .mode.slim { min-height: 80px; } #sHome .mode:not(.slim) { min-height: 104px; } }   /* 首頁多了對戰卡（2026-11-11），小手機兩張大卡縮一點才不會捲動 */
+@media (max-height: 660px) { body .mode.slim { min-height: 80px; } }   /* body 提高優先：後面還有一條 .mode.slim 92px，原本會蓋掉這條 */   /* 首頁三張卡（挑戰／練習／對戰）2026-11-11 起跟挑戰選單一樣都用 slim，大小一致 */
 .mode { display: flex; align-items: center; gap: 16px; min-height: 128px; padding: 18px 18px; border-radius: 22px; border: 2px solid var(--line2); background: var(--panel); color: var(--text); text-align: left; }
 .mode.r { border-color: var(--gold); } .mode.p { border-color: var(--teal); }
 .mode .big { width: 84px; flex: none; display: flex; justify-content: center; font-family: var(--num); font-size: 56px; font-weight: 700; line-height: 1; color: var(--gold); }
@@ -273,11 +273,11 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
     <span class="muted" style="font-size: 15px;" data-i18n="homeSub">五子棋 VCF 解題</span>
   </div>
   <div class="pad" style="padding-top: 28px; display: flex; flex-direction: column; gap: 14px;">
-    <button type="button" class="mode r" id="toPick">
+    <button type="button" class="mode r slim" id="toPick">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></span>
       <span class="tx"><b data-i18n="modeRush">挑戰</b></span>
     </button>
-    <button type="button" class="mode p" id="modeP">
+    <button type="button" class="mode p slim" id="modeP">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
       <span class="tx"><b data-i18n="modePrac">練習</b></span>
     </button>
