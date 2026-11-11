@@ -566,6 +566,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
   <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="revList"></div></div>
 </div>
 
+<script src="game/skin.js"></script>
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
@@ -993,25 +994,12 @@ function setBoardPx(v) {
 }
 const xy = (t) => [pad + COLS.indexOf(t[0]) * cell, pad + (N - parseInt(t.slice(1), 10)) * cell];
 function stone(t, black, alpha) {
-  const [x, y] = xy(t), r = cell * 0.46;
-  ctx.globalAlpha = alpha ?? 1;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = black ? '#1B1A17' : '#FBFAF6'; ctx.fill();
-  if (!black) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#1B1A17'; ctx.stroke(); }
-  ctx.globalAlpha = 1;
+  const [x, y] = xy(t);
+  RushSkin.drawStone(ctx, x, y, cell * 0.46, black, alpha);   // 樣式在 game/skin.js
 }
 function draw() {
   ctx.clearRect(0, 0, px, px);
-  ctx.fillStyle = '#E9C98B';
-  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, px, px, 10) : ctx.rect(0, 0, px, px); ctx.fill();
-  ctx.strokeStyle = '#5B4524'; ctx.lineWidth = 1;
-  for (let i = 0; i < N; i++) {
-    const o = Math.round(pad + i * cell) + 0.5;
-    ctx.beginPath(); ctx.moveTo(pad, o); ctx.lineTo(px - pad, o); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(o, pad); ctx.lineTo(o, px - pad); ctx.stroke();
-  }
-  ctx.fillStyle = '#5B4524';
-  for (const t of ['D4', 'D12', 'L4', 'L12', 'H8']) { const [x, y] = xy(t); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: N });
   const V = revView();
   if (!V && (!g || !g.p)) return;
   if (V) {   // 研究盤（象牙塔每題後、各模式覆盤共用）：題目＋目前這條線（我的下法或答案，可自由改），標手順
@@ -1020,7 +1008,7 @@ function draw() {
     V.r.seq.slice(0, V.r.cur).forEach((t, k) => {
       const blk = (k % 2 === 0) !== V.p.atkWhite, [x, y] = xy(t);
       stone(t, blk);
-      ctx.fillStyle = blk ? '#F2B544' : '#1B1A17';
+      ctx.fillStyle = blk ? '#F2B544' : RushSkin.ink(false);
       ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(k + 1), x, y + 1);
@@ -1043,6 +1031,7 @@ function draw() {
     ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, cell * 0.8, 0, Math.PI * 2); ctx.stroke();
   }
 }
+RushSkin.onChange(() => draw());   // 選單換樣式、棋子圖載入完：重畫
 function cellAt(ev) {
   const r = cv.getBoundingClientRect();
   const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);
@@ -1187,10 +1176,10 @@ async function nextPuzzle() {
   if (g.mj) { g.armed = false; g.think = 0; g.left = MJ_START; }   // 明鏡台每題重新計時
   g.hist = []; g.helped = false; g.undos = 0; g.hints = 0; g.mist = 0; g.dead = false; g.hintPt = null;   // 練習場每題重設
   setGhost(null);
-  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
+  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
   renderHud();
   // 每題都閃一下黑先／白先（使用者 2026-11-07：同色也要閃），閃的時候不扣秒
-  await flash(`<i class="stone" style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
+  await flash(`<i class="stone" style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
   if (!g.over) g.hold = false;
 }
 
@@ -1250,9 +1239,9 @@ async function eyNext() {
     catch { endGame(T('endNoPuzzle')); return; }
     g.p = p; g.black = [...p.black]; g.white = [...p.white]; g.lastDef = null; g.psec = 0; g.moves = []; g.seq = []; g.wf = 0; g.wn = 0; g.hist = []; g.hintPt = null; g.eySol = '';
     setGhost(null);
-    $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
+    $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
     g.left = EYE_SEC; renderHud();
-    const [sol] = await Promise.all([solveFirst(p), flash(`<i class="stone" style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS)]);
+    const [sol] = await Promise.all([solveFirst(p), flash(`<i class="stone" style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS)]);
     if (g.over) return;
     if (!sol) continue;   // 引擎算不出解：靜默換下一題
     g.eySol = sol; g.left = EYE_SEC; g.hold = false;
@@ -1782,9 +1771,9 @@ async function twOpen() {
   const p = { rank: rankOf(score), black: black.split(' '), white: white.split(' '), L, score, atkWhite: atk === 'w', id: id || '' };
   Object.assign(g, { open: g.n, paused: false, p, black: [...p.black], white: [...p.white], lastDef: null, psec: openMs / 1000, moves: [], seq: [], wf: 0, wn: 0, hist: [], undos: 0, hints: 0, hintPt: null, dead: false, helped: false });
   setGhost(null);
-  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
+  $('atkInfo').innerHTML = `<i style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:1.5px solid #FBFAF6"></i>${atkName(p)}`;
   renderHud();
-  await flash(`<i class="stone" style="background:${p.atkWhite ? '#FBFAF6' : '#1B1A17'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
+  await flash(`<i class="stone" style="background:${p.atkWhite ? 'var(--sk-w)' : 'var(--sk-b)'};border:2px solid #FBFAF6"></i>${atkName(p)}`, '', FLASH_MS);
   if (!g.over && !g.rev) g.hold = false;
 }
 async function twStep(ok, wk, wa) {   // 交這一題；回傳這題得分

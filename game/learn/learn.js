@@ -45,12 +45,12 @@
 #learn .lbar b{flex:1;font-size:17px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #learn .lchip{height:28px;padding:0 10px;border-radius:14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 #learn .lbody{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;padding:0 12px;gap:10px}
-#learn .lbrd{position:relative;flex:none;border-radius:14px;background:#E9C98B;box-shadow:0 7px 0 #9C7A45,0 12px 28px rgba(0,0,0,.45);touch-action:manipulation}
+#learn .lbrd{position:relative;flex:none;border-radius:14px;background:var(--sk-board,#E9C98B);box-shadow:0 7px 0 var(--sk-edge,#9C7A45),0 12px 28px rgba(0,0,0,.45);touch-action:manipulation}
 #learn .lbrd svg.grid{position:absolute;inset:0}
 #learn .lst{position:absolute;border-radius:50%;pointer-events:none;box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35)}
-#learn .lst.b{background:#1B1A17}#learn .lst.w{background:#FBFAF6}
+#learn .lst.b{background:var(--sk-b,#1B1A17)}#learn .lst.w{background:var(--sk-w,#FBFAF6)}
 #learn .lst .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-weight:700}
-#learn .lst.b .n{color:#FBFAF6}#learn .lst.w .n{color:#1B1A17}
+#learn .lst.b .n{color:var(--sk-b-ink,#FBFAF6)}#learn .lst.w .n{color:var(--sk-w-ink,#1B1A17)}
 #learn .lhit{position:absolute;border:0;padding:0;background:transparent;border-radius:50%;cursor:pointer}
 #learn .lmsg{flex:none;width:100%;max-width:520px;box-sizing:border-box;border-radius:18px;background:var(--panel);border:1px solid var(--line);padding:12px 15px;min-height:96px}
 #learn .lmsg .tag{display:block;font-size:13px;font-weight:700;color:var(--gold)}
@@ -144,6 +144,8 @@
   }).catch(() => {}));
   const FRAME_MS = 42;
   // host：疊在誰上面；cx,cy：主體中心要對準的位置（px）；body：主體要多寬（px）；opt.full＝整張蓋滿 host（特效層）
+  // 落子／提子的逐格圖畫的是原木樣式的黑白子；換了別的棋子樣式就改用 CSS 動畫（用的是那套樣式的子）
+  const classicStones = () => !window.RushSkin || RushSkin.get().id === 'classic';
   function sprite(host, name, cx, cy, body, opt = {}) {
     const s = ART && ART[name];
     if (!s) return null;
@@ -190,8 +192,8 @@
         const p = Math.round(B.m + i * B.cell) + .5; lines += `<line x1="${B.m}" y1="${p}" x2="${s - B.m}" y2="${p}"/><line x1="${p}" y1="${B.m}" x2="${p}" y2="${s - B.m}"/>`;
         labels += `<text x="${p}" y="${s - B.m + B.cell * 0.47 + fs + 1}" text-anchor="middle">${COLS[ox + i]}</text><text x="${B.m - B.cell * 0.47 - 3}" y="${p + fs * .36}" text-anchor="end">${oy + n - i}</text>`;
       }
-      const star = n === 15 ? ['D4', 'D12', 'L4', 'L12', 'H8'].map(t => { const [x, y] = xy(t); return `<circle cx="${B.m + x * B.cell}" cy="${B.m + (14 - y) * B.cell}" r="3"/>`; }).join('') : '';
-      el.innerHTML = `<svg class="grid" width="${s}" height="${s}" aria-hidden="true"><g stroke="#5B4524" stroke-width="1">${lines}</g><g fill="#5B4524">${star}</g><g fill="#7A5E36" font-size="${fs}" font-family="var(--num)" font-weight="700">${labels}</g></svg>`;
+      const star = n === 15 ? ['D4', 'D12', 'M4', 'M12', 'H8'].map(t => { const [x, y] = xy(t); return `<circle cx="${B.m + x * B.cell}" cy="${B.m + (14 - y) * B.cell}" r="3"/>`; }).join('') : '';
+      el.innerHTML = `<svg class="grid" width="${s}" height="${s}" aria-hidden="true"><g style="stroke:var(--sk-line,#5B4524)" stroke-width="1">${lines}</g><g style="fill:var(--sk-star,#5B4524)">${star}</g><g style="fill:var(--sk-label,#7A5E36)" font-size="${fs}" font-family="var(--num)" font-weight="700">${labels}</g></svg>`;
       B.layer = document.createElement('div'); B.layer.style.cssText = 'position:absolute;inset:0'; el.appendChild(B.layer);
       B.hits = document.createElement('div'); B.hits.style.cssText = 'position:absolute;inset:0'; el.appendChild(B.hits);
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
@@ -213,7 +215,7 @@
       B.layer.appendChild(s); B.stones.set(t, { el: s, color });
       if (o.anim !== false) {
         snd(color === 'w');
-        const sp = sprite(B.layer, color === 'b' ? 'drop_black' : 'drop_white', px, py, d);
+        const sp = classicStones() && sprite(B.layer, color === 'b' ? 'drop_black' : 'drop_white', px, py, d);
         if (sp) { s.classList.remove('a-drop'); s.style.opacity = 0; sp.done.then(() => { s.style.opacity = ''; }); }   // 逐格圖播完才換成真的子
         else { const rp = document.createElement('div'); rp.className = 'ripple'; s.appendChild(rp); }
       }
@@ -222,7 +224,7 @@
     B.take = (t, silent) => {
       const s = B.stones.get(t); if (!s) return; B.stones.delete(t);
       if (silent) { s.el.remove(); return; }
-      const [px, py] = B.px(t), sp = sprite(B.layer, s.color === 'b' ? 'lift_black' : 'lift_white', px, py, B.cell * 0.88);
+      const [px, py] = B.px(t), sp = classicStones() && sprite(B.layer, s.color === 'b' ? 'lift_black' : 'lift_white', px, py, B.cell * 0.88);
       if (sp) { s.el.remove(); return; }
       s.el.className = s.el.className.replace(' a-drop', '') + ' a-lift'; setTimeout(() => s.el.remove(), 280);
     };
@@ -244,7 +246,7 @@
       const [tx, ty] = B.px(t), sx = B.size + 2, sy = -40, d = `M ${sx} ${sy} Q ${Math.round((sx + tx) / 2 + 40)} ${Math.round((sy + ty) / 2 - 40)} ${tx} ${ty}`;
       const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); sv.setAttribute('class', 'travelsvg'); sv.setAttribute('width', B.size); sv.setAttribute('height', B.size); sv.style.cssText = 'position:absolute;inset:0;overflow:visible;pointer-events:none';
       sv.innerHTML = `<path class="thread" d="${d}" fill="none" stroke="#3CC6B4" stroke-width="2.5" stroke-linecap="round"/>`; B.layer.appendChild(sv);
-      const dd = B.cell * 0.88, tr = document.createElement('div'); tr.className = 'travel'; tr.style.cssText = `width:${dd}px;height:${dd}px;offset-path:path('${d}');background:${color === 'b' ? '#1B1A17' : '#FBFAF6'}`; B.layer.appendChild(tr);
+      const dd = B.cell * 0.88, tr = document.createElement('div'); tr.className = 'travel'; tr.style.cssText = `width:${dd}px;height:${dd}px;offset-path:path('${d}');background:${color === 'b' ? 'var(--sk-b,#1B1A17)' : 'var(--sk-w,#FBFAF6)'}`; B.layer.appendChild(tr);
       await sleep(780); sv.remove(); tr.remove(); B.put(t, color);
     };
     B.five = (pts, good, o = {}) => {   // 連成五：依序點亮＋光束＋震動
@@ -488,7 +490,7 @@
     order.forEach(o => { if (o.lesson === 'opening' || doneSet.has(o.lesson)) B.put(o.t, o.c, { anim: false, num: num(o), cls: o.c === 'b' ? 'a-breath' : '' }); });
     if (DEV) order.forEach(o => {   // 測試模式：還沒落的子也淡淡標出位置與順序，點了就能直接上那課
       if (o.lesson === 'opening' || doneSet.has(o.lesson)) return;
-      B.mark('ring', o.t, `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 ${Math.round(B.cell * .42)}px var(--num);color:#5B4524">${num(o)}</span>`, 'border:1.5px dashed rgba(91,69,36,.55);animation:none');
+      B.mark('ring', o.t, `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 ${Math.round(B.cell * .42)}px var(--num);color:var(--sk-line,#5B4524)">${num(o)}</span>`, 'border:1.5px dashed rgba(91,69,36,.55);animation:none');
     });
     if (prog().justDone) {   // 剛完成的課：子落到盤上，再轉一圈金光（逐格圖 unit_clear）
       const o = order.find(x => x.lesson === prog().justDone);
@@ -553,8 +555,8 @@
     if (st.pos && !(T === 'tap' && (st.kind === 'coord' || st.kind === 'free')) && T !== 'say') {   // 判斷題（是不是四、是不是禁手）也標：題目都在問黑棋這一手
       const atkW = st.pos.atk === 'w', meW = (T === 'predict' || st.kind === 'block') ? !atkW : atkW;
       const chip = document.createElement('span'); chip.className = 'lchip'; chip.setAttribute('data-me', '');
-      chip.style.cssText = 'background:#E9C98B;color:#1B1A17;font-weight:900';   // 棋盤色底＋實心子：黑子、白子一眼分得出來
-      chip.innerHTML = `<i style="width:16px;height:16px;border-radius:50%;background:${meW ? '#FBFAF6' : '#1B1A17'};box-shadow:0 1px 2px rgba(0,0,0,.45)${meW ? ',inset 0 0 0 1px #B9B4A6' : ''}"></i>`;
+      chip.style.cssText = 'background:var(--sk-board-c,#E9C98B);color:var(--sk-board-ink,#1B1A17);font-weight:900';   // 棋盤色底＋實心子：黑子、白子一眼分得出來
+      chip.innerHTML = `<i style="width:16px;height:16px;border-radius:50%;background:${meW ? 'var(--sk-w,#FBFAF6)' : 'var(--sk-b,#1B1A17)'};box-shadow:0 1px 2px rgba(0,0,0,.45)${meW ? ',inset 0 0 0 1px #B9B4A6' : ''}"></i>`;
       chip.appendChild(document.createTextNode(U('playAs', { c: U(meW ? 'white' : 'black') })));
       root.querySelector('.lbar').insertBefore(chip, root.querySelector('.lbar').lastElementChild);
     }
@@ -670,7 +672,7 @@
     const used = tape.offsetHeight + Math.max(f.body.querySelector('.lmsg').offsetHeight, 132) + 2 * 10 + 4;   // 訊息框至少預留 4 行：後面的問題可能比結局那句長（英文 360×640）
     B.fit(Math.min(Math.min(root.clientWidth, 544) - 24, root.clientHeight - root.querySelector('.lbar').offsetHeight - 86 - used));   // 底部按鈕這時還沒放上去，固定預留 86px
     const head = document.createElement('div'); head.className = 'head'; tape.appendChild(head);
-    const dots = line.map((t, k) => { const d = document.createElement('i'); d.textContent = k + 1; const c = colorAt(k); d.style.cssText = `background:${c === 'b' ? '#1B1A17' : '#FBFAF6'};color:${c === 'b' ? '#FBFAF6' : '#1B1A17'};border:2px solid ${c === 'b' ? '#FBFAF6' : '#1B1A17'}`; tape.appendChild(d); return d; });
+    const dots = line.map((t, k) => { const d = document.createElement('i'); d.textContent = k + 1; const c = colorAt(k); d.style.cssText = `background:${c === 'b' ? 'var(--sk-b,#1B1A17)' : 'var(--sk-w,#FBFAF6)'};color:${c === 'b' ? 'var(--sk-b-ink,#FBFAF6)' : 'var(--sk-w-ink,#1B1A17)'};border:2px solid ${c === 'b' ? '#FBFAF6' : '#1B1A17'}`; tape.appendChild(d); return d; });
     const layoutTape = (n) => { const w = tape.clientWidth - 40, gap = w / Math.max(1, line.length - 1); dots.forEach((d, k) => { d.style.left = (8 + k * gap) + 'px'; d.style.opacity = k < n ? 1 : .25; }); head.style.left = Math.max(4, Math.min(tape.clientWidth - 8, 8 + n * gap - gap / 2 + 10)) + 'px'; };
     pos.b.forEach(t => B.put(t, 'b', { anim: false })); pos.w.forEach(t => B.put(t, 'w', { anim: false }));
     line.forEach((t, k) => B.put(t, colorAt(k), { anim: false, num: k + 1 }));

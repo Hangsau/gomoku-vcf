@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>詰題試煉場</title>
 <script src="score-i18n.js?v=2" defer></script>
+<script src="game/skin.js"></script><!-- 棋盤樣式，跟 Rush 同一份 -->
 <script src="score_rules.js?v=20261109b"></script><!-- 給分規則（跟本機題庫同一份，vcf-slover web/score_rules.js 複製來的；2026-11-08） -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0F121A">
@@ -402,18 +403,16 @@ const noteAt = s => s > 0 ? steps()[Math.floor((s - 1) / 2)] : null;
 
 // ---------- 棋盤 ----------
 function drawBoard() {
-  let g = `<rect width="${SZ}" height="${SZ}" rx="8" fill="#E9C98B"/>`;
+  let g = RushSkin.svgBoard({ size: SZ, pad: PAD, cell: CELL, n: N });   // 樣式在 game/skin.js
+  const lc = RushSkin.get().board.label;
   for (let i = 0; i < N; i++) {
-    g += `<line x1="${PAD}" y1="${PAD + i * CELL}" x2="${PAD + 14 * CELL}" y2="${PAD + i * CELL}" stroke="#5B4524" stroke-width="1"/>`;
-    g += `<line x1="${PAD + i * CELL}" y1="${PAD}" x2="${PAD + i * CELL}" y2="${PAD + 14 * CELL}" stroke="#5B4524" stroke-width="1"/>`;
-    g += `<text x="${PAD + i * CELL}" y="${SZ - 4}" text-anchor="middle" font-size="10" fill="#7A6038">${COLS[i]}</text>`;
-    g += `<text x="6" y="${PAD + i * CELL + 4}" font-size="10" fill="#7A6038">${N - i}</text>`;
+    g += `<text x="${PAD + i * CELL}" y="${SZ - 4}" text-anchor="middle" font-size="10" fill="${lc}">${COLS[i]}</text>`;
+    g += `<text x="6" y="${PAD + i * CELL + 4}" font-size="10" fill="${lc}">${N - i}</text>`;
   }
-  [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]].forEach(([c, r]) => g += `<circle cx="${PAD + c * CELL}" cy="${PAD + r * CELL}" r="3.5" fill="#5B4524"/>`);
   const stone = (t, col, label) => {
     const [x, y] = xy(t);
-    g += `<circle cx="${x}" cy="${y}" r="15" fill="${col === 'b' ? '#1B1A17' : '#FBFAF6'}" stroke="#1B1A17" stroke-width="${col === 'b' ? 0 : 1.3}"/>`;
-    if (label) g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${col === 'b' ? '#fff' : '#1B1A17'}">${label}</text>`;
+    g += RushSkin.svgStone(x, y, 15, col === 'b');
+    if (label) g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(col === 'b')}">${label}</text>`;
   };
   black.forEach(t => stone(t, 'b'));
   white.forEach(t => stone(t, 'w'));
@@ -434,8 +433,8 @@ function drawBoard() {
   if (preview) {   // 得分來源點開看的：錯的走法（虛線圈＋手數）、沒作用的子（虛線方框）
     (preview.line || []).forEach((t, k) => {
       const [x, y] = xy(t), bl = (k % 2 === 0) !== !!atkWhite();
-      g += `<circle cx="${x}" cy="${y}" r="15" fill="${bl ? '#1B1A17' : '#FBFAF6'}" fill-opacity=".62" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="4 3"/>`;
-      g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${bl ? '#fff' : '#1B1A17'}">${Math.floor(k / 2) + 1}</text>`;
+      g += RushSkin.svgStone(x, y, 15, bl, 'fill-opacity=".62"') + `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+      g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(bl)}">${Math.floor(k / 2) + 1}</text>`;
     });
     (preview.mark || []).forEach(t => { const [x, y] = xy(t); g += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="6" fill="none" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="5 3"/>`; });
   }
@@ -929,13 +928,8 @@ function drawCard() {
   c.fillText(rankOf(r) || '詰題', 54, 64);
   c.fillStyle = '#A79FC4'; c.font = '20px "Chakra Petch"'; c.textAlign = 'right'; c.fillText('詰題試煉場', W - 40, 64); c.textAlign = 'left';
   const bx = 40, by = 100, bs = W - 80, cell = (bs - 40) / 14, p = 20;
-  c.fillStyle = '#E9C98B'; rr(c, bx, by, bs, bs, 14); c.fill();
-  c.strokeStyle = '#5B4524'; c.lineWidth = 1.2;
-  for (let i = 0; i < N; i++) {
-    c.beginPath(); c.moveTo(bx + p, by + p + i * cell); c.lineTo(bx + p + 14 * cell, by + p + i * cell); c.stroke();
-    c.beginPath(); c.moveTo(bx + p + i * cell, by + p); c.lineTo(bx + p + i * cell, by + p + 14 * cell); c.stroke();
-  }
-  const put = (t, col) => { const x = bx + p + COLS.indexOf(t[0]) * cell, y = by + p + (N - parseInt(t.slice(1), 10)) * cell; c.beginPath(); c.arc(x, y, cell * .44, 0, 7); c.fillStyle = col === 'b' ? '#1B1A17' : '#FBFAF6'; c.fill(); if (col === 'w') { c.strokeStyle = '#1B1A17'; c.lineWidth = 1.5; c.stroke(); } };
+  RushSkin.drawBoard(c, { x: bx, y: by, size: bs, pad: p, cell, n: N, round: 14, lineWidth: 1.2, crisp: false, starR: 0 });   // 分享卡跟著玩家選的樣式
+  const put = (t, col) => { const x = bx + p + COLS.indexOf(t[0]) * cell, y = by + p + (N - parseInt(t.slice(1), 10)) * cell; RushSkin.drawStone(c, x, y, cell * .44, col === 'b'); };
   black.forEach(t => put(t, 'b')); white.forEach(t => put(t, 'w'));
   const ty = by + bs + 60;
   // 分享卡是出題用：不寫幾手勝、不寫加分項，只留黑先／白先和子數
@@ -944,6 +938,7 @@ function drawCard() {
   c.fillStyle = '#A79FC4'; c.font = '22px "Noto Sans TC"'; c.fillText('鑑定分數', 40, H - 44);
   c.fillStyle = '#FFE3A3'; c.font = '700 54px "Chakra Petch"'; c.textAlign = 'right'; c.fillText(r.score.toFixed(1), W - 40, H - 40); c.textAlign = 'left';
 }
+RushSkin.onChange(() => { if (typeof drawBoard === 'function') drawBoard(); });   // 別的分頁換了樣式
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 $('btnCard').onclick = async () => { try { await document.fonts.ready; } catch {} drawCard(); $('dlgCard').showModal(); };
 $('btnDl').onclick = () => { const a = document.createElement('a'); a.download = `vcf-題目-黑${result.nb}白${result.nw}.png`; a.href = $('cardCanvas').toDataURL('image/png'); a.click(); };

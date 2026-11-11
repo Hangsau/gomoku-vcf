@@ -71,9 +71,9 @@ input.nick { flex: 1; min-width: 0; height: 44px; border-radius: 12px; border: 1
 .seat .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seat.empty { border: 1.5px dashed var(--line2); background: transparent; color: var(--text2); }
 .st { width: 18px; height: 18px; border-radius: 50%; flex: none; display: inline-block; }
-.st.b { background: #1B1A17; border: 1.5px solid #8A90A0; }   /* 深色底上黑子要有亮邊才看得到 */
-.st.w { background: #FBFAF6; }
-.st.q { background: linear-gradient(90deg, #1B1A17 50%, #FBFAF6 50%); border: 1.5px solid #8A90A0; }   /* 塔拉、Swap2 開局前還不知道誰黑誰白 */
+.st.b { background: var(--sk-b); border: 1.5px solid #8A90A0; }   /* 深色底上黑子要有亮邊才看得到 */
+.st.w { background: var(--sk-w); }
+.st.q { background: linear-gradient(90deg, var(--sk-b-c) 50%, var(--sk-w-c) 50%); border: 1.5px solid #8A90A0; }   /* 塔拉、Swap2 開局前還不知道誰黑誰白 */
 .st.p { background: transparent; border: 2px solid var(--gold); }   /* VCF 搶答：沒有黑白，座位用空心圈 */
 .pips { display: inline-flex; gap: 4px; }
 .pips i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--gold); display: inline-block; }
@@ -255,6 +255,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   </div>
 </div>
 
+<script src="game/skin.js"></script>
 <script type="module">
 import { BLACK, WHITE, EMPTY, SIZE, FORBID_NONE, forbidType } from './game/duel/rules.js';
 import { RULE, PHASE, ACTION, OFFER_COUNT, SWAP2_ADD_CHOICE, END_REASON, replayMatch, actorOf, colorOf, canChooseYamaguchi, openingZoneRadius, placeError, stoneColorToPlace, ruleHasForbidden } from './game/duel/match.js';
@@ -812,25 +813,12 @@ const cv = $('board'), ctx = cv.getContext('2d');
 let px = 390, cell = 24, pad = 14;
 const xyOf = (p) => [pad + (p % SIZE) * cell, pad + Math.floor(p / SIZE) * cell];
 function stone(p, black, alpha) {
-  const [x, y] = xyOf(p), r = cell * 0.46;
-  ctx.globalAlpha = alpha ?? 1;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = black ? '#1B1A17' : '#FBFAF6'; ctx.fill();
-  if (!black) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#1B1A17'; ctx.stroke(); }
-  ctx.globalAlpha = 1;
+  const [x, y] = xyOf(p);
+  RushSkin.drawStone(ctx, x, y, cell * 0.46, black, alpha);   // 樣式在 game/skin.js（跟 Rush 同一份）
 }
 function draw() {
   ctx.clearRect(0, 0, px, px);
-  ctx.fillStyle = '#E9C98B';
-  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, px, px, 10) : ctx.rect(0, 0, px, px); ctx.fill();
-  ctx.strokeStyle = '#5B4524'; ctx.lineWidth = 1;
-  for (let i = 0; i < SIZE; i++) {
-    const o = Math.round(pad + i * cell) + 0.5;
-    ctx.beginPath(); ctx.moveTo(pad, o); ctx.lineTo(px - pad, o); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(o, pad); ctx.lineTo(o, px - pad); ctx.stroke();
-  }
-  ctx.fillStyle = '#5B4524';
-  for (const [r, c] of [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]]) { const [x, y] = xyOf(r * SIZE + c); ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: SIZE });
   if (room && room.kind === 'vcf') return vcfDraw();
   if (room && room.state === 'study' && room.study) return studyDraw();
   if (!match) return;
@@ -859,6 +847,7 @@ function draw() {
     ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
   }
 }
+RushSkin.onChange(() => draw());   // 選單換樣式、棋子圖載入完：重畫
 // 研棋：畫到目前這一手；實戰之後的研究手標數字（從實戰下一手接著數）
 const studyShown = () => room.study.seq.slice(0, room.study.cur);
 const studyNext = () => { const sh = studyShown(); return sh.length && sh.at(-1)[1] === BLACK ? WHITE : BLACK; };
@@ -868,7 +857,7 @@ function studyDraw() {
     stone(p, color === BLACK);
     if (k >= st.realN) {
       const [x, y] = xyOf(p);
-      ctx.fillStyle = color === BLACK ? '#F2B544' : '#1B1A17';
+      ctx.fillStyle = color === BLACK ? '#F2B544' : RushSkin.ink(false);
       ctx.font = `700 ${Math.round(cell * 0.46)}px 'Chakra Petch', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(k + 1), x, y + 1);
@@ -1123,7 +1112,7 @@ function numbered(seq, atkWhite) {   // 解法手順：攻方、守方交替，�
   seq.forEach((t, k) => {
     const p = tToP(t), blk = (k % 2 === 0) !== atkWhite, [x, y] = xyOf(p);
     stone(p, blk);
-    ctx.fillStyle = blk ? '#F2B544' : '#1B1A17';
+    ctx.fillStyle = blk ? '#F2B544' : RushSkin.ink(false);
     ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(k + 1), x, y + 1);
