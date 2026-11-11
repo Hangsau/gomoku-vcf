@@ -5,7 +5,14 @@ import { BLACK, WHITE, EMPTY, CELLS, FORBID_NONE, forbidType } from '../duel/rul
 import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, pickPuzzle, newVs, publicVs, COUNT_MS, REVEAL_MS } from './vcf.js';
 import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
-const TIMES = { none: null, '5+3': { mainMs: 300000, incMs: 3000 }, '10+5': { mainMs: 600000, incMs: 5000 } };
+// 時間：'none'＝不計時，或「分+每手加秒」字串（2026-11-11 使用者：5+5、10+10、自訂；分 1–180、秒 0–60）
+const MAX_MIN = 180, MAX_INC = 60;
+function parseTime(t) {
+  if (t === 'none') return { ok: true, clock: null };
+  const m = /^(\d{1,3})\+(\d{1,2})$/.exec(String(t));
+  if (!m || +m[1] < 1 || +m[1] > MAX_MIN || +m[2] > MAX_INC) return { ok: false };
+  return { ok: true, clock: { mainMs: +m[1] * 60000, incMs: +m[2] * 1000 } };
+}
 const RULES = Object.values(RULE);
 const PLACE_PHASES = [PHASE.PLAY, PHASE.OPENING_PLACE, PHASE.SWAP2_PLACE, PHASE.SWAP2_ADD];
 // match.js 的錯誤原因（中文）換成前端認得的代碼
@@ -109,10 +116,10 @@ export class Hall {
         if (this.rooms.size >= MAX_ROOMS) return err('full');
         const kind = m.kind === 'vcf' ? 'vcf' : 'gomoku';
         const vcf = kind === 'vcf' ? cleanVcfSettings(m) : null;
-        if (kind === 'vcf' ? !vcf : !(m.time in TIMES) || !RULES.includes(m.rule)) return err('bad');
+        if (kind === 'vcf' ? !vcf : !parseTime(m.time).ok || !RULES.includes(m.rule)) return err('bad');
         this.leaveAll(id);
         const room = {
-          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? m.time : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), state: 'wait',
+          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), state: 'wait',
           seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, vtimer: null, games: 0,
         };
         this.rooms.set(room.id, room);
@@ -270,7 +277,7 @@ export class Hall {
     room.again.clear();
     room.games += 1;
     if (room.kind === 'vcf') { room.vs = newVs(); this.vcfNext(room); return; }
-    room.match = createMatch({ rule: room.rule, clock: TIMES[room.time] }, Date.now());
+    room.match = createMatch({ rule: room.rule, clock: parseTime(room.time).clock }, Date.now());
     this.armTimer(room);
   }
 
