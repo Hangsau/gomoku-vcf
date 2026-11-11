@@ -1,0 +1,17 @@
+# Gomoku Rush 對戰大廳（2026-11-11）。本機：npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml（預設 127.0.0.1:8787）
+# 還沒部署：要上線前跟使用者確認；部署後把 duel.html 的 WS_PROD 換成實際網址
+name = "rush-duel"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+
+[[durable_objects.bindings]]
+name = "HALL"
+class_name = "Hall"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hall"]
+
+# VCF 搶答抽題的題庫網址（game/p/段位.json）；本機測試：wrangler dev --var BANK_URL:http://127.0.0.1:8791
+[vars]
+BANK_URL = "https://rush.hangsau.app"
