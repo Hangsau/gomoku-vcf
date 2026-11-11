@@ -157,7 +157,7 @@ const LOW = /*LADDER*/[0, 60, 86, 122, 175, 249, 349, 480, 649, 860, 1120]/*END*
 const START_AB = /*START*/[45, 72, 102, 146, 209, 295, 409, 558, 747, 981, 1400]/*END*/;
 const SCORE_VER = '2026-11-09b';   // 競速數據只算這一版評分的局（跟 worker.js CUR_VER 一致）；舊版的局不混進來
 const SPREAD = 0.5, MIN_N = 30;
-const WHY = { five: '對方連五', forbid: '被禁手', nofour: '沒四了', novcf: '下完沒 VCF（舊判定）', counter_nf: '被反四', counter_fb: '被反四', counter_nv: '被反四', skip: '跳過', time: '時間到', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
+const WHY = { five: '對方連五', forbid: '被禁手', nofour: '沒四了', novcf: '下完沒 VCF（舊判定）', counter_nf: '被反四', counter_fb: '被反四', counter_nv: '被反四', skip: '跳過', time: '時間到', eyx: '第一手不對', quit: '退出', mustblock: '沒擋四', lost: '被反殺', forbidden: '禁手（舊版）', notfour: '不是四（舊版）', bad: '其他', '': '其他' };
 const CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rankOf = (ab) => { let k = 0; while (k < RANKS.length - 1 && ab >= LOW[k + 1]) k++; return k; };
@@ -259,7 +259,7 @@ async function loadPractice() {
 }
 // 切到某個數據子頁時抓資料（force＝重抓，按上面「數據」時）
 function loadStMode(force) {
-  if (stMode === 'all' && (force || !ov)) loadOverview();
+  if ((stMode === 'all' || MODES.some(m => m.key === stMode)) && (force || !ov)) loadOverview();
   if (stMode === 'rush' && (force || !stats)) loadStats();
   if (stMode === 'prac' && (force || !pstats)) loadPractice();
   if (stMode === 'learn' && (force || !lv)) loadLearn();
@@ -278,14 +278,15 @@ const MODES = [
 const solvedOf = (m, r) => (m.solved ? m.solved(r) : r.solved || 0);
 const taipeiToday = () => new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
 const dayShift = (d, k) => new Date(Date.parse(d + 'T00:00:00Z') + k * 864e5).toISOString().slice(0, 10);
-let ov = null, ovErr = '';
+let ov = null, ovErr = '', ovRaw = null;
 async function loadOverview() {
   ov = null; ovErr = '';
   try {
     const [data, learn] = await Promise.all([Promise.all(MODES.map(m => api(m.path).then(j => j.rows))), api('/admin/learn').then(j => j.rows).catch(() => [])]);
+    ovRaw = Object.fromEntries(MODES.map((m, i) => [m.key, data[i]]));
     ov = summarizeOverview(data, learn);
   } catch (e) { ovErr = e.message; }
-  if (tab === 'st' && stMode === 'all') render();
+  if (tab === 'st' && stMode !== 'learn') render();
 }
 function summarizeOverview(data, learn) {
   const today = taipeiToday(), week0 = dayShift(today, -6);
@@ -318,6 +319,51 @@ function renderOverview(list, head) {
   </tbody></table></div></section>`);
   out.push(`<section class="sec"><h2>各模式比較</h2><span class="note">每局作答題數、每局時長取中位數；解開率＝全部解開題數÷全部作答題數。</span><div class="scroll"><table style="min-width:600px"><thead><tr><th>模式</th><th class="r">累計局數</th><th class="r">今天</th><th class="r">近 7 天</th><th class="r">每局作答</th><th class="r">解開率</th><th class="r">每局時長</th><th class="r">開始於</th></tr></thead><tbody>${O.cmp.map(c => `<tr><th>${c.name}</th><td class="r"><b>${c.n.toLocaleString()}</b></td><td class="r">${c.today}</td><td class="r">${c.week}</td><td class="r">${c.att ?? '–'} 題</td><td class="r">${c.solve == null ? '–' : c.solve + '%'}</td><td class="r">${mmssA(c.sec)}</td><td class="r small">${c.first ? esc(c.first.slice(5)) : '–'}</td></tr>`).join('')}</tbody></table></div><span class="note">各模式上線日不同（例如明鏡台、火眼金睛 11-10 才開），比累計局數時要看「開始於」。對戰（大廳）目前沒有存紀錄。</span></section>`);
   list.innerHTML = out.join('');
+}
+
+// ---------- 各模式共同開頭（2026-11-11 使用者：每個模式一樣的段落、一樣的欄位，好比對）----------
+const attsOf = (rows) => rows.flatMap(r => { let d = []; try { d = JSON.parse(r.detail || '[]'); } catch {} return Array.isArray(d) ? d.filter(a => a && typeof a === 'object') : []; });
+function commonBlock(key) {
+  if (!ovRaw) return `<p class="msg">${ovErr ? '讀不到數據：' + esc(ovErr) : '載入數據中…'}</p>`;
+  const m = MODES.find(x => x.key === key), R = ovRaw[key] || [], today = taipeiToday();
+  const sol = r => solvedOf(m, r), att = r => sol(r) + (r.wrong || 0);
+  const tot = R.reduce((a, r) => a + att(r), 0), secs = R.map(r => r.seconds).filter(Number.isFinite);
+  const stat = (k, v, sub) => `<div class="stat"><span>${k}</span><b>${v}</b><span>${sub}</span></div>`, pc = v => v == null ? '–' : v + '%';
+  const out = [];
+  out.push(`<section class="sec"><h2>${m.name}概況</h2><div class="stats">${stat('累計局數', R.length.toLocaleString(), `今天 ${R.filter(r => r.day === today).length}`)}${stat('作答題數', tot.toLocaleString(), `每局中位 ${R.length ? median(R.map(att)) : '–'} 題`)}${stat('解開率', pc(pct(R.reduce((a, r) => a + sol(r), 0), tot)), '解開÷作答')}${stat('每局時長', mmssA(secs.length ? Math.round(median(secs)) : null), '中位數')}</div></section>`);
+  const days = [...new Set(R.map(r => r.day))].sort().reverse();
+  out.push(`<section class="sec"><h2>每天</h2><div class="scroll"><table><thead><tr><th>日期</th><th class="r">局數</th><th class="r">作答</th><th class="r">解開率</th><th class="r">每局作答</th><th class="r">每局時長</th></tr></thead><tbody>${days.map(d => { const D = R.filter(r => r.day === d), t = D.reduce((a, r) => a + att(r), 0), sc = D.map(r => r.seconds).filter(Number.isFinite); return `<tr><th>${esc(d.slice(5))}</th><td class="r"><b>${D.length}</b></td><td class="r">${t}</td><td class="r">${pc(pct(D.reduce((a, r) => a + sol(r), 0), t))}</td><td class="r">${median(D.map(att))} 題</td><td class="r">${mmssA(sc.length ? Math.round(median(sc)) : null)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="small">還沒有資料</td></tr>'}</tbody></table></div></section>`);
+  const A = attsOf(R).filter(a => Number(a.s) > 0), prs = [...new Set(A.map(a => rankOf(Number(a.s))))].sort((x, y) => x - y);
+  const side = (X, c) => { const Y = X.filter(a => (a.a || 'b') === c); return Y.length ? `${pct(Y.filter(a => a.ok).length, Y.length)}%<div class="small">${Y.length}</div>` : '–'; };
+  const hasSide = A.some(a => 'a' in a);
+  out.push(`<section class="sec"><h2>各段題目</h2><span class="note">題目段位照題目分算。${hasSide ? '' : '這個模式沒記黑先白先。'}</span><div class="scroll"><table><thead><tr><th>題目段位</th><th class="r">作答</th><th class="r">解開率</th><th class="r">解開秒數</th>${hasSide ? '<th class="r">黑先解開</th><th class="r">白先解開</th>' : ''}</tr></thead><tbody>${prs.map(k => { const X = A.filter(a => rankOf(Number(a.s)) === k), sc = X.filter(a => a.ok).map(a => a.sec).filter(Number.isFinite); return `<tr><th>${esc(RANKS[k])}題</th><td class="r">${X.length}</td><td class="r"><b>${pc(pct(X.filter(a => a.ok).length, X.length))}</b></td><td class="r">${sc.length ? r1(median(sc)) : '–'}</td>${hasSide ? `<td class="r">${side(X, 'b')}</td><td class="r">${side(X, 'w')}</td>` : ''}</tr>`; }).join('') || '<tr><td colspan="6" class="small">還沒有資料</td></tr>'}</tbody></table></div></section>`);
+  const miss = A.filter(a => !a.ok), why = {};
+  for (const a of miss) why[whyOf(a)] = (why[whyOf(a)] || 0) + 1;
+  out.push(`<section class="sec"><h2>沒解開的原因</h2><div class="scroll"><table><thead><tr><th>原因</th><th class="r">次數</th><th class="r">比例</th></tr></thead><tbody>${Object.entries(why).sort((x, y) => y[1] - x[1]).map(([k, v]) => `<tr><th>${esc(k)}</th><td class="r">${v}</td><td class="r">${pct(v, miss.length)}%</td></tr>`).join('') || '<tr><td colspan="3" class="small">還沒有資料</td></tr>'}</tbody></table></div></section>`);
+  return out.join('');
+}
+// 各模式特有的段落（共同開頭之後）
+function extraBlock(key) {
+  if (!ovRaw) return '';
+  const R = ovRaw[key] || [], A = attsOf(R), med = (xs) => { const v = xs.filter(Number.isFinite); return v.length ? r1(median(v)) : '–'; };
+  if (key === 'mj') {
+    const inf = R.filter(r => r.inf), lv = R.filter(r => !r.inf), ok = A.filter(a => a.ok), ng = A.filter(a => !a.ok);
+    return `<section class="sec"><h2>明鏡台：想多久、剩多少</h2><div class="scroll"><table><thead><tr><th></th><th class="r">局數</th><th class="r">退出</th></tr></thead><tbody><tr><th>無限（排名）</th><td class="r">${inf.length}</td><td class="r">${pct(inf.filter(r => r.quit).length, inf.length) ?? '–'}%</td></tr><tr><th>分級（練功）</th><td class="r">${lv.length}</td><td class="r">${pct(lv.filter(r => r.quit).length, lv.length) ?? '–'}%</td></tr></tbody></table></div>
+      <div class="scroll"><table><thead><tr><th></th><th class="r">題數</th><th class="r">落子前想多久</th><th class="r">結束時剩幾秒</th></tr></thead><tbody><tr><th>解開的題</th><td class="r">${ok.length}</td><td class="r">${med(ok.map(a => a.th))} 秒</td><td class="r">${med(ok.map(a => a.lf))} 秒</td></tr><tr><th>沒解開的題</th><td class="r">${ng.length}</td><td class="r">${med(ng.map(a => a.th))} 秒</td><td class="r">${med(ng.map(a => a.lf))} 秒</td></tr></tbody></table></div><span class="note">中位數。落第一手後 5 秒、每手 +1 秒。</span></section>`;
+  }
+  if (key === 'eye') {
+    const ok = A.filter(a => a.ok);
+    return `<section class="sec"><h2>火眼金睛：多快看出來</h2><div class="scroll"><table><thead><tr><th></th><th class="r">題數</th><th class="r">花幾秒</th><th class="r">剩幾秒</th></tr></thead><tbody><tr><th>答對的題</th><td class="r">${ok.length}</td><td class="r">${med(ok.map(a => a.sec))}</td><td class="r">${med(ok.map(a => a.lf))}</td></tr></tbody></table></div><span class="note">中位數。一題 8 秒、只看第一手；剩越多秒分數越高。</span></section>`;
+  }
+  if (key === 'tower') {
+    const days = [...new Set(R.map(r => r.day))].sort().reverse();
+    return `<section class="sec"><h2>象牙塔：每天做到哪</h2><div class="scroll"><table><thead><tr><th>日期</th><th class="r">人數</th><th class="r">做到第幾題</th><th class="r">按了結束</th><th class="r">每人提示</th></tr></thead><tbody>${days.map(d => { const D = R.filter(r => r.day === d); return `<tr><th>${esc(d.slice(5))}</th><td class="r">${D.length}</td><td class="r">${median(D.map(r => r.n))}<span class="small"> 最多 ${Math.max(...D.map(r => r.n))}</span></td><td class="r">${pct(D.filter(r => r.ended).length, D.length)}%</td><td class="r">${r1(D.reduce((a, r) => a + (r.hints || 0), 0) / D.length)}</td></tr>`; }).join('') || '<tr><td colspan="5" class="small">還沒有資料</td></tr>'}</tbody></table></div><span class="note">一天 100 題、同一組題；做到第幾題取中位數。</span></section>`;
+  }
+  if (key === 'b4') {
+    const B = [[0, 4], [5, 9], [10, 19], [20, 999]];
+    return `<section class="sec"><h2>無限之塔：一局解開幾題</h2><div class="scroll"><table><thead><tr><th>解開題數</th><th class="r">局數</th><th class="r">比例</th></tr></thead><tbody>${B.map(([lo, hi]) => { const n = R.filter(r => r.solved >= lo && r.solved <= hi).length; return `<tr><th>${hi > 99 ? lo + ' 題以上' : lo + '–' + hi + ' 題'}</th><td class="r">${n}</td><td class="r">${pct(n, R.length) ?? '–'}%</td></tr>`; }).join('')}</tbody></table></div><span class="note">全是 4 手題，60 秒＋每解開一題 +20 秒，錯 3 題結束。</span></section>`;
+  }
+  return '';
 }
 
 // ---------- 新手教學（2026-11-11 使用者：走完度、停在哪幾關）----------
@@ -397,7 +443,7 @@ function renderPractice(list, head) {
   if (!pstats) { list.innerHTML = head + `<p class="msg">${pErr ? '讀不到數據：' + esc(pErr) : '載入練習數據中…'}</p>`; return; }
   const P = pstats, stat = (k, v, sub) => `<div class="stat"><span>${k}</span><b>${v}</b><span>${sub}</span></div>`, pc = v => v == null ? '–' : v + '%';
   const out = [head];
-  out.push(`<section class="sec"><h2>練習概況</h2><div class="stats">${stat('練習局數', P.runs.toLocaleString(), `今天 ${P.today}`)}${stat('作答題數', P.attempts.toLocaleString(), '含沒做完的')}${stat('一局練多久', P.secMed != null ? Math.round(P.secMed / 60 * 10) / 10 + ' 分' : '–', '中位數，含加時')}${stat('看提示後解開', pc(P.afterHint.solve), `${P.afterHint.n} 題用過提示`)}</div><span class="note">不含暱稱。練習不上排行，抽題和能力分算法跟競速一樣；用過悔棋、提示或下錯過的題解開時不加分、扣答錯的一半。</span></section>`);
+  out.push(`<section class="sec"><h2>練習：選時間與幫助</h2><div class="stats">${stat('練習局數', P.runs.toLocaleString(), `今天 ${P.today}`)}${stat('作答題數', P.attempts.toLocaleString(), '含沒做完的')}${stat('一局練多久', P.secMed != null ? Math.round(P.secMed / 60 * 10) / 10 + ' 分' : '–', '中位數，含加時')}${stat('看提示後解開', pc(P.afterHint.solve), `${P.afterHint.n} 題用過提示`)}</div><span class="note">不含暱稱。練習不上排行，抽題和能力分算法跟競速一樣；用過悔棋、提示或下錯過的題解開時不加分、扣答錯的一半。</span></section>`);
   out.push(`<section class="sec"><h2>大家選幾分鐘</h2><div class="scroll"><table><thead><tr><th>時間</th><th class="r">局數</th><th class="r">比例</th><th class="r">每局加時</th><th class="r">實際練了</th></tr></thead><tbody>${P.mins.map(x => `<tr><th>${x.m ? x.m + ' 分' : '不限時'}</th><td class="r">${x.n}</td><td class="r">${x.pct}%</td><td class="r">${x.m ? `${x.added} 次<div class="small">${x.addedSec} 秒</div>` : '–'}</td><td class="r">${x.sec != null ? Math.round(x.sec / 6) / 10 + ' 分' : '–'}</td></tr>`).join('') || '<tr><td colspan="5" class="small">還沒有資料</td></tr>'}</tbody></table></div></section>`);
   out.push(`<section class="sec"><h2>各段題目怎麼解</h2><span class="note">自己解開＝沒用悔棋、提示，也沒下錯；靠幫助＝用過其中一種才解開；沒解＝跳過或時間到；沒做完＝按結束時那題。</span><div class="scroll"><table style="min-width:640px"><thead><tr><th>題目段位</th><th class="r">作答</th><th class="r">自己解開</th><th class="r">靠幫助</th><th class="r">沒解</th><th class="r">沒做完</th><th class="r">用悔棋</th><th class="r">用提示</th><th class="r">每題下錯</th><th class="r">自己解開秒數</th></tr></thead><tbody>${P.bands.map(b => `<tr><th>${esc(b.dan)}題</th><td class="r">${b.n}</td><td class="r"><b>${b.own}%</b></td><td class="r">${b.help}%</td><td class="r">${b.miss}%</td><td class="r">${b.quit}%</td><td class="r">${b.undo}%</td><td class="r">${b.hint}%</td><td class="r">${b.mk ?? '–'}</td><td class="r">${b.sec ?? '–'}</td></tr>`).join('') || '<tr><td colspan="10" class="small">還沒有資料</td></tr>'}</tbody></table></div><span class="note">只悔棋、沒看提示的題，最後解開 ${pc(P.afterUndo.solve)}（${P.afterUndo.n} 題）。</span></section>`);
   out.push(`<section class="sec"><h2>練習段位</h2><span class="note">選某個起始段位練習，結束時練習段位到哪。</span>${P.flow.map(f => `<div style="border-top:1px solid var(--line);padding-top:8px;font-size:14px"><b>從${esc(f.start)}起跳</b> <span class="small">${f.n} 局：${f.to.map(t => `${esc(t[0])} ${t[1]}`).join('、')}</span></div>`).join('') || '<span class="small">還沒有資料</span>'}</section>`);
@@ -429,13 +475,15 @@ function renderScoring() {
 }
 function renderStats() {
   const list = $('list');
-  const SUB = [['all', '總覽'], ['rush', '煉獄之門'], ['prac', '練習'], ['learn', '新手教學']];
+  const SUB = [['all', '總覽'], ...MODES.map(m => [m.key, m.name]), ['learn', '新手教學']];   // 順序跟總覽表的欄位一樣
   const head = `<div class="acts" role="group" aria-label="數據種類">${SUB.map(([k, n]) => `<button type="button" data-stm="${k}" class="${stMode === k ? 'gold' : ''}" aria-pressed="${stMode === k}">${n}</button>`).join('')}</div>`;
   const bindHead = () => list.querySelectorAll('[data-stm]').forEach(b => b.onclick = () => { stMode = b.dataset.stm; loadStMode(); render(); });
   if (stMode === 'all') { renderOverview(list, head); bindHead(); return; }
   if (stMode === 'learn') { renderLearn(list, head); bindHead(); return; }
-  if (stMode === 'prac') { renderPractice(list, head); bindHead(); return; }
-  if (!stats) { list.innerHTML = head + `<p class="msg">${statsErr ? '讀不到數據：' + esc(statsErr) : '載入數據中…'}</p>`; bindHead(); return; }
+  const headC = head + commonBlock(stMode);   // 每個模式開頭都是同一套（概況、每天、各段、沒解開原因）
+  if (stMode === 'prac') { renderPractice(list, headC); bindHead(); return; }
+  if (stMode !== 'rush') { list.innerHTML = headC + extraBlock(stMode); bindHead(); return; }
+  if (!stats) { list.innerHTML = headC + `<p class="msg">${statsErr ? '讀不到數據：' + esc(statsErr) : '載入數據中…'}</p>`; bindHead(); return; }
   const G = stats, B = G.bank || {};
   const stat = (k, v, sub) => `<div class="stat"><span>${k}</span><b>${v}</b><span>${sub}</span></div>`;
   const cellHtml = c => {
@@ -448,7 +496,7 @@ function renderStats() {
   const bk = Object.fromEntries((B.dans || []).map(d => [d.dan, d])), seen = Object.fromEntries(G.bands.map(b => [b.dan, b]));
   const danNames = [...new Set([...G.bands.map(b => b.dan), ...(B.dans || []).map(d => d.dan)])].sort((x, y) => RANKS.indexOf(x) - RANKS.indexOf(y));
   const out = [];
-  out.push(`<section class="sec"><h2>煉獄之門局數</h2><div class="stats">${stat('全部局數', G.allRuns.toLocaleString(), '所有評分版本')}${stat('今天', G.allToday.toLocaleString(), '台北時間・所有版本')}</div><span class="note">評分規則每改一次版本，段位尺就不一樣，所以<b>下面的段位、解開率分析只用目前版本 ${esc(SCORE_VER)} 的 ${G.runs} 局</b>；局數趨勢請看「總覽」。</span></section>`);
+  out.push(`<section class="sec"><h2>以下只算目前評分版本</h2><span class="note">上面的局數、每天、各段是全部 ${G.allRuns.toLocaleString()} 局（所有評分版本）。評分規則每改一次版本，段位尺就不一樣，所以<b>下面的段位、能力分分析只用目前版本 ${esc(SCORE_VER)} 的 ${G.runs} 局</b>。</span></section>`);
   out.push(`<section class="sec"><h2>目前版本的解題狀況</h2><div class="stats">${stat('今天的局', G.today.toLocaleString(), `版本 ${esc(SCORE_VER)}`)}${stat('有作答的局', G.played.toLocaleString(), `共 ${G.runs} 局`)}${stat('作答題數', G.attempts.toLocaleString(), `一格至少 ${MIN_N} 筆才算數`)}${stat('一局裡漲跌換方向', G.flip.rate != null ? G.flip.rate + '%' : '–', `${G.flip.n} 局（4 題以上）；越高越像亂跳`)}</div><span class="note">不含暱稱。資料是打開這頁時抓的，按上面「數據」可以重抓。</span></section>`);
   out.push(`<section class="sec"><h2>題目作答狀況</h2><span class="note">遊戲題庫 ${(B.total || 0).toLocaleString()} 題・評分版本 ${esc(B.ver || '–')}・匯出 ${esc(B.at || '–')}・被做過 ${G.puzzlesSeen} 題</span><div class="scroll"><table style="min-width:620px"><thead><tr><th>題目段位</th><th class="r">題庫題數</th><th class="r">白先</th><th class="r">被做過</th><th class="r">作答</th><th class="r">解開率</th><th class="r">跳過率</th><th class="r">中位秒數</th><th class="r">做過 5 次以上</th></tr></thead><tbody>${danNames.map(n => { const b = seen[n] || { puzzles: 0, n: 0, solve: null, skip: null, sec: null, multi: 0 }, k = bk[n]; return `<tr><th>${esc(n)}題</th><td class="r">${k ? k.n.toLocaleString() : '–'}</td><td class="r">${k ? k.white.toLocaleString() : '–'}</td><td class="r">${b.puzzles}</td><td class="r">${b.n}</td><td class="r"><b>${b.solve == null ? '–' : b.solve + '%'}</b></td><td class="r">${b.skip == null ? '–' : b.skip + '%'}</td><td class="r">${b.sec ?? '–'}</td><td class="r">${b.multi}</td></tr>`; }).join('')}</tbody></table></div></section>`);
   out.push(`<section class="sec"><h2>手數 vs 解開率</h2><div class="scroll"><table><thead><tr><th>手數</th><th class="r">作答</th><th class="r">解開率</th><th class="r">解開的中位秒數</th></tr></thead><tbody>${G.byLen.map(x => `<tr><th>${x.label}</th><td class="r">${x.n}</td><td class="r"><b>${x.solve}%</b></td><td class="r">${x.sec ?? '–'}</td></tr>`).join('')}</tbody></table></div><span class="note">六段以上是給挑戰族群的長題，解開率低是預期（2026-11-08 定）。</span></section>`);
@@ -458,7 +506,7 @@ function renderStats() {
   out.push(`<section class="sec"><h2>各段玩家錯在哪</h2><div class="scroll"><table style="min-width:560px"><thead><tr><th>結算段位</th><th class="r">局／題</th><th>沒解開的原因</th><th class="r">黑先解開</th><th class="r">白先解開</th><th class="r">每題警告</th></tr></thead><tbody>${G.per.map(x => { const tot = x.why.reduce((a, w) => a + w[1], 0), side = c => c.n ? `${c.solve}%<div class="small">${c.n} 筆</div>` : '–'; return `<tr><th>${esc(x.fr)}</th><td class="r">${x.runs}／${x.n}</td><td class="small">${tot ? x.why.map(([k, v]) => `${esc(k)} ${Math.round(v / tot * 100)}%`).join('・') : '–'}</td><td class="r">${side(x.side.b)}</td><td class="r">${side(x.side.w)}</td><td class="r">${x.warnN ? `禁手 ${x.wf}・非四 ${x.wn}<div class="small">${x.warnN} 筆</div>` : '–'}</td></tr>`; }).join('')}</tbody></table></div></section>`);
   out.push(`<section class="sec"><h2>升段過程</h2><span class="note">選某個起始段位的局，結算時升段／守住／掉段各幾成。</span>${G.flow.map(f => `<div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:14px"><b>從${esc(f.start)}起跳</b><span class="small">${f.n} 局</span></div><div class="bar"><div style="width:${f.up}%;background:var(--ok)"></div><div style="width:${f.keep}%;background:var(--gold)"></div><div style="width:${f.down}%;background:var(--ng)"></div></div><span class="small">升 ${f.up}%・守住 ${f.keep}%・掉 ${f.down}%（結算到：${f.to.map(t => `${esc(t[0])} ${t[1]}`).join('、')}）</span></div>`).join('')}</section>`);
   out.push(`<section class="sec"><h2>最近 12 局的能力分走勢</h2><span class="note">每局從起始能力分開始，每題一個點。一路爬升＝漲跌太慢；上下亂跳＝漲跌太快。</span><div class="paths">${G.paths.map(p => `<div class="path"><span>${esc(p.start)} → <b>${esc(p.final)}</b></span>${spark(p.path)}<span class="small">${p.path[0]} → ${p.path[p.path.length - 1]}・${p.path.length - 1} 題</span></div>`).join('')}</div></section>`);
-  list.innerHTML = head + out.join('');
+  list.innerHTML = headC + out.join('');
   bindHead();
   list.querySelectorAll('[data-block]').forEach(b => b.onclick = async () => {
     const id = b.dataset.block, x = [...G.flagged, ...G.top].find(p => p.id === id);
