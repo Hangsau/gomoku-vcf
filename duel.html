@@ -1025,7 +1025,7 @@ setInterval(() => {
   if (c.phase === 'play' && srvNow() < c.startAt) {   // 開始前倒數 3、2、1
     const k = Math.ceil((c.startAt - srvNow()) / 1000);
     if (k !== vLastCount) { vLastCount = k; flash(String(k), T(c.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB'), 'info', 950); if (k <= 3) beep(false); }
-  } else if (vLastCount !== null && c.phase === 'play') { vLastCount = null; beep(true); draw(); }
+  } else if (vLastCount !== null && c.phase === 'play') { vLastCount = null; beep(true); renderRoom(); }   // 倒數結束：整個重畫（題目、黑先／白先那行）
   if (VR && VR.armed && !VR.done && !VR.out && !VR.hold && c.phase === 'play') {
     const before = Math.ceil(VR.left);
     VR.left -= dt;
