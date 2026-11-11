@@ -1,8 +1,8 @@
 // Gomoku Rush 對戰大廳（2026-11-11）：一個 Durable Object（Hall）放所有房間和棋局，玩家用 WebSocket 連進來。
-// 兩種房間：kind 'gomoku'（五子棋，game/duel/match.js 每一手都在這裡驗）、kind 'vcf'（VCF 明鏡台搶答，見 vcf.js）。
+// 兩種房間：kind 'gomoku'（五子棋，game/duel/match.js 每一手都在這裡驗）、kind 'vcf'（VCF 明鏡台競速，見 vcf.js）。
 // 狀態只放記憶體：大廳重開（部署、長時間沒人）房間就清空；第一版夠用，人多了再拆成一個房間一個 DO。
 import { BLACK, WHITE, EMPTY, CELLS, FORBID_NONE, forbidType } from '../duel/rules.js';
-import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, pickPuzzle, newVs, publicVs, COUNT_MS, REVEAL_MS } from './vcf.js';
+import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, newVs, initList, startPuzzle, stopTimers, publicVs, COUNT_MS, NEXT_MS } from './vcf.js';
 import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
 // 時間：'none'＝不計時，或「分+每手加秒」字串（2026-11-11 使用者：5+5、10+10、自訂；分 1–180、秒 0–60）
@@ -25,7 +25,7 @@ const WAIT_GRACE_MS = 15000;   // 等人時斷線（例如重新整理），15 �
 const ROOM_ID_MIN = 1000, ROOM_ID_SPAN = 9000;   // 房號 4 位數
 const TIMER_SLACK_MS = 50;      // 計時到了再多等一點才判，避免差幾毫秒還沒到
 const LOBBY_DEBOUNCE_MS = 50;   // 同一瞬間很多變動，大廳清單只送一次
-const ROUND_SLACK_MS = 300;     // 搶答思考上限到了再多等一點，讓剛好送出的解開先到
+const ROUND_SLACK_MS = 300;     // 每題思考上限到了再多等一點，讓剛好送出的解開先到
 const EARLY_MSG_MS = 500;       // 倒數結束前這麼久以內送來的進度還收（兩邊時鐘可能差一點）
 const MAX_REPORTED_MOVES = 99;
 // 研棋（2026-11-11 使用者）：不計時、自訂時間的房間對局中可以申請；任何時間設定下完都能覆盤
@@ -159,7 +159,7 @@ export class Hall {
         this.leaveAll(id);
         const room = {
           id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), waitSince: Date.now(), state: 'wait',
-          seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, vtimer: null, games: 0,
+          seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, games: 0,
         };
         this.rooms.set(room.id, room);
         const seat = m.color === 'w' ? 1 : m.color === 'b' ? 0 : (Math.random() < 0.5 ? 0 : 1);
@@ -191,7 +191,7 @@ export class Hall {
         this.roomChanged(room);
         return;
       }
-      case 'vprog': case 'vdone': case 'vout': {   // VCF 搶答：進度、解開、出局
+      case 'vprog': case 'vdone': case 'vout': case 'vskip': {   // VCF 競速：進度、解開、下錯／時間到、放棄這題
         const s = this.seatOf(id);
         if (!s || s.room.kind !== 'vcf' || s.room.state !== 'play') return err('notplay');
         return this.vcfMsg(s.room, s.seat, m);
@@ -234,7 +234,7 @@ export class Hall {
         if (!s || s.room.state !== 'over') return;
         s.room.again.add(id);
         if (s.room.seats[0] && s.room.seats[1] && s.room.seats.every(x => s.room.again.has(x.id))) {
-          if (s.room.kind === 'gomoku') s.room.seats.reverse();   // 五子棋交換座位（黑白）；搶答沒有顏色，不用換
+          if (s.room.kind === 'gomoku') s.room.seats.reverse();   // 五子棋交換座位（黑白）；VCF 競速沒有顏色，不用換
           this.start(s.room);
         }
         this.roomChanged(s.room);
@@ -405,10 +405,10 @@ export class Hall {
   }
   resetRoom(room) {
     room.state = 'wait'; room.waitSince = Date.now(); room.match = null; room.vs = null; room.study = null; room.req = null; room.endNote = null; room.again.clear();
-    clearTimeout(room.timer); clearTimeout(room.vtimer);
+    clearTimeout(room.timer); stopTimers(room.vs);
   }
   closeRoom(room) {
-    clearTimeout(room.timer); clearTimeout(room.vtimer);
+    clearTimeout(room.timer); stopTimers(room.vs);
     this.rooms.delete(room.id);
     for (const c of this.clients.values()) if (c.room === room.id) { c.room = null; this.send(c.ws, { t: 'closed', room: room.id }); }
     this.broadcastLobby();
@@ -419,60 +419,60 @@ export class Hall {
     room.study = null; room.req = null; room.reqBlock = [0, 0];
     room.again.clear();
     room.games += 1;
-    if (room.kind === 'vcf') { room.vs = newVs(); this.vcfNext(room); return; }
+    if (room.kind === 'vcf') { room.vs = newVs(); this.vcfStart(room); return; }
     room.match = createMatch({ rule: room.rule, clock: parseTime(room.time).clock }, Date.now());
     this.armTimer(room);
   }
 
-  // ---------- VCF 明鏡台搶答 ----------
-  async vcfNext(room) {   // 出下一題：倒數 3 秒後兩人同時開始
+  // ---------- VCF 明鏡台競速 ----------
+  async vcfStart(room) {   // 抽好題目串，倒數 3 秒後兩人同時從第 1 題開始
     const vs = room.vs, token = vs.token;
-    let x;
-    try { x = pickPuzzle(await loadBank(this.env.BANK_URL, room.vcf.rank), vs.used); }
+    let bank;
+    try { bank = await loadBank(this.env.BANK_URL, room.vcf.rank); }
     catch (e) { console.error('題庫讀不到', e); room.endNote = 'nobank'; vs.result = { winner: null, note: 'nobank' }; room.state = 'over'; return this.roomChanged(room); }
     if (room.vs !== vs || vs.token !== token || room.state !== 'play') return;   // 等題目時房間變了
-    const now = Date.now();
-    vs.n += 1;
-    vs.cur = {
-      n: vs.n, puzzle: x, startAt: now + COUNT_MS, deadline: now + COUNT_MS + room.vcf.think * 1000, phase: 'play', winner: null, endAt: null,
-      st: [{ s: 'think', moves: 0, why: null }, { s: 'think', moves: 0, why: null }], seqs: [null, null],
-    };
-    clearTimeout(room.vtimer);
-    room.vtimer = setTimeout(() => this.vcfEndRound(room, null), vs.cur.deadline - now + ROUND_SLACK_MS);   // 思考上限到：這題沒人得分
+    initList(vs, bank, room.vcf.target);
+    vs.startAt = Date.now() + COUNT_MS;
+    for (const seat of [0, 1]) this.vcfBegin(room, seat, 0, vs.startAt);
     this.roomChanged(room);
+  }
+  vcfBegin(room, seat, i, at) {   // 某人開始做第 i 題，設這題的思考上限
+    const vs = room.vs, st = vs.p[seat];
+    startPuzzle(vs, seat, i, at, room.vcf.think);
+    clearTimeout(st.timer);
+    st.timer = setTimeout(() => this.vcfFinish(room, seat, 'out', 'time', null), st.deadline - Date.now() + ROUND_SLACK_MS);
   }
   vcfMsg(room, seat, m) {
-    const c = room.vs && room.vs.cur;
-    if (!c || c.phase !== 'play' || Number(m.n) !== c.n || Date.now() < c.startAt - EARLY_MSG_MS) return;
-    const me = c.st[seat];
-    if (me.s !== 'think' && me.s !== 'armed') return;
+    const vs = room.vs, st = vs && vs.p[seat];
+    if (!st || vs.result || Number(m.n) !== st.i || Date.now() < st.at - EARLY_MSG_MS) return;
+    if (st.s !== 'think' && st.s !== 'armed') return;
     if (m.t === 'vprog') {
-      me.s = m.armed ? 'armed' : 'think';
-      me.moves = Math.max(0, Math.min(MAX_REPORTED_MOVES, Number(m.moves) | 0));
+      st.s = m.armed ? 'armed' : 'think';
+      st.moves = Math.max(0, Math.min(MAX_REPORTED_MOVES, Number(m.moves) | 0));
       return this.roomChanged(room);
     }
-    c.seqs[seat] = cleanSeq(m.seq);
-    if (m.t === 'vdone') {
-      me.s = 'solved';
-      room.vs.score[seat] += 1;
-      return this.vcfEndRound(room, seat);
-    }
-    me.s = 'out'; me.why = cleanWhy(m.why);
-    if (c.st.every((x) => x.s === 'out')) return this.vcfEndRound(room, null);
-    this.roomChanged(room);
+    if (m.t === 'vdone') return this.vcfFinish(room, seat, 'solved', null, cleanSeq(m.seq));
+    this.vcfFinish(room, seat, 'out', m.t === 'vskip' ? 'skip' : cleanWhy(m.why), cleanSeq(m.seq));
   }
-  vcfEndRound(room, winner) {
-    const vs = room.vs, c = vs && vs.cur;
-    if (!c || c.phase !== 'play' || room.state !== 'play') return;
-    clearTimeout(room.vtimer);
-    c.phase = 'done'; c.winner = winner; c.endAt = Date.now();
-    if (winner === null) for (const x of c.st) if (x.s === 'think' || x.s === 'armed') { x.s = 'out'; x.why = 'time'; }
-    if (winner !== null && vs.score[winner] >= room.vcf.target) {
-      vs.result = { winner, note: 'score' };
+  vcfFinish(room, seat, r, why, seq) {   // 這題結束：解開加 1；到目標就贏，不然停一下換下一題
+    const vs = room.vs, st = vs && vs.p[seat];
+    if (!st || vs.result || room.state !== 'play' || (st.s !== 'think' && st.s !== 'armed')) return;
+    clearTimeout(st.timer);
+    st.s = r; st.why = why;
+    st.log[st.i] = { r, why, seq: seq || [] };
+    if (r === 'solved') vs.score[seat] += 1;
+    if (vs.score[seat] >= room.vcf.target) {
+      vs.result = { winner: seat, note: 'score' };
       room.state = 'over';
-    } else {
-      room.vtimer = setTimeout(() => this.vcfNext(room), REVEAL_MS);
+      stopTimers(vs);
+      return this.roomChanged(room);
     }
+    const i = st.i;
+    st.timer = setTimeout(() => {
+      if (room.vs !== vs || vs.result || st.i !== i) return;
+      this.vcfBegin(room, seat, i + 1, Date.now());
+      this.roomChanged(room);
+    }, NEXT_MS);
     this.roomChanged(room);
   }
   // 黑棋非擋不可的點是禁手（Rush 的「被禁手」）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 判黑輸
@@ -489,8 +489,8 @@ export class Hall {
   }
   endBy(room, seat, note) {
     if (room.kind === 'vcf') {
-      clearTimeout(room.vtimer);
-      if (room.vs) { room.vs.result = { winner: 1 - seat, note }; if (room.vs.cur) room.vs.cur.phase = 'done'; }
+      stopTimers(room.vs);
+      if (room.vs) room.vs.result = { winner: 1 - seat, note };
       room.endNote = note; room.state = 'over';
       return this.roomChanged(room);
     }
