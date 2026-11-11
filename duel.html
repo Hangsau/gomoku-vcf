@@ -193,7 +193,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="pbar" id="pBot"></div>
   <div class="facts" id="facts"></div>
   <div class="phase" id="phaseActs" hidden></div>
-  <div style="flex: 1;"></div>
+  <div class="grow" style="flex: 1;"></div>
   <div class="thumb" id="rActs"></div>
 </section>
 </div>
@@ -890,7 +890,7 @@ function layout() {   // 一屏放得下：先照寬度放，再看房間畫面�
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
   if ($('sRoom').hidden) return setBoardPx(Math.max(240, w - 16));
   setBoardPx(Math.max(240, w - 16));
-  const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && el.style.flex !== '1').reduce((s, el) => s + el.getBoundingClientRect().height, 0);
+  const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && !el.classList.contains('grow')).reduce((s, el) => s + el.getBoundingClientRect().height, 0);
   setBoardPx(Math.max(240, Math.min(w - 16, window.innerHeight - used - 16)));
   const over = document.documentElement.scrollHeight - window.innerHeight;   // 還是超出（字換行等）：超出多少縮多少
   if (over > 0) setBoardPx(Math.max(240, px - over));
