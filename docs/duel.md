@@ -1,6 +1,8 @@
-# Gomoku Rush 對戰（2026-11-11 上線）
+# Gomoku Rush 對戰「兩儀殿」（2026-11-11 上線）
 
-頁面：https://rush.hangsau.app/duel （首頁「對戰」卡片進入）｜伺服器：`rush-duel` Worker，`wss://rush-duel.psyhangsau.workers.dev/ws`。
+名稱（使用者 2026-11-11 定）：中文 兩儀殿（《易・繫辭》「易有太極，是生兩儀」，黑白對弈）、日文 両儀殿、韓文 음양전（양의 跟「洋醫」同音所以用陰陽）、英文 Yin-Yang Hall。入口在「挑戰」選單最下面（煉獄之門下方；沒有排行榜，放最後排行榜分頁順序才不受影響）；返回鍵回 `game.html#pick`。
+
+頁面：https://rush.hangsau.app/duel｜伺服器：`rush-duel` Worker，`wss://rush-duel.psyhangsau.workers.dev/ws`。
 
 ## 部署
 

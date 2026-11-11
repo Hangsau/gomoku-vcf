@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F121A">
-<title>Gomoku Rush — 對戰</title>
+<title>Gomoku Rush — 兩儀殿</title>
 <link rel="icon" type="image/png" sizes="192x192" href="app/icon-192.png">
 <link rel="apple-touch-icon" href="app/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -160,8 +160,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <!-- 大廳 -->
 <section id="sLobby" class="screen">
   <div class="topbar">
-    <a href="game.html" class="icob" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <b style="font-size: 18px;" data-i18n="title">對戰大廳</b>
+    <a href="game.html#pick" class="icob" aria-label="回挑戰" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <b style="font-size: 18px;" data-i18n="title">兩儀殿</b>
     <div>
       <button type="button" class="icob" data-sound aria-pressed="true"></button>
       <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
@@ -269,7 +269,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 // ---------- 文字（四種語言，跟 Rush 共用 vcfgame.lang） ----------
 const I18N = {
   zh: {
-    title: '對戰大廳', home: '回入口', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
+    title: '兩儀殿', home: '回挑戰', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
     netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…',
     create: '開房', createGo: '開房，等人入座',
     timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
@@ -290,7 +290,7 @@ const I18N = {
     ruleL: "規則", r_free: "普規", r_renju: "連珠", r_tara: "塔拉", r_tara10: "塔拉山口", r_swap2: "Swap2", n_free: "無禁手・五連以上都算贏・黑先", n_renju: "黑先・黑棋不能下三三、四四、長連（點到只提醒）", n_tara: "第一手天元，前五手由內往外擴（3×3→9×9），每手後可換手；之後照連珠", n_tara10: "同塔拉；第四手後可轉山口：黑提 10 個第五手候選，白挑一個", n_swap2: "先手擺二黑一白，後手選執黑、執白，或再加一黑一白讓對方選色；無禁手，長連不算贏", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "第 {n} 手下好了，要換手嗎？（你現在執{c}）", bKeep: "不換，執{c}", bSwap: "換手，改執{c}", bYama: "轉山口", pZone: "下第 {n} 手（{c}），要在中央 {w}×{w} 內", pOffer: "點棋盤選 {k} 個第五手候選（形狀一樣的不能同時選）", bOffer: "送出候選 {n}/{k}", bClear: "清除", pPick: "從黑方的候選裡挑一個當第五手", pS2Place: "放第 {n} 顆（{c}）", pS2Choice: "要執黑、執白，還是再加一黑一白？", bTakeB: "執黑", bTakeW: "執白", bAdd: "再加一黑一白", pS2Color: "選你要執的顏色", waitDecide: "等對手決定…", watchPhase: "觀戰中・等{name}", swapped: "換手了：你現在執{c}", zoneErr: "這手要下在中央 {w}×{w} 內", symmetric: "候選裡有形狀一樣的，換一個", notoffer: "要從黑方的候選裡挑", pCenter: "第 1 手（黑棋）下在天元", centerErr: "第 1 手要下在天元",
   },
   en: {
-    title: 'Versus Lobby', home: 'Home', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
+    title: 'Yin-Yang Hall', home: 'Challenge', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
     netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…',
     create: 'Open a room', createGo: 'Open room and wait',
     timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
@@ -311,7 +311,7 @@ const I18N = {
     ruleL: "Rules", r_free: "Freestyle", r_renju: "Renju", r_tara: "Taraguchi", r_tara10: "Taraguchi-10", r_swap2: "Swap2", n_free: "No forbidden moves · five or more wins · Black first", n_renju: "Black first · Black can’t play 3-3, 4-4 or overlines (you’ll be warned)", n_tara: "1st stone on the center; the first five expand from 3×3 to 9×9 with a swap option after each; then Renju", n_tara10: "Like Taraguchi; after move 4 Black may go Yamaguchi: offer 10 fifth moves, White picks one", n_swap2: "First player places 2 black + 1 white; second takes Black, White, or adds one of each and lets the first choose. No forbidden moves; overlines don’t win", sideFirst: "First (opens)", sideSecond: "Second", pSwap: "Move {n} is down — swap colors? (you hold {c})", bKeep: "Keep {c}", bSwap: "Swap to {c}", bYama: "Yamaguchi", pZone: "Place move {n} ({c}) inside the central {w}×{w}", pOffer: "Tap {k} candidate fifth moves (no two of the same shape)", bOffer: "Send {n}/{k}", bClear: "Clear", pPick: "Pick one of Black’s candidates as move 5", pS2Place: "Place stone {n} ({c})", pS2Choice: "Take Black, take White, or add one of each?", bTakeB: "Take Black", bTakeW: "Take White", bAdd: "Add one of each", pS2Color: "Choose your color", waitDecide: "Waiting for your opponent to decide…", watchPhase: "Watching · waiting for {name}", swapped: "Colors swapped: you now play {c}", zoneErr: "This move must be inside the central {w}×{w}", symmetric: "Two candidates have the same shape — pick another", notoffer: "Pick one of Black’s candidates", pCenter: "Place move 1 (Black) on the center point", centerErr: "Move 1 must go on the center point",
   },
   ja: {
-    title: '対局ロビー', home: 'ホーム', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
+    title: '両儀殿', home: 'チャレンジへ', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
     netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…',
     create: '部屋を作る', createGo: '部屋を作って待つ',
     timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
@@ -332,7 +332,7 @@ const I18N = {
     ruleL: "ルール", r_free: "自由ルール", r_renju: "連珠", r_tara: "タラグチ", r_tara10: "タラグチ10", r_swap2: "Swap2", n_free: "禁手なし・五連以上で勝ち・黒先", n_renju: "黒先・黒は三三・四四・長連が打てません（打つと警告）", n_tara: "1手目は天元。5手目まで中央3×3から9×9へ広がり、毎手後に交代を選べる。その後は連珠", n_tara10: "タラグチと同じ。4手目の後に山口へ：黒が5手目候補を10個出し、白が1つ選ぶ", n_swap2: "先手が黒2白1を置き、後手が黒・白を選ぶか、黒白1つずつ追加して相手に選ばせる。禁手なし、長連は勝ちにならない", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "{n}手目が置かれました。交代しますか？（今は{c}）", bKeep: "交代しない（{c}）", bSwap: "交代して{c}", bYama: "山口へ", pZone: "{n}手目（{c}）を中央 {w}×{w} 内に", pOffer: "5手目の候補を{k}個タップ（同じ形は不可）", bOffer: "候補を送る {n}/{k}", bClear: "クリア", pPick: "黒の候補から5手目を1つ選ぶ", pS2Place: "{n}個目（{c}）を置く", pS2Choice: "黒を持つ、白を持つ、または黒白1つずつ追加？", bTakeB: "黒を持つ", bTakeW: "白を持つ", bAdd: "黒白を1つずつ追加", pS2Color: "自分の色を選ぶ", waitDecide: "相手の判断を待っています…", watchPhase: "観戦中・{name}の番", swapped: "交代：あなたは{c}になりました", zoneErr: "この手は中央 {w}×{w} 内に", symmetric: "同じ形の候補があります。別の点を", notoffer: "黒の候補から選んでください", pCenter: "1手目（黒）を天元に", centerErr: "1手目は天元に打ってください",
   },
   ko: {
-    title: '대국 로비', home: '처음으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
+    title: '음양전', home: '도전으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
     netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…',
     create: '방 만들기', createGo: '방 만들고 기다리기',
     timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
