@@ -147,7 +147,7 @@ async function adminEye(req, env) {
   return json({ rows: results });
 }
 
-// 明鏡台（2026-11-10 使用者：落第一手才計時、起始 5 秒每手 +1 秒、錯 3 題結束、可退出）：獨立的 mirror 表
+// 明鏡台（2026-11-10 使用者：落第一手才計時、起始 8 秒（2026-11-11 前是 5 秒）每手 +1 秒、錯 3 題結束、可退出）：獨立的 mirror 表
 // 分數＝解開題目的（題目分＋題目分×10%×剩餘整秒數）加總；同分用時短的在前；只有 inf=1（無限，從初段開始）上排行
 async function postMirror(req, env) {
   let b;
