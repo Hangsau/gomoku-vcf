@@ -813,10 +813,10 @@ setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom
 addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && mySeat() >= 0) { e.preventDefault(); e.returnValue = ''; } });
 
 // ================= VCF 明鏡台搶答（2026-11-11 使用者） =================
-// 兩人同一題同時開始，先解開得 1 分。想的時候不扣落子時間；第一手落下後 8 秒、每手 +1 秒（Rush 單人明鏡台是 5 秒）。
+// 兩人同一題同時開始，先解開得 1 分。想的時候不扣落子時間；第一手落下後 8 秒、每手 +1 秒（跟 Rush 單人明鏡台一樣，2026-11-11 兩邊都從 5 改 8）。
 // 解題判定用 Rush 的引擎（score-worker.js 的 vcf_move：電腦擋、判對方連五／被禁手／沒四了），跟 game.html 同一套。
 const COLS = 'ABCDEFGHJKLMNOP';
-const MJ_START = 8, MJ_STEP = 1;   // 2026-11-11 使用者：對戰版落子後 8 秒＋每手 1 秒（Rush 單人明鏡台仍是 5 秒）
+const MJ_START = 8, MJ_STEP = 1;   // 2026-11-11 使用者：對戰版落子後 8 秒＋每手 1 秒（Rush 單人明鏡台也改成 8 秒）
 const tToP = (t) => (SIZE - parseInt(t.slice(1), 10)) * SIZE + COLS.indexOf(t[0]);
 const pToT = (p) => COLS[p % SIZE] + (SIZE - Math.floor(p / SIZE));
 const srvNow = () => Date.now() + srvOff;
