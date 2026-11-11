@@ -1,6 +1,11 @@
-# Gomoku Rush 對戰（分支 `duel`，2026-11-11）
+# Gomoku Rush 對戰（2026-11-11 上線）
 
-本機試做中，**還沒上線**。部署腳本只部署 main，所以這個分支不會影響線上 Rush。
+頁面：https://rush.hangsau.app/duel （首頁「對戰」卡片進入）｜伺服器：`rush-duel` Worker，`wss://rush-duel.psyhangsau.workers.dev/ws`。
+
+## 部署
+
+- 頁面跟 Rush 一起：`bash C:/claudehome/projects/VCF/tools/deploy_rush.sh`
+- 伺服器另外部署：`npx wrangler@4.158.0 deploy -c game/duel-server/wrangler.toml`（**部署會清空進行中的房間**，挑沒人在下的時候）
 
 ## 檔案
 
@@ -34,7 +39,7 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 
 ## 還沒做 / 上線前要決定
 
-- **部署**：`rush-duel` Worker 部署到 Cloudflare、`duel.html` 的 `WS_PROD` 換成實際網址、併進 main 再跑 `tools/deploy_rush.sh`。
 - **VCF 防作弊**：第一版相信前端回報的解法；要擋就把 `vcfscore.wasm` 放進 Worker 重驗 `seq`（先量 CPU 時間再決定要不要升 Workers Paid）。
 - **停用題**：伺服器抽題沒有排除 `/blocked` 的題。
 - 房間只存在記憶體，伺服器重開（例如部署）時進行中的房間會消失。
+- 伺服器沒有限制每人送訊息的頻率（人多了再加）。

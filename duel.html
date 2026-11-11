@@ -243,7 +243,7 @@ const PLACE_PHASES = [PHASE.PLAY, PHASE.OPENING_PLACE, PHASE.SWAP2_PLACE, PHASE.
 const SWAP_RULES = [RULE.TARA, RULE.TARA10, RULE.SWAP2];   // 開局才決定誰黑誰白
 
 const WS_LOCAL = 'ws://127.0.0.1:8787/ws';
-const WS_PROD = 'wss://rush-duel.psyhangsau.workers.dev/ws';   // 還沒部署
+const WS_PROD = 'wss://rush-duel.psyhangsau.workers.dev/ws';   // 2026-11-11 上線（npx wrangler@4.158.0 deploy -c game/duel-server/wrangler.toml）
 const WS_URL = ['127.0.0.1', 'localhost'].includes(location.hostname) ? WS_LOCAL : WS_PROD;
 
 const $ = (id) => document.getElementById(id);
