@@ -28,6 +28,10 @@ const LOBBY_DEBOUNCE_MS = 50;   // 同一瞬間很多變動，大廳清單只送
 const ROUND_SLACK_MS = 300;     // 搶答思考上限到了再多等一點，讓剛好送出的解開先到
 const EARLY_MSG_MS = 500;       // 倒數結束前這麼久以內送來的進度還收（兩邊時鐘可能差一點）
 const MAX_REPORTED_MOVES = 99;
+// 研棋（2026-11-11 使用者）：不計時、自訂時間的房間對局中可以申請；任何時間設定下完都能覆盤
+const STUDY_FAST_TIMES = ['5+5', '10+10'];
+const STUDY_COOLDOWN_MS = 30000;   // 被拒絕後多久才能再申請
+const canStudy = (room) => room.kind === 'gomoku' && !STUDY_FAST_TIMES.includes(room.time);
 // 只接受 Rush 網頁連進來（瀏覽器一定會帶 Origin）；本機測試用 127.0.0.1／localhost
 const ORIGIN_OK = [/^https:\/\/rush\.hangsau\.app$/, /^https:\/\/([a-z0-9-]+\.)?gomoku-rush\.pages\.dev$/, /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/];
 
@@ -98,7 +102,7 @@ export class Hall {
     const { room, seat } = seated;
     const s = room.seats[seat];
     s.online = false;
-    const playing = room.state === 'play';
+    const playing = room.state === 'play' || room.state === 'study';
     s.graceT = setTimeout(() => {
       if (room.seats[seat] !== s || s.online) return;
       if (room.state === 'play') this.endBy(room, seat, 'disconnect');
@@ -151,7 +155,7 @@ export class Hall {
         const room = this.rooms.get(String(m.room));
         const seat = Number(m.seat);
         if (!room) return err('gone');
-        if (![0, 1].includes(seat) || room.state === 'play' || room.seats[seat]) return err('taken');
+        if (![0, 1].includes(seat) || room.state === 'play' || room.state === 'study' || room.seats[seat]) return err('taken');
         const mine = this.seatOf(id);
         if (mine && mine.room !== room) this.leaveAll(id);
         if (mine && mine.room === room) return err('taken');
@@ -187,6 +191,12 @@ export class Hall {
         const action = this.cleanAction(m.action);
         if (!action) return err('bad');
         return this.apply(s.room, s.seat, action, err);
+      }
+      case 'studyReq': case 'studyCancel': case 'studyAns': case 'review':
+      case 'smove': case 'snav': case 'studyEnd': {   // 研棋：申請／取消／回覆、下完覆盤、研棋中下子／前後手／結束
+        const s = this.seatOf(id);
+        if (!s || s.room.kind !== 'gomoku') return err('bad');
+        return this.studyMsg(s.room, s.seat, m, err);
       }
       case 'resign': {
         const s = this.seatOf(id);
@@ -240,6 +250,64 @@ export class Hall {
     this.afterChange(room);
   }
 
+  // ---------- 研棋 ----------
+  studyMsg(room, seat, m, err) {
+    const now = Date.now();
+    switch (m.t) {
+      case 'studyReq':
+        if (room.state !== 'play' || !canStudy(room) || room.req) return;
+        if ((room.reqBlock?.[seat] || 0) > now) return err('cool');
+        room.req = { seat };
+        return this.roomChanged(room);
+      case 'studyCancel':
+        if (room.req && room.req.seat === seat) { room.req = null; this.roomChanged(room); }
+        return;
+      case 'studyAns': {
+        if (room.state !== 'play' || !room.req || room.req.seat === seat) return;
+        if (m.ok === true) return this.enterStudy(room, 'request');
+        const asker = room.seats[room.req.seat];
+        room.reqBlock = room.reqBlock || [0, 0];
+        room.reqBlock[room.req.seat] = now + STUDY_COOLDOWN_MS;
+        room.req = null;
+        const c = asker && this.clients.get(asker.id);
+        if (c) this.send(c.ws, { t: 'note', code: 'declined' });
+        return this.roomChanged(room);
+      }
+      case 'review':   // 下完覆盤：勝負已定，不用申請
+        if (room.state !== 'over' || !room.match) return;
+        return this.enterStudy(room, 'review');
+    }
+    const st = room.study;
+    if (room.state !== 'study' || !st) return;
+    if (m.t === 'smove') {
+      const p = Number(m.p);
+      if (!Number.isInteger(p) || p < 0 || p >= CELLS) return err('bad');
+      const shown = st.seq.slice(0, st.cur);
+      if (shown.some((x) => x.p === p)) return err('occupied');
+      const color = shown.length && shown.at(-1).color === BLACK ? WHITE : BLACK;   // 研棋不管禁手，黑白輪流
+      st.seq = [...shown, { p, color }];
+      st.cur = st.seq.length;
+    } else if (m.t === 'snav') {
+      if (m.to === 'prev') st.cur = Math.max(0, st.cur - 1);
+      else if (m.to === 'next') st.cur = Math.min(st.seq.length, st.cur + 1);
+      else if (m.to === 'real') { st.seq = st.real.slice(); st.cur = st.real.length; }
+      else return err('bad');
+    } else if (m.t === 'studyEnd') {
+      room.state = 'over';
+      room.study = null;
+    }
+    this.roomChanged(room);
+  }
+  enterStudy(room, from) {
+    clearTimeout(room.timer);
+    const real = room.match.moves.map((x) => ({ p: x.p, color: x.color }));
+    room.study = { seq: real.slice(), cur: real.length, real, from };
+    room.req = null;
+    room.state = 'study';
+    if (from === 'request') room.endNote = 'study';   // 對局中研棋：這盤不計勝負
+    this.roomChanged(room);
+  }
+
   // ---------- 房間 ----------
   newRoomId() {
     for (;;) { const k = String(ROOM_ID_MIN + Math.floor(Math.random() * ROOM_ID_SPAN)); if (!this.rooms.has(k)) return k; }
@@ -267,12 +335,12 @@ export class Hall {
     clearTimeout(s.graceT);
     room.seats[seat] = null;
     room.again.delete(s.id);
-    if (room.state === 'over') this.resetRoom(room);   // 有人走了：留下的人回到等人狀態
+    if (room.state === 'over' || room.state === 'study') this.resetRoom(room);   // 有人走了：留下的人回到等人狀態
     if (!room.seats.some(Boolean)) return this.closeRoom(room);
     this.roomChanged(room);
   }
   resetRoom(room) {
-    room.state = 'wait'; room.match = null; room.vs = null; room.endNote = null; room.again.clear();
+    room.state = 'wait'; room.match = null; room.vs = null; room.study = null; room.req = null; room.endNote = null; room.again.clear();
     clearTimeout(room.timer); clearTimeout(room.vtimer);
   }
   closeRoom(room) {
@@ -284,6 +352,7 @@ export class Hall {
   start(room) {
     room.state = 'play';
     room.endNote = null;
+    room.study = null; room.req = null; room.reqBlock = [0, 0];
     room.again.clear();
     room.games += 1;
     if (room.kind === 'vcf') { room.vs = newVs(); this.vcfNext(room); return; }
@@ -366,7 +435,7 @@ export class Hall {
     this.afterChange(room);
   }
   afterChange(room) {
-    if (room.match && room.match.result) { room.state = 'over'; clearTimeout(room.timer); }
+    if (room.match && room.match.result) { room.state = 'over'; room.req = null; clearTimeout(room.timer); }
     else this.armTimer(room);
     this.roomChanged(room);
   }
@@ -393,6 +462,8 @@ export class Hall {
         watchers: this.watchers(room),
         again: [...room.again],
         match: m ? serializeMatch(m) : null,
+        canStudy: canStudy(room), req: room.req || null,
+        study: room.study ? { seq: room.study.seq.map((x) => [x.p, x.color]), cur: room.study.cur, realN: room.study.real.length, from: room.study.from } : null,
         clock: m && m.clock ? clockMs(m, now) : null,
       },
     };
