@@ -255,7 +255,7 @@ const I18N = {
   zh: {
     title: '對戰大廳', home: '回入口', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
     netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…',
-    create: '開房', createGo: '開房，等人入座', ruleLine: '連珠規則・黑先・黑棋不能下三三、四四、長連',
+    create: '開房', createGo: '開房，等人入座',
     timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
     tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
     emptyHall: '還沒有人開房', emptyHall2: '開一間，等人進來', room: '房間', waiting: '等待中', playing: '對局中', emptySeat: '空位',
@@ -274,7 +274,7 @@ const I18N = {
   en: {
     title: 'Versus Lobby', home: 'Home', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
     netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…',
-    create: 'Open a room', createGo: 'Open room and wait', ruleLine: 'Renju · Black first · Black can’t play 3-3, 4-4 or overlines',
+    create: 'Open a room', createGo: 'Open room and wait',
     timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
     tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
     emptyHall: 'No rooms yet', emptyHall2: 'Open one and wait for someone', room: 'Room', waiting: 'Waiting', playing: 'Playing', emptySeat: 'Empty',
@@ -293,7 +293,7 @@ const I18N = {
   ja: {
     title: '対局ロビー', home: 'ホーム', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
     netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…',
-    create: '部屋を作る', createGo: '部屋を作って待つ', ruleLine: '連珠・黒先・黒は三三・四四・長連が打てません',
+    create: '部屋を作る', createGo: '部屋を作って待つ',
     timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
     tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
     emptyHall: 'まだ部屋がありません', emptyHall2: '部屋を作って相手を待ちましょう', room: '部屋', waiting: '待機中', playing: '対局中', emptySeat: '空席',
@@ -312,7 +312,7 @@ const I18N = {
   ko: {
     title: '대국 로비', home: '처음으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
     netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…',
-    create: '방 만들기', createGo: '방 만들고 기다리기', ruleLine: '렌주 · 흑 선 · 흑은 삼삼·사사·장목 금지',
+    create: '방 만들기', createGo: '방 만들고 기다리기',
     timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
     tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
     emptyHall: '아직 방이 없습니다', emptyHall2: '방을 만들고 상대를 기다려 보세요', room: '방', waiting: '대기 중', playing: '대국 중', emptySeat: '빈자리',
@@ -464,7 +464,8 @@ $('cMin').value = cfg.cmin; $('cInc').value = cfg.cinc;
 $('vRkDown').onclick = () => stepRank(-1); $('vRkUp').onclick = () => stepRank(1);
 
 // ---------- 連線 ----------
-let ws = null, online = false, failCount = 0, pingT = 0, retryT = 0;
+const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
+let ws = null, online = false, failCount = 0, retryT = 0;
 let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0;   // srvOff：伺服器時間－本機時間   // viewing：我正在看的房號
 function connect() {
   clearTimeout(retryT);
@@ -473,9 +474,9 @@ function connect() {
   ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
   ws.onclose = () => { online = false; failCount++; renderNet(); retry(); };
 }
-function retry() { clearTimeout(retryT); retryT = setTimeout(connect, Math.min(8000, 800 * 2 ** Math.min(failCount, 4))); }
+function retry() { clearTimeout(retryT); retryT = setTimeout(connect, Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** Math.min(failCount, RETRY_MAX_POW))); }
 function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
-pingT = setInterval(() => send({ t: 'ping' }), 25000);
+setInterval(() => send({ t: 'ping' }), PING_MS);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!ws || ws.readyState > 1)) connect(); });
 
 function onMsg(m) {
@@ -499,6 +500,12 @@ function renderNet() {
 }
 
 // ---------- 大廳 ----------
+// 大廳的一張房間卡（五子棋、搶答共用外框）
+const roomCard = (r, wait, extra, seatsHtml) => `<button type="button" class="roomc ${wait ? 'wait' : 'play'}" data-room="${esc(r.id)}">
+      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>
+        <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : 'playing'))}</span></span>
+      <span class="ex">${esc(extra)}</span>
+      <span class="seats">${seatsHtml}</span></button>`;
 function renderLobby() {
   if (!lobby.length) {
     $('list').innerHTML = `<div class="empty-hall"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg><b style="font-size:18px">${esc(T('emptyHall'))}</b><span class="muted" style="font-size:15px">${esc(T('emptyHall2'))}</span></div>`;
@@ -511,11 +518,7 @@ function renderLobby() {
     const seat = (s, c) => (c = qs ? 'q' : c, s) ? `<span class="seat"><i class="st ${c}"></i><span class="nm">${esc(s.nick)}</span>${s.online ? '' : '<i class="dot off"></i>'}</span>`
       : `<span class="seat empty"><i class="st ${c}" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
     const extra = [T('r_' + r.rule), timeLabel(r.time), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.moves ? T('moveN', { n: r.moves }) : ''].filter(Boolean).join('・');
-    return `<button type="button" class="roomc ${wait ? 'wait' : 'play'}" data-room="${esc(r.id)}">
-      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>
-        <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : 'playing'))}</span></span>
-      <span class="ex">${esc(extra)}</span>
-      <span class="seats">${seat(r.seats[0], 'b')}${seat(r.seats[1], 'w')}</span></button>`;
+    return roomCard(r, wait, extra, seat(r.seats[0], 'b') + seat(r.seats[1], 'w'));
   }).join('');
   $('list').querySelectorAll('[data-room]').forEach(b => b.onclick = () => enterRoom(b.dataset.room));
 }
@@ -548,7 +551,7 @@ function onRoom(r, serverNow) {
   if (!match || match.phase !== PHASE.OFFER) sel = [];
   const me = mySeat();
   if (me >= 0 && prevMatch && match && prev && prev.id === r.id && r.state === 'play' && prev.state === 'play' && prevMatch.log.length && colorOf(prevMatch, me) !== colorOf(match, me)) flash(T('swapped', { c: colorWord(colorOf(match, me)) }), '', 'info', 1500);
-  if (r.kind === 'vcf') vcfOnRoom(prev);
+  if (r.kind === 'vcf') vcfOnRoom();
   const sig = r.state + (me >= 0) + !!r.watchers + myDecision();   // 版面會變（按鈕、觀戰人數那行）才重算棋盤大小
   renderRoom();
   if (sig !== layoutSig) { layoutSig = sig; layout(); }
@@ -565,23 +568,25 @@ function clockOf(seat) {
   if (match && room.state === 'play' && actorOf(match) === seat) ms -= Date.now() - roomAt;
   return Math.max(0, ms);
 }
+const LOW_CLOCK_MS = 30000, CLOCK_TICK_MS = 250, VCF_TICK_MS = 100;   // 剩 30 秒變紅；五子棋時鐘、搶答計時多久重畫一次
 const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+// 空座位：沒入座的人在等人時看得到「入座」（五子棋、搶答共用）
+function emptySeatBar(el, seat, stoneHtml) {
+  el.className = 'pbar empty';
+  const canSit = room && room.state !== 'play' && mySeat() < 0;
+  el.innerHTML = `${stoneHtml}<span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
+  const b = el.querySelector('[data-sit]'); if (b) b.onclick = () => { audio(); send({ t: 'sit', room: room.id, seat }); };
+}
 function renderBar(el, seat) {
   const s = room && room.seats[seat], c = seatColor(seat);
   const stone = `<i class="st ${c === null ? 'q' : c === BLACK ? 'b' : 'w'}"></i>`;
-  if (!s) {
-    el.className = 'pbar empty';
-    const canSit = room && room.state !== 'play' && mySeat() < 0;
-    el.innerHTML = `${stone}<span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
-    const b = el.querySelector('[data-sit]'); if (b) b.onclick = () => { audio(); send({ t: 'sit', room: room.id, seat }); };
-    return;
-  }
+  if (!s) return emptySeatBar(el, seat, stone);
   const act = match && room.state === 'play' ? actorOf(match) : null;
   el.className = 'pbar' + (act === seat ? ' on' : '');
   const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
   const tag = !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
   const ck = clockOf(seat);
-  el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < 30000 ? ' low' : ''}">${ck != null && room.state !== 'wait' ? mmss(ck) : ''}</span>`;
+  el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < LOW_CLOCK_MS ? ' low' : ''}">${ck != null && room.state !== 'wait' ? mmss(ck) : ''}</span>`;
 }
 function renderRoom() {
   if ($('sRoom').hidden) return;
@@ -600,14 +605,7 @@ function renderRoom() {
   $('status').innerHTML = st;
   $('facts').innerHTML = [T('n_' + room.rule), room.watchers ? T('watchers', { n: room.watchers }) : ''].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
   // 底部按鈕
-  const acts = [];
-  if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
-  if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
-  acts.push(`<button type="button" class="btn ghost" id="aLeave" style="flex:1">${esc(T(me >= 0 ? 'leaveRoom' : 'back'))}</button>`);
-  $('rActs').innerHTML = acts.join('');
-  if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
-  if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
-  $('aLeave').onclick = leaveRoom;
+  renderActs(me);
   renderPhase();
   draw();
 }
@@ -661,6 +659,17 @@ function renderPhase() {
       send({ t: 'act', action: A[k] });
     };
   });
+}
+// 底部按鈕：認輸（對局中）、再來一局（下完）、離開／回大廳（五子棋、搶答共用）
+function renderActs(me) {
+  const acts = [];
+  if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
+  if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
+  acts.push(`<button type="button" class="btn ghost" id="aLeave" style="flex:1">${esc(T(me >= 0 ? 'leaveRoom' : 'back'))}</button>`);
+  $('rActs').innerHTML = acts.join('');
+  if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
+  if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
+  $('aLeave').onclick = leaveRoom;
 }
 function leaveRoom() {
   if (room && room.state === 'play' && mySeat() >= 0 && !confirm(T('leaveQ'))) return;
@@ -809,7 +818,7 @@ cv.addEventListener('click', (ev) => {
   send({ t: 'move', p });
 });
 // 時鐘每 250ms 重畫（只動兩條玩家列，不重畫棋盤）
-setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom').hidden) { renderBar($('pTop'), 1 - bottomSeat()); renderBar($('pBot'), bottomSeat()); } }, 250);
+setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom').hidden) { renderBar($('pTop'), 1 - bottomSeat()); renderBar($('pBot'), bottomSeat()); } }, CLOCK_TICK_MS);
 addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && mySeat() >= 0) { e.preventDefault(); e.returnValue = ''; } });
 
 // ================= VCF 明鏡台搶答（2026-11-11 使用者） =================
@@ -834,7 +843,7 @@ const vSolve = (black, white, attackerWhite) => engineCall({ black, white, attac
 
 let VR = null;   // 我這一題的狀態
 function vPuzzle(x) { return { black: x[0].split(' ').filter(Boolean), white: x[1].split(' ').filter(Boolean), L: x[2], score: x[3], atkWhite: x[4] === 'w', id: x[5] }; }
-function vcfOnRoom(prev) {
+function vcfOnRoom() {
   const c = room.vs && room.vs.cur;
   if (!c) { VR = null; return; }
   if (!VR || VR.n !== c.n || VR.room !== room.id || VR.games !== room.games) {   // 新的一題
@@ -874,21 +883,11 @@ function vcfCard(r, wait) {
     : `<span class="seat empty"><i class="st p" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
   const v = r.vcf || {};
   const extra = [T('kVcf'), rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target }), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.score ? r.score.join(' : ') : ''].filter(Boolean).join('・');
-  return `<button type="button" class="roomc ${wait ? 'wait' : 'play'}" data-room="${esc(r.id)}">
-      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>
-        <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : 'playing'))}</span></span>
-      <span class="ex">${esc(extra)}</span>
-      <span class="seats">${seat(r.seats[0])}${seat(r.seats[1])}</span></button>`;
+  return roomCard(r, wait, extra, seat(r.seats[0]) + seat(r.seats[1]));
 }
 function vcfBar(el, seat) {
   const s = room.seats[seat], v = room.vcf;
-  if (!s) {
-    el.className = 'pbar empty';
-    const canSit = room.state !== 'play' && mySeat() < 0;
-    el.innerHTML = `<i class="st p"></i><span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
-    const b = el.querySelector('[data-sit]'); if (b) b.onclick = () => { audio(); send({ t: 'sit', room: room.id, seat }); };
-    return;
-  }
+  if (!s) return emptySeatBar(el, seat, '<i class="st p"></i>');
   const c = vCur(), st = c && room.state === 'play' && vStarted() ? c.st[seat] : null;
   el.className = 'pbar' + (st && st.s === 'armed' ? ' on' : '');
   const tag = !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
@@ -922,14 +921,7 @@ function vcfRenderRoom() {
   const atk = c && vStarted() ? T(c.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB') : '';
   $('facts').innerHTML = [atk, room.watchers ? T('watchers', { n: room.watchers }) : ''].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
   $('phaseActs').hidden = true; $('phaseActs').innerHTML = '';
-  const acts = [];
-  if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
-  if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
-  acts.push(`<button type="button" class="btn ghost" id="aLeave" style="flex:1">${esc(T(me >= 0 ? 'leaveRoom' : 'back'))}</button>`);
-  $('rActs').innerHTML = acts.join('');
-  if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
-  if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
-  $('aLeave').onclick = leaveRoom;
+  renderActs(me);
   draw();
 }
 function vcfRenderEnd() {
@@ -995,22 +987,22 @@ async function vcfClick(ev) {
   if (VR.black.includes(t) || VR.white.includes(t)) return;
   if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
   ghost = null;
-  const R = VR, P = R.p, atk = P.atkWhite ? R.white : R.black, def = P.atkWhite ? R.black : R.white;
-  R.hold = true;
-  const res = (await vMove(R.black.join(' '), R.white.join(' '), t, P.atkWhite)).result || { r: 'illegal' };
-  if (VR !== R || R.out || R.done) return;   // 等引擎時這題已經結束
-  if (res.r === 'illegal') { R.hold = false; return; }
-  if (res.r === 'forbidden' || res.r === 'notfour') { R.hold = false; flash(T(res.r === 'forbidden' ? 'forbidden' : 'notfour'), T('noMiss'), 'warn', 900); renderRoom(); return; }
+  const round = VR, puz = round.p, atk = puz.atkWhite ? round.white : round.black, def = puz.atkWhite ? round.black : round.white;
+  round.hold = true;
+  const res = (await vMove(round.black.join(' '), round.white.join(' '), t, puz.atkWhite)).result || { r: 'illegal' };
+  if (VR !== round || round.out || round.done) return;   // 等引擎時這題已經結束
+  if (res.r === 'illegal') { round.hold = false; return; }
+  if (res.r === 'forbidden' || res.r === 'notfour') { round.hold = false; flash(T(res.r), T('noMiss'), 'warn', 900); renderRoom(); return; }
   if (res.r === 'forcedForbidden') return vOut('forbid');
-  atk.push(t); R.seq.push(t); R.moves.push(t); stoneSound();
-  if (res.r === 'win') { R.done = true; send({ t: 'vdone', n: R.n, seq: R.seq }); renderRoom(); return; }
-  if (res.r === 'defFive') { def.push(res.at); R.seq.push(res.at); R.lastDef = res.at; renderRoom(); return vOut('five'); }
+  atk.push(t); round.seq.push(t); round.moves.push(t); stoneSound();
+  if (res.r === 'win') { round.done = true; send({ t: 'vdone', n: round.n, seq: round.seq }); renderRoom(); return; }
+  if (res.r === 'defFive') { def.push(res.at); round.seq.push(res.at); round.lastDef = res.at; renderRoom(); return vOut('five'); }
   if (res.r === 'block') {
-    def.push(res.def); R.seq.push(res.def); R.lastDef = res.def; setTimeout(() => stoneSound(true), 160);
+    def.push(res.def); round.seq.push(res.def); round.lastDef = res.def; setTimeout(() => stoneSound(true), 160);
     if (res.nofour) { renderRoom(); return vOut(res.forcedForbidden ? 'forbid' : 'nofour'); }
-    if (!R.armed) { R.armed = true; R.left = MJ_START; } else R.left += MJ_STEP;   // 明鏡台：第一手開錶，之後每手 +1 秒
-    send({ t: 'vprog', n: R.n, moves: R.moves.length, armed: true });
-    R.hold = false; renderRoom();
+    if (!round.armed) { round.armed = true; round.left = MJ_START; } else round.left += MJ_STEP;   // 明鏡台：第一手開錶，之後每手 +1 秒
+    send({ t: 'vprog', n: round.n, moves: round.moves.length, armed: true });
+    round.hold = false; renderRoom();
     return;
   }
   vOut('bad');
@@ -1043,7 +1035,7 @@ setInterval(() => {
   }
   $('status').innerHTML = vcfStatus();
   vcfBar($('pTop'), 1 - (mySeat() >= 0 ? mySeat() : 0)); vcfBar($('pBot'), mySeat() >= 0 ? mySeat() : 0);
-}, 100);
+}, VCF_TICK_MS);
 
 applyLang();
 layout();

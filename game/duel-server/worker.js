@@ -6,12 +6,12 @@ import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, pickPuzzle, newVs, publ
 import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
 // 時間：'none'＝不計時，或「分+每手加秒」字串（2026-11-11 使用者：5+5、10+10、自訂；分 1–180、秒 0–60）
-const MAX_MIN = 180, MAX_INC = 60;
+const MAX_MIN = 180, MAX_INC = 60, MS_PER_MIN = 60000, MS_PER_SEC = 1000;
 function parseTime(t) {
   if (t === 'none') return { ok: true, clock: null };
   const m = /^(\d{1,3})\+(\d{1,2})$/.exec(String(t));
   if (!m || +m[1] < 1 || +m[1] > MAX_MIN || +m[2] > MAX_INC) return { ok: false };
-  return { ok: true, clock: { mainMs: +m[1] * 60000, incMs: +m[2] * 1000 } };
+  return { ok: true, clock: { mainMs: +m[1] * MS_PER_MIN, incMs: +m[2] * MS_PER_SEC } };
 }
 const RULES = Object.values(RULE);
 const PLACE_PHASES = [PHASE.PLAY, PHASE.OPENING_PLACE, PHASE.SWAP2_PLACE, PHASE.SWAP2_ADD];
@@ -22,12 +22,22 @@ const MAX_ROOMS = 200;
 const MAX_NICK = 12;
 const PLAY_GRACE_MS = 60000;   // 對局中斷線，60 秒內回來可以繼續，過了判輸
 const WAIT_GRACE_MS = 15000;   // 等人時斷線（例如重新整理），15 秒內回來還在座位上
+const ROOM_ID_MIN = 1000, ROOM_ID_SPAN = 9000;   // 房號 4 位數
+const TIMER_SLACK_MS = 50;      // 計時到了再多等一點才判，避免差幾毫秒還沒到
+const LOBBY_DEBOUNCE_MS = 50;   // 同一瞬間很多變動，大廳清單只送一次
+const ROUND_SLACK_MS = 300;     // 搶答思考上限到了再多等一點，讓剛好送出的解開先到
+const EARLY_MSG_MS = 500;       // 倒數結束前這麼久以內送來的進度還收（兩邊時鐘可能差一點）
+const MAX_REPORTED_MOVES = 99;
+// 只接受 Rush 網頁連進來（瀏覽器一定會帶 Origin）；本機測試用 127.0.0.1／localhost
+const ORIGIN_OK = [/^https:\/\/rush\.hangsau\.app$/, /^https:\/\/([a-z0-9-]+\.)?gomoku-rush\.pages\.dev$/, /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/];
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === '/ws') {
       if (req.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
+      const origin = req.headers.get('Origin');
+      if (origin && !ORIGIN_OK.some((re) => re.test(origin))) return new Response('forbidden origin', { status: 403 });
       return env.HALL.get(env.HALL.idFromName('hall')).fetch(req);
     }
     return new Response('rush-duel', { status: 200 });
@@ -232,7 +242,7 @@ export class Hall {
 
   // ---------- 房間 ----------
   newRoomId() {
-    for (;;) { const k = String(1000 + Math.floor(Math.random() * 9000)); if (!this.rooms.has(k)) return k; }
+    for (;;) { const k = String(ROOM_ID_MIN + Math.floor(Math.random() * ROOM_ID_SPAN)); if (!this.rooms.has(k)) return k; }
   }
   seatRec(id, nick) { return { id, nick, online: true, graceT: null }; }
   seatOf(id) {
@@ -295,17 +305,17 @@ export class Hall {
       st: [{ s: 'think', moves: 0, why: null }, { s: 'think', moves: 0, why: null }], seqs: [null, null],
     };
     clearTimeout(room.vtimer);
-    room.vtimer = setTimeout(() => this.vcfEndRound(room, null), vs.cur.deadline - now + 300);   // 思考上限到：這題沒人得分
+    room.vtimer = setTimeout(() => this.vcfEndRound(room, null), vs.cur.deadline - now + ROUND_SLACK_MS);   // 思考上限到：這題沒人得分
     this.roomChanged(room);
   }
   vcfMsg(room, seat, m) {
     const c = room.vs && room.vs.cur;
-    if (!c || c.phase !== 'play' || Number(m.n) !== c.n || Date.now() < c.startAt - 500) return;
+    if (!c || c.phase !== 'play' || Number(m.n) !== c.n || Date.now() < c.startAt - EARLY_MSG_MS) return;
     const me = c.st[seat];
     if (me.s !== 'think' && me.s !== 'armed') return;
     if (m.t === 'vprog') {
       me.s = m.armed ? 'armed' : 'think';
-      me.moves = Math.max(0, Math.min(99, Number(m.moves) | 0));
+      me.moves = Math.max(0, Math.min(MAX_REPORTED_MOVES, Number(m.moves) | 0));
       return this.roomChanged(room);
     }
     c.seqs[seat] = cleanSeq(m.seq);
@@ -323,7 +333,7 @@ export class Hall {
     if (!c || c.phase !== 'play' || room.state !== 'play') return;
     clearTimeout(room.vtimer);
     c.phase = 'done'; c.winner = winner; c.endAt = Date.now();
-    for (const x of c.st) if (x.s === 'think' || x.s === 'armed') { x.s = 'out'; x.why = winner === null ? 'time' : x.why; }
+    if (winner === null) for (const x of c.st) if (x.s === 'think' || x.s === 'armed') { x.s = 'out'; x.why = 'time'; }
     if (winner !== null && vs.score[winner] >= room.vcf.target) {
       vs.result = { winner, note: 'score' };
       room.state = 'over';
@@ -368,7 +378,7 @@ export class Hall {
     room.timer = setTimeout(() => {
       const next = checkTimeout(room.match, Date.now());
       if (next !== room.match) { room.match = next; this.afterChange(room); } else this.armTimer(room);
-    }, left + 50);
+    }, left + TIMER_SLACK_MS);
   }
 
   // ---------- 廣播 ----------
@@ -412,6 +422,6 @@ export class Hall {
     this.lobbyT = setTimeout(() => {   // 同一瞬間很多變動只送一次
       const msg = JSON.stringify(this.lobbyMsg());
       for (const c of this.clients.values()) if (!c.room) try { c.ws.send(msg); } catch {}
-    }, 50);
+    }, LOBBY_DEBOUNCE_MS);
   }
 }

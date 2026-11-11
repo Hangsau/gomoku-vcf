@@ -3,8 +3,8 @@
 // 題目從 Rush 題庫（game/p/段位.json）抽，只用 20 手內的題（使用者：能玩的就 20 手以下）。
 // 第一版相信前端回報的解法；之後要防作弊，把 vcfscore.wasm 放進伺服器重驗 seq。
 
-export const VCF_THINK = [60, 180, 300];   // 每題思考上限（秒），預設 180
-export const VCF_TARGET = [3, 5];
+const VCF_THINK = [60, 180, 300];   // 每題思考上限（秒），預設 180
+const VCF_TARGET = [3, 5];
 export const VCF_MAX_L = 20;
 const RANK_MIN = 1, RANK_MAX = 10;         // 題庫檔 1..10＝初段..傳說
 export const COUNT_MS = 3000;              // 每題開始前倒數
