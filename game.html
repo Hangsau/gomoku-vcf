@@ -281,13 +281,14 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
     <h1>Gomoku Rush</h1>
   </div>
   <div class="pad homeCards">
-    <button type="button" class="mode r slim" id="toPick">
-      <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></span>
-      <span class="tx"><b data-i18n="modeRush">挑戰</b></span>
-    </button>
+    <!-- 順序（2026-11-11 使用者）：教學（learn.js 插在最上面）、練習、挑戰、對戰 -->
     <button type="button" class="mode p slim" id="modeP">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
       <span class="tx"><b data-i18n="modePrac">練習</b></span>
+    </button>
+    <button type="button" class="mode r slim" id="toPick">
+      <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></span>
+      <span class="tx"><b data-i18n="modeRush">挑戰</b></span>
     </button>
     <a href="duel.html" class="mode slim" id="toDuel" style="text-decoration: none;">
       <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg></span>
