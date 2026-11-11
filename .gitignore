@@ -1,3 +1,4 @@
 game/learn/art/.codex-work/
 tools/__pycache__/
 .wrangler/
+.dev.vars

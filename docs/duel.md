@@ -19,6 +19,9 @@
 
 ## 本機跑
 
+本機設定放 `game/duel-server/.dev.vars`（不進 git）。**`wrangler dev --var` 在這版不會生效**（2026-11-11 實測 env 拿到 null），要測閒置就在 .dev.vars 寫 `IDLE_MS=8000`、`IDLE_ASK_MS=5000` 再重開 wrangler dev；測完拿掉，不然其他測試會被閒置規則踢掉。
+
+
 ```bash
 python -m http.server 8791 --bind 127.0.0.1                     # 在 repo 根目錄
 npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port 8787 --var BANK_URL:http://127.0.0.1:8791
@@ -35,6 +38,8 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 - 任何時間設定下完，結果視窗按「研棋」直接覆盤（勝負照舊）。
 - 研棋中兩人共用棋盤、誰都能下、黑白輪流、不管禁手；上一手／下一手／回到實戰；退回去再下會取代後面的手順；實戰之後的手標數字。任一方按「結束研棋」回到下完狀態。
 - 伺服器：`worker.js` 的 `studyMsg`、`enterStudy`，房間狀態多一個 `study`。
+
+**閒置退出**（使用者 2026-11-11）：坐在位子上 10 分鐘沒動作就問「還在嗎？」，60 秒沒回應就離座；對局中離座＝判負（對方看到「X 太久沒回應」）。五子棋對局中只看輪到的人（從上一手算起）；等人從開始等算起；下完、研棋、VCF 搶答看自己最後一個操作。伺服器用 Durable Object 的 alarm 定時檢查（建構時設的 setInterval 不會跑）。大廳卡片顯示「等了幾分」。
 
 **VCF 明鏡台搶答**（使用者 2026-11-11 定）：
 - 兩人同一題、倒數 3 秒後同時開始，先解開得 1 分，先拿到 3 或 5 分贏。

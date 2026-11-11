@@ -31,6 +31,9 @@ const MAX_REPORTED_MOVES = 99;
 // 研棋（2026-11-11 使用者）：不計時、自訂時間的房間對局中可以申請；任何時間設定下完都能覆盤
 const STUDY_FAST_TIMES = ['5+5', '10+10'];
 const STUDY_COOLDOWN_MS = 30000;   // 被拒絕後多久才能再申請
+// 閒置退出（2026-11-11 使用者：開房等到睡著怎麼辦、要有入座時間退出機制）：坐著 IDLE_MS 沒動作就問「還在嗎？」，ASK_MS 內沒回應就離座（對局中＝判負）
+// 本機測試可以用 --var IDLE_MS:8000 --var IDLE_ASK_MS:5000 縮短
+const IDLE_MS = 10 * 60000, IDLE_ASK_MS = 60000;
 const canStudy = (room) => room.kind === 'gomoku' && !STUDY_FAST_TIMES.includes(room.time);
 // 只接受 Rush 網頁連進來（瀏覽器一定會帶 Origin）；本機測試用 127.0.0.1／localhost
 const ORIGIN_OK = [/^https:\/\/rush\.hangsau\.app$/, /^https:\/\/([a-z0-9-]+\.)?gomoku-rush\.pages\.dev$/, /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/];
@@ -56,6 +59,22 @@ export class Hall {
     this.env = env;
     this.clients = new Map();   // 玩家 id → { ws, nick, room: 正在看的房號或 null }
     this.rooms = new Map();     // 房號 → room
+    this.state = state;
+    this.idleMs = Number(env.IDLE_MS) || IDLE_MS;
+    this.askMs = Number(env.IDLE_ASK_MS) || IDLE_ASK_MS;
+    this.sweepMs = Math.min(15000, this.idleMs / 4);
+    this.alarmSet = false;
+  }
+  // 閒置檢查用 Durable Object 的 alarm 定時喚醒（建構時設的 setInterval 不會跑，2026-11-11 實測）；有人連著才一直排
+  ensureAlarm() {
+    if (this.alarmSet) return;
+    this.alarmSet = true;
+    this.state.storage.setAlarm(Date.now() + this.sweepMs);
+  }
+  async alarm() {
+    this.alarmSet = false;
+    this.idleSweep();
+    if (this.clients.size || this.rooms.size) this.ensureAlarm();
   }
 
   async fetch(req) {
@@ -75,6 +94,7 @@ export class Hall {
     if (old && old.ws !== ws) try { old.ws.close(4000, 'replaced'); } catch {}
     const c = { ws, nick, room: null };
     this.clients.set(id, c);
+    this.ensureAlarm();
     ws.addEventListener('message', (ev) => { try { this.onMessage(id, ws, JSON.parse(ev.data)); } catch (e) { this.send(ws, { t: 'err', code: 'bad' }); } });
     const gone = () => this.disconnect(id, ws);
     ws.addEventListener('close', gone);
@@ -118,8 +138,13 @@ export class Hall {
     const c = this.clients.get(id);
     if (!c || c.ws !== ws) return;
     const err = (code) => this.send(ws, { t: 'err', code });
+    if (m.t !== 'ping') {   // 自己按的任何操作都算「還在」（自動送的 ping 不算）
+      const s = this.seatOf(id);
+      if (s) { const rec = s.room.seats[s.seat]; rec.lastAct = Date.now(); if (rec.askUntil) { rec.askUntil = null; this.send(ws, { t: 'idleClear' }); } }
+    }
     switch (m.t) {
       case 'ping': return this.send(ws, { t: 'pong', now: Date.now() });
+      case 'here': return;   // 「還在嗎？」按了繼續：上面已經記成有動作
       case 'nick': {
         c.nick = cleanNick(m.nick);
         const s = this.seatOf(id);
@@ -133,7 +158,7 @@ export class Hall {
         if (kind === 'vcf' ? !vcf : !parseTime(m.time).ok || !RULES.includes(m.rule)) return err('bad');
         this.leaveAll(id);
         const room = {
-          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), state: 'wait',
+          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), waitSince: Date.now(), state: 'wait',
           seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, vtimer: null, games: 0,
         };
         this.rooms.set(room.id, room);
@@ -312,7 +337,46 @@ export class Hall {
   newRoomId() {
     for (;;) { const k = String(ROOM_ID_MIN + Math.floor(Math.random() * ROOM_ID_SPAN)); if (!this.rooms.has(k)) return k; }
   }
-  seatRec(id, nick) { return { id, nick, online: true, graceT: null }; }
+  seatRec(id, nick) { return { id, nick, online: true, graceT: null, lastAct: Date.now(), askUntil: null }; }
+  // 多久沒動作：五子棋對局中只看輪到的人（從上一手算起），等人從開始等算起，其他從自己最後一個操作算起
+  idleSince(room, seat) {
+    const rec = room.seats[seat];
+    if (room.state === 'play' && room.kind === 'gomoku' && room.match) {
+      if (actorOf(room.match) !== seat) return null;
+      const lastMove = room.match.log.length ? room.match.log.at(-1).t : room.match.startedAt;
+      return Math.max(rec.lastAct, lastMove);
+    }
+    if (room.state === 'wait') return Math.max(rec.lastAct, room.waitSince || 0);
+    return rec.lastAct;
+  }
+  idleSweep() {
+    const now = Date.now();
+    for (const room of [...this.rooms.values()]) {
+      room.seats.forEach((rec, seat) => {
+        if (!rec || !rec.online || room.seats[seat] !== rec) return;
+        const c = this.clients.get(rec.id);
+        if (rec.askUntil) {
+          if (now < rec.askUntil) return;
+          rec.askUntil = null;   // 問了沒回：離座（對局中判負）
+          if (c) this.send(c.ws, { t: 'note', code: 'idleOut' });
+          if (room.state === 'play') {
+            this.endBy(room, seat, 'idle');
+            const other = room.seats[1 - seat], oc = other && this.clients.get(other.id);
+            if (oc) this.send(oc.ws, { t: 'note', code: 'oppIdle', nick: rec.nick });   // 留下的人：對手太久沒回應、判你勝
+          }
+          if (c && c.room === room.id) c.room = null;
+          this.stand(room, seat);
+          if (c) this.send(c.ws, this.lobbyMsg());
+          return;
+        }
+        const since = this.idleSince(room, seat);
+        if (since != null && now - since >= this.idleMs) {
+          rec.askUntil = now + this.askMs;
+          if (c) this.send(c.ws, { t: 'idleAsk', ms: this.askMs });
+        }
+      });
+    }
+  }
   seatOf(id) {
     for (const room of this.rooms.values()) {
       const seat = room.seats.findIndex(s => s && s.id === id);
@@ -340,7 +404,7 @@ export class Hall {
     this.roomChanged(room);
   }
   resetRoom(room) {
-    room.state = 'wait'; room.match = null; room.vs = null; room.study = null; room.req = null; room.endNote = null; room.again.clear();
+    room.state = 'wait'; room.waitSince = Date.now(); room.match = null; room.vs = null; room.study = null; room.req = null; room.endNote = null; room.again.clear();
     clearTimeout(room.timer); clearTimeout(room.vtimer);
   }
   closeRoom(room) {
@@ -481,12 +545,12 @@ export class Hall {
   }
   lobbyMsg() {
     const rooms = [...this.rooms.values()].map(r => ({
-      id: r.id, kind: r.kind, vcf: r.vcf, score: r.vs ? r.vs.score : null, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt,
+      id: r.id, kind: r.kind, vcf: r.vcf, score: r.vs ? r.vs.score : null, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt, waitSince: r.waitSince,
       seats: r.seats.map(s => s && { nick: s.nick, online: s.online }),
       watchers: this.watchers(r),
       moves: r.match ? r.match.moves.length : 0,
     })).sort((a, b) => (a.state === 'wait' ? 0 : 1) - (b.state === 'wait' ? 0 : 1) || b.createdAt - a.createdAt);
-    return { t: 'lobby', rooms, online: this.clients.size };
+    return { t: 'lobby', rooms, online: this.clients.size, now: Date.now() };
   }
   broadcastLobby() {   // 大廳清單給還沒進房的人
     clearTimeout(this.lobbyT);
