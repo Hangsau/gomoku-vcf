@@ -11,3 +11,7 @@ class_name = "Hall"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Hall"]
+
+# VCF 搶答抽題的題庫網址（game/p/段位.json）；本機測試：wrangler dev --var BANK_URL:http://127.0.0.1:8791
+[vars]
+BANK_URL = "https://rush.hangsau.app"

@@ -1,7 +1,8 @@
 // Gomoku Rush 對戰大廳（2026-11-11）：一個 Durable Object（Hall）放所有房間和棋局，玩家用 WebSocket 連進來。
-// 下棋規則用 game/duel/match.js（連珠，跟前端同一份），每一手都在這裡驗，前端改不了結果。
+// 兩種房間：kind 'gomoku'（五子棋，game/duel/match.js 每一手都在這裡驗）、kind 'vcf'（VCF 明鏡台搶答，見 vcf.js）。
 // 狀態只放記憶體：大廳重開（部署、長時間沒人）房間就清空；第一版夠用，人多了再拆成一個房間一個 DO。
 import { BLACK, WHITE, EMPTY, CELLS, FORBID_NONE, forbidType } from '../duel/rules.js';
+import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, pickPuzzle, newVs, publicVs, COUNT_MS, REVEAL_MS } from './vcf.js';
 import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
 const TIMES = { none: null, '5+3': { mainMs: 300000, incMs: 3000 }, '10+5': { mainMs: 600000, incMs: 5000 } };
@@ -31,6 +32,7 @@ const cleanId = (s) => (/^[A-Za-z0-9_-]{8,40}$/.test(String(s)) ? String(s) : nu
 
 export class Hall {
   constructor(state, env) {
+    this.env = env;
     this.clients = new Map();   // 玩家 id → { ws, nick, room: 正在看的房號或 null }
     this.rooms = new Map();     // 房號 → room
   }
@@ -105,11 +107,13 @@ export class Hall {
       }
       case 'create': {
         if (this.rooms.size >= MAX_ROOMS) return err('full');
-        if (!(m.time in TIMES) || !RULES.includes(m.rule)) return err('bad');
+        const kind = m.kind === 'vcf' ? 'vcf' : 'gomoku';
+        const vcf = kind === 'vcf' ? cleanVcfSettings(m) : null;
+        if (kind === 'vcf' ? !vcf : !(m.time in TIMES) || !RULES.includes(m.rule)) return err('bad');
         this.leaveAll(id);
         const room = {
-          id: this.newRoomId(), time: m.time, rule: m.rule, createdAt: Date.now(), state: 'wait',
-          seats: [null, null], match: null, endNote: null, again: new Set(), timer: null, games: 0,
+          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? m.time : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), state: 'wait',
+          seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, vtimer: null, games: 0,
         };
         this.rooms.set(room.id, room);
         const seat = m.color === 'w' ? 1 : m.color === 'b' ? 0 : (Math.random() < 0.5 ? 0 : 1);
@@ -134,16 +138,21 @@ export class Hall {
         const mine = this.seatOf(id);
         if (mine && mine.room !== room) this.leaveAll(id);
         if (mine && mine.room === room) return err('taken');
-        if (room.state === 'over') { room.state = 'wait'; room.match = null; room.endNote = null; room.again.clear(); }
+        if (room.state === 'over') this.resetRoom(room);
         room.seats[seat] = this.seatRec(id, c.nick);
         c.room = room.id;
         if (room.seats[0] && room.seats[1]) this.start(room);
         this.roomChanged(room);
         return;
       }
+      case 'vprog': case 'vdone': case 'vout': {   // VCF 搶答：進度、解開、出局
+        const s = this.seatOf(id);
+        if (!s || s.room.kind !== 'vcf' || s.room.state !== 'play') return err('notplay');
+        return this.vcfMsg(s.room, s.seat, m);
+      }
       case 'move': {
         const s = this.seatOf(id);
-        if (!s || s.room.state !== 'play') return err('notplay');
+        if (!s || s.room.kind !== 'gomoku' || s.room.state !== 'play') return err('notplay');
         const { room, seat } = s;
         const p = Number(m.p);
         if (!Number.isInteger(p) || p < 0 || p >= CELLS) return err('bad');
@@ -156,7 +165,7 @@ export class Hall {
       }
       case 'act': {   // 開局的決定：換手、轉山口、提候選、挑候選、Swap2 選擇、選色
         const s = this.seatOf(id);
-        if (!s || s.room.state !== 'play') return err('notplay');
+        if (!s || s.room.kind !== 'gomoku' || s.room.state !== 'play') return err('notplay');
         if (actorOf(s.room.match) !== s.seat) return err('notturn');
         const action = this.cleanAction(m.action);
         if (!action) return err('bad');
@@ -173,7 +182,7 @@ export class Hall {
         if (!s || s.room.state !== 'over') return;
         s.room.again.add(id);
         if (s.room.seats[0] && s.room.seats[1] && s.room.seats.every(x => s.room.again.has(x.id))) {
-          s.room.seats.reverse();
+          if (s.room.kind === 'gomoku') s.room.seats.reverse();   // 五子棋交換座位（黑白）；搶答沒有顏色，不用換
           this.start(s.room);
         }
         this.roomChanged(s.room);
@@ -241,23 +250,80 @@ export class Hall {
     clearTimeout(s.graceT);
     room.seats[seat] = null;
     room.again.delete(s.id);
-    if (room.state === 'over') { room.state = 'wait'; room.match = null; room.endNote = null; room.again.clear(); }   // 有人走了：留下的人回到等人狀態
+    if (room.state === 'over') this.resetRoom(room);   // 有人走了：留下的人回到等人狀態
     if (!room.seats.some(Boolean)) return this.closeRoom(room);
     this.roomChanged(room);
   }
+  resetRoom(room) {
+    room.state = 'wait'; room.match = null; room.vs = null; room.endNote = null; room.again.clear();
+    clearTimeout(room.timer); clearTimeout(room.vtimer);
+  }
   closeRoom(room) {
-    clearTimeout(room.timer);
+    clearTimeout(room.timer); clearTimeout(room.vtimer);
     this.rooms.delete(room.id);
     for (const c of this.clients.values()) if (c.room === room.id) { c.room = null; this.send(c.ws, { t: 'closed', room: room.id }); }
     this.broadcastLobby();
   }
   start(room) {
-    room.match = createMatch({ rule: room.rule, clock: TIMES[room.time] }, Date.now());
     room.state = 'play';
     room.endNote = null;
     room.again.clear();
     room.games += 1;
+    if (room.kind === 'vcf') { room.vs = newVs(); this.vcfNext(room); return; }
+    room.match = createMatch({ rule: room.rule, clock: TIMES[room.time] }, Date.now());
     this.armTimer(room);
+  }
+
+  // ---------- VCF 明鏡台搶答 ----------
+  async vcfNext(room) {   // 出下一題：倒數 3 秒後兩人同時開始
+    const vs = room.vs, token = vs.token;
+    let x;
+    try { x = pickPuzzle(await loadBank(this.env.BANK_URL, room.vcf.rank), vs.used); }
+    catch (e) { console.error('題庫讀不到', e); room.endNote = 'nobank'; vs.result = { winner: null, note: 'nobank' }; room.state = 'over'; return this.roomChanged(room); }
+    if (room.vs !== vs || vs.token !== token || room.state !== 'play') return;   // 等題目時房間變了
+    const now = Date.now();
+    vs.n += 1;
+    vs.cur = {
+      n: vs.n, puzzle: x, startAt: now + COUNT_MS, deadline: now + COUNT_MS + room.vcf.think * 1000, phase: 'play', winner: null, endAt: null,
+      st: [{ s: 'think', moves: 0, why: null }, { s: 'think', moves: 0, why: null }], seqs: [null, null],
+    };
+    clearTimeout(room.vtimer);
+    room.vtimer = setTimeout(() => this.vcfEndRound(room, null), vs.cur.deadline - now + 300);   // 思考上限到：這題沒人得分
+    this.roomChanged(room);
+  }
+  vcfMsg(room, seat, m) {
+    const c = room.vs && room.vs.cur;
+    if (!c || c.phase !== 'play' || Number(m.n) !== c.n || Date.now() < c.startAt - 500) return;
+    const me = c.st[seat];
+    if (me.s !== 'think' && me.s !== 'armed') return;
+    if (m.t === 'vprog') {
+      me.s = m.armed ? 'armed' : 'think';
+      me.moves = Math.max(0, Math.min(99, Number(m.moves) | 0));
+      return this.roomChanged(room);
+    }
+    c.seqs[seat] = cleanSeq(m.seq);
+    if (m.t === 'vdone') {
+      me.s = 'solved';
+      room.vs.score[seat] += 1;
+      return this.vcfEndRound(room, seat);
+    }
+    me.s = 'out'; me.why = cleanWhy(m.why);
+    if (c.st.every((x) => x.s === 'out')) return this.vcfEndRound(room, null);
+    this.roomChanged(room);
+  }
+  vcfEndRound(room, winner) {
+    const vs = room.vs, c = vs && vs.cur;
+    if (!c || c.phase !== 'play' || room.state !== 'play') return;
+    clearTimeout(room.vtimer);
+    c.phase = 'done'; c.winner = winner; c.endAt = Date.now();
+    for (const x of c.st) if (x.s === 'think' || x.s === 'armed') { x.s = 'out'; x.why = winner === null ? 'time' : x.why; }
+    if (winner !== null && vs.score[winner] >= room.vcf.target) {
+      vs.result = { winner, note: 'score' };
+      room.state = 'over';
+    } else {
+      room.vtimer = setTimeout(() => this.vcfNext(room), REVEAL_MS);
+    }
+    this.roomChanged(room);
   }
   // 黑棋非擋不可的點是禁手（Rush 的「被禁手」）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 判黑輸
   trapCheck(room) {
@@ -272,6 +338,12 @@ export class Hall {
     }
   }
   endBy(room, seat, note) {
+    if (room.kind === 'vcf') {
+      clearTimeout(room.vtimer);
+      if (room.vs) { room.vs.result = { winner: 1 - seat, note }; if (room.vs.cur) room.vs.cur.phase = 'done'; }
+      room.endNote = note; room.state = 'over';
+      return this.roomChanged(room);
+    }
     room.match = applyAction(room.match, seat, { type: ACTION.RESIGN }, Date.now()).match;
     room.endNote = note;
     this.afterChange(room);
@@ -298,7 +370,8 @@ export class Hall {
     return {
       t: 'room', now,
       room: {
-        id: room.id, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
+        id: room.id, kind: room.kind, vcf: room.vcf, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
+        vs: publicVs(room.vs),
         seats: room.seats.map(s => s && { id: s.id, nick: s.nick, online: s.online }),
         watchers: this.watchers(room),
         again: [...room.again],
@@ -320,7 +393,7 @@ export class Hall {
   }
   lobbyMsg() {
     const rooms = [...this.rooms.values()].map(r => ({
-      id: r.id, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt,
+      id: r.id, kind: r.kind, vcf: r.vcf, score: r.vs ? r.vs.score : null, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt,
       seats: r.seats.map(s => s && { nick: s.nick, online: s.online }),
       watchers: this.watchers(r),
       moves: r.match ? r.match.moves.length : 0,
