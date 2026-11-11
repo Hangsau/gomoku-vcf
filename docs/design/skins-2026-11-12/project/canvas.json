@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-12T00:30:00+08:00" },
+  "title": "Rush 棋盤樣式",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "A 整套換（一鍵套組）", "is_interactive": true },
+    "Mix.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "B 棋盤、棋子分開配", "is_interactive": true },
+    "Cabinet.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "title": "C 棋具櫃（收藏）", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Mix.dc.html", "Cabinet.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -300, "text": "棋盤樣式：選法三版（樣式本身三版共用）", "kind": "title1", "maxW": 1330 },
+    "n1": { "x": 1410, "y": 0, "w": 300, "text": "入口：首頁上排加一顆「棋具」圖示（在語言鈕旁邊）。選了存在這台裝置，闖關、教學、兩儀殿、試煉場一起換。\n\n標「codex 畫」的是用圖的樣式（玉石、蛤碁石），稿上先用漸層代替，選定後才派 codex 畫。\n\n每套都會檢查：黑白子分得清、最後一手紅點和連五金圈看得到。", "fill": "orange" }
+  }
+}

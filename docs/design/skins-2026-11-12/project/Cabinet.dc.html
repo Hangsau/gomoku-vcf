@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>棋具：收藏櫃</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&amp;family=Chakra+Petch:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FDCCD}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0E1119; color: #F1EEFA; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; padding: 12px 16px 18px; gap: 12px;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" aria-label="回首頁" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #1A1F2C; color: #F1EEFA; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 900; flex-grow: 1;">棋具櫃</h1>
+    <span style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #F2B544; font-size: 15px;">8 / 8</span>
+  </div>
+  <div style="border-radius: 18px; background: #1A1F2C; padding: 12px; display: flex; gap: 12px; align-items: center;">
+    <div style="{{big.outer}}">
+      <div style="{{big.grid}}"></div>
+      <sc-for list="{{big.stones}}" as="s" hint-placeholder-count="10"><div style="{{s.style}}"></div></sc-for>
+      <div style="{{big.last}}"></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex-grow: 1;">
+      <b style="font-size: 20px; font-weight: 900;">{{cur.name}}</b>
+      <span style="font-size: 13px; line-height: 1.5; color: #A79FC4;">{{cur.desc}}</span>
+      <sc-if value="{{using}}" hint-placeholder-val="{{ true }}">
+        <span style="align-self: flex-start; height: 36px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #3CC6B4;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>使用中
+        </span>
+      </sc-if>
+      <sc-if value="{{notUsing}}" hint-placeholder-val="{{ false }}">
+        <button type="button" onClick="{{use}}" style="align-self: flex-start; height: 44px; padding: 0 22px; border: 0; border-radius: 22px; background: #F2B544; color: #1B1A17; font-family: inherit; font-size: 16px; font-weight: 900; cursor: pointer;">使用</button>
+      </sc-if>
+    </div>
+  </div>
+  <div style="flex-grow: 1; border-radius: 18px; background: linear-gradient(#3B2A1E, #2C1F16); padding: 10px 10px 0; display: flex; flex-direction: column; gap: 0; box-shadow: inset 0 0 0 2px #4A3626;">
+    <sc-for list="{{shelves}}" as="row" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 8px 2px 6px; min-height: 128px; align-items: end;">
+          <sc-for list="{{row.items}}" as="c" hint-placeholder-count="3">
+            <button type="button" onClick="{{c.pick}}" aria-label="{{c.name}}" style="{{c.btn}}">
+              <span style="{{c.tile}}"></span>
+              <span style="display: flex; gap: 4px; margin-top: -14px;">
+                <span style="{{c.bowlB}}"><span style="{{c.dotB}}"></span></span>
+                <span style="{{c.bowlW}}"><span style="{{c.dotW}}"></span></span>
+              </span>
+              <span style="font-size: 13px; font-weight: 700; color: #F6E7D2;">{{c.name}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="height: 10px; border-radius: 3px; background: #6B4A30; box-shadow: 0 4px 0 #23180F;"></div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const SKINS = [
+  { id: 'classic', name: '原木', desc: '現在的樣子。暖黃木盤、平面黑白子。', board: '#E9C98B', line: '#5B4524', b: '#1B1A17', w: '#FBFAF6', bS: 'none', wS: 'inset 0 0 0 1.5px #1B1A17' },
+  { id: 'green', name: '經典綠', desc: '最常見的綠色五子棋盤，深綠格線、平面黑白子。', board: '#4E9A62', line: '#1E4A2C', b: '#1B1A17', w: '#FBFAF6', bS: 'none', wS: 'inset 0 0 0 1.5px #1B1A17' },
+  { id: 'ink', name: '夜墨', desc: '深藍夜盤，子帶一點光澤，晚上看不刺眼。', board: '#1F2533', line: '#56627A', b: 'radial-gradient(circle at 35% 30%, #5A6070, #0A0C10 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #D6D2C6 75%)', bS: '0 0 0 1.5px #8A93A8', wS: 'none' },
+  { id: 'celadon', name: '青瓷', desc: '淡青瓷盤，釉面子，安靜。', board: '#C4DCCB', line: '#557564', b: 'radial-gradient(circle at 35% 30%, #5B6E64, #16201B 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #E2E8E0 72%)', bS: '0 1px 2px rgba(0,0,0,.35)', wS: 'inset 0 0 0 1.2px #7E9A8A' },
+  { id: 'paper', name: '宣紙', desc: '米白紙盤、墨線，像棋譜書。', board: '#F3EDE0', line: '#9A8F7A', b: '#23201C', w: '#FFFDF8', bS: 'none', wS: 'inset 0 0 0 1.5px #23201C' },
+  { id: 'neon', name: '霓虹', desc: '黑底發光線，粉紅黑子、青色白子。', board: '#141428', line: '#39396A', b: 'radial-gradient(circle at 40% 35%, #3A1F4F, #120A1E 70%)', w: 'radial-gradient(circle at 40% 35%, #FFFFFF, #BDF3FF 75%)', bS: '0 0 0 1.5px #FF4FA3, 0 0 8px #FF4FA3', wS: '0 0 0 1.5px #2FD8FF, 0 0 8px #2FD8FF' },
+  { id: 'jade', name: '玉石', desc: '黑曜石對白玉，半透明質感（codex 畫）。', board: '#2B2420', line: '#7C6A55', b: 'radial-gradient(circle at 35% 28%, #6E7A78, #10171A 62%)', w: 'radial-gradient(circle at 35% 28%, #FFFFFF, #CFE6D8 55%, #9DC4AE 100%)', bS: '0 2px 3px rgba(0,0,0,.5)', wS: '0 2px 3px rgba(0,0,0,.4)' },
+  { id: 'shell', name: '蛤碁石', desc: '榧木盤配貝殼白子、那智黑石（codex 畫）。', board: '#E2B871', line: '#6E4F22', b: 'radial-gradient(circle at 35% 30%, #4A4A48, #121211 66%)', w: 'repeating-radial-gradient(circle at 50% 120%, #FFFFFF 0 3px, #EEEAE0 3px 5px)', bS: '0 2px 2px rgba(0,0,0,.4)', wS: 'inset 0 0 0 1px #C9C1AE' }
+];
+const PRE = [[1, 1, 'b'], [2, 2, 'w'], [3, 3, 'b'], [2, 3, 'b'], [4, 2, 'w'], [3, 1, 'w'], [1, 3, 'b'], [4, 4, 'w'], [5, 3, 'b'], [3, 5, 'w']];
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sel: 'ink', used: 'classic' }; }
+  renderVals() {
+    const cur = SKINS.find((s) => s.id === this.state.sel);
+    const size = 132, n = 7, pad = 10, cell = (size - 2 * pad) / (n - 1), r = cell * 0.44, lr = cell * 0.13;
+    const at = (x, y, rr) => `position:absolute;left:${pad + x * cell - rr}px;top:${pad + y * cell - rr}px;width:${2 * rr}px;height:${2 * rr}px;border-radius:50%;`;
+    const items = SKINS.map((s) => {
+      const on = s.id === this.state.sel;
+      const bowl = (bg) => `width:30px;height:22px;border-radius:0 0 15px 15px;background:${bg};display:flex;justify-content:center;padding-top:2px;box-sizing:border-box;box-shadow:0 2px 0 rgba(0,0,0,.35)`;
+      return {
+        name: s.name,
+        pick: () => this.setState({ sel: s.id }),
+        btn: `display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 4px;border-radius:12px;cursor:pointer;font-family:inherit;background:${on ? 'rgba(242,181,68,.16)' : 'transparent'};border:2px solid ${on ? '#F2B544' : 'transparent'}`,
+        tile: `width:58px;height:58px;border-radius:6px;background:${s.board};background-image:linear-gradient(${s.line} 1px, transparent 1px),linear-gradient(90deg, ${s.line} 1px, transparent 1px);background-size:12px 12px;background-position:5px 5px;box-shadow:0 3px 0 rgba(0,0,0,.4);transform:perspective(160px) rotateX(28deg)`,
+        bowlB: bowl('#5C3F28'), bowlW: bowl('#5C3F28'),
+        dotB: `width:16px;height:16px;border-radius:50%;margin-top:-8px;background:${s.b};box-shadow:${s.bS}`,
+        dotW: `width:16px;height:16px;border-radius:50%;margin-top:-8px;background:${s.w};box-shadow:${s.wS}`
+      };
+    });
+    return {
+      cur,
+      using: this.state.sel === this.state.used,
+      notUsing: this.state.sel !== this.state.used,
+      use: () => this.setState({ used: this.state.sel }),
+      big: {
+        outer: `position:relative;flex:none;width:${size}px;height:${size}px;border-radius:10px;background:${cur.board}`,
+        grid: `position:absolute;left:${pad}px;top:${pad}px;width:${(n - 1) * cell + 1}px;height:${(n - 1) * cell + 1}px;background-image:linear-gradient(${cur.line} 1px, transparent 1px),linear-gradient(90deg, ${cur.line} 1px, transparent 1px);background-size:${cell}px ${cell}px`,
+        stones: PRE.map(([x, y, c]) => ({ style: at(x, y, r) + `background:${c === 'b' ? cur.b : cur.w};box-shadow:${c === 'b' ? cur.bS : cur.wS}` })),
+        last: at(5, 3, lr) + 'background:#FF7A6B'
+      },
+      shelves: [{ items: items.slice(0, 3) }, { items: items.slice(3, 6) }, { items: items.slice(6) }]   // 3＋3＋2
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>棋具：棋盤棋子分開配</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&amp;family=Chakra+Petch:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FDCCD}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0E1119; color: #F1EEFA; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; padding: 12px 16px 20px; gap: 14px;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" aria-label="回首頁" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #1A1F2C; color: #F1EEFA; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 900; flex-grow: 1;">棋具</h1>
+  </div>
+  <div style="{{big.outer}}">
+    <div style="{{big.grid}}"></div>
+    <sc-for list="{{big.stones}}" as="s" hint-placeholder-count="12"><div style="{{s.style}}"></div></sc-for>
+    <div style="{{big.last}}"></div>
+    <div style="{{big.five}}"></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: baseline; gap: 8px;"><b style="font-size: 15px;">棋盤</b><span style="font-size: 13px; color: #A79FC4;">{{boardName}}</span></div>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+      <sc-for list="{{boards}}" as="o" hint-placeholder-count="7">
+        <button type="button" onClick="{{o.pick}}" aria-label="{{o.name}}" style="{{o.btn}}"><span style="{{o.sw}}"></span></button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: baseline; gap: 8px;"><b style="font-size: 15px;">棋子</b><span style="font-size: 13px; color: #A79FC4;">{{stoneName}}</span></div>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px;">
+      <sc-for list="{{stones}}" as="o" hint-placeholder-count="7">
+        <button type="button" onClick="{{o.pick}}" aria-label="{{o.name}}" style="{{o.btn}}">
+          <span style="{{o.b}}"></span><span style="{{o.w}}"></span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="min-height: 40px; display: flex; align-items: center;">
+    <sc-if value="{{warn}}" hint-placeholder-val="{{ false }}">
+      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #FFB4A8; display: flex; gap: 6px; align-items: flex-start;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 2px;"><path d="M12 3l10 18H2z M12 10v5 M12 18v.5"/></svg>
+        <span>{{warnText}}</span>
+      </p>
+    </sc-if>
+  </div>
+  <div style="flex-grow: 1;"></div>
+  <p style="margin: 0; font-size: 12px; color: #A79FC4; text-align: center;">選了就存，闖關、教學、兩儀殿一起換</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+// 棋盤和棋子各自一份清單：8 種盤 × 7 種子 = 56 種組合，用圖的只要畫子或盤其中一邊
+const BOARDS = [
+  { id: 'classic', name: '原木', board: '#E9C98B', line: '#5B4524', lum: 0.6 },
+  { id: 'green', name: '經典綠', board: '#4E9A62', line: '#1E4A2C', lum: 0.26 },
+  { id: 'ink', name: '夜墨', board: '#1F2533', line: '#56627A', lum: 0.02 },
+  { id: 'celadon', name: '青瓷', board: '#C4DCCB', line: '#557564', lum: 0.68 },
+  { id: 'paper', name: '宣紙', board: '#F3EDE0', line: '#9A8F7A', lum: 0.85 },
+  { id: 'neon', name: '霓虹', board: '#141428', line: '#39396A', lum: 0.01 },
+  { id: 'walnut', name: '胡桃木', board: '#5A3E2B', line: '#C9A57A', lum: 0.06 },
+  { id: 'kaya', name: '榧木', board: '#E2B871', line: '#6E4F22', lum: 0.52 }
+];
+const STONES = [
+  { id: 'flat', name: '平面', b: '#1B1A17', w: '#FBFAF6', bS: 'none', wS: 'inset 0 0 0 1.5px #1B1A17', bl: 0.01, wl: 0.95 },
+  { id: 'gloss', name: '光澤', b: 'radial-gradient(circle at 35% 30%, #5A6070, #0A0C10 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #D6D2C6 75%)', bS: '0 1px 2px rgba(0,0,0,.45)', wS: '0 1px 2px rgba(0,0,0,.35)', bl: 0.02, wl: 0.8 },
+  { id: 'glaze', name: '釉面', b: 'radial-gradient(circle at 35% 30%, #5B6E64, #16201B 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #E2E8E0 72%)', bS: '0 1px 2px rgba(0,0,0,.35)', wS: 'inset 0 0 0 1.2px #7E9A8A', bl: 0.03, wl: 0.85 },
+  { id: 'neon', name: '霓虹', b: 'radial-gradient(circle at 40% 35%, #3A1F4F, #120A1E 70%)', w: 'radial-gradient(circle at 40% 35%, #FFFFFF, #BDF3FF 75%)', bS: '0 0 0 1.5px #FF4FA3, 0 0 8px #FF4FA3', wS: '0 0 0 1.5px #2FD8FF, 0 0 8px #2FD8FF', bl: 0.2, wl: 0.85, glow: true },
+  { id: 'jade', name: '玉石（codex 畫）', b: 'radial-gradient(circle at 35% 28%, #6E7A78, #10171A 62%)', w: 'radial-gradient(circle at 35% 28%, #FFFFFF, #CFE6D8 55%, #9DC4AE 100%)', bS: '0 2px 3px rgba(0,0,0,.5)', wS: '0 2px 3px rgba(0,0,0,.4)', bl: 0.04, wl: 0.62 },
+  { id: 'shell', name: '蛤碁石（codex 畫）', b: 'radial-gradient(circle at 35% 30%, #4A4A48, #121211 66%)', w: 'repeating-radial-gradient(circle at 50% 120%, #FFFFFF 0 3px, #EEEAE0 3px 5px)', bS: '0 2px 2px rgba(0,0,0,.4)', wS: 'inset 0 0 0 1px #C9C1AE', bl: 0.03, wl: 0.88 },
+  { id: 'ink', name: '墨點', b: '#23201C', w: '#FFFDF8', bS: '0 0 0 1px #8F8678', wS: 'inset 0 0 0 1.5px #23201C', bl: 0.02, wl: 0.97 }
+];
+const PRE = [[3, 3, 'b'], [4, 4, 'w'], [5, 5, 'b'], [4, 5, 'b'], [6, 4, 'w'], [5, 3, 'w'], [3, 5, 'b'], [6, 6, 'w'], [7, 5, 'b'], [5, 7, 'w'], [2, 5, 'b'], [8, 4, 'w']];
+const FIVE = [[3, 5], [4, 5], [5, 5], [6, 5], [7, 5]];
+const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { bd: 'classic', st: 'flat' }; }
+  renderVals() {
+    const bd = BOARDS.find((x) => x.id === this.state.bd), st = STONES.find((x) => x.id === this.state.st);
+    const size = 358, n = 11, pad = 18, cell = (size - 2 * pad) / (n - 1), r = cell * 0.45, lr = cell * 0.12;
+    const at = (x, y, rr) => `position:absolute;left:${pad + x * cell - rr}px;top:${pad + y * cell - rr}px;width:${2 * rr}px;height:${2 * rr}px;border-radius:50%;`;
+    const darkGap = ratio(bd.lum, st.bl), lightGap = ratio(bd.lum, st.wl);
+    let warnText = '';
+    if (!st.glow && darkGap < 3) warnText = `${bd.name}盤太暗，黑子不容易看出來；建議換「霓虹」子，或程式自動幫黑子加亮邊。`;
+    else if (lightGap < 1.25) warnText = `${bd.name}盤太亮，白子跟盤面幾乎一樣；建議換顏色深一點的盤。`;
+    return {
+      big: {
+        outer: `position:relative;flex:none;width:${size}px;height:${size}px;border-radius:14px;background:${bd.board}`,
+        grid: `position:absolute;left:${pad}px;top:${pad}px;width:${(n - 1) * cell + 1}px;height:${(n - 1) * cell + 1}px;background-image:linear-gradient(${bd.line} 1px, transparent 1px),linear-gradient(90deg, ${bd.line} 1px, transparent 1px);background-size:${cell}px ${cell}px`,
+        stones: PRE.map(([x, y, c]) => ({ style: at(x, y, r) + `background:${c === 'b' ? st.b : st.w};box-shadow:${c === 'b' ? st.bS : st.wS}` })),
+        last: at(7, 5, lr) + 'background:#FF7A6B',
+        five: `position:absolute;left:${pad + 3 * cell - cell * 0.52}px;top:${pad + 5 * cell - cell * 0.52}px;width:${4 * cell + cell * 1.04}px;height:${cell * 1.04}px;border-radius:${cell}px;box-shadow:0 0 0 3px #F2B544`
+      },
+      boardName: bd.name, stoneName: st.name,
+      warn: !!warnText, warnText,
+      boards: BOARDS.map((o) => ({
+        name: o.name, pick: () => this.setState({ bd: o.id }),
+        btn: `width:100%;height:44px;padding:0;border-radius:12px;cursor:pointer;background:transparent;border:2px solid ${o.id === this.state.bd ? '#F2B544' : '#2A3042'};display:flex;align-items:center;justify-content:center`,
+        sw: `width:30px;height:30px;border-radius:8px;background:${o.board};background-image:linear-gradient(${o.line} 1px, transparent 1px),linear-gradient(90deg, ${o.line} 1px, transparent 1px);background-size:11px 11px;background-position:5px 5px`
+      })),
+      stones: STONES.map((o) => ({
+        name: o.name, pick: () => this.setState({ st: o.id }),
+        btn: `width:100%;height:44px;padding:0;border-radius:12px;cursor:pointer;background:#1D2230;border:2px solid ${o.id === this.state.st ? '#F2B544' : 'transparent'};position:relative`,
+        b: `position:absolute;left:3px;top:7px;width:18px;height:18px;border-radius:50%;background:${o.b};box-shadow:${o.bS}`,
+        w: `position:absolute;left:14px;top:16px;width:18px;height:18px;border-radius:50%;background:${o.w};box-shadow:${o.wS}`
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

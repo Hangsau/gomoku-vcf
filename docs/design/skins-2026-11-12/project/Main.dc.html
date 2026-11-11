@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>棋具：整套換</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&amp;family=Chakra+Petch:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FDCCD}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #0E1119; color: #F1EEFA; font-family: 'Noto Sans TC', sans-serif;">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; opacity: .35;">
+    <span style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 20px; flex-grow: 1;">GOMOKU RUSH</span>
+    <span style="width: 36px; height: 36px; border-radius: 18px; background: #1A1F2C;"></span>
+    <span style="width: 36px; height: 36px; border-radius: 18px; background: #1A1F2C;"></span>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(5,7,12,.55);"></div>
+  <section style="position: absolute; left: 0; right: 0; bottom: 0; height: 772px; background: #161A25; border-radius: 22px 22px 0 0; border-top: 1px solid #2A3042; display: flex; flex-direction: column; padding: 10px 16px 20px; box-sizing: border-box; gap: 12px;">
+    <div style="width: 40px; height: 4px; border-radius: 2px; background: #3A4056; align-self: center;"></div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 900; flex-grow: 1;">棋具</h1>
+      <button type="button" aria-label="關閉" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #222838; color: #F1EEFA; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div style="display: flex; gap: 14px; align-items: center;">
+      <div style="{{big.outer}}">
+        <div style="{{big.grid}}"></div>
+        <sc-for list="{{big.stones}}" as="s" hint-placeholder-count="10"><div style="{{s.style}}"></div></sc-for>
+        <div style="{{big.last}}"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+        <b style="font-size: 22px; font-weight: 900;">{{cur.name}}</b>
+        <span style="font-size: 13px; color: #A79FC4; line-height: 1.5;">{{cur.desc}}</span>
+        <sc-if value="{{cur.art}}" hint-placeholder-val="{{ false }}"><span style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #0E1119; background: #F2B544; border-radius: 10px; padding: 2px 8px;">codex 畫</span></sc-if>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="8">
+        <button type="button" onClick="{{c.pick}}" style="{{c.btn}}">
+          <div style="{{c.mini.outer}}">
+            <div style="{{c.mini.grid}}"></div>
+            <sc-for list="{{c.mini.stones}}" as="s" hint-placeholder-count="5"><div style="{{s.style}}"></div></sc-for>
+          </div>
+          <span style="font-size: 14px; font-weight: 700;">{{c.name}}</span>
+        </button>
+      </sc-for>
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #A79FC4; text-align: center;">點一下就換，闖關、教學、兩儀殿一起套用</p>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const SKINS = [
+  { id: 'classic', name: '原木', desc: '現在的樣子。暖黃木盤、平面黑白子。', board: '#E9C98B', line: '#5B4524', b: '#1B1A17', w: '#FBFAF6', bShadow: 'none', wShadow: 'inset 0 0 0 1.5px #1B1A17' },
+  { id: 'green', name: '經典綠', desc: '最常見的綠色五子棋盤，深綠格線、平面黑白子。', board: '#4E9A62', line: '#1E4A2C', b: '#1B1A17', w: '#FBFAF6', bShadow: 'none', wShadow: 'inset 0 0 0 1.5px #1B1A17' },
+  { id: 'ink', name: '夜墨', desc: '深藍夜盤，子帶一點光澤，晚上看不刺眼。', board: '#1F2533', line: '#56627A', b: 'radial-gradient(circle at 35% 30%, #5A6070, #0A0C10 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #D6D2C6 75%)', bShadow: '0 0 0 1.5px #8A93A8', wShadow: 'none' },
+  { id: 'celadon', name: '青瓷', desc: '淡青瓷盤，釉面子，安靜。', board: '#C4DCCB', line: '#557564', b: 'radial-gradient(circle at 35% 30%, #5B6E64, #16201B 68%)', w: 'radial-gradient(circle at 35% 30%, #FFFFFF, #E2E8E0 72%)', bShadow: '0 1px 2px rgba(0,0,0,.35)', wShadow: 'inset 0 0 0 1.2px #7E9A8A, 0 1px 2px rgba(0,0,0,.25)' },
+  { id: 'paper', name: '宣紙', desc: '米白紙盤、墨線，像棋譜書。', board: '#F3EDE0', line: '#9A8F7A', b: '#23201C', w: '#FFFDF8', bShadow: 'none', wShadow: 'inset 0 0 0 1.5px #23201C' },
+  { id: 'neon', name: '霓虹', desc: '黑底發光線，粉紅黑子、青色白子。', board: '#141428', line: '#39396A', b: 'radial-gradient(circle at 40% 35%, #3A1F4F, #120A1E 70%)', w: 'radial-gradient(circle at 40% 35%, #FFFFFF, #BDF3FF 75%)', bShadow: '0 0 0 1.5px #FF4FA3, 0 0 8px #FF4FA3', wShadow: '0 0 0 1.5px #2FD8FF, 0 0 8px #2FD8FF' },
+  { id: 'jade', name: '玉石', desc: '黑曜石對白玉，半透明質感。', art: true, board: '#2B2420', line: '#7C6A55', b: 'radial-gradient(circle at 35% 28%, #6E7A78, #10171A 62%)', w: 'radial-gradient(circle at 35% 28%, #FFFFFF, #CFE6D8 55%, #9DC4AE 100%)', bShadow: '0 2px 3px rgba(0,0,0,.5)', wShadow: '0 2px 3px rgba(0,0,0,.4)' },
+  { id: 'shell', name: '蛤碁石', desc: '榧木盤配貝殼白子、那智黑石，最像真的棋具。', art: true, board: '#E2B871', line: '#6E4F22', b: 'radial-gradient(circle at 35% 30%, #4A4A48, #121211 66%)', w: 'repeating-radial-gradient(circle at 50% 120%, #FFFFFF 0 3px, #EEEAE0 3px 5px)', bShadow: '0 2px 2px rgba(0,0,0,.4)', wShadow: 'inset 0 0 0 1px #C9C1AE, 0 2px 2px rgba(0,0,0,.3)' }
+];
+const PRE = [[2, 2, 'b'], [3, 3, 'w'], [4, 4, 'b'], [3, 4, 'b'], [5, 3, 'w'], [4, 2, 'w'], [2, 4, 'b'], [5, 5, 'w'], [6, 4, 'b'], [4, 6, 'w']];
+const MINI = [[1, 1, 'b'], [2, 2, 'w'], [2, 1, 'b'], [3, 2, 'b'], [1, 3, 'w']];
+function board(s, size, n, pad, list, last) {
+  const cell = (size - 2 * pad) / (n - 1), r = cell * 0.44;
+  const stones = list.map(([x, y, c]) => ({ style: `position:absolute;left:${pad + x * cell - r}px;top:${pad + y * cell - r}px;width:${2 * r}px;height:${2 * r}px;border-radius:50%;background:${c === 'b' ? s.b : s.w};box-shadow:${c === 'b' ? s.bShadow : s.wShadow}` }));
+  const lr = Math.max(2.5, cell * 0.12);
+  return {
+    outer: `position:relative;flex:none;width:${size}px;height:${size}px;border-radius:${size > 150 ? 12 : 7}px;background:${s.board}`,
+    grid: `position:absolute;left:${pad}px;top:${pad}px;width:${(n - 1) * cell + 1}px;height:${(n - 1) * cell + 1}px;background-image:linear-gradient(${s.line} 1px, transparent 1px),linear-gradient(90deg, ${s.line} 1px, transparent 1px);background-size:${cell}px ${cell}px`,
+    stones,
+    last: last ? `position:absolute;left:${pad + last[0] * cell - lr}px;top:${pad + last[1] * cell - lr}px;width:${2 * lr}px;height:${2 * lr}px;border-radius:50%;background:#FF7A6B` : 'display:none'
+  };
+}
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sel: 'classic' }; }
+  renderVals() {
+    const cur = SKINS.find((s) => s.id === this.state.sel);
+    return {
+      cur,
+      big: board(cur, 168, 8, 12, PRE, [6, 4]),
+      cards: SKINS.map((s) => ({
+        name: s.name,
+        mini: board(s, 84, 5, 9, MINI, null),
+        pick: () => this.setState({ sel: s.id }),
+        btn: `display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border-radius:14px;cursor:pointer;color:#F1EEFA;font-family:inherit;background:${s.id === this.state.sel ? '#2A2416' : '#1D2230'};border:2px solid ${s.id === this.state.sel ? '#F2B544' : 'transparent'}`
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
