@@ -1,6 +1,7 @@
 // game/learn/learn.js — Gomoku Rush「VCF 教學」（2026-11-10，W4–W6）
 // 一盤棋教學：開場先被打敗→倒帶→換你打；主畫面是 15×15 教學盤（每完成一課落一顆子）；第 4 單元起倒帶課。
-// 資料：game/learn/lessons.json（所有盤面已由 tools/check_lessons.py 用引擎驗證）。進度只存本機，不送伺服器、不給修為。
+// 資料：game/learn/lessons.json（所有盤面已由 tools/check_lessons.py 用引擎驗證）。進度存本機、不給修為；
+// 2026-11-11 起另送匿名進度到排行榜 Worker 的 /learn（瀏覽器隨機 ID＋課號／步數，不含暱稱），後台看走完度、停在哪幾關。
 // 依賴 game.html 的全域：move()（引擎判定）、stoneSound()、lang、$。設計稿：docs/design/tutorial-2026-11-10/project/。
 (() => {
   'use strict';
@@ -20,6 +21,20 @@
   const xy = (t) => [COLS.indexOf(t[0]), +t.slice(1) - 1];
   const nm = (x, y) => COLS[x] + (y + 1);
   const snd = (soft) => { try { if (typeof stoneSound === 'function') stoneSound(soft); } catch {} };
+  // 匿名進度回報（2026-11-11）：ID 跟象牙塔共用 vcfgame.vid；測試模式（?dev=1）、本機不送
+  const vid = (() => {
+    let v = null; try { v = localStorage.getItem('vcfgame.vid'); } catch {}
+    if (!v || !/^[0-9a-f-]{16,40}$/i.test(v)) {
+      v = crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+      try { localStorage.setItem('vcfgame.vid', v); } catch {}
+    }
+    return v;
+  })();
+  const LOCAL = ['127.0.0.1', 'localhost'].includes(location.hostname);
+  function track(ev, l = '', s = 0) {
+    if (DEV || LOCAL || typeof API === 'undefined') return;
+    try { fetch(API + '/learn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid, ev, l, s, lang: typeof lang !== 'undefined' ? lang : '' }), keepalive: true }).catch(() => {}); } catch {}
+  }
   const store = { get() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }, set(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} } };
 
   // ---------- 樣式（一屏不捲動；動畫照設計稿，codex 逐格圖之後替換） ----------
@@ -346,6 +361,7 @@
 
   async function open() {
     root.hidden = false; history.pushState({ learn: 1 }, '');
+    track('open');
     root.innerHTML = '';
     loadArt();
     await load();
@@ -437,6 +453,7 @@
     await new Promise(res => button(f.foot, U('cont'), '', res));
     if (!alive()) return;
     const p = prog(); p.opening = true; store.set(p);
+    track('opening');
     // 拉遠：這局變成教學盤上第一顆子
     f = frame(U('board'));
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:12px';
@@ -518,10 +535,12 @@
     const my = ++run, alive = () => my === run;
     for (let i = 0; i < l.steps.length; i++) {
       const st = l.steps[i];
+      track('step', l.id, i);
       const r = await step(l, st, i, alive);
       if (!alive() || r === 'quit') return;
     }
     saveDone(l.id); const p = prog(); p.justDone = l.id; store.set(p);
+    track('done', l.id);
     boardScreen();
   }
   function progressChip(l, i) {
@@ -839,6 +858,7 @@
   // ---------- 畢業考：教學盤整盤，用引擎判定 ----------
   async function exam() {
     const my = ++run, alive = () => my === run, bd = DATA.board;
+    track('exam');
     const f = frame(U('examT'));
     // 跟各課「自己解」同一套（走進死路會說明並退回、有退一手／重來／提示）
     const B = await solveCore({ pos: { b: bd.b, w: bd.w, atk: 'b' }, text: { zh: UI.zh.examSub, en: UI.en.examSub, ja: UI.ja.examSub, ko: UI.ko.examSub }, line: bd.sol }, f, alive);
@@ -846,6 +866,7 @@
     sprite(B.el, 'graduation', 0, 0, 0, { full: true, z: 8, ms: 70 });
     msg(f.body, U('grad'), U('gradSub'), 'good');
     const p = prog(); p.graduated = true; store.set(p);
+    track('grad');
     button(f.foot, U('back'), '', () => boardScreen());
   }
 })();

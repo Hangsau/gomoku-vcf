@@ -12,6 +12,7 @@
 // POST /eye 火眼金睛一局（2026-11-10）→ {id, place:{today,all}}；GET /board?by=eye → 火眼金睛排行（total 高者在前、同分用時少者在前）；GET /admin/eye
 // 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
+// POST /learn {vid, ev, l, s, lang} 新手教學進度（2026-11-11 使用者：後台要看走完度、停在哪幾關）；ev＝open／opening／step／done／exam／grad，l＝課號、s＝第幾步；GET /admin/learn
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
@@ -463,6 +464,25 @@ async function adminSetFeedback(req, env) {
   return json({ ok: true });
 }
 // 練習場（2026-11-08 使用者：練習作答也送後台，分開分析大家怎麼練）：跟 /run 不同表，排行榜永遠讀不到；全站每分鐘最多 60 局防灌
+// 新手教學進度（2026-11-11）：瀏覽器隨機 ID（跟象牙塔同一個 vcfgame.vid）＋事件，不含暱稱；一個 ID 一天最多 LEARN_DAY_MAX 筆
+const LEARN_EV = ["open", "opening", "step", "done", "exam", "grad"];
+const LEARN_DAY_MAX = 500;
+async function postLearn(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const vid = String(b.vid || ""), ev = String(b.ev || ""), l = String(b.l || ""), s = Number(b.s) || 0;
+  if (!/^[0-9a-f-]{16,40}$/i.test(vid) || !LEARN_EV.includes(ev) || (l && !/^\d{1,2}-\d{1,2}$/.test(l)) || !Number.isInteger(s) || s < 0 || s > 50) return json({ error: "bad fields" }, 400);
+  const now = Date.now(), day = taipeiDay(now);
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM learn WHERE vid = ? AND day = ?").bind(vid, day).first();
+  if (n.n >= LEARN_DAY_MAX) return json({ error: "too many" }, 429);
+  await env.DB.prepare("INSERT INTO learn(t, day, vid, ev, l, s, lang) VALUES (?,?,?,?,?,?,?)").bind(now, day, vid, ev, l, s, String(b.lang || "").slice(0, 5)).run();
+  return json({ ok: true });
+}
+async function adminLearn(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT t, day, vid, ev, l, s, lang FROM learn ORDER BY id").all();
+  return json({ rows: results });
+}
 async function postPractice(req, env) {
   let b;
   try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
@@ -520,6 +540,8 @@ export default {
       if (req.method === "GET" && url.pathname === "/admin/mirror") return await adminMirror(req, env);
       if (req.method === "GET" && url.pathname === "/admin/blitz") return await adminBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/practice") return await postPractice(req, env);
+      if (req.method === "POST" && url.pathname === "/learn") return await postLearn(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/learn") return await adminLearn(req, env);
       if (req.method === "GET" && url.pathname === "/admin/practice") return await adminPractice(req, env);
       if (req.method === "GET" && url.pathname === "/tower") return await getTower(url, env);
       if (req.method === "POST" && url.pathname === "/tower/open") return await postTowerOpen(req, env);

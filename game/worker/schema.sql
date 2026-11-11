@@ -73,3 +73,8 @@ CREATE TABLE IF NOT EXISTS eye(
   total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL, seconds REAL NOT NULL, detail TEXT);
 CREATE INDEX IF NOT EXISTS eye_rank ON eye(total DESC, seconds ASC);
 CREATE INDEX IF NOT EXISTS eye_day ON eye(day);
+
+-- 2026-11-11：新手教學進度（使用者：後台看走完度、停在哪幾關）。vid＝瀏覽器隨機 ID（跟 tower 同一個）；ev＝open／opening／step／done／exam／grad；l＝課號（例 3-2）；s＝第幾步（從 0 起）
+CREATE TABLE IF NOT EXISTS learn(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, vid TEXT NOT NULL, ev TEXT NOT NULL, l TEXT NOT NULL DEFAULT '', s INTEGER NOT NULL DEFAULT 0, lang TEXT);
+CREATE INDEX IF NOT EXISTS learn_vid_day ON learn(vid, day);

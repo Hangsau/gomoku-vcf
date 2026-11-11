@@ -188,6 +188,7 @@ async function loadStats() {
   if (tab === 'st') render();
 }
 async function summarize(rows, bank) {
+  const allRuns = rows.length, allToday = rows.filter(r => r.day === new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10)).length;
   rows = rows.filter(r => (r.ver || '2026-11-07') === SCORE_VER);
   const runs = rows.map(r => { let d = []; try { d = JSON.parse(r.detail || '[]'); } catch {} return { ...r, att: Array.isArray(d) ? d : [] }; });
   const played = runs.filter(r => r.att.length);
@@ -240,7 +241,7 @@ async function summarize(rows, bank) {
   const LB = [[1, 5], [6, 9], [10, 13], [14, 19], [20, 29], [30, 999]];
   const byLen = LB.map(([lo, hi]) => { const A = atts.filter(a => a.L >= lo && a.L <= hi), secs = A.filter(a => a.ok).map(a => a.sec).filter(Number.isFinite); return { label: hi > 99 ? `${lo} 手以上` : `${lo}–${hi} 手`, n: A.length, solve: pct(A.filter(a => a.ok).length, A.length), sec: secs.length ? r1(median(secs)) : null }; }).filter(x => x.n);
   const today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
-  return { runs: runs.length, played: played.length, today: runs.filter(r => r.day === today).length, attempts: atts.length, table, prs: prs.map(p => RANKS[p]), per, flow, paths,
+  return { allRuns, allToday, runs: runs.length, played: played.length, today: runs.filter(r => r.day === today).length, attempts: atts.length, table, prs: prs.map(p => RANKS[p]), per, flow, paths,
     flip: { n: flips.length, rate: flips.length ? Math.round(flips.reduce((x, y) => x + y, 0) / flips.length * 100) : null },
     bands, byLen, bank, puzzlesSeen: plist.length,
     flagged: plist.filter(x => x.flag.length).sort((x, y) => (x.solve - x.expect) - (y.solve - y.expect) || y.n - x.n), top: [...plist].sort((x, y) => y.n - x.n).slice(0, 50) };
@@ -250,11 +251,126 @@ function spark(P) {
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><polyline points="${P.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#E2B34B" stroke-width="2"/></svg>`;
 }
 // 練習場數據（2026-11-08 使用者：練習作答也送後台，分開分析大家怎麼練）：/admin/practice
-let stMode = 'rush', pstats = null, pErr = '';
+let stMode = 'all', pstats = null, pErr = '';
 async function loadPractice() {
   pstats = null; pErr = '';
   try { pstats = summarizePractice((await api('/admin/practice')).rows); } catch (e) { pErr = e.message; }
   if (tab === 'st' && stMode === 'prac') render();
+}
+// 切到某個數據子頁時抓資料（force＝重抓，按上面「數據」時）
+function loadStMode(force) {
+  if (stMode === 'all' && (force || !ov)) loadOverview();
+  if (stMode === 'rush' && (force || !stats)) loadStats();
+  if (stMode === 'prac' && (force || !pstats)) loadPractice();
+  if (stMode === 'learn' && (force || !lv)) loadLearn();
+}
+
+// ---------- 總覽（2026-11-11 使用者：每個模式同樣的欄位、同樣的順序，好比對；煉獄之門所有評分版本都算）----------
+// 作答題數＝解開＋沒解開（跳過、時間到、下錯都算沒解開）；練習的解開＝自己解開＋靠幫助解開
+const MODES = [
+  { key: 'rush', name: '煉獄之門', path: '/admin/runs' },
+  { key: 'b4', name: '無限之塔', path: '/admin/blitz' },
+  { key: 'tower', name: '象牙塔', path: '/admin/tower' },
+  { key: 'mj', name: '明鏡台', path: '/admin/mirror' },
+  { key: 'eye', name: '火眼金睛', path: '/admin/eye' },
+  { key: 'prac', name: '練習', path: '/admin/practice', solved: r => (r.own || 0) + (r.helped || 0) },
+];
+const solvedOf = (m, r) => (m.solved ? m.solved(r) : r.solved || 0);
+const taipeiToday = () => new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+const dayShift = (d, k) => new Date(Date.parse(d + 'T00:00:00Z') + k * 864e5).toISOString().slice(0, 10);
+let ov = null, ovErr = '';
+async function loadOverview() {
+  ov = null; ovErr = '';
+  try {
+    const [data, learn] = await Promise.all([Promise.all(MODES.map(m => api(m.path).then(j => j.rows))), api('/admin/learn').then(j => j.rows).catch(() => [])]);
+    ov = summarizeOverview(data, learn);
+  } catch (e) { ovErr = e.message; }
+  if (tab === 'st' && stMode === 'all') render();
+}
+function summarizeOverview(data, learn) {
+  const today = taipeiToday(), week0 = dayShift(today, -6);
+  const days = new Set();
+  data.forEach(rows => rows.forEach(r => days.add(r.day)));
+  const firstSeen = new Map();   // 教學：每個 ID 第一次出現的日子＝那天新進教學
+  for (const e of learn) if (!firstSeen.has(e.vid)) firstSeen.set(e.vid, e.day);
+  for (const d of firstSeen.values()) days.add(d);
+  const dayList = [...days].sort().reverse();
+  const perDay = dayList.map(d => {
+    const n = data.map(rows => rows.filter(r => r.day === d).length);
+    return { d, n, total: n.reduce((a, b) => a + b, 0), learners: [...firstSeen.values()].filter(x => x === d).length };
+  });
+  const cmp = MODES.map((m, i) => {
+    const R = data[i], solved = R.reduce((a, r) => a + solvedOf(m, r), 0), att = R.reduce((a, r) => a + solvedOf(m, r) + (r.wrong || 0), 0);
+    const perRun = R.map(r => solvedOf(m, r) + (r.wrong || 0)), secs = R.map(r => r.seconds).filter(Number.isFinite);
+    return { name: m.name, n: R.length, today: R.filter(r => r.day === today).length, week: R.filter(r => r.day >= week0).length,
+      att: perRun.length ? median(perRun) : null, solve: pct(solved, att), sec: secs.length ? Math.round(median(secs)) : null, first: R.length ? R.map(r => r.day).sort()[0] : null };
+  });
+  return { perDay, cmp, learners: firstSeen.size };
+}
+const mmssA = (s) => s == null ? '–' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+function renderOverview(list, head) {
+  if (!ov) { list.innerHTML = head + `<p class="msg">${ovErr ? '讀不到數據：' + esc(ovErr) : '載入各模式數據中…'}</p>`; return; }
+  const O = ov, out = [head];
+  const sum = O.cmp.map(c => c.n), tot = sum.reduce((a, b) => a + b, 0);
+  out.push(`<section class="sec"><h2>每天局數</h2><span class="note">台北時間。每一欄固定同一個模式；煉獄之門算所有評分版本。教學＝那天第一次打開新手教學的人數（2026-11-11 起才有紀錄）。</span><div class="scroll"><table style="min-width:560px"><thead><tr><th>日期</th>${MODES.map(m => `<th class="r">${m.name}</th>`).join('')}<th class="r">合計</th><th class="r">教學新進</th></tr></thead><tbody>
+    <tr><th>累計</th>${sum.map(n => `<td class="r"><b>${n.toLocaleString()}</b></td>`).join('')}<td class="r"><b>${tot.toLocaleString()}</b></td><td class="r"><b>${O.learners}</b></td></tr>
+    ${O.perDay.map(x => `<tr><th>${esc(x.d.slice(5))}</th>${x.n.map(n => `<td class="r${n ? '' : ' dim'}">${n || '·'}</td>`).join('')}<td class="r"><b>${x.total}</b></td><td class="r${x.learners ? '' : ' dim'}">${x.learners || '·'}</td></tr>`).join('')}
+  </tbody></table></div></section>`);
+  out.push(`<section class="sec"><h2>各模式比較</h2><span class="note">每局作答題數、每局時長取中位數；解開率＝全部解開題數÷全部作答題數。</span><div class="scroll"><table style="min-width:600px"><thead><tr><th>模式</th><th class="r">累計局數</th><th class="r">今天</th><th class="r">近 7 天</th><th class="r">每局作答</th><th class="r">解開率</th><th class="r">每局時長</th><th class="r">開始於</th></tr></thead><tbody>${O.cmp.map(c => `<tr><th>${c.name}</th><td class="r"><b>${c.n.toLocaleString()}</b></td><td class="r">${c.today}</td><td class="r">${c.week}</td><td class="r">${c.att ?? '–'} 題</td><td class="r">${c.solve == null ? '–' : c.solve + '%'}</td><td class="r">${mmssA(c.sec)}</td><td class="r small">${c.first ? esc(c.first.slice(5)) : '–'}</td></tr>`).join('')}</tbody></table></div><span class="note">各模式上線日不同（例如明鏡台、火眼金睛 11-10 才開），比累計局數時要看「開始於」。對戰（大廳）目前沒有存紀錄。</span></section>`);
+  list.innerHTML = out.join('');
+}
+
+// ---------- 新手教學（2026-11-11 使用者：走完度、停在哪幾關）----------
+// 資料：/admin/learn（每個瀏覽器隨機 ID 的事件：open 打開、opening 看完開場、step 某課第幾步開始、done 完成一課、exam 進畢業考、grad 畢業）
+let lv = null, lvErr = '';
+async function loadLearn() {
+  lv = null; lvErr = '';
+  try {
+    const [rows, lessons] = await Promise.all([api('/admin/learn').then(j => j.rows), fetch(SITE + '/game/learn/lessons.json', { cache: 'no-store' }).then(r => r.json())]);
+    lv = summarizeLearn(rows, lessons.lessons || []);
+  } catch (e) { lvErr = e.message; }
+  if (tab === 'st' && stMode === 'learn') render();
+}
+const ACTIVE_MS = 30 * 60e3;   // 最後動作在 30 分鐘內＝可能還在學，不算「停住」
+function summarizeLearn(rows, lessons) {
+  const by = new Map();
+  for (const e of rows) { if (!by.has(e.vid)) by.set(e.vid, []); by.get(e.vid).push(e); }
+  const people = [...by.values()], has = (E, f) => E.some(f), cnt = f => people.filter(E => has(E, f)).length;
+  const N = people.length, opening = cnt(e => e.ev === 'opening'), exam = cnt(e => e.ev === 'exam'), grad = cnt(e => e.ev === 'grad');
+  const title = l => (l.title && (l.title.zh || l.title.en)) || l.id;
+  const funnel = lessons.filter(l => (l.steps || []).length).map(l => {   // 沒有步驟的課（9-3＝畢業考入口）另外用 exam／grad 算
+    const start = cnt(e => e.ev === 'step' && e.l === l.id), done = cnt(e => e.ev === 'done' && e.l === l.id);
+    return { id: l.id, title: title(l), steps: (l.steps || []).length, start, done, rate: pct(done, start), ofAll: pct(done, N) };
+  });
+  // 停在哪：沒畢業的人，最後一個動作在哪
+  const now = Date.now(), stop = new Map(), order = Object.fromEntries(lessons.map((l, i) => [l.id, i]));
+  let active = 0;
+  for (const E of people) {
+    if (has(E, e => e.ev === 'grad')) continue;
+    const last = E.reduce((a, e) => (e.t > a.t ? e : a));
+    if (now - last.t < ACTIVE_MS) { active++; continue; }
+    let key, sort;
+    if (last.ev === 'open') { key = has(E, e => e.ev === 'opening') ? '在教學盤沒點下一課' : '開場（還沒看完）'; sort = has(E, e => e.ev === 'opening') ? 0.5 : 0; }
+    else if (last.ev === 'opening') { key = '看完開場、沒開始第一課'; sort = 0.5; }
+    else if (last.ev === 'step') { key = `${last.l} 第 ${last.s + 1} 步`; sort = 1 + (order[last.l] ?? 99) + last.s / 100; }
+    else if (last.ev === 'done') { key = `完成 ${last.l} 後沒繼續`; sort = 1 + (order[last.l] ?? 99) + 0.99; }
+    else { key = '畢業考'; sort = 999; }
+    const x = stop.get(key) || { key, sort, n: 0, title: last.l ? title(lessons[order[last.l]] || { id: last.l }) : '' };
+    x.n++; stop.set(key, x);
+  }
+  const stops = [...stop.values()].sort((a, b) => a.sort - b.sort);
+  return { N, opening, exam, grad, funnel, stops, active, first: rows.length ? rows[0].day : null };
+}
+function renderLearn(list, head) {
+  if (!lv) { list.innerHTML = head + `<p class="msg">${lvErr ? '讀不到教學數據：' + esc(lvErr) : '載入教學數據中…'}</p>`; return; }
+  const L = lv, stat = (k, v, sub) => `<div class="stat"><span>${k}</span><b>${v}</b><span>${sub}</span></div>`, out = [head];
+  const first = L.funnel[0] || { done: 0 };
+  out.push(`<section class="sec"><h2>新手教學走完度</h2><div class="stats">${stat('打開過教學', L.N, '人（瀏覽器）')}${stat('看完開場', L.opening, pct(L.opening, L.N) == null ? '–' : pct(L.opening, L.N) + '%')}${stat('完成第一課', first.done, pct(first.done, L.N) == null ? '–' : pct(first.done, L.N) + '%')}${stat('畢業', L.grad, pct(L.grad, L.N) == null ? '–' : pct(L.grad, L.N) + '%')}</div><span class="note">${L.first ? `從 ${esc(L.first)} 開始記錄；` : '還沒有紀錄；'}之前走過教學的人沒有資料。一個瀏覽器算一人，換手機、清瀏覽器資料會算成新的人。不含暱稱。</span></section>`);
+  const max = Math.max(1, L.N);
+  out.push(`<section class="sec"><h2>每一課</h2><span class="note">開始＝有進到這課第 1 步；完成＝整課走完；完成率＝完成÷開始；剩下＝完成的人占所有打開過教學的人。</span><div class="scroll"><table style="min-width:560px"><thead><tr><th>課</th><th class="r">步數</th><th class="r">開始</th><th class="r">完成</th><th class="r">完成率</th><th style="width:30%">剩下</th></tr></thead><tbody>${L.funnel.map(x => `<tr><th>${esc(x.id)}<div class="small">${esc(x.title)}</div></th><td class="r">${x.steps}</td><td class="r">${x.start}</td><td class="r"><b>${x.done}</b></td><td class="r${x.rate != null && x.rate < 70 ? ' hi' : ''}">${x.rate == null ? '–' : x.rate + '%'}</td><td><div class="bar"><div style="width:${Math.round(x.done / max * 100)}%;background:var(--gold)"></div></div><span class="small">${x.ofAll == null ? '–' : x.ofAll + '%'}</span></td></tr>`).join('')}
+    <tr><th>畢業考</th><td class="r">–</td><td class="r">${L.exam}</td><td class="r"><b>${L.grad}</b></td><td class="r">${pct(L.grad, L.exam) == null ? '–' : pct(L.grad, L.exam) + '%'}</td><td><div class="bar"><div style="width:${Math.round(L.grad / max * 100)}%;background:var(--gold)"></div></div><span class="small">${pct(L.grad, L.N) == null ? '–' : pct(L.grad, L.N) + '%'}</span></td></tr></tbody></table></div><span class="note">完成率低於 70% 標紅，代表很多人開始了卻沒走完這課。</span></section>`);
+  out.push(`<section class="sec"><h2>停在哪</h2><span class="note">還沒畢業的人，最後一個動作停在哪裡（同一課的步驟從 1 數起）。最後動作在 30 分鐘內的 ${L.active} 人可能還在學，不算在內。</span><div class="scroll"><table><thead><tr><th>停在</th><th class="r">人數</th></tr></thead><tbody>${L.stops.map(x => `<tr><th>${esc(x.key)}${x.title ? `<div class="small">${esc(x.title)}</div>` : ''}</th><td class="r"><b>${x.n}</b></td></tr>`).join('') || '<tr><td colspan="2" class="small">還沒有資料</td></tr>'}</tbody></table></div></section>`);
+  list.innerHTML = out.join('');
 }
 function summarizePractice(rows) {
   const runs = rows.map(r => { let d = []; try { d = JSON.parse(r.detail || '[]'); } catch {} return { ...r, att: Array.isArray(d) ? d : [] }; });
@@ -313,8 +429,11 @@ function renderScoring() {
 }
 function renderStats() {
   const list = $('list');
-  const head = `<div class="acts" role="group" aria-label="數據種類"><button type="button" data-stm="rush" class="${stMode === 'rush' ? 'gold' : ''}" aria-pressed="${stMode === 'rush'}">競速</button><button type="button" data-stm="prac" class="${stMode === 'prac' ? 'gold' : ''}" aria-pressed="${stMode === 'prac'}">練習</button></div>`;
-  const bindHead = () => list.querySelectorAll('[data-stm]').forEach(b => b.onclick = () => { stMode = b.dataset.stm; if (stMode === 'prac' && !pstats) loadPractice(); render(); });
+  const SUB = [['all', '總覽'], ['rush', '煉獄之門'], ['prac', '練習'], ['learn', '新手教學']];
+  const head = `<div class="acts" role="group" aria-label="數據種類">${SUB.map(([k, n]) => `<button type="button" data-stm="${k}" class="${stMode === k ? 'gold' : ''}" aria-pressed="${stMode === k}">${n}</button>`).join('')}</div>`;
+  const bindHead = () => list.querySelectorAll('[data-stm]').forEach(b => b.onclick = () => { stMode = b.dataset.stm; loadStMode(); render(); });
+  if (stMode === 'all') { renderOverview(list, head); bindHead(); return; }
+  if (stMode === 'learn') { renderLearn(list, head); bindHead(); return; }
   if (stMode === 'prac') { renderPractice(list, head); bindHead(); return; }
   if (!stats) { list.innerHTML = head + `<p class="msg">${statsErr ? '讀不到數據：' + esc(statsErr) : '載入數據中…'}</p>`; bindHead(); return; }
   const G = stats, B = G.bank || {};
@@ -329,7 +448,8 @@ function renderStats() {
   const bk = Object.fromEntries((B.dans || []).map(d => [d.dan, d])), seen = Object.fromEntries(G.bands.map(b => [b.dan, b]));
   const danNames = [...new Set([...G.bands.map(b => b.dan), ...(B.dans || []).map(d => d.dan)])].sort((x, y) => RANKS.indexOf(x) - RANKS.indexOf(y));
   const out = [];
-  out.push(`<section class="sec"><h2>玩家解題狀況</h2><div class="stats">${stat('今天的局', G.today.toLocaleString(), '台北時間')}${stat('有作答的局', G.played.toLocaleString(), `共 ${G.runs} 局`)}${stat('作答題數', G.attempts.toLocaleString(), `一格至少 ${MIN_N} 筆才算數`)}${stat('一局裡漲跌換方向', G.flip.rate != null ? G.flip.rate + '%' : '–', `${G.flip.n} 局（4 題以上）；越高越像亂跳`)}</div><span class="note">不含暱稱。資料是打開這頁時抓的，按上面「數據」可以重抓。</span></section>`);
+  out.push(`<section class="sec"><h2>煉獄之門局數</h2><div class="stats">${stat('全部局數', G.allRuns.toLocaleString(), '所有評分版本')}${stat('今天', G.allToday.toLocaleString(), '台北時間・所有版本')}</div><span class="note">評分規則每改一次版本，段位尺就不一樣，所以<b>下面的段位、解開率分析只用目前版本 ${esc(SCORE_VER)} 的 ${G.runs} 局</b>；局數趨勢請看「總覽」。</span></section>`);
+  out.push(`<section class="sec"><h2>目前版本的解題狀況</h2><div class="stats">${stat('今天的局', G.today.toLocaleString(), `版本 ${esc(SCORE_VER)}`)}${stat('有作答的局', G.played.toLocaleString(), `共 ${G.runs} 局`)}${stat('作答題數', G.attempts.toLocaleString(), `一格至少 ${MIN_N} 筆才算數`)}${stat('一局裡漲跌換方向', G.flip.rate != null ? G.flip.rate + '%' : '–', `${G.flip.n} 局（4 題以上）；越高越像亂跳`)}</div><span class="note">不含暱稱。資料是打開這頁時抓的，按上面「數據」可以重抓。</span></section>`);
   out.push(`<section class="sec"><h2>題目作答狀況</h2><span class="note">遊戲題庫 ${(B.total || 0).toLocaleString()} 題・評分版本 ${esc(B.ver || '–')}・匯出 ${esc(B.at || '–')}・被做過 ${G.puzzlesSeen} 題</span><div class="scroll"><table style="min-width:620px"><thead><tr><th>題目段位</th><th class="r">題庫題數</th><th class="r">白先</th><th class="r">被做過</th><th class="r">作答</th><th class="r">解開率</th><th class="r">跳過率</th><th class="r">中位秒數</th><th class="r">做過 5 次以上</th></tr></thead><tbody>${danNames.map(n => { const b = seen[n] || { puzzles: 0, n: 0, solve: null, skip: null, sec: null, multi: 0 }, k = bk[n]; return `<tr><th>${esc(n)}題</th><td class="r">${k ? k.n.toLocaleString() : '–'}</td><td class="r">${k ? k.white.toLocaleString() : '–'}</td><td class="r">${b.puzzles}</td><td class="r">${b.n}</td><td class="r"><b>${b.solve == null ? '–' : b.solve + '%'}</b></td><td class="r">${b.skip == null ? '–' : b.skip + '%'}</td><td class="r">${b.sec ?? '–'}</td><td class="r">${b.multi}</td></tr>`; }).join('')}</tbody></table></div></section>`);
   out.push(`<section class="sec"><h2>手數 vs 解開率</h2><div class="scroll"><table><thead><tr><th>手數</th><th class="r">作答</th><th class="r">解開率</th><th class="r">解開的中位秒數</th></tr></thead><tbody>${G.byLen.map(x => `<tr><th>${x.label}</th><td class="r">${x.n}</td><td class="r"><b>${x.solve}%</b></td><td class="r">${x.sec ?? '–'}</td></tr>`).join('')}</tbody></table></div><span class="note">六段以上是給挑戰族群的長題，解開率低是預期（2026-11-08 定）。</span></section>`);
   out.push(`<section class="sec"><h2>異常題目（${G.flagged.length}）</h2><span class="note">做過 5 次以上，而且解開率比預估低 30 個百分點以上，或一半以上的人跳過。</span>${G.flagged.length ? `<div class="scroll"><table style="min-width:760px">${phead}<tbody>${G.flagged.map(prow).join('')}</tbody></table></div>` : '<span class="small">目前沒有。現在多數題目只被做過 1 次，還看不出單題的問題。</span>'}</section>`);
@@ -348,7 +468,7 @@ function renderStats() {
     catch (e) { alert('停用失敗：' + e.message); b.disabled = false; }
   });
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') { loadStats(); if (stMode === 'prac') loadPractice(); } if (tab === 'sc' && !sc) loadScoring(); render(); });
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') loadStMode(true); if (tab === 'sc' && !sc) loadScoring(); render(); });
 document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
 load();
 </script>
