@@ -2055,6 +2055,7 @@ if (location.hash === '#pick') { history.replaceState(null, '', location.pathnam
 </script>
 <!-- VCF 教學（2026-11-10）：一盤棋教學，見 docs/tutorial_implementation.md。版本號跟 BUILD（部署時換成 commit 短碼；GitHub Pages 開發版是 dev，每次都抓新的），改了才不會被快取擋住 -->
 <script>(() => { const s = document.createElement('script'); s.src = 'game/learn/learn.js?v=' + (BUILD === 'dev' ? Date.now() : BUILD); document.body.appendChild(s); })();</script>
+<script>(() => { const s = document.createElement('script'); s.src = 'game/skin-picker.js?v=' + (BUILD === 'dev' ? Date.now() : BUILD); document.body.appendChild(s); })();</script>   <!-- 棋具頁（棋盤、棋子分開配） -->
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 </body>
 </html>

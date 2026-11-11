@@ -48,7 +48,7 @@
 #learn .lbrd{position:relative;flex:none;border-radius:14px;background:var(--sk-board,#E9C98B);box-shadow:0 7px 0 var(--sk-edge,#9C7A45),0 12px 28px rgba(0,0,0,.45);touch-action:manipulation}
 #learn .lbrd svg.grid{position:absolute;inset:0}
 #learn .lst{position:absolute;border-radius:50%;pointer-events:none;box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35)}
-#learn .lst.b{background:var(--sk-b,#1B1A17)}#learn .lst.w{background:var(--sk-w,#FBFAF6)}
+#learn .lst.b{background:var(--sk-b,#1B1A17);box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35),var(--sk-b-sh,0 0 0 0 transparent)}#learn .lst.w{background:var(--sk-w,#FBFAF6);box-shadow:inset -3px -4px 0 rgba(0,0,0,.18),0 2px 3px rgba(0,0,0,.35),var(--sk-w-sh,0 0 0 0 transparent)}
 #learn .lst .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-weight:700}
 #learn .lst.b .n{color:var(--sk-b-ink,#FBFAF6)}#learn .lst.w .n{color:var(--sk-w-ink,#1B1A17)}
 #learn .lhit{position:absolute;border:0;padding:0;background:transparent;border-radius:50%;cursor:pointer}
@@ -145,7 +145,7 @@
   const FRAME_MS = 42;
   // host：疊在誰上面；cx,cy：主體中心要對準的位置（px）；body：主體要多寬（px）；opt.full＝整張蓋滿 host（特效層）
   // 落子／提子的逐格圖畫的是原木樣式的黑白子；換了別的棋子樣式就改用 CSS 動畫（用的是那套樣式的子）
-  const classicStones = () => !window.RushSkin || RushSkin.get().id === 'classic';
+  const classicStones = () => !window.RushSkin || RushSkin.stonesId() === 'flat';
   function sprite(host, name, cx, cy, body, opt = {}) {
     const s = ART && ART[name];
     if (!s) return null;
