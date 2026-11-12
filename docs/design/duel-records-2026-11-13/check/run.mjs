@@ -125,29 +125,21 @@ try {
   const again = await O2.ask({ t: 'rec', id: r1.id }, 'rec');
   ok(again.t === 'rec' && again.rec.match.log.length === 9, '重啟後單筆 rec 還拿得到');
 
-  // ================= 5–7. 頁面 =================
-  console.log('== 5. 頁面：今日棋局＋回看');
+  // ================= 5–7. 頁面（2026-11-13 改：今日棋局搬到首頁，大廳沒有切換鈕；回看改吃本機 vcfgame.today，從 duel.html#replay=<id> 進來。首頁清單的測試在 docs/design/today-home-2026-11-13/check/） =================
+  console.log('== 5. 頁面：大廳沒有切換鈕、用本機紀錄回看（紀錄由伺服器 rec 訊息的內容組成，驗證兩邊格式一致）');
   b = await L.launch();
   const P = await L.mk(b, { nick: 'Cat' });
-  const pubList = await O2.recs();
-  ok(await P.evaluate(() => document.getElementById('lobTabs').children.length) === 2, '大廳有兩個切換鈕');
-  ok(await P.evaluate(() => document.querySelector('#lobTabs .gold').dataset.tab) === 'rooms', '預設在「對局」');
-  await P.screenshot({ path: SH + 'lobby_rooms.png' });
-  await P.click('[data-tab="recs"]'); await sleep(700);
-  const cards = await P.evaluate(() => document.querySelectorAll('.roomc.rec').length);
-  ok(cards === pubList.length && cards === 4, `今日棋局出現 ${cards} 張卡（等於公開局數 ${pubList.length}）`);
-  const txt = await P.evaluate(() => document.getElementById('list').innerText);
-  ok(txt.includes('Alice') && txt.includes('Bob') && txt.includes('9 手') && txt.includes('3 : 1') && txt.includes('一線天') && txt.includes('八仙渡'), '卡片有暱稱、手數、比分、玩法名');
-  await P.screenshot({ path: SH + 'lobby_recs.png' });
-  // 捲動位置：清單捲一點、點下面那張
-  await P.evaluate(() => { const l = document.getElementById('list'); l.scrollTop = 120; });
-  const sc0 = await P.evaluate(() => document.getElementById('list').scrollTop);
-  const sentBefore = (await L.sentTypes(P)).length;
-  await P.evaluate((id) => document.querySelector(`[data-rec="${id}"]`).click(), r1.id);
+  ok(await P.evaluate(() => !document.getElementById('lobTabs') && !document.querySelector('[data-tab]')), '大廳沒有「對局｜今日棋局」切換鈕');
+  ok(!(await L.sentTypes(P)).some((t) => t === 'recs' || t === 'rec'), '大廳載入後沒送 recs／rec');
+  const pg1 = await O2.ask({ t: 'rec', id: r1.id }, 'rec'), pv1 = await O2.ask({ t: 'rec', id: r4.id }, 'rec');
+  const mkEntry = (rec, i) => ({ at: rec.at, src: 'duel', id: 'dtest' + i, gk: 'g' + i, sum: { kind: rec.kind, opp: 'x', res: 'w', n: rec.n || 0 }, rec });
+  const entries = JSON.stringify([mkEntry(pg1.rec, 1), mkEntry(pv1.rec, 2)]);
+  await P.evaluate((s) => localStorage.setItem('vcfgame.today', s), entries);
+  const openReplay = async (pg, id) => { await pg.goto(L.BASE + '/duel.html?again=1'); await pg.goto(L.BASE + '/duel.html#replay=' + id); await sleep(1300); };
+  await openReplay(P, 'dtest1');
   await P.waitForFunction(() => window.__duel.REPLAY, null, { timeout: 5000 });
-  await sleep(400);
   const st1 = await P.evaluate(() => ({ cur: window.__duel.REPLAY.cur, n: window.__duel.match.moves.length, sRoomHidden: document.getElementById('sRoom').hidden, title: document.getElementById('rTitle').textContent, status: document.getElementById('status').textContent, facts: document.getElementById('facts').textContent, acts: document.getElementById('rActs').children.length, sit: document.querySelectorAll('[data-sit]').length, endHidden: document.getElementById('mEnd').hidden, inv: getComputedStyle(document.getElementById('rInvite')).display === 'none', btns: [...document.querySelectorAll('#phaseActs button')].map((x) => x.textContent) }));
-  ok(!st1.sRoomHidden && st1.cur === 9 && st1.n === 9, `點五子棋局 → 回看畫面、停在最後一手（${st1.cur}/${st1.n}）`);
+  ok(!st1.sRoomHidden && st1.cur === 9 && st1.n === 9, `#replay=<id> → 回看畫面、停在最後一手（${st1.cur}/${st1.n}）`);
   ok(st1.status.includes('黑棋勝') && st1.facts.includes('第 9／9 手') && st1.title.includes('普規'), `狀態列＝${st1.status}｜${st1.facts}｜${st1.title}`);
   ok(st1.acts === 0 && st1.sit === 0 && st1.endHidden && st1.inv, '沒有入座／再來一局／研棋／認輸／邀請');
   ok(JSON.stringify(st1.btns) === JSON.stringify(['|◀', '◀', '▶', '▶|']), '導覽鈕：第一手 上一手 下一手 最後一手');
@@ -166,9 +158,9 @@ try {
   await P.click('[data-rp="next"]'); await P.click('[data-rp="next"]'); await sleep(150);
   ok(await cnt() === 2, '▶ 兩次：2 顆');
   await P.click('[data-rp="last"]'); await sleep(200);
-  ok(await sig2(P) === sEnd, '▶| 回最後一手：畫面等於一開始');
-  const sent1 = (await L.sentTypes(P)).slice(sentBefore);
-  ok(sent1.every((t) => t === 'rec' || t === 'ping'), `回看期間只送過 rec／ping：${JSON.stringify(sent1)}`);
+  ok(await L.sig(P) === sEnd, '▶| 回最後一手：畫面等於一開始');
+  const sent1 = await L.sentTypes(P);
+  ok(sent1.every((t) => t === 'ping'), `回看期間只送過 ping：${JSON.stringify([...new Set(sent1)])}`);
 
   // 6. 回看時大廳廣播
   console.log('== 6. 回看中大廳廣播不拉走畫面');
@@ -180,25 +172,20 @@ try {
   const st6 = await P.evaluate(() => ({ rep: !!window.__duel.REPLAY, hidden: document.getElementById('sRoom').hidden, id: window.__duel.room && window.__duel.room.id, title: document.getElementById('rTitle').textContent, cur: window.__duel.REPLAY && window.__duel.REPLAY.cur }));
   ok(st6.rep && !st6.hidden && st6.id === 'rec' && st6.title === titleBefore && st6.cur === 9, `D、E 開房對局（大廳廣播）後仍在回看：${JSON.stringify(st6)}`);
   ok(await L.sig(P) === sEnd, '棋盤沒被改動');
-  // 斷線重連
   const wsN0 = await P.evaluate(() => window.__wsN);
-  // 真的斷線：把本機伺服器關掉再開（資料還在），頁面會自己重連
   L.stopWr(); await sleep(1500); await L.startWr(PERSIST);
   await P.waitForFunction((n) => window.__wsN > n && window.__ws.readyState === 1, wsN0, { timeout: 40000 }); await sleep(800);
   const st6b = await P.evaluate(() => ({ n: window.__wsN, rep: !!window.__duel.REPLAY, hidden: document.getElementById('sRoom').hidden, id: window.__duel.room && window.__duel.room.id }));
-  const sent6 = (await L.sentTypes(P)).slice(sentBefore);
+  const sent6 = await L.sentTypes(P);
   ok(st6b.rep && !st6b.hidden && st6b.id === 'rec', `斷線重連後仍在回看（伺服器關掉再開，新連線數 ${wsN0} → ${st6b.n}）`);
-  ok(sent6.every((t) => ['rec', 'ping'].includes(t)), `重連後也沒送 view／sit／leave／join：${JSON.stringify([...new Set(sent6)])}`);
+  ok(sent6.every((t) => t === 'ping'), `重連後也沒送 view／sit／leave／join：${JSON.stringify([...new Set(sent6)])}`);
   D.send({ t: 'leave' }); E.send({ t: 'leave' });
-  // 返回
-  await P.click('#rBack'); await sleep(400);
-  const back = await P.evaluate(() => ({ lobHidden: document.getElementById('sLobby').hidden, tab: document.querySelector('#lobTabs .gold').dataset.tab, cards: document.querySelectorAll('.roomc.rec').length, sc: document.getElementById('list').scrollTop, rep: window.__duel.REPLAY }));
-  ok(!back.lobHidden && back.tab === 'recs' && back.cards === 4 && back.rep === null, `返回 → 大廳「今日棋局」清單（${back.cards} 張）`);
-  ok(Math.abs(back.sc - sc0) <= 2, `清單捲動位置保留（${sc0} → ${back.sc}${sc0 === 0 ? '；注意清單沒有超出，這項沒有實質驗證' : ''}）`);
-  ok(!(await L.sentTypes(P)).includes('view') && !(await L.sentTypes(P)).includes('sit') && !(await L.sentTypes(P)).includes('leave'), '整個過程沒送過 view／sit／leave');
+  // 返回：回首頁 game.html
+  await P.click('#rBack'); await P.waitForURL(/game\.html/, { timeout: 8000 });
+  ok(await P.evaluate(() => location.pathname.endsWith('game.html')), '回看的返回鍵 → game.html（首頁）');
 
   // VCF 回看
-  await P.evaluate((id) => document.querySelector(`[data-rec="${id}"]`).click(), r4.id);
+  await openReplay(P, 'dtest2');
   await P.waitForFunction(() => window.__duel.REPLAY && window.__duel.RV, null, { timeout: 5000 }); await sleep(500);
   const v1 = await P.evaluate(() => ({ k: window.__duel.RV.k, who: window.__duel.RV.who, btn: [...document.querySelectorAll('#phaseActs button')].map((x) => x.textContent), status: document.getElementById('status').textContent, facts: document.getElementById('facts').textContent, acts: document.getElementById('rActs').children.length, title: document.getElementById('rTitle').textContent }));
   ok(v1.k === 0 && v1.btn.includes('◀') && v1.btn.includes('▶') && v1.btn.includes('正解') && v1.btn.includes('Alice') && v1.btn.includes('Bob'), `VCF 回看：◀ ▶ 正解 ＋ 兩位暱稱鈕（${v1.btn.join('｜')}）`);
@@ -211,56 +198,25 @@ try {
   ok(await P.evaluate(() => window.__duel.RV.who) === 1, '點對手暱稱鈕換成看他的手順');
   await P.click('[data-rv="0"]'); await sleep(300);
   ok(await P.evaluate(() => window.__duel.RV.who) === 0, '點另一位換回來');
-  await P.click('#rBack'); await sleep(300);
-  ok(await P.evaluate(() => !document.getElementById('sLobby').hidden && document.querySelector('#lobTabs .gold').dataset.tab === 'recs' && document.querySelectorAll('.roomc.rec').length === 4), 'VCF 回看返回 → 今日棋局清單');
-
-  // 切回「對局」再切進來會重抓（新增一局後多一張）
-  await P.click('[data-tab="rooms"]'); await sleep(200);
-  ok(await P.evaluate(() => document.getElementById('lobTabs').querySelector('.gold').dataset.tab) === 'rooms', '切回「對局」');
+  ok((await L.sentTypes(P)).every((t) => t === 'ping'), 'VCF 回看全程沒送 view／sit／leave');
   ok(errs(P).length === 0, '頁面沒有 JS 錯誤 ' + JSON.stringify(errs(P)));
 
-  // 空清單、舊伺服器
-  console.log('== 舊伺服器：不認得 recs');
-  {
-    const Q = await L.mk(b, { nick: 'Old' });
-    // 模擬舊伺服器：recs／rec 改成伺服器不認得的訊息（default → err bad）
-    await Q.evaluate(() => { window.__rewrite = (d) => d.replace('"t":"recs"', '"t":"recsOLD"').replace('"t":"rec"', '"t":"recOLD"'); });
-    await Q.click('[data-tab="recs"]'); await sleep(800);
-    const old = await Q.evaluate(() => ({ txt: document.getElementById('list').innerText, toast: !!document.querySelector('.toast'), modal: [...document.querySelectorAll('.modal')].some((m) => !m.hidden) }));
-    ok(old.txt.includes('今天還沒有棋局') && !old.toast && !old.modal, `舊伺服器回 bad → 顯示空狀態、沒有錯誤視窗（${old.txt.trim()}）`);
-    ok(errs(Q).length === 0, '舊伺服器情境沒有 JS 錯誤');
-    await Q.context().close();
-  }
-
   // ================= 7. 不可捲動 =================
-  console.log('== 7. 版面：4 語言 × 2 尺寸');
-  const fakes = (n) => Array.from({ length: n }, (_, i) => i % 3 === 0
-    ? { id: 'f' + i, at: Date.now() - i * 60000, kind: 'vcf', vmode: i % 2 ? 'line' : 'eight', rank: 1 + (i % 10), score: [3, 2], names: ['WWWWWWWWWWWW', '十二個字的暱稱十二個字'], win: 0, note: 'score', priv: i % 4 === 0, mine: i % 5 === 0 ? 1 : null }
-    : { id: 'f' + i, at: Date.now() - i * 60000, kind: 'gomoku', rule: ['free', 'renju', 'tara', 'tara10', 'swap2'][i % 5], time: i % 2 ? 'none' : '10+10', n: 100 + i, names: ['MMMMMMMMMMMM', 'Bob'], win: i % 2 ? 1 : null, note: null, priv: false, mine: null, cols: i % 2 ? [1, 2] : [2, 1] });
+  console.log('== 7. 版面：4 語言 × 2 尺寸（大廳、兩種回看）');
   for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[375, 667], [360, 640]]) {
     const X = await L.mk(b, { lang, w, h, nick: 'Cat' });
     const tag = `${lang} ${w}×${h}`;
     const chk = async (what) => { const f = await L.fit(X); ok(f.sh <= f.ih && f.sw <= f.iw && f.bad.length === 0, `${tag} ${what}：高 ${f.sh}/${f.ih} 寬 ${f.sw}/${f.iw}${f.bad.length ? ' 溢出 ' + JSON.stringify(f.bad) : ''}`); };
-    await X.click('[data-tab="recs"]'); await sleep(700);
-    await chk('今日棋局（真資料 4 筆）');
-    await X.evaluate(() => window.__duel.setRecs([])); await sleep(100);
-    await chk('今日棋局（0 筆）');
-    await X.evaluate((f) => window.__duel.setRecs(f), fakes(30)); await sleep(150);
-    await chk('今日棋局（30 筆）');
-    const inner = await X.evaluate(() => { const l = document.getElementById('list'); return l.scrollHeight > l.clientHeight && getComputedStyle(l).overflowY === 'auto'; });
-    ok(inner, `${tag} 30 筆時清單在自己的區塊內捲`);
-    if (lang === 'zh' && w === 375) await X.screenshot({ path: SH + 'lobby_recs_30.png' });
-    // 回真資料，開回看
-    await X.click('[data-tab="rooms"]'); await sleep(150); await X.click('[data-tab="recs"]'); await sleep(700);
-    await X.evaluate((id) => document.querySelector(`[data-rec="${id}"]`).click(), r1.id);
-    await X.waitForFunction(() => window.__duel.REPLAY, null, { timeout: 5000 }); await sleep(500);
+    await chk('大廳');
+    await X.evaluate((s) => localStorage.setItem('vcfgame.today', s), entries);
+    await openReplay(X, 'dtest1');
+    await X.waitForFunction(() => window.__duel.REPLAY, null, { timeout: 5000 });
     await chk('五子棋回看（終局）');
     await X.click('[data-rp="prev"]'); await sleep(150);
     await chk('五子棋回看（退一手）');
     if (lang === 'en' && w === 360) await X.screenshot({ path: SH + 'replay_gomoku_en_360.png' });
-    await X.click('#rBack'); await sleep(300);
-    await X.evaluate((id) => document.querySelector(`[data-rec="${id}"]`).click(), r4.id);
-    await X.waitForFunction(() => window.__duel.REPLAY && window.__duel.RV, null, { timeout: 5000 }); await sleep(600);
+    await openReplay(X, 'dtest2');
+    await X.waitForFunction(() => window.__duel.REPLAY && window.__duel.RV, null, { timeout: 5000 }); await sleep(300);
     await chk('VCF 回看');
     if (lang === 'ko' && w === 375) await X.screenshot({ path: SH + 'replay_vcf_ko.png' });
     errsAll.push(...errs(X));
