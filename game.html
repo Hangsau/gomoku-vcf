@@ -884,12 +884,12 @@ document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.st
 // 每個場景各記自己播到第幾首；選單場景每次載入頁面隨機一首開始，解題場景固定從清單第一首開始。同一首歌全頁只有一個 Audio 元素，兩個場景剛好都輪到同一首時切場景不中斷。
 // 點過畫面才開始播（手機限制）；場景切換交叉淡化 0.6 秒；曲尾 1.5 秒淡出、下一首從頭淡入（頁面第一次出聲只淡入 0.4 秒）；切到背景、靜音、音樂 0 都直接 pause；
 // 載不到的歌標記為壞檔、跳到清單下一首（不重試）；整份清單都壞就安靜不播。
-const BGM_LISTS = { menu: ['theme', 'menu'], play: ['play', 'theme'] };
+const BGM_LISTS = { menu: ['theme', 'menu'], play: ['play', 'theme'], race: ['battle', 'play', 'theme'] };   // race＝煉獄之門（限時競速）的解題畫面
 const BGM_REPEAT = { play: 3 };
 const BGM_MAX = 0.8, BGM_XFADE = 0.6, BGM_EDGE = 1.5, BGM_FIRST_EDGE = 0.4;
 const bgm = {}, bgmBad = {};
-const bgmIdx = { menu: Math.floor(Math.random() * BGM_LISTS.menu.length), play: 0 };
-const bgmPlays = { menu: 0, play: 0 };
+const bgmIdx = { menu: Math.floor(Math.random() * BGM_LISTS.menu.length), play: 0, race: 0 };
+const bgmPlays = { menu: 0, play: 0, race: 0 };
 let bgmTrack = 'menu', bgmTouched = false, bgmTimer = null, bgmLast = 0, bgmFirstPlay = true;
 // 場景目前那一首（跳過壞檔）；整份清單都壞回傳 null
 function bgmCur(sc) {
@@ -975,7 +975,7 @@ function bgmSync() {
   bgmStep();
 }
 function bgmSetTrack() {
-  const n = (!$('sPlay').hidden) ? 'play' : 'menu';
+  const n = (!$('sPlay').hidden) ? (mode === 'rush' ? 'race' : 'play') : 'menu';
   if (n !== bgmTrack) { bgmTrack = n; bgmSync(); }
 }
 const bgmTouch = () => { if (!bgmTouched) bgmTouched = true; if (bgmWanted()) { audio();   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume 一次，不然音樂播進暫停中的 context 會沒聲音（2026-11-12 使用者：首頁沒音樂，要先下過棋才有）

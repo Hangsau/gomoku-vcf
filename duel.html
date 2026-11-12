@@ -517,7 +517,7 @@ function chime() {   // 有人入座：兩聲輕響
 // 每首一個 HTMLAudioElement；第一首 preload auto（進頁就載），其餘 preload none、輪到才建立才載。經 GainNode 控音量（建不起來退回 el.volume）。
 // 頁面第一次出聲淡入 0.4 秒，換曲／循環邊緣 1.5 秒；靜音／音樂 0／切到背景就 pause；載不到的歌標壞檔跳下一首（不重試），整份都壞就安靜。
 // AudioContext 不是 running（被瀏覽器擋）或 play() 被拒時不出聲、不報錯，等 pointerdown／click／keydown／touchend 或 statechange 再試。
-const BGM_LIST = ['duel', 'theme'];
+const BGM_LIST = ['duel', 'battle', 'theme'];
 const BGM_MAX = 0.8, BGM_EDGE = 1.5, BGM_FIRST_EDGE = 0.4;
 const bgm = {}, bgmBad = {};
 let bgmIdx = 0, bgmTimer = null, bgmBlocked = false;
