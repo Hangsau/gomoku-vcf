@@ -1,5 +1,6 @@
 """《落子無聲》MV 橫式版（1920x1080、24fps）建置腳本（可重跑）
-    python C:/claudehome/projects/VCF/tools/promo/mv_build_v2.py [build|check]
+    python C:/claudehome/projects/VCF/tools/promo/mv_build_v2.py <h|v> [build|check|all]
+    h = 橫式 1920x1080；v = 直式 1080x1920。不帶參數只印用法（避免誤覆蓋成品）
 
 以 mv_build.py（直式初版）為底：疊化 0.3 秒、5b->6 白閃、字幕、頭尾淡入淡出、音訊淡入淡出沿用。
 - 十段 AI 影片直接用（1920x1080、24fps）；太短慢放、太長裁尾，9_心弦整段加速填滿
@@ -19,13 +20,39 @@ FFPROBE = os.path.join(FF, 'ffprobe.exe')
 ROOT = r'C:\claudehome\projects\VCF\docs'
 ASSET = os.path.join(ROOT, 'promo', 'MV素材')
 OUTD = os.path.join(ASSET, '第二版')
-WORK = os.path.join(OUTD, 'work')
+VIDDIR = {'h': os.path.join(ASSET, '落子無聲橫'), 'v': os.path.join(ASSET, '落子無聲916')}
 SONG = os.path.join(ROOT, '遊戲音樂_原檔', '4_主題曲_落子無聲_有唱.mp3')
 RUSH_A = os.path.join(ROOT, 'promo', '無聲原片', 'rush_A.mp4')
 FONT = r'C:\Windows\Fonts\kaiu.ttf'
-FINAL = os.path.join(ROOT, 'promo', '成品_有配樂', '落子無聲_MV_橫式.mp4')
+FINALS = {'h': os.path.join(ROOT, 'promo', '成品_有配樂', '落子無聲_MV_橫式.mp4'),
+          'v': os.path.join(ROOT, 'promo', '成品_有配樂', '落子無聲_MV_直式.mp4')}
+FPS = 24
+MODE = 'h'
+W, H = 1920, 1080
+WORK = FINAL = VID = ''
+# 版面參數（set_mode 填）
+LAY = {}
 
-W, H, FPS = 1920, 1080, 24
+
+def set_mode(m):
+    global MODE, W, H, WORK, FINAL, VID, LAY
+    MODE = m
+    VID = VIDDIR[m]
+    FINAL = FINALS[m]
+    if m == 'h':
+        W, H = 1920, 1080
+        WORK = os.path.join(OUTD, 'work')
+        LAY = dict(fw=756, fh=1000, gx=None, gy=None, sub_size=54, sub_y=0.86, sub_y_strong=0.86, sub_maxw=None,
+                   sheet_cols=5, cut_cols=6, sheet_tw=480, cut_tw=320, sheet_name='檢查_縮圖.png', cut_name='檢查_切點.png')
+    else:
+        W, H = 1080, 1920
+        WORK = os.path.join(OUTD, 'work_v')
+        fw = 960
+        fh = round(fw * 1430 / 1080)
+        LAY = dict(fw=fw, fh=fh, gx=(W - fw) // 2, gy=290, sub_size=64, sub_y=0.80, sub_y_strong=0.90, sub_maxw=1000,
+                   sheet_cols=9, cut_cols=9, sheet_tw=240, cut_tw=200, sheet_name='檢查_縮圖_直式.png',
+                   cut_name='檢查_切點_直式.png')
+
 SONG_START, SONG_LEN = 21.0, 60.4
 XF = 0.3
 HALF = XF / 2
@@ -128,10 +155,17 @@ def render_video_clip(src, name, L, out):
     return {'name': name, 'src_dur': sd, 'L': L, 'speed': speed, 'used': (0.0, used)}
 
 
+def game_xy():
+    fw, fh = LAY['fw'], LAY['fh']
+    if LAY['gx'] is None:
+        return (W - fw) // 2, (H - fh) // 2
+    return LAY['gx'], LAY['gy']
+
+
 def render_game(L, bg_png, out):
     base = Image.open(bg_png).convert('RGB')
-    fw, fh = 756, 1000
-    x0, y0 = (W - fw) // 2, (H - fh) // 2
+    fw, fh = LAY['fw'], LAY['fh']
+    x0, y0 = game_xy()
     base = shadow_on(base, (x0, y0, x0 + fw, y0 + fh))
     bp = os.path.join(WORK, 'game_base.png')
     base.save(bp)
@@ -146,10 +180,11 @@ def render_game(L, bg_png, out):
 def render_end_win(L, bg_png, out):
     png = os.path.join(WORK, 'end_win_frame.png')
     run([FFMPEG, '-v', 'error', '-y', '-ss', '7.45', '-i', RUSH_A, '-frames:v', '1', png])
-    g = Image.open(png).convert('RGB').crop((0, 0, 1080, 1430)).resize((756, 1000), Image.LANCZOS)
+    fw, fh = LAY['fw'], LAY['fh']
+    g = Image.open(png).convert('RGB').crop((0, 0, 1080, 1430)).resize((fw, fh), Image.LANCZOS)
     base = Image.open(bg_png).convert('RGB')
-    x0, y0 = (W - 756) // 2, (H - 1000) // 2
-    base = shadow_on(base, (x0, y0, x0 + 756, y0 + 1000))
+    x0, y0 = game_xy()
+    base = shadow_on(base, (x0, y0, x0 + fw, y0 + fh))
     base.paste(g, (x0, y0))
     bp = os.path.join(WORK, 'end_win_comp.png')
     base.save(bp)
@@ -176,16 +211,25 @@ def draw_text(base, text, size, cx, cy):
 def render_end_home(L, bg_png, out):
     png = os.path.join(WORK, 'end_home_frame.png')
     run([FFMPEG, '-v', 'error', '-y', '-ss', '25.6', '-i', RUSH_A, '-frames:v', '1', png])
-    g = Image.open(png).convert('RGB').resize((540, 960), Image.LANCZOS)
+    if MODE == 'h':
+        g = Image.open(png).convert('RGB').resize((540, 960), Image.LANCZOS)
+        cx = int(W * 0.30)
+        x0, y0 = cx - 270, (H - 960) // 2
+        gw, gh = 540, 960
+        tcx = 1380
+        rows = [('落子無聲', 110), ('Gomoku Rush', 64), ('rush.hangsau.app', 56)]
+        ys = [H // 2 - 150, H // 2 + 10, H // 2 + 110]
+    else:
+        gh = 1050
+        gw = round(1080 * gh / 1920)
+        g = Image.open(png).convert('RGB').resize((gw, gh), Image.LANCZOS)
+        x0, y0 = (W - gw) // 2, 130
+        tcx = W // 2
+        rows = [('落子無聲', 120), ('Gomoku Rush', 68), ('rush.hangsau.app', 60)]
+        ys = [1370, 1520, 1630]
     base = Image.open(bg_png).convert('RGB')
-    cx = int(W * 0.30)
-    x0, y0 = cx - 270, (H - 960) // 2
-    base = shadow_on(base, (x0, y0, x0 + 540, y0 + 960))
+    base = shadow_on(base, (x0, y0, x0 + gw, y0 + gh))
     base.paste(g, (x0, y0))
-    tcx = 1380
-    # 三行垂直置中：110 / 64 / 56，行距
-    rows = [('落子無聲', 110), ('Gomoku Rush', 64), ('rush.hangsau.app', 56)]
-    ys = [H // 2 - 150, H // 2 + 10, H // 2 + 110]
     boxes = []
     for (t, s), y in zip(rows, ys):
         base, bx = draw_text(base, t, s, tcx, y)
@@ -203,14 +247,22 @@ def still(png, L, out):
 
 
 def make_sub_png(text, path):
-    font = ImageFont.truetype(FONT, 54)
+    size = LAY['sub_size']
+    font = ImageFont.truetype(FONT, size)
+    if LAY['sub_maxw']:
+        while True:
+            bb0 = ImageDraw.Draw(Image.new('RGB', (4, 4))).textbbox((0, 0), text, font=font)
+            if bb0[2] - bb0[0] <= LAY['sub_maxw']:
+                break
+            size -= 1
+            font = ImageFont.truetype(FONT, size)
     layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
     bb = d.textbbox((0, 0), text, font=font)
     tw, th = bb[2] - bb[0], bb[3] - bb[1]
     x = (W - tw) // 2 - bb[0]
-    y = int(H * 0.86) - th // 2 - bb[1]
     strong = text in STRONG_SUBS
+    y = int(H * (LAY['sub_y_strong'] if strong else LAY['sub_y'])) - th // 2 - bb[1]
     if strong:   # 疊在米色棋盤上：先墊一條半透明深色底
         pad = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         ImageDraw.Draw(pad).rounded_rectangle((x + bb[0] - 28, y + bb[1] - 14, x + bb[2] + 28, y + bb[3] + 18),
@@ -232,9 +284,12 @@ def build():
     os.makedirs(os.path.dirname(FINAL), exist_ok=True)
     n = len(SEGS)
     lens = lens_of()
-    src = lambda f: os.path.join(ASSET, f)
+    src = lambda f: os.path.join(VID, f)
     bg_game = os.path.join(WORK, 'bg_game.png')
     bg_end = os.path.join(WORK, 'bg_end.png')
+    for _, _, _, f in SEGS:
+        if f and not os.path.exists(src(f)):
+            raise SystemExit('缺素材 ' + src(f))
     blurred_bg(src('5a.mp4'), 0, bg_game)
     blurred_bg(src('9.mp4'), 0, bg_end)
     clips, info = [], []
@@ -299,7 +354,7 @@ def grab(t, w=480):
 
 
 def sheet(cells, cols, path, tw=480):
-    font = ImageFont.truetype(FONT, 20)
+    font = ImageFont.truetype(FONT, 20 if tw >= 400 else 15)
     th = int(tw * H / W)
     rows = (len(cells) + cols - 1) // cols
     S = Image.new('RGB', (cols * (tw + 8) + 8, rows * (th + 34) + 8), (30, 30, 30))
@@ -321,13 +376,13 @@ def check():
     for txt, s, e in SUBS:
         t = (s + e) / 2 - SONG_START
         cells.append((t, f'字幕 {txt[:8]} {t:.1f}s'))
-    sheet(cells, 5, os.path.join(OUTD, '檢查_縮圖.png'))
+    sheet(cells, LAY['sheet_cols'], os.path.join(OUTD, LAY['sheet_name']), tw=LAY['sheet_tw'])
     cuts = []
     for name, a, b, _ in SEGS[:-1]:
         c = b - SONG_START
         for dt in (-0.25, 0.0, 0.25):
             cuts.append((c + dt, f'{name}|切 {c:.1f}s {dt:+.2f}'))
-    sheet(cuts, 6, os.path.join(OUTD, '檢查_切點.png'), tw=320)
+    sheet(cuts, LAY['cut_cols'], os.path.join(OUTD, LAY['cut_name']), tw=LAY['cut_tw'])
     # 逐格亮度：找閃黑
     r = run([FFMPEG, '-v', 'error', '-i', FINAL, '-vf', 'scale=96:54', '-f', 'rawvideo', '-pix_fmt', 'gray', '-'])
     a = np.frombuffer(r.stdout, np.uint8).reshape(-1, 54 * 96).mean(axis=1)
@@ -339,7 +394,19 @@ def check():
 
 
 if __name__ == '__main__':
-    mode = sys.argv[1] if len(sys.argv) > 1 else 'build'
+    if len(sys.argv) < 2 or sys.argv[1] not in ('h', 'v', 'hdry'):
+        print(__doc__)
+        raise SystemExit(0)
+    m = sys.argv[1]
+    if m == 'hdry':     # 橫式乾跑：只驗路徑，不輸出
+        set_mode('h')
+        for _, _, _, f in SEGS:
+            if f:
+                pth = os.path.join(VID, f)
+                print(('OK ' if os.path.exists(pth) else '缺 ') + pth)
+        raise SystemExit(0)
+    set_mode(m)
+    mode = sys.argv[2] if len(sys.argv) > 2 else 'build'
     if mode in ('build', 'all'):
         build()
     if mode in ('check', 'all'):
