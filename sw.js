@@ -6,6 +6,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;
+  if (u.pathname.includes('/game/music/')) return;   // 音樂：Range 請求回 206，放進 Cache 會出錯，交給瀏覽器自己處理（2026-11-12）
   e.respondWith(fetch(e.request).then(r => {
     if (r.ok) { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); }
     return r;

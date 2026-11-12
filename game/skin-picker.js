@@ -1,7 +1,7 @@
 // game/skin-picker.js — 「棋具」頁：棋盤、棋子分開配（2026-11-12 使用者選設計稿 B，docs/design/skins-2026-11-12/）
 // 上面大預覽，下面一排選盤、一排選子；點了就換、就存（RushSkin 存 localStorage），闖關、教學、兩儀殿、試煉場一起換。
 // 鎖住的（之後的解鎖制度）顯示鎖頭、不能選；後台關閉的（S.isOff）不顯示。棋盤、棋子各兩排（8 欄自動換行）。一屏不捲動（中英日韓 × 360×640／375×667）。
-// 依賴 game.html 的全域：lang、RushSkin（game/skin.js）。
+// 入口在設定頁（#setSkin），不再有首頁按鈕。依賴 game.html 的全域：lang、RushSkin（game/skin.js）。
 (() => {
   if (!window.RushSkin) return;
   const S = window.RushSkin;
@@ -39,24 +39,19 @@
 #skinPick .dot{position:absolute;width:18px;height:18px;border-radius:50%}
 #skinPick .dot.fig{width:20px;height:20px;border-radius:0;background-color:transparent}
 #skinPick .snote{flex:none;margin:auto 0 0;font-size:12px;color:var(--text2);text-align:center}
-#skinEntry{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;margin:clamp(6px,1.4dvh,14px) auto 0;padding:0 22px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
-#skinEntry .pair{position:relative;width:30px;height:22px;flex:none}
-#skinEntry .pair i{position:absolute;width:16px;height:16px;border-radius:50%}
-#skinEntry .pair i.fig{border-radius:0}
+.skPair{position:relative;width:30px;height:22px;flex:none;margin:0 0 0 0;display:inline-block}
+.skPair i{position:absolute;width:16px;height:16px;border-radius:50%}
+.skPair i.fig{border-radius:0}
 `;
   document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }));
 
-  // ---------- 入口：首頁三張卡下面一顆細長按鈕（上排圖示列在 360 寬已經放不下） ----------
-  const entry = document.createElement('button'); entry.type = 'button'; entry.id = 'skinEntry';
-  const entryLabel = () => {
+  // ---------- 入口：設定頁的「棋具」列（2026-11-12 從首頁拿掉，改由設定頁打開）；game.html 用 window.RushSkinPicker.open()／pair() ----------
+  const pairHTML = () => {
     const fg = !!S.get().black.fig;   // 造型棋子：不要底色、不要圈
-    entry.innerHTML = `<span class="pair" aria-hidden="true"><i class="${fg ? 'fig' : ''}" style="left:0;top:0;background:var(--sk-b);box-shadow:${fg ? 'none' : 'var(--sk-b-sh),0 0 0 1.5px #8A90A0'}"></i><i class="${fg ? 'fig' : ''}" style="left:12px;top:6px;background:var(--sk-w);box-shadow:${fg ? 'none' : 'var(--sk-w-sh)'}"></i></span><span></span>`;
-    entry.lastChild.textContent = U('entry');
+    return `<span class="skPair" aria-hidden="true"><i class="${fg ? 'fig' : ''}" style="left:0;top:0;background:var(--sk-b);box-shadow:${fg ? 'none' : 'var(--sk-b-sh),0 0 0 1.5px #8A90A0'}"></i><i class="${fg ? 'fig' : ''}" style="left:12px;top:6px;background:var(--sk-w);box-shadow:${fg ? 'none' : 'var(--sk-w-sh)'}"></i></span>`;
   };
-  const cards = document.getElementById('toPick')?.parentNode;
-  if (cards) { cards.after(entry); entryLabel(); }
-  new MutationObserver(() => { entryLabel(); if (!root.hidden) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-  entry.onclick = () => open();
+  const refreshSet = () => { if (typeof window.renderSet === 'function') window.renderSet(); };
+  new MutationObserver(() => { if (!root.hidden) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 
   // ---------- 棋具頁 ----------
   const root = document.createElement('div'); root.id = 'skinPick'; root.hidden = true;
@@ -122,10 +117,12 @@
   }
   function open() { root.hidden = false; history.pushState({ skin: 1 }, ''); render(); root.querySelector('[data-x]').focus(); }
   function close() {
-    root.hidden = true; root.innerHTML = ''; entry.focus();
+    root.hidden = true; root.innerHTML = ''; const back = document.getElementById('setSkin'); if (back) back.focus();
     if (history.state && history.state.skin) history.back();
   }
   addEventListener('popstate', () => { if (!root.hidden) { root.hidden = true; root.innerHTML = ''; } });
   addEventListener('resize', () => { if (!root.hidden) drawPreview(root.querySelector('canvas')); });
-  S.onChange(() => { entryLabel(); if (!root.hidden) drawPreview(root.querySelector('canvas')); });   // 棋子圖載入完重畫
+  S.onChange(() => { if (!root.hidden) drawPreview(root.querySelector('canvas')); });
+  window.RushSkinPicker = { open, pair: pairHTML };
+  refreshSet();   // 棋子圖載入完重畫
 })();

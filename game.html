@@ -40,10 +40,6 @@ html, body { touch-action: manipulation; margin: 0; background: var(--bg); color
 .iosSteps { margin: 6px 0 4px; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.5; }
 .iosSteps svg { width: 20px; height: 20px; vertical-align: -4px; fill: none; stroke: var(--gold); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ico { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.langs { position: absolute; right: 8px; top: calc(56px + env(safe-area-inset-top)); z-index: 5; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-.langs[hidden] { display: none; }
-.langs button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--text); font-size: 16px; text-align: left; }
-.langs button[aria-pressed="true"] { color: var(--gold); font-weight: 700; }
 .sq { width: 64px; height: 60px; flex: none; border: 0; border-radius: 16px; background: var(--panel); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; }
 .sq .ico { width: 22px; height: 22px; }
 .sq.gold { color: var(--gold); }
@@ -262,6 +258,35 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
   .trev .bt .btn { height: 48px !important; }
   #sPlay .info { padding-top: 4px; }
 }
+/* 設定頁（2026-11-12 使用者選設計稿 SetA：一頁清單） */
+#sSet .setBody { padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: clamp(8px, 1.8dvh, 12px); }
+#sSet .setTop { justify-content: flex-start; }
+#sSet .setTop b { font-size: 18px; }
+#sSet .acc { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px 14px; border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); color: var(--text); text-align: left; cursor: default; }
+#sSet .acc .av { width: 40px; height: 40px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+#sSet .acc .av .ico { width: 22px; height: 22px; color: var(--text2); }
+#sSet .acc .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#sSet .acc .tx b { font-size: 16px; }
+#sSet .acc .tx span { font-size: 13px; color: var(--text2); line-height: 1.35; }
+#sSet .grp { display: flex; flex-direction: column; gap: 6px; }
+#sSet .grp > span { font-size: 13px; color: var(--text2); padding-left: 4px; }
+#sSet .card { border-radius: 16px; background: var(--panel); padding: 2px 14px; }
+#sSet .card .sep { height: 1px; background: var(--line); }
+#sSet .vrow { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+#sSet .vrow label { display: flex; align-items: center; gap: 8px; width: 112px; flex: none; font-size: 15px; min-width: 0; white-space: nowrap; }
+#sSet .vrow label .ico { width: 20px; height: 20px; flex: none; }
+#sSet .vrow input[type=range] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--gold); }
+#sSet .vrow output { width: 28px; text-align: right; font-family: var(--num); font-size: 16px; color: var(--gold); flex: none; }
+#sSet .lrow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 15px; text-align: left; }
+#sSet .lrow > .ico { width: 22px; height: 22px; margin: 0 4px; flex: none; }
+#sSet .lrow .nm { flex: 1; min-width: 0; }
+#sSet .lrow .val { font-size: 14px; color: var(--text2); min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sSet .lrow .chev { width: 20px; height: 20px; flex: none; color: var(--text2); transition: transform .15s; }
+#sSet .lrow[aria-expanded="true"] .chev { transform: rotate(90deg); }
+#sSet .langRow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 0 10px; }
+#sSet .langRow[hidden] { display: none; }
+#sSet .langRow button { min-height: 44px; padding: 0 4px; border-radius: 10px; border: 1px solid var(--line2); background: transparent; color: var(--text); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#sSet .langRow button[aria-pressed="true"] { border: 2px solid var(--gold); color: var(--gold); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .bar > div, .plus, .pbar > div { transition: none; } }
 </style>
 </head>
@@ -274,13 +299,10 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
     <div><a href="score.html" class="icob" aria-label="詰題試煉場" data-i18n-aria="backA"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><circle cx="15" cy="9" r="2.2" fill="currentColor"/></svg></a>
     <a href="https://rush.hangsau.app/alchemy/" class="icob gold" aria-label="邪修煉丹爐" data-i18n-aria="alchemy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14v3a7 7 0 0 1-14 0z"/><path d="M7 9V7M17 9V7M8 18l-1 3M16 18l1 3M12 19v2"/><path d="M10 5c0-1.2 1-1.6 1-3M14 5c0-1.2 1-1.6 1-3"/></svg></a></div>
     <div>
-      <button type="button" class="icob" data-sound aria-pressed="true"></button>
-      <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
-      <button type="button" class="icob" id="openMsg" aria-label="給作者留言" data-i18n-aria="msgBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></button>
+      <button type="button" class="icob" id="openSet" aria-label="設定" data-i18n-aria="setT"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       <button type="button" class="icob" id="shareBtn" aria-label="分享" data-i18n-aria="share"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
       <button type="button" class="icob gold" id="openBoard" aria-label="看排行榜" data-i18n-aria="openBoard"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg></button>
     </div>
-    <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
   </div>
   <div class="pad homeHead">
     <h1>Gomoku Rush</h1>
@@ -302,6 +324,39 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
     <span class="tx" data-i18n="instT">加到主畫面，下次一鍵開啟</span>
     <button type="button" class="btn gold" id="instGo" data-i18n="instBtn">安裝</button>
     <button type="button" class="icob" id="instNo" aria-label="先不要" data-i18n-aria="instNo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+</section>
+
+<!-- 設定（2026-11-12 使用者選設計稿 SetA）：帳號（之後開放）、音量、棋具、語言、留言 -->
+<section id="sSet" class="screen" hidden>
+  <div class="topbar setTop">
+    <button type="button" class="icob" id="setBack" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <b data-i18n="setT">設定</b>
+  </div>
+  <div class="setBody">
+    <div class="acc" role="group" aria-disabled="true">
+      <span class="av"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 14.5-4 16 0"/></svg></span>
+      <span class="tx"><b data-i18n="accT">帳號</b><span data-i18n="accSub">登入後成績跟著你換裝置（之後開放）</span></span>
+    </div>
+    <div class="grp">
+      <span data-i18n="setSnd">聲音</span>
+      <div class="card">
+        <div class="vrow"><label for="volSfx"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="currentColor" stroke="none"/></svg><span data-i18n="setSfx">落子音效</span></label><input id="volSfx" type="range" min="0" max="100" step="1" value="70"><output id="volSfxN" for="volSfx">70</output></div>
+        <div class="sep"></div>
+        <div class="vrow"><label for="volBgm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><span data-i18n="setBgm">音樂</span></label><input id="volBgm" type="range" min="0" max="100" step="1" value="30"><output id="volBgmN" for="volBgm">30</output></div>
+      </div>
+    </div>
+    <div class="grp">
+      <span data-i18n="setMore">外觀與其他</span>
+      <div class="card">
+        <button type="button" class="lrow" id="setSkin"><span id="setSkinPair"></span><span class="nm" data-i18n="setSkin">棋具</span><span class="val" id="setSkinVal"></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <div class="sep"></div>
+        <button type="button" class="lrow" id="setLang" aria-expanded="false" aria-controls="setLangRow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg><span class="nm" data-i18n="setLang">語言</span><span class="val" id="setLangVal"></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <div class="langRow" id="setLangRow" role="group" aria-label="Language" hidden></div>
+        <div class="sep"></div>
+        <button type="button" class="lrow" id="openMsg"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><span class="nm" data-i18n="msgBtn">給作者留言</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -577,7 +632,7 @@ const API = 'https://vcf-game-api.psyhangsau.workers.dev';
 // 段位尺（2026-11-08a 新評分）：下面兩行由 vcf-slover tools/apply_ladder.py 依 engine/rank_lines.json 改寫，不要手改
 const LOW = /*LADDER*/[0, 60, 86, 122, 175, 249, 349, 480, 649, 860, 1120]/*END*/;   // 各段題目分下限：見習生、初段…九段、傳說
 const BUILD = 'dev';   // 部署時 tools/deploy_rush.sh 換成 commit 短碼，並寫 version.txt；dev＝本機，不檢查更新
-const SAFE_SCREENS = ['sHome', 'sPick', 'sStart'];   // 有新版時可以重新整理的畫面（見「自動更新」）
+const SAFE_SCREENS = ['sHome', 'sPick', 'sStart', 'sSet'];   // 有新版時可以重新整理的畫面（見「自動更新」）
 let updPending = false;
 const SCORE_VER = '2026-11-09b';   // 評分版本：送進 /run，排行榜只排這一版（練習場不記）
 const START_AB = /*START*/[45, 72, 102, 146, 209, 295, 409, 558, 747, 981, 1400]/*END*/;  // 起始能力分＝起始段位區間的幾何中點（見習生＝初段線×0.75）
@@ -618,6 +673,7 @@ const I18N = {
     abLine: '能力分 {a}（{r}題目分 {lo}–{hi}{next}）', abNext: '，到 {top} 升{r}',
     placeDemoted: '能力分掉到{r}以下，這局不上排行榜。', sending: '送出成績中…', place: '段位榜：今天第 {a}・全部第 {b}',
     sendFail: '排行榜連不上，成績還沒送出。', retry: '重新送出成績', review: '看我解的題', again: '再來一局',
+    setT: '設定', accT: '帳號', accSub: '登入後成績跟著你換裝置（之後開放）', setSnd: '聲音', setSfx: '落子音效', setBgm: '音樂', setMore: '外觀與其他', setSkin: '棋具', setLang: '語言',
     boardT: '排行榜', close: '關閉', msgBtn: '給作者留言', msgT: '給作者留言', msgHint: '建議、遇到的問題、想要的功能都可以寫，只有作者看得到。', msgPh: '想說的話', msgContactPh: '聯絡方式（選填，想收到回覆再填，例如 IG 或 email）', msgSend: '送出', msgOk: '收到了，謝謝！', msgFail: '沒送出去，請稍後再試。', msgEmpty: '請先寫點什麼。', reviewT: '這局的題目', reviewHint: '點「打開」會在試煉場看解答、自己試走（試煉場目前只有中文）。',
     tabRank: '煉獄之門', noteNone: '沒有解開題目', noRankLine: '一題都沒解開，這局不判段位。', capLine: '能力分 {a} 到了{r}，但這局最難只解開{p}題，所以判{p}。', report: '回報', reportT: '回報題目 #{id}', rk_answer: '答案有問題', rk_unfair: '題目不合理', rk_other: '其他', reportPh: '哪裡有問題？（可不填）', reportSend: '送出', reportOk: '已送出，謝謝！', reportFail: '送不出去，稍後再試', soundOn: '開聲音', soundOff: '關聲音', backA: '詰題試煉場', alchemy: '邪修煉丹爐', todayNo: '今天第', boardShort: '排行', revShort: '題目', lastRev: '上一局的題目', rvBack: '返回', rvPrevQ: '上一題', rvNextQ: '下一題', placeAll: '全部排行第 {b} 名', placeNone: '一題都沒解開，這局不上排行榜。', noMiss: '不算錯，再下一次', abLbl: '能力分', boardNote: '依能力分排名；段位由能力分決定（例：200–315 分＝四段），段位高的一定排前面', tabTotal: '總分榜', tabPps: '每秒榜', today: '今天', all: '全部', loadingRows: '讀取中…', empty: '還沒有人上榜',
     boardFail: '排行榜連不上', noPuzzles: '這局沒有題目', tagOk: '解開', tagNg: '沒解', open: '打開',
@@ -648,6 +704,7 @@ const I18N = {
     abLine: 'Rating {a} ({r}: puzzle score {lo}–{hi}{next})', abNext: '; {top} reaches {r}',
     placeDemoted: 'Your rating fell below {r}, so this run is not on the leaderboard.', sending: 'Submitting…', place: 'Rank board: #{a} today · #{b} all time',
     sendFail: "Couldn't reach the leaderboard. Score not submitted yet.", retry: 'Submit again', review: 'My puzzles', again: 'Play again',
+    setT: 'Settings', accT: 'Account', accSub: 'Sign in to keep your scores across devices (coming later)', setSnd: 'Sound', setSfx: 'Stone sound', setBgm: 'Music', setMore: 'Look & more', setSkin: 'Board & stones', setLang: 'Language',
     boardT: 'Leaderboard', close: 'Close', msgBtn: 'Message the developer', msgT: 'Message the developer', msgHint: 'Suggestions, problems, feature ideas: only the developer can read this.', msgPh: 'Your message', msgContactPh: 'Contact (optional, only if you want a reply, e.g. Instagram or email)', msgSend: 'Send', msgOk: 'Got it, thank you!', msgFail: "Couldn't send. Please try again later.", msgEmpty: 'Please write something first.', reviewT: 'Puzzles this run', reviewHint: 'Open shows the solution in the puzzle lab, where you can try other lines (the lab is in Chinese for now).',
     tabRank: 'Purgatory Gate', noteNone: 'No puzzle solved', noRankLine: 'No puzzle solved, so no rank this run.', capLine: 'Rating {a} reached {r}, but the hardest puzzle you solved was {p}, so your rank is {p}.', report: 'Report', reportT: 'Report puzzle #{id}', rk_answer: 'Wrong answer', rk_unfair: 'Unfair puzzle', rk_other: 'Other', reportPh: 'What is wrong? (optional)', reportSend: 'Send', reportOk: 'Sent. Thank you!', reportFail: 'Could not send. Try again later.', soundOn: 'Sound on', soundOff: 'Sound off', backA: 'Puzzle trial room', alchemy: 'Rogue Alchemy Furnace', todayNo: 'Today #', boardShort: 'Ranks', revShort: 'Puzzles', lastRev: 'Last run’s puzzles', rvBack: 'Back', rvPrevQ: 'Prev', rvNextQ: 'Next', placeAll: 'All time: #{b}', placeNone: 'No puzzle solved, so this run is not on the leaderboard.', noMiss: 'Not a miss. Try again.', abLbl: 'Rating', boardNote: 'Ranked by rating. Your rank comes from your rating (e.g. 200–315 = 4 dan), so a higher rank always places higher.', tabTotal: 'Score', tabPps: 'Pts/sec', today: 'Today', all: 'All time', loadingRows: 'Loading…', empty: 'No entries yet',
     boardFail: "Couldn't load the leaderboard", noPuzzles: 'No puzzles this run', tagOk: 'Solved', tagNg: 'Missed', open: 'Open',
@@ -678,6 +735,7 @@ const I18N = {
     abLine: 'レーティング {a}（{r}：問題点 {lo}–{hi}{next}）', abNext: '、{top} で{r}',
     placeDemoted: 'レーティングが{r}を下回ったため、今回はランキングに載りません。', sending: '送信中…', place: '段位ランキング：今日 {a} 位・全期間 {b} 位',
     sendFail: 'ランキングに接続できず、まだ送信されていません。', retry: 'もう一度送信', review: '解いた問題を見る', again: 'もう一度',
+    setT: '設定', accT: 'アカウント', accSub: 'ログインすると成績を端末間で引き継げます（近日対応）', setSnd: 'サウンド', setSfx: '着手音', setBgm: '音楽', setMore: '外観ほか', setSkin: '碁盤と石', setLang: '言語',
     boardT: 'ランキング', close: '閉じる', msgBtn: '作者にメッセージ', msgT: '作者にメッセージ', msgHint: '提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。', msgPh: 'メッセージ', msgContactPh: '連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）', msgSend: '送信', msgOk: '受け取りました。ありがとうございます！', msgFail: '送信できませんでした。しばらくしてからもう一度お試しください。', msgEmpty: 'まず何か書いてください。', reviewT: '今回の問題', reviewHint: '「開く」で試練場に移動し、解答の確認や試し打ちができます（試練場は今のところ中国語のみ）。',
     tabRank: '煉獄の門', noteNone: '解けた問題なし', noRankLine: '1 問も解けなかったため、今回は段位なしです。', capLine: 'レーティング {a} は{r}ですが、解けた最も難しい問題が{p}なので{p}と判定します。', report: '報告', reportT: '問題 #{id} を報告', rk_answer: '答えがおかしい', rk_unfair: '問題が不自然', rk_other: 'その他', reportPh: 'どこがおかしいですか？（任意）', reportSend: '送信', reportOk: '送信しました。ありがとうございます！', reportFail: '送信できませんでした。後でもう一度お試しください', soundOn: '音をオン', soundOff: '音をオフ', backA: '詰題の試練場', alchemy: '邪道の錬丹炉', todayNo: '今日の順位', boardShort: 'ランキング', revShort: '問題', lastRev: '前回の問題', rvBack: '戻る', rvPrevQ: '前の問題', rvNextQ: '次の問題', placeAll: '全期間 {b} 位', placeNone: '1 問も解けなかったため、ランキングに載りません。', noMiss: 'ミスではありません。もう一度どうぞ', abLbl: 'レーティング', boardNote: 'レーティング順。段位はレーティングで決まる（例：200–315＝四段）ので、段位が高い人が必ず上に来ます', tabTotal: '合計', tabPps: '毎秒', today: '今日', all: '全期間', loadingRows: '読み込み中…', empty: 'まだ記録がありません',
     boardFail: 'ランキングに接続できません', noPuzzles: '今回は問題がありません', tagOk: '正解', tagNg: '不正解', open: '開く',
@@ -708,6 +766,7 @@ const I18N = {
     abLine: '능력 점수 {a} ({r}: 문제 점수 {lo}–{hi}{next})', abNext: ', {top}이면 {r}',
     placeDemoted: '능력 점수가 {r} 아래로 떨어져 이번 판은 순위표에 오르지 않습니다.', sending: '전송 중…', place: '단 순위: 오늘 {a}위 · 전체 {b}위',
     sendFail: '순위표에 연결하지 못해 아직 전송되지 않았습니다.', retry: '다시 전송', review: '내가 푼 문제', again: '다시 하기',
+    setT: '설정', accT: '계정', accSub: '로그인하면 기록이 기기를 넘어 이어져요 (추후 지원)', setSnd: '소리', setSfx: '착수음', setBgm: '음악', setMore: '외형 및 기타', setSkin: '판과 돌', setLang: '언어',
     boardT: '순위표', close: '닫기', msgBtn: '개발자에게 메시지', msgT: '개발자에게 메시지', msgHint: '제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.', msgPh: '메시지', msgContactPh: '연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)', msgSend: '보내기', msgOk: '잘 받았습니다. 감사합니다!', msgFail: '보내지 못했습니다. 잠시 후 다시 시도해 주세요.', msgEmpty: '먼저 내용을 적어 주세요.', reviewT: '이번 판 문제', reviewHint: '"열기"를 누르면 연습장에서 정답을 보고 직접 둬 볼 수 있습니다 (연습장은 아직 중국어만 지원).',
     tabRank: '연옥의 문', noteNone: '푼 문제 없음', noRankLine: '한 문제도 풀지 못해 이번 판은 단을 판정하지 않습니다.', capLine: '능력 점수 {a}는 {r}이지만 가장 어려운 해결 문제가 {p}이라 {p}으로 판정합니다.', report: '신고', reportT: '문제 #{id} 신고', rk_answer: '정답이 이상함', rk_unfair: '문제가 이상함', rk_other: '기타', reportPh: '무엇이 문제인가요? (선택)', reportSend: '보내기', reportOk: '보냈습니다. 감사합니다!', reportFail: '보내지 못했습니다. 잠시 후 다시 시도하세요', soundOn: '소리 켜기', soundOff: '소리 끄기', backA: '묘수풀이 연습장', alchemy: '사파 연단로', todayNo: '오늘 순위', boardShort: '순위', revShort: '문제', lastRev: '지난 판 문제', rvBack: '뒤로', rvPrevQ: '이전 문제', rvNextQ: '다음 문제', placeAll: '전체 {b}위', placeNone: '한 문제도 풀지 못해 순위표에 오르지 않습니다.', noMiss: '실수 아님. 다시 두세요', abLbl: '능력 점수', boardNote: '능력 점수 순위입니다. 단은 능력 점수로 정해지므로(예: 200–315 = 4단) 단이 높으면 항상 위에 있습니다', tabTotal: '총점', tabPps: '초당', today: '오늘', all: '전체', loadingRows: '불러오는 중…', empty: '아직 기록이 없습니다',
     boardFail: '순위표에 연결할 수 없음', noPuzzles: '이번 판에는 문제가 없습니다', tagOk: '성공', tagNg: '실패', open: '열기',
@@ -732,7 +791,7 @@ function pickLang() {
   if (saved && I18N[saved]) return saved;
   const nav = (navigator.languages || [navigator.language || 'zh']).join(',').toLowerCase();
   for (const l of nav.split(',')) { const k = l.slice(0, 2); if (I18N[k]) return k; }
-  return 'zh';
+  return 'en';
 }
 let lang = pickLang();
 const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
@@ -748,13 +807,8 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n, { b: BONUS_SEC, w: MAX_WRONG }); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
-  $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
-  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); renderStart(); });
+  if (typeof renderSet === 'function') renderSet();
 }
-
-function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
-$('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
-document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
 
 
 // ---------- 聲音（2026-11-07 使用者：落子聲、最後 5 秒倒數聲、聲音開關）：Web Audio 現場合成，不用音檔 ----------
@@ -773,6 +827,15 @@ function audio() {   // 手機要在使用者點擊時才能開聲音，所以�
 function audioWake() { if (soundOn && actx && actx.state !== 'running') actx.resume().catch(() => {}); }
 addEventListener('pointerdown', audioWake, { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWake(); });
+// 音量（2026-11-12 設定頁）：落子聲、倒數嗶聲都接到同一個 master GainNode，gain = 音效音量 / 70（70 ＝ 改版前的音量）
+const clampVol = (v, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : d; };
+const vol = { sfx: clampVol(store.get('vcfgame.vol.sfx'), 70), bgm: clampVol(store.get('vcfgame.vol.bgm'), 30) };
+let sfxMaster = null;
+function sfxOut(a) {
+  if (!sfxMaster || sfxMaster.context !== a) { sfxMaster = a.createGain(); sfxMaster.connect(a.destination); }
+  sfxMaster.gain.value = vol.sfx / 70;
+  return sfxMaster;
+}
 function stoneSound(soft) {   // 落子：短促的木頭「叩」聲（帶通雜訊＋低頻敲擊）；電腦擋的那手小聲一點
   const a = audio(); if (!a) return;
   const t = a.currentTime, vol = soft ? 0.35 : 0.6;
@@ -781,22 +844,101 @@ function stoneSound(soft) {   // 落子：短促的木頭「叩」聲（帶通�
   const src = a.createBufferSource(); src.buffer = n;
   const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 1.4;
   const g1 = a.createGain(); g1.gain.setValueAtTime(vol, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  src.connect(bp).connect(g1).connect(a.destination); src.start(t);
+  src.connect(bp).connect(g1).connect(sfxOut(a)); src.start(t);
   const o = a.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(160, t + 0.08);
   const g2 = a.createGain(); g2.gain.setValueAtTime(vol * 0.7, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-  o.connect(g2).connect(a.destination); o.start(t); o.stop(t + 0.1);
+  o.connect(g2).connect(sfxOut(a)); o.start(t); o.stop(t + 0.1);
 }
 function beep(last) {   // 倒數：5、4、3、2 短嗶，最後 1 秒高一點、長一點
   const a = audio(); if (!a) return;
   const t = a.currentTime, o = a.createOscillator(), gn = a.createGain();
   o.type = 'sine'; o.frequency.value = last ? 1320 : 880;
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
-  o.connect(gn).connect(a.destination); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
+  o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
 function renderSound() {
   document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', T(soundOn ? 'soundOff' : 'soundOn')); });
 }
-document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); if (soundOn) stoneSound(); });
+document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); bgmSync(); if (soundOn) stoneSound(); });
+
+// ---------- 背景音樂（2026-11-12）：HTMLAudioElement、preload none；首頁／選單／開始／結算／設定播 menu，解題畫面播 play ----------
+// 點過畫面才開始播（手機限制）；兩首交叉淡化 0.6 秒；曲尾 1.5 秒淡出、回開頭淡入；切到背景、靜音、音樂 0 都直接 pause；載不到就安靜失敗。
+const MUSIC = { menu: 'game/music/menu.mp3', play: 'game/music/play.mp3' };
+const BGM_MAX = 0.8, BGM_XFADE = 0.6, BGM_EDGE = 1.5;
+const bgm = {};
+let bgmTrack = 'menu', bgmTouched = false, bgmTimer = null, bgmLast = 0;
+function bgmGet(n) {
+  if (!bgm[n]) {
+    const el = new Audio(); el.preload = 'none'; el.loop = false; el.volume = 0; el.src = MUSIC[n];
+    el.addEventListener('error', () => {});
+    bgm[n] = { el, f: 0 };
+  }
+  return bgm[n];
+}
+function bgmWanted() { return soundOn && vol.bgm > 0 && bgmTouched && document.visibilityState === 'visible'; }
+function bgmPauseAll() { for (const n in bgm) { bgm[n].f = 0; bgm[n].el.volume = 0; if (!bgm[n].el.paused) bgm[n].el.pause(); } }
+function bgmStep() {
+  const now = performance.now(), dt = Math.min(0.25, (now - bgmLast) / 1000); bgmLast = now;
+  if (!bgmWanted()) { bgmPauseAll(); bgmStop(); return; }
+  let busy = false;
+  for (const n in bgm) {
+    const t = bgm[n], el = t.el, tgt = n === bgmTrack ? 1 : 0;
+    t.f = tgt > t.f ? Math.min(1, t.f + dt / BGM_XFADE) : Math.max(0, t.f - dt / BGM_XFADE);
+    if (tgt === 0 && t.f <= 0.001) { t.f = 0; if (!el.paused) el.pause(); continue; }
+    busy = true;
+    let lf = 1;
+    const d = el.duration;
+    if (Number.isFinite(d) && d > 0) {
+      const rem = d - el.currentTime;
+      if (el.ended || rem <= 0.05) { try { el.currentTime = 0; } catch {} lf = 0; }
+      else lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / BGM_EDGE));
+    }
+    if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    el.volume = Math.max(0, Math.min(1, (vol.bgm / 100) * BGM_MAX * t.f * lf));
+  }
+  if (!busy) bgmStop();
+}
+function bgmStop() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
+function bgmSync() {
+  if (!bgmWanted()) { bgmPauseAll(); bgmStop(); return; }
+  bgmGet(bgmTrack);
+  if (!bgmTimer) { bgmLast = performance.now(); bgmTimer = setInterval(bgmStep, 80); }
+  bgmStep();
+}
+function bgmSetTrack() {
+  const n = (!$('sPlay').hidden) ? 'play' : 'menu';
+  if (n !== bgmTrack) { bgmTrack = n; bgmSync(); }
+}
+const bgmTouch = () => { if (!bgmTouched) bgmTouched = true; if (bgmWanted()) { const t = bgm[bgmTrack]; if (!t || t.el.paused) bgmSync(); } };
+for (const ev of ['pointerdown', 'click', 'keydown', 'touchend']) addEventListener(ev, bgmTouch, { capture: true, passive: true });
+document.addEventListener('visibilitychange', () => bgmSync());
+new MutationObserver(bgmSetTrack).observe($('sPlay'), { attributes: true, attributeFilter: ['hidden'] });
+
+// ---------- 設定頁 ----------
+function renderSet() {
+  if (!$('sSet')) return;
+  const sf = $('volSfx'), bg = $('volBgm');
+  if (sf) { sf.value = vol.sfx; $('volSfxN').textContent = vol.sfx; bg.value = vol.bgm; $('volBgmN').textContent = vol.bgm; }
+  const S = window.RushSkin;
+  if (S) {
+    const nm = (list, id) => { const it = list.find(x => x.id === id); return it ? S.name(it, lang) : ''; };
+    $('setSkinVal').textContent = nm(S.boards, S.boardId()) + '・' + nm(S.stones, S.stonesId());
+    const P = window.RushSkinPicker; $('setSkinPair').innerHTML = P ? P.pair() : '';
+  }
+  $('setLangVal').textContent = LANGS.find(l => l[0] === lang)[1];
+  $('setLangRow').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
+  $('setLangRow').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); applyLang(); renderStart(); });
+}
+$('openSet').onclick = () => show('sSet');
+$('setBack').onclick = () => show('sHome');
+$('setLang').onclick = () => { const o = $('setLangRow').hidden; $('setLangRow').hidden = !o; $('setLang').setAttribute('aria-expanded', String(o)); };
+$('setSkin').onclick = () => { if (window.RushSkinPicker) window.RushSkinPicker.open(); };
+$('volSfx').oninput = (e) => { vol.sfx = clampVol(e.target.value, 70); $('volSfxN').textContent = vol.sfx; if (sfxMaster) sfxMaster.gain.value = vol.sfx / 70; store.set('vcfgame.vol.sfx', String(vol.sfx)); };
+$('volSfx').onchange = () => { if (soundOn && vol.sfx > 0) stoneSound(); };   // 放開時播一聲試聽
+$('volBgm').oninput = (e) => { vol.bgm = clampVol(e.target.value, 30); $('volBgmN').textContent = vol.bgm; store.set('vcfgame.vol.bgm', String(vol.bgm)); bgmSync(); };
+window.RushSkin && window.RushSkin.onChange(renderSet);
+renderSet();
+
 
 // ---------- 引擎（score-worker.js：vcf_move 下一手、電腦擋、判輸贏） ----------
 const engine = new Worker('score-worker.js?v=' + ENGINE_V);
@@ -1070,7 +1212,7 @@ $('go').onclick = async () => {
 };
 function show(id) {
   if (updPending && SAFE_SCREENS.includes(id)) { updReload(id); return; }   // 有新版：在選單畫面換頁時重新整理，不打斷解題
-  for (const s of ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0);
+  for (const s of ['sHome', 'sSet', 'sPick', 'sStart', 'sPlay', 'sEnd']) $(s).hidden = s !== id; window.scrollTo(0, 0);
   if (id === 'sEnd') keepRev();
   if (id === 'sHome') homeRevSync();
   if (SAFE_SCREENS.includes(id)) updCheck();
@@ -1078,7 +1220,7 @@ function show(id) {
 }
 // ---------- 自動更新（2026-11-09 使用者：放桌面當 App 時改版要關掉重開才會換）----------
 // 切回 App（真的離開過）、回到選單畫面時問一次 version.txt（2026-11-09 使用者：不要定時問；也不能用多久沒碰畫面判斷離開，想棋超過五分鐘很正常）；有新版只在首頁／選模式頁／設定畫面重新整理，解題中和結算畫面不動。
-const curScreen = () => ['sHome', 'sPick', 'sStart', 'sPlay', 'sEnd'].find(s => !$(s).hidden);
+const curScreen = () => ['sHome', 'sSet', 'sPick', 'sStart', 'sPlay', 'sEnd'].find(s => !$(s).hidden);
 function updReload(id) {
   try { sessionStorage.setItem('vcfgame.resume', JSON.stringify({ id, rank: startRank })); } catch {}
   location.reload();
