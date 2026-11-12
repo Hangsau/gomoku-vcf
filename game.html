@@ -178,7 +178,7 @@ body.prac #sStart .big60 { color: var(--teal); }
 .prow { padding: 0 8px 6px 16px; display: flex; flex-direction: column; gap: 4px; }
 .prow .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text2); }
 .prow .top b { color: var(--teal); font-size: 15px; }
-.prow .end { min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text2); font-size: 14px; }
+.prow .end { flex: none; min-height: 40px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 20px; background: var(--panel); color: var(--text); font-size: 14px; font-weight: 700; white-space: nowrap; }   /* 2026-11-12 使用者：練習模式好像沒有退出鈕——原本是沒框的灰字，看不出能按 */
 .pbar { height: 8px; margin-right: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
 .pbar > div { height: 100%; background: var(--teal); transition: width .3s; }
 .tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 12px 12px calc(20px + env(safe-area-inset-bottom)); }
