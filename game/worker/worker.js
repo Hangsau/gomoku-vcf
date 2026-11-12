@@ -13,6 +13,7 @@
 // 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
 // POST /learn {vid, ev, l, s, lang} 新手教學進度（2026-11-11 使用者：後台要看走完度、停在哪幾關）；ev＝open／opening／step／done／exam／grad，l＝課號、s＝第幾步；GET /admin/learn
+// 棋具開關（2026-11-12）：GET /skins → {off:{boards,stones},on:{boards,stones}}（公開，快取 60 秒，遊戲用）；GET／POST /admin/skins {off,on}（Bearer／Access）。off＝關閉的（一般項目），on＝打開的（optIn 新棋具，預設關閉）
 // GET  /admin → 手機後台頁（留言＋回報）。只在 rush.hangsau.app/admin* 這條 route 上有效，前面擋 Cloudflare Access（email 驗證碼），
 //      Worker 再驗 Access 的 JWT（env.ACCESS_TEAM、env.ACCESS_AUD），沒設或驗不過一律 403；workers.dev 上的 /admin/* 照舊只認 Bearer 管理密碼
 // 部署：Cloudflare API（metadata 綁 D1 為 DB）；表結構見 game/worker/schema.sql
@@ -507,6 +508,40 @@ async function adminPractice(req, env) {
   const { results } = await env.DB.prepare("SELECT id, t, day, lang, start_rank, final_rank, ab, minutes, added, added_sec, own, helped, wrong, seconds, detail FROM practice ORDER BY id").all();
   return json({ rows: results });
 }
+// 棋具開關（2026-11-12）：settings 表 k='skins_off'，v＝{"boards":[…],"stones":[…],"on":{"boards":[…],"stones":[…]}}（頂層 boards／stones 是關閉的；舊資料沒有 on 照讀）
+async function readSkins(env) {
+  const row = await env.DB.prepare("SELECT v FROM settings WHERE k = 'skins_off'").first();
+  let o = {};
+  try { o = row ? JSON.parse(row.v) || {} : {}; } catch { o = {}; }
+  const arr = (a) => (Array.isArray(a) ? a : []);
+  const on = o.on && typeof o.on === "object" ? o.on : {};
+  return { off: { boards: arr(o.boards), stones: arr(o.stones) }, on: { boards: arr(on.boards), stones: arr(on.stones) } };
+}
+async function getSkins(env) {
+  return new Response(JSON.stringify(await readSkins(env)), { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=60", ...cors } });
+}
+async function adminGetSkins(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  return json(await readSkins(env));
+}
+const SKIN_ID = /^[a-z0-9_-]{1,24}$/;
+function cleanSkinList(a) {
+  if (!Array.isArray(a) || a.length > 100) return null;
+  if (!a.every(x => typeof x === "string" && SKIN_ID.test(x))) return null;
+  return [...new Set(a)];
+}
+async function adminSetSkins(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const o = b && b.off, n = b && b.on === undefined ? { boards: [], stones: [] } : b && b.on;
+  const boards = cleanSkinList(o && o.boards), stones = cleanSkinList(o && o.stones);
+  const onBoards = cleanSkinList(n && n.boards), onStones = cleanSkinList(n && n.stones);
+  if (!boards || !stones || !onBoards || !onStones) return json({ error: "bad fields" }, 400);
+  const on = { boards: onBoards, stones: onStones };
+  await env.DB.prepare("INSERT INTO settings(k, v, t) VALUES ('skins_off', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, t = excluded.t").bind(JSON.stringify({ boards, stones, on }), Date.now()).run();
+  return json({ ok: true, off: { boards, stones }, on });
+}
 async function adminPage(req, env) {
   if (!(await accessOk(req, env))) return new Response("forbidden", { status: 403 });
   return new Response(ADMIN_HTML, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
@@ -549,6 +584,9 @@ export default {
       if (req.method === "POST" && url.pathname === "/tower/end") return await postTowerEnd(req, env);
       if (req.method === "POST" && url.pathname === "/tower/pause") return await postTowerPause(req, env);
       if (req.method === "GET" && url.pathname === "/admin/tower") return await adminTower(req, env);
+      if (req.method === "GET" && url.pathname === "/skins") return await getSkins(env);
+      if (req.method === "GET" && url.pathname === "/admin/skins") return await adminGetSkins(req, env);
+      if (req.method === "POST" && url.pathname === "/admin/skins") return await adminSetSkins(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);

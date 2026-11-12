@@ -8,6 +8,21 @@
 <meta name="apple-mobile-web-app-title" content="Rush 後台">
 <title>Gomoku Rush 後台</title>
 <style>
+/* 棋具分頁（2026-11-12）：哪些棋盤、棋子開放給玩家 */
+.skq { display: flex; flex-wrap: wrap; gap: 8px; }
+.skq button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: 14px; }
+.skr { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 0; border-top: 1px solid var(--line); }
+.skr .pv { flex: none; width: 56px; height: 44px; display: flex; align-items: center; justify-content: center; position: relative; }
+.skr .bd { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--line); background-size: cover; background-position: center; }
+.skr .dt { position: absolute; width: 28px; height: 28px; border-radius: 50%; background-size: contain; background-repeat: no-repeat; background-position: center; }
+.skr .dt.fig { border-radius: 0; background-color: transparent !important; }
+.skr .nm { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 15px; }
+.skr .nm .new { margin-left: 6px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line); }
+.skr .nm small { color: var(--text2); font-size: 12px; overflow-wrap: anywhere; }
+.skr .sw { flex: none; min-width: 84px; min-height: 44px; border-radius: 22px; border: 1px solid var(--ng); background: transparent; color: var(--ng); font: inherit; font-size: 14px; }
+.skr .sw[aria-checked="true"] { border-color: var(--ok); color: var(--ok); }
+.skr .fx { flex: none; min-width: 84px; text-align: center; color: var(--text2); font-size: 13px; }
+#skMsg { min-height: 20px; font-size: 14px; color: var(--ok); } #skMsg.err { color: var(--ng); }
 /* Gomoku Rush 後台（2026-11-08）：玩家留言＋題目回報。只有作者用，前面擋 Cloudflare Access。
    顏色沿用遊戲（game.html）的深色底＋金色重點，讓作者一眼認得是同一個遊戲的東西。
    玩家寫的字一律用 textContent 放進畫面，不當 HTML，避免有人在留言裡塞程式。 */
@@ -84,6 +99,7 @@ details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; displ
     <button type="button" data-tab="st" aria-pressed="false">數據</button>
     <button type="button" data-tab="sc" aria-pressed="false">計分</button>
     <button type="button" data-tab="pz" aria-pressed="false">題庫</button>
+    <button type="button" data-tab="sk" aria-pressed="false">棋具</button>
   </div>
   <div class="filt" id="filt" role="group" aria-label="篩選">
     <button type="button" data-f="open" aria-pressed="true">未處理</button>
@@ -91,6 +107,7 @@ details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; displ
   </div>
 </header>
 <main id="list" aria-live="polite"><p class="msg">載入中…</p></main>
+<script src="/game/skin.js"></script>
 <script>
 'use strict';
 const SITE = 'https://rush.hangsau.app';
@@ -120,8 +137,9 @@ function groups() {   // 同一題的回報併成一張卡
     .sort((x, y) => y.t - x.t);
 }
 function render() {
-  $('filt').hidden = tab === 'st' || tab === 'sc' || tab === 'pz';
+  $('filt').hidden = tab === 'st' || tab === 'sc' || tab === 'pz' || tab === 'sk';
   if (tab === 'pz') return renderBank();
+  if (tab === 'sk') return renderSkins();
   if (tab === 'st') return renderStats();
   if (tab === 'sc') return renderScoring();
   const g = groups();
@@ -531,7 +549,7 @@ function renderStats() {
     catch (e) { alert('停用失敗：' + e.message); b.disabled = false; }
   });
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') loadStMode(true); if (tab === 'sc' && !sc) loadScoring(); render(); });
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (tab === 'st') loadStMode(true); if (tab === 'sc' && !sc) loadScoring(); if (tab === 'sk') loadSkins(); render(); });
 // ---------- 題庫（2026-11-11 使用者：後台找題，段位、黑先白先、手數、盤面子數、題號）----------
 // 資料：網站上的遊戲題庫 game/p/1..10.json（初段..傳說），每題 [黑子, 白子, 手數, 題目分, 攻方 b/w, 題號]；選了哪段才下載那段
 const BANK_FILES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], PZ_PAGE = 50, COLS = 'ABCDEFGHJKLMNOP';
@@ -607,6 +625,74 @@ async function bankSearch() {
 }
 document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
 load();
+
+// ---------- 棋具（2026-11-12 使用者：後台開關哪些棋盤、棋子給玩家用）----------
+// 清單從遊戲本身來（/game/skin.js 的 RushSkin.boards／stones）；關閉的 id 存在 Worker（POST /admin/skins），玩家的 skin.js 最慢 1 分鐘後看到
+const SK_FIXED = ['classic', 'flat'];
+let skOff = { boards: [], stones: [] }, skOn = { boards: [], stones: [] }, skLoaded = false, skMsg = '', skErr = false;
+async function loadSkins() {
+  try { const r = await api('/admin/skins'); skOff = r.off; skOn = r.on || { boards: [], stones: [] }; skLoaded = true; skMsg = ''; }
+  catch (e) { skMsg = '讀不到開關狀態：' + e.message; skErr = true; }
+  if (tab === 'sk') render();
+}
+// next＝{ off:{boards,stones}, on:{boards,stones} }
+async function saveSkins(next) {
+  try {
+    const r = await api('/admin/skins', next);
+    skOff = r.off; skOn = r.on; skMsg = '已儲存，玩家最慢 1 分鐘後看到'; skErr = false; return true;
+  } catch (e) { skMsg = '儲存失敗：' + e.message; skErr = true; return false; }
+}
+const skAbs = (p) => (p ? '/' + p.replace(/^\/+/, '') : '');
+function renderSkins() {
+  const list = $('list'); list.innerHTML = '';
+  const S = window.RushSkin;
+  if (!S) { list.appendChild(el('p', 'msg', '載不到遊戲的棋具清單（/game/skin.js）。請從 rush.hangsau.app/admin 開，不要直接開檔案。')); return; }
+  const msg = el('div', ''); msg.id = 'skMsg'; msg.textContent = skMsg; if (skErr) msg.className = 'err';
+  const q = el('div', 'skq');
+  q.append(
+    btn('全部開放', '', async () => {
+      const optIn = (list) => list.filter(x => x.optIn).map(x => x.id);
+      await saveSkins({ off: { boards: [], stones: [] }, on: { boards: optIn(S.boards), stones: optIn(S.stones) } }); renderSkins();
+    }),
+    btn('新的全部關閉', '', async () => { await saveSkins({ off: skOff, on: { boards: [], stones: [] } }); renderSkins(); }));
+  const sec = (title, kind, items, pv) => {
+    const c = el('div', 'sec'); c.append(el('h2', '', title));
+    for (const it of items) {
+      const fixed = SK_FIXED.includes(it.id), isOff = !fixed && (it.optIn ? !skOn[kind].includes(it.id) : skOff[kind].includes(it.id));
+      const row = el('div', 'skr'), p = el('div', 'pv'); pv(p, it);
+      const nm = el('div', 'nm'); const t = el('span', '', S.name(it, 'zh')); if (it.optIn) t.append(el('small', 'new', '新'));
+      nm.append(t, el('small', '', it.id));
+      row.append(p, nm);
+      if (fixed) row.append(el('span', 'fx', '固定開放'));
+      else {
+        const sw = el('button', 'sw', isOff ? '關閉' : '開放'); sw.type = 'button'; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', String(!isOff)); sw.setAttribute('aria-label', S.name(it, 'zh'));
+        sw.onclick = async () => {
+          sw.disabled = true;
+          const key = it.optIn ? 'on' : 'off', src = it.optIn ? skOn : skOff, was = src[kind];
+          const wantOpen = isOff, now = (it.optIn ? wantOpen : !wantOpen) ? [...new Set([...was, it.id])] : was.filter(x => x !== it.id);
+          const next = { off: skOff, on: skOn }; next[key] = { ...src, [kind]: now };
+          const ok = await saveSkins(next);
+          renderSkins();   // 失敗時 skOff／skOn 沒變，重畫就是切回去
+          return ok;
+        };
+        row.append(sw);
+      }
+      c.append(row);
+    }
+    return c;
+  };
+  const bPv = (p, b) => { const d = el('div', 'bd'); d.style.backgroundColor = b.color; if (b.img) d.style.backgroundImage = `url('${skAbs(b.img)}')`; p.append(d); };
+  const sPv = (p, s) => {
+    [[s.black, 2, true], [s.white, 22, false]].forEach(([sd, x, blk]) => {
+      const d = el('span', 'dt' + (sd.fig ? ' fig' : '')); d.style.left = x + 'px'; d.style.top = (blk ? 4 : 12) + 'px';
+      if (sd.img) d.style.backgroundImage = `url('${skAbs(sd.img)}')`;
+      if (!sd.fig) { d.style.backgroundColor = sd.fill; d.style.boxShadow = `0 0 0 1px ${sd.ring || '#8A90A0'}`; }
+      p.append(d);
+    });
+  };
+  list.append(msg, q, sec('棋盤', 'boards', S.boards, bPv), sec('棋子', 'stones', S.stones, sPv));
+  if (!skLoaded) msg.textContent = msg.textContent || '讀取開關狀態中…';
+}
 </script>
 </body>
 </html>

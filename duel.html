@@ -860,7 +860,7 @@ function studyDraw() {
       ctx.fillStyle = color === BLACK ? '#F2B544' : RushSkin.ink(false);
       ctx.font = `700 ${Math.round(cell * 0.46)}px 'Chakra Petch', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(String(k + 1), x, y + 1);
+      RushSkin.fillNum(ctx, String(k + 1), x, y + 1, color === BLACK);
     }
   });
   const last = shown.at(-1);
@@ -1115,7 +1115,7 @@ function numbered(seq, atkWhite) {   // 解法手順：攻方、守方交替，�
     ctx.fillStyle = blk ? '#F2B544' : RushSkin.ink(false);
     ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(k + 1), x, y + 1);
+    RushSkin.fillNum(ctx, String(k + 1), x, y + 1, blk);
   });
 }
 function vcfDraw() {

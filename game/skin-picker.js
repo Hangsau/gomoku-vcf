@@ -1,6 +1,6 @@
 // game/skin-picker.js — 「棋具」頁：棋盤、棋子分開配（2026-11-12 使用者選設計稿 B，docs/design/skins-2026-11-12/）
 // 上面大預覽，下面一排選盤、一排選子；點了就換、就存（RushSkin 存 localStorage），闖關、教學、兩儀殿、試煉場一起換。
-// 鎖住的（之後的解鎖制度）顯示鎖頭、不能選。一屏不捲動（中英日韓 × 360×640／375×667）。
+// 鎖住的（之後的解鎖制度）顯示鎖頭、不能選；後台關閉的（S.isOff）不顯示。棋盤、棋子各兩排（8 欄自動換行）。一屏不捲動（中英日韓 × 360×640／375×667）。
 // 依賴 game.html 的全域：lang、RushSkin（game/skin.js）。
 (() => {
   if (!window.RushSkin) return;
@@ -26,7 +26,10 @@
 #skinPick .shd b{font-size:15px;flex:none}
 #skinPick .shd span{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #skinPick .sgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
-#skinPick .sopt{position:relative;height:44px;padding:0;border-radius:12px;border:2px solid var(--line2);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+#skinPick.tight{--sh:40px;gap:6px;padding-top:calc(4px + env(safe-area-inset-top));padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+#skinPick.tight .srow{gap:3px}
+#skinPick.tight .sgrid{gap:3px}
+#skinPick .sopt{position:relative;height:var(--sh,44px);padding:0;border-radius:12px;border:2px solid var(--line2);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
 #skinPick .sopt[aria-pressed="true"]{border-color:var(--gold)}
 #skinPick .sopt.st{background:var(--panel);border-color:transparent}
 #skinPick .sopt.st[aria-pressed="true"]{border-color:var(--gold)}
@@ -34,17 +37,20 @@
 #skinPick .sopt .lk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,12,18,.55);border-radius:10px;color:var(--text)}
 #skinPick .sw{width:30px;height:30px;border-radius:8px}
 #skinPick .dot{position:absolute;width:18px;height:18px;border-radius:50%}
+#skinPick .dot.fig{width:20px;height:20px;border-radius:0;background-color:transparent}
 #skinPick .snote{flex:none;margin:auto 0 0;font-size:12px;color:var(--text2);text-align:center}
 #skinEntry{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;margin:clamp(6px,1.4dvh,14px) auto 0;padding:0 22px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
 #skinEntry .pair{position:relative;width:30px;height:22px;flex:none}
 #skinEntry .pair i{position:absolute;width:16px;height:16px;border-radius:50%}
+#skinEntry .pair i.fig{border-radius:0}
 `;
   document.head.appendChild(Object.assign(document.createElement('style'), { textContent: css }));
 
   // ---------- 入口：首頁三張卡下面一顆細長按鈕（上排圖示列在 360 寬已經放不下） ----------
   const entry = document.createElement('button'); entry.type = 'button'; entry.id = 'skinEntry';
   const entryLabel = () => {
-    entry.innerHTML = `<span class="pair" aria-hidden="true"><i style="left:0;top:0;background:var(--sk-b);box-shadow:var(--sk-b-sh),0 0 0 1.5px #8A90A0"></i><i style="left:12px;top:6px;background:var(--sk-w);box-shadow:var(--sk-w-sh)"></i></span><span></span>`;
+    const fg = !!S.get().black.fig;   // 造型棋子：不要底色、不要圈
+    entry.innerHTML = `<span class="pair" aria-hidden="true"><i class="${fg ? 'fig' : ''}" style="left:0;top:0;background:var(--sk-b);box-shadow:${fg ? 'none' : 'var(--sk-b-sh),0 0 0 1.5px #8A90A0'}"></i><i class="${fg ? 'fig' : ''}" style="left:12px;top:6px;background:var(--sk-w);box-shadow:${fg ? 'none' : 'var(--sk-w-sh)'}"></i></span><span></span>`;
     entry.lastChild.textContent = U('entry');
   };
   const cards = document.getElementById('toPick')?.parentNode;
@@ -61,9 +67,20 @@
   const PRE = [[3, 3, 1], [4, 4, 0], [5, 5, 1], [4, 5, 1], [6, 4, 0], [5, 3, 0], [3, 5, 1], [6, 6, 0], [6, 5, 1], [5, 7, 0], [2, 5, 1], [8, 4, 0]];
   const FIVE = [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5]];
   const LAST = [6, 5];   // 最後一手剛好連成五
+  // 預覽盤能用的高度 = 整頁高度 − 內距 − 其他區塊高度 − 區塊間距（實際量，不用猜；選項排數變了也不用改數字）
+  function previewRoom(cv) {
+    const cs = getComputedStyle(root), kids = [...root.children], gap = parseFloat(cs.rowGap) || 0;
+    cv.style.display = 'none';
+    const others = kids.filter((k) => k !== cv).reduce((a, k) => a + k.offsetHeight, 0);
+    cv.style.display = '';
+    return root.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - others - gap * (kids.length - 1);
+  }
   function drawPreview(cv) {
-    const avail = Math.min(root.clientWidth - 32, root.clientHeight - 330);
-    const px = Math.max(200, Math.min(420, Math.floor(avail)));
+    root.classList.remove('tight');
+    let room = previewRoom(cv);
+    if (room < 190) { root.classList.add('tight'); room = previewRoom(cv); }   // 放不下：格子 44→40、縮間距
+    const avail = Math.min(root.clientWidth - 32, room);
+    const px = Math.max(190, Math.min(420, Math.floor(avail)));
     const dpr = window.devicePixelRatio || 1;
     cv.width = Math.round(px * dpr); cv.height = Math.round(px * dpr); cv.style.width = cv.style.height = px + 'px';
     const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -78,16 +95,20 @@
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // url 用單引號：整串放在 style="…" 裡
-  const bgOf = (s) => (s.img ? `url('${s.img}') center/cover no-repeat, ` : '') + (s.hi ? `radial-gradient(circle at 35% 30%, ${s.hi}, ${s.fill} 70%)` : s.fill);
+  const bgOf = (s) => {
+    if (s.fig && s.img) return `url('${s.img}') center/contain no-repeat`;   // 造型：不要底色
+    return (s.img ? `url('${s.img}') center/cover no-repeat, ` : '') + (s.hi ? `radial-gradient(circle at 35% 30%, ${s.hi}, ${s.fill} 70%)` : s.fill);
+  };
   const shOf = (s) => [s.ring ? `0 0 0 1.5px ${s.ring}` : '', s.glow ? `0 0 6px ${s.ring}` : ''].filter(Boolean).join(',') || 'none';
+  const swOf = (b) => (b.img ? `url('${b.img}') center/cover no-repeat, ` : '') + b.color;
   function render() {
     const lg = L(), bId = S.boardId(), sId = S.stonesId();
     const bName = S.name(S.boards.find((x) => x.id === bId), lg), sName = S.name(S.stones.find((x) => x.id === sId), lg);
     const lock = (it) => (S.isLocked(it) ? `<span class="lk" title="${esc(U('locked'))}">${IC_LOCK}</span>` : '');
-    const boards = S.boards.map((b) => `<button type="button" class="sopt" data-b="${b.id}" aria-pressed="${b.id === bId}" aria-label="${esc(S.name(b, lg))}"${S.isLocked(b) ? ' disabled' : ''}><span class="sw" style="background:${b.color};background-image:linear-gradient(${b.line} 1px,transparent 1px),linear-gradient(90deg,${b.line} 1px,transparent 1px);background-size:10px 10px;background-position:4px 4px"></span>${lock(b)}</button>`).join('');
-    const stones = S.stones.map((s) => {
+    const boards = S.boards.filter((b) => !S.isOff(b)).map((b) => `<button type="button" class="sopt" data-b="${b.id}" aria-pressed="${b.id === bId}" aria-label="${esc(S.name(b, lg))}"${S.isLocked(b) ? ' disabled' : ''}><span class="sw" style="background:${b.img ? '' : b.color};background-image:linear-gradient(${b.line} 1px,transparent 1px),linear-gradient(90deg,${b.line} 1px,transparent 1px)${b.img ? `,url('${b.img}'),linear-gradient(${b.color},${b.color})` : ''};background-size:10px 10px,10px 10px${b.img ? ',cover,auto' : ''};background-position:4px 4px,4px 4px${b.img ? ',center,0 0' : ''};background-repeat:repeat,repeat${b.img ? ',no-repeat,no-repeat' : ''}"></span>${lock(b)}</button>`).join('');
+    const stones = S.stones.filter((s) => !S.isOff(s)).map((s) => {
       const p = S.preview('night', s.id);   // 按鈕底是深色，用深色盤算描邊，黑子才看得到
-      return `<button type="button" class="sopt st" data-s="${s.id}" aria-pressed="${s.id === sId}" aria-label="${esc(S.name(s, lg))}"${S.isLocked(s) ? ' disabled' : ''}><span class="dot" style="left:calc(50% - 15px);top:6px;background:${bgOf(p.black)};box-shadow:${shOf(p.black)}"></span><span class="dot" style="left:calc(50% - 3px);top:16px;background:${bgOf(p.white)};box-shadow:${shOf(p.white)}"></span>${lock(s)}</button>`;
+      return `<button type="button" class="sopt st" data-s="${s.id}" aria-pressed="${s.id === sId}" aria-label="${esc(S.name(s, lg))}"${S.isLocked(s) ? ' disabled' : ''}><span class="dot${s.fig ? ' fig' : ''}" style="left:calc(50% - 15px);top:6px;background:${bgOf(p.black)};box-shadow:${shOf(p.black)}"></span><span class="dot${s.fig ? ' fig' : ''}" style="left:calc(50% - 3px);top:16px;background:${bgOf(p.white)};box-shadow:${shOf(p.white)}"></span>${lock(s)}</button>`;
     }).join('');
     root.innerHTML = `<div class="sbar"><button type="button" class="icob" data-x aria-label="${esc(U('close'))}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><b>${esc(U('title'))}</b></div>
 <canvas aria-hidden="true"></canvas>

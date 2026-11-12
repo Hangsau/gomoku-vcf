@@ -412,7 +412,7 @@ function drawBoard() {
   const stone = (t, col, label) => {
     const [x, y] = xy(t);
     g += RushSkin.svgStone(x, y, 15, col === 'b');
-    if (label) g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(col === 'b')}">${label}</text>`;
+    if (label) g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(col === 'b')}"${RushSkin.numHalo(col === 'b') ? ` stroke="${RushSkin.numHalo(col === 'b')}" stroke-width="3" paint-order="stroke" stroke-linejoin="round"` : ''}>${label}</text>`;
   };
   black.forEach(t => stone(t, 'b'));
   white.forEach(t => stone(t, 'w'));
@@ -434,7 +434,7 @@ function drawBoard() {
     (preview.line || []).forEach((t, k) => {
       const [x, y] = xy(t), bl = (k % 2 === 0) !== !!atkWhite();
       g += RushSkin.svgStone(x, y, 15, bl, 'fill-opacity=".62"') + `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="4 3"/>`;
-      g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(bl)}">${Math.floor(k / 2) + 1}</text>`;
+      g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${RushSkin.ink(bl)}"${RushSkin.numHalo(bl) ? ` stroke="${RushSkin.numHalo(bl)}" stroke-width="3" paint-order="stroke" stroke-linejoin="round"` : ''}>${Math.floor(k / 2) + 1}</text>`;
     });
     (preview.mark || []).forEach(t => { const [x, y] = xy(t); g += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="6" fill="none" stroke="#D2601A" stroke-width="2.5" stroke-dasharray="5 3"/>`; });
   }

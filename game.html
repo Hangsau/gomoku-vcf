@@ -1011,7 +1011,7 @@ function draw() {
       ctx.fillStyle = blk ? '#F2B544' : RushSkin.ink(false);
       ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(String(k + 1), x, y + 1);
+      RushSkin.fillNum(ctx, String(k + 1), x, y + 1, blk);
     });
     return;
   }
