@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>設定 C 底部抽屜方塊</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input[type=range]{accent-color:#F2B544}
+</style>
+</helmet>
+<div style="position: relative; width: 375px; height: 667px; box-sizing: border-box; overflow: hidden; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif;">
+  <div style="display: flex; justify-content: flex-end; align-items: center; padding: 6px 8px 0;">
+    <button type="button" aria-label="排行榜" style="width: 48px; height: 48px; border: 0; background: transparent; color: #F2B544; display: inline-flex; align-items: center; justify-content: center;">
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>
+    </button>
+    <button type="button" aria-label="設定" style="width: 48px; height: 48px; border: 0; background: transparent; color: #EDEFF5; display: inline-flex; align-items: center; justify-content: center;">
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+    </button>
+  </div>
+  <div style="padding: 10px 20px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 36px; color: #F2B544; text-align: center;">Gomoku Rush</div>
+    <div style="border-radius: 16px; background: #161A24; padding: 16px; font-size: 18px; font-weight: 700;">練習</div>
+    <div style="border-radius: 16px; background: #161A24; padding: 16px; font-size: 18px; font-weight: 700;">挑戰</div>
+  </div>
+
+  <div style="position: absolute; inset: 0; background: rgba(5,7,12,.7); display: flex; align-items: flex-end;">
+    <div style="width: 100%; box-sizing: border-box; border-radius: 24px 24px 0 0; background: #161A24; border-top: 1px solid #2E3546; padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="width: 40px; height: 4px; border-radius: 2px; background: #2E3546; align-self: center;"></div>
+      <h2 style="margin: 0; font-size: 20px;">設定</h2>
+
+      <div style="border-radius: 14px; background: #1F2A3D; padding: 2px 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; height: 50px;">
+          <label for="scSfx" style="display: flex; align-items: center; gap: 6px; width: 62px; flex: none; font-size: 14px;">
+            <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 18px; height: 18px; flex: none;"><circle cx="12" cy="12" r="8" fill="#EDEFF5"/></svg>落子
+          </label>
+          <input id="scSfx" type="range" min="0" max="100" value="60" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+          <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">60</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 50px;">
+          <label for="scBgm" style="display: flex; align-items: center; gap: 6px; width: 62px; flex: none; font-size: 14px;">
+            <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 18px; height: 18px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>音樂
+          </label>
+          <input id="scBgm" type="range" min="0" max="100" value="30" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+          <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">30</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+        <button type="button" style="height: 84px; border: 0; border-radius: 14px; background: #1F2A3D; color: #EDEFF5; font-family: inherit; font-size: 15px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+          <span style="position: relative; width: 34px; height: 26px;"><i style="position: absolute; left: 0; top: 0; width: 19px; height: 19px; border-radius: 50%; background: #14161C; box-shadow: 0 0 0 1.5px #8A90A0;"></i><i style="position: absolute; left: 14px; top: 7px; width: 19px; height: 19px; border-radius: 50%; background: #F4F4F0;"></i></span>棋具
+        </button>
+        <button type="button" style="height: 84px; border: 0; border-radius: 14px; background: #1F2A3D; color: #EDEFF5; font-family: inherit; font-size: 15px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round;"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 14.5-4 16 0"/></svg>帳號
+        </button>
+        <button type="button" style="height: 84px; border: 0; border-radius: 14px; background: #1F2A3D; color: #EDEFF5; font-family: inherit; font-size: 15px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>語言
+        </button>
+        <button type="button" style="height: 84px; border: 0; border-radius: 14px; background: #1F2A3D; color: #EDEFF5; font-family: inherit; font-size: 15px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>給作者留言
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

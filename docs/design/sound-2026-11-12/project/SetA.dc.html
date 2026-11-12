@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>設定 A 一頁清單</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input[type=range]{accent-color:#F2B544}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; overflow: hidden; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column;">
+  <div style="display: flex; align-items: center; padding: 6px 8px 0;">
+    <button type="button" aria-label="返回" style="width: 48px; height: 48px; border: 0; background: transparent; color: #EDEFF5; display: inline-flex; align-items: center; justify-content: center;">
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <b style="font-size: 18px;">設定</b>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 12px;">
+    <button type="button" style="display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 14px; border: 1px solid #2E3546; border-radius: 16px; background: #161A24; color: #EDEFF5; font-family: inherit; text-align: left;">
+      <span style="width: 40px; height: 40px; border-radius: 50%; background: #1F2A3D; display: inline-flex; align-items: center; justify-content: center; flex: none;">
+        <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #B6BCCB; fill: none; stroke-width: 2; stroke-linecap: round;"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 14.5-4 16 0"/></svg>
+      </span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><b style="font-size: 16px;">帳號</b><span style="font-size: 13px; color: #B6BCCB;">登入後成績跟著你換裝置（之後開放）</span></span>
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #B6BCCB; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #B6BCCB; padding-left: 4px;">聲音</span>
+      <div style="border-radius: 16px; background: #161A24; padding: 2px 14px;">
+        <div style="display: flex; align-items: center; gap: 10px; height: 52px;">
+          <label for="saSfx" style="display: flex; align-items: center; gap: 8px; width: 92px; flex: none; font-size: 15px;">
+            <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; flex: none;"><circle cx="12" cy="12" r="8" fill="#EDEFF5"/></svg>落子音效
+          </label>
+          <input id="saSfx" type="range" min="0" max="100" value="60" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+          <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">60</span>
+        </div>
+        <div style="height: 1px; background: #252B3A;"></div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 52px;">
+          <label for="saBgm" style="display: flex; align-items: center; gap: 8px; width: 92px; flex: none; font-size: 15px;">
+            <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>音樂
+          </label>
+          <input id="saBgm" type="range" min="0" max="100" value="30" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+          <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">30</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #B6BCCB; padding-left: 4px;">外觀與其他</span>
+      <div style="border-radius: 16px; background: #161A24; padding: 2px 14px;">
+        <button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 54px; padding: 0; border: 0; background: transparent; color: #EDEFF5; font-family: inherit; font-size: 15px; text-align: left;">
+          <span style="position: relative; width: 30px; height: 22px; flex: none;"><i style="position: absolute; left: 0; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #14161C; box-shadow: 0 0 0 1.5px #8A90A0;"></i><i style="position: absolute; left: 12px; top: 6px; width: 16px; height: 16px; border-radius: 50%; background: #F4F4F0;"></i></span>
+          <span style="flex-grow: 1;">棋具</span><span style="font-size: 14px; color: #B6BCCB;">榧木盤・雲子</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #B6BCCB; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <div style="height: 1px; background: #252B3A;"></div>
+        <button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 54px; padding: 0; border: 0; background: transparent; color: #EDEFF5; font-family: inherit; font-size: 15px; text-align: left;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 22px; height: 22px; margin: 0 4px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>
+          <span style="flex-grow: 1;">語言</span><span style="font-size: 14px; color: #B6BCCB;">繁體中文</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #B6BCCB; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <div style="height: 1px; background: #252B3A;"></div>
+        <button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 54px; padding: 0; border: 0; background: transparent; color: #EDEFF5; font-family: inherit; font-size: 15px; text-align: left;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 22px; height: 22px; margin: 0 4px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>
+          <span style="flex-grow: 1;">給作者留言</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #B6BCCB; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
