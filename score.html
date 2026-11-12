@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>詰題試煉場</title>
-<script src="score-i18n.js?v=2" defer></script>
+<script src="score-i18n.js?v=3" defer></script>
 <script src="game/skin.js?v=20261112b"></script><!-- 棋盤樣式，跟 Rush 同一份 -->
 <script src="score_rules.js?v=20261109b"></script><!-- 給分規則（跟本機題庫同一份，vcf-slover web/score_rules.js 複製來的；2026-11-08） -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -770,15 +770,20 @@ const PART_RULE = {
   '計算量': () => '每一手各值多少分，全題加總：底分 20，再加 20 × log₂(這一手能下的衝四數 ÷ 2)。只有一條路的手只拿底分；能下的衝四越多、要排除的假路越多，這一手越值錢。',
   '深誘餌': () => '錯的第一手要能連走至少 4 手、後一手用到這條路下過的子，而且連到解答用的棋，才算深誘餌。每條得 6 × 手數，走到被白反擊才斷再 +10，全部最多 120 分。太淺又單獨一區、不影響解答的錯路，每條扣 2 分，最多扣 20。',
   '禁手陷阱': () => '看起來能衝四，其實是禁手的點。同一點只算一次；第 k 個得 3 × (1 − 0.5^k)。',
-  '解禁': () => '這一點原本是禁手，黑自己下的子讓它變可以下，解答又真的下在那裡。每次 30 分。',
+  '解禁': () => '這一點原本是禁手，黑自己下的子讓它變可以下，解答又真的下在那裡。分三種：真解禁 60 分（形狀還是三三，只因其中一個三要成活四的點本身是禁手才能下；或原本四四、其中一個四再下會長連）；路過解禁 15 分（黑棋路過把那些子用掉，形狀不再是禁手）；原本兩個二組成的三三禁點、後來變成四三點的不算分。',
   '反四': () => '白擋下的同時自己成四，黑要先擋回去。第 k 次得 8 × (1 − 0.5^k)。',
   '預備反四': () => '黑擋回去的四，用到更早佈好、之前沒用過的子。每次 30 分。',
   '手順': () => '後面才該下的四，現在先衝就贏不了。每手最多算 2 個，每個 15 分。',
   '禁手勝': r => r.features && r.features.forbidFinish ? '白先的最後一手逼黑擋在禁手點：黑擋不了，白勝。這叫禁手勝，加 30 分。' : '白先的結局是逼黑擋在禁手點（黑擋不了）才算禁手勝，加 30 分。這題的結局不是。',
   '繞路': r => `除了解答之外還有 ${r.detours ?? 0} 條多走幾手也能贏的路，每條扣 15 分。`,
 };
-function liftHands(r) {   // 真的算分的解禁手（features.liftAt 是引擎計分用的清單，格式 G8@4）
-  return new Set(String((r.features || {}).liftAt || '').split(/\s+/).filter(Boolean).map(x => +x.split('@')[1]));
+const LIFT_P = { true: 'liftTrue', pass: 'liftPass', fourThree: 'liftFourThree' };   // 解禁種類 → 規則檔的分數參數
+const LIFT_NAME = { true: '真解禁', pass: '路過解禁', fourThree: '三三禁點變四三，不算分' };
+function liftHands(r) {   // 解禁手：手數 → 種類（facts.lifts 的 at 格式 G8@4；種類與分數都照 score_rules.js，2026-11-12）
+  const M = new Map(), L = (r.facts || {}).lifts;
+  if (L && self.ScoreRules) L.forEach(l => M.set(+String(l.at).split('@')[1], ScoreRules.liftKind(l)));
+  else String((r.features || {}).liftAt || '').split(/\s+/).filter(Boolean).forEach(x => M.set(+x.split('@')[1], 'pass'));
+  return M;
 }
 // 每一項分數的來源。pts 加總要等於引擎的分數，對不上就在畫面上標出來（audit 也用同一份）
 function sources(r) {
@@ -791,7 +796,7 @@ function sources(r) {
   S.forEach(n => {
     const go = 2 * n.n - 1;
     (n.traps || []).forEach(t => { if (seen.has(t)) return; seen.add(t); tk++; R.禁手陷阱.push({ hand: n.n, t: `第 ${n.n} 手：${t} 是禁手`, pts: 3 * (1 - 0.5 ** tk), go }); });
-    if (lifts.has(n.n)) R.解禁.push({ hand: n.n, t: `第 ${n.n} 手下在 ${n.atk}`, pts: 30, go });
+    if (lifts.has(n.n)) { const lk = lifts.get(n.n); R.解禁.push({ hand: n.n, t: `第 ${n.n} 手下在 ${n.atk}：${LIFT_NAME[lk]}`, pts: self.ScoreRules ? ScoreRules.P[LIFT_P[lk]] : 15, go }); }
     if (n.counter) { ck++; R.反四.push({ hand: n.n, t: `第 ${n.n} 手白擋 ${n.def} 同時成四`, pts: 8 * (1 - 0.5 ** ck), go: go + 1 }); }
     if (n.counterPrep) R.預備反四.push({ hand: n.n, t: `第 ${n.n} 手 ${n.atk} 擋回去`, pts: 30, go });
     (n.order || []).forEach(t => R.手順.push({ hand: n.n, t: `第 ${n.n} 手：${t} 現在衝太早`, pts: 15, go }));
