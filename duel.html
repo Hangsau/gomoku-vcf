@@ -145,7 +145,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 @media (max-height: 680px) {   /* 小手機（360×640、375×667）：英日文規則說明會換兩三行，再收一點 */
   .modal h2 { font-size: 18px; }
   .modal .chips button { min-height: 36px; }
-  #ruleNote, #vOpts > .muted { font-size: 12px !important; line-height: 1.3 !important; }
+  #ruleNote, #vNote { font-size: 12px !important; line-height: 1.3 !important; }
   .modal .box { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
 }
 .stamp { align-self: center; width: 124px; height: 124px; flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); text-align: center; }
@@ -214,7 +214,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <span class="lbl" data-i18n="sideL">我拿</span><div class="chips" id="cSide"></div>
     </div>
     <div class="kopt" id="vOpts" hidden>
-    <span class="muted" style="font-size: 13px; line-height: 1.45;" data-i18n="vNote"></span>
+    <span class="lbl" data-i18n="vModeL">玩法</span><div class="chips" id="cVmode" style="--n: 2;"></div>
+    <span class="muted" id="vNote" style="font-size: 13px; line-height: 1.45;"></span>
     <span class="lbl" data-i18n="vRankL">題目段位</span>
     <div class="stepper"><button type="button" id="vRkDown" aria-label="−">−</button><div class="val" id="vRkName" aria-live="polite"></div><button type="button" id="vRkUp" aria-label="+">+</button></div>
     <span class="lbl" data-i18n="vThinkL">每題思考時間</span><div class="chips" id="cThink"></div>
@@ -290,7 +291,7 @@ const I18N = {
     closed: '房間已關閉', started: '對手入座，開始！',
     idleT: "還在嗎？", idleSub: "{s} 秒內沒回應會自動離開座位", idleStay: "我還在", idleLeave: "離開", idleOut: "太久沒回應，已離開座位", waited: "等了 {m} 分", whyIdle: "{c}太久沒回應",
     studyReq: "申請研棋", studyCancel: "取消申請", studyWait: "已申請研棋，等對方回覆…", studyAsk: "{name} 申請研棋（這盤不計勝負）", studyYes: "同意", studyNo: "拒絕", studyDeclined: "對方拒絕研棋", studyCool: "剛被拒絕，等一下才能再申請", studyOn: "研棋中", studyStatus: "研棋中・第 {n}／{m} 手・兩人都可以下", studyWatch: "觀戰中・研棋第 {n}／{m} 手", sPrev: "◀ 上一手", sNext: "下一手 ▶", sReal: "回到實戰", sEnd: "結束研棋", review: "研棋", studyOverTitle: "研棋", studyOverWhy: "研棋結束・這盤不計勝負", studyStarted: "開始研棋",
-    kindL: "類型", kGomoku: "五子棋", kVcf: "VCF 明鏡台", vRankL: "題目段位", vThinkL: "每題思考時間", vT60: "1 分鐘", vT180: "3 分鐘", vT300: "5 分鐘", vTargetL: "先解開幾題獲勝", vP3: "3 題", vP5: "5 題", vNote: "兩人做同一串題目、同樣順序，各自往下做，先解開指定題數的贏・下錯、時間到或放棄就換下一題・想的時候不扣時間，第一手落下後只剩 5 秒、每手 +1 秒・題目都在 20 手內", vThinkShort: "每題 {t}", vTargetShort: "搶 {p}", vThink: "思考中", vArmed: "落子中・第 {n} 手", vOutS: "出局", vSolvedS: "解開！", vReady: "準備…", vStThink: "想好再落子・剩 {t}", vStArmed: "落子中・剩 {s} 秒", vStOut: "{why}・下一題…", vStWatch: "觀戰中・第 {n} 題・剩 {t}", vPuzzleN: "第 {n} 題", vAtkB: "黑先", vAtkW: "白先", vWhy_five: "對方連五", vWhy_forbid: "被禁手", vWhy_nofour: "沒四了", vWhy_time: "時間到", vWhy_bad: "這手不行", notfour: "這手不是四", noMiss: "不算錯，再想想", vEndScore: "解開 {a} : {b}", vNoBank: "題庫讀不到，這局取消", ranks: ["見習生", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "傳說"], vP10: "10 題", vSkip: "放棄這題", vWhy_skip: "放棄", vSolvedNext: "解開！下一題…", vSolvedR: "解開", rvBtn: "看每題解法", rvPrev: "上一題", rvNext: "下一題", rvSol: "正解", rvMine: "我的", rvK: "第 {k}／{n} 題", rvNone: "沒做到", rvNoSol: "找不到解法", rvOpp: "對手",
+    kindL: "類型", kGomoku: "五子棋", kVcf: "VCF 明鏡台", vRankL: "題目段位", vThinkL: "每題思考時間", vT60: "1 分鐘", vT180: "3 分鐘", vT300: "5 分鐘", vTargetL: "先解開幾題獲勝", vP3: "3 題", vP5: "5 題", vNote: "兩人做同一串題目、同樣順序，各自往下做，先解開指定題數的贏・下錯、時間到或放棄就換下一題・想的時候不扣時間，第一手落下後只剩 5 秒、每手 +1 秒・題目都在 20 手內", vThinkShort: "每題 {t}", vTargetShort: "搶 {p}", vThink: "思考中", vArmed: "落子中・第 {n} 手", vOutS: "出局", vSolvedS: "解開！", vReady: "準備…", vStThink: "想好再落子・剩 {t}", vStArmed: "落子中・剩 {s} 秒", vStOut: "{why}・下一題…", vStWatch: "觀戰中・第 {n} 題・剩 {t}", vPuzzleN: "第 {n} 題", vAtkB: "黑先", vAtkW: "白先", vWhy_five: "對方連五", vWhy_forbid: "被禁手", vWhy_nofour: "沒四了", vWhy_time: "時間到", vWhy_bad: "這手不行", notfour: "這手不是四", noMiss: "不算錯，再想想", vEndScore: "解開 {a} : {b}", vNoBank: "題庫讀不到，這局取消", ranks: ["見習生", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "傳說"], vP10: "10 題", vSkip: "放棄這題", vWhy_skip: "放棄", vSolvedNext: "解開！下一題…", vSolvedR: "解開", rvBtn: "看每題解法", rvPrev: "上一題", rvNext: "下一題", rvSol: "正解", rvMine: "我的", rvK: "第 {k}／{n} 題", rvNone: "沒做到", rvNoSol: "找不到解法", rvOpp: "對手", vModeL: "玩法", vm_line: "一線天", vm_eight: "八仙渡", vmn_line: "同一題・先解開的得分", vmn_eight: "各解各的・先解開 {p} 題的贏", vNoteC: "想的時候不扣時間，第一手落下後只剩 5 秒、每手 +1 秒・題目都在 20 手內", vRoundWin: "{name} 解開！+1", vRoundNone: "沒人解開・這是正解", vNext: "下一題準備中…", vWhy_late: "慢了一步", vStOutWait: "{why}・等這題結果…",
     ruleL: "規則", r_free: "普規", r_renju: "連珠", r_tara: "塔拉", r_tara10: "塔拉山口", r_swap2: "Swap2", n_free: "無禁手・五連以上都算贏・黑先", n_renju: "黑先・黑棋不能下三三、四四、長連（點到只提醒）", n_tara: "第一手天元，前五手由內往外擴（3×3→9×9），每手後可換手；之後照連珠", n_tara10: "同塔拉；第四手後可轉山口：黑提 10 個第五手候選，白挑一個", n_swap2: "先手擺二黑一白，後手選執黑、執白，或再加一黑一白讓對方選色；無禁手，長連不算贏", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "第 {n} 手下好了，要換手嗎？（你現在執{c}）", bKeep: "不換，執{c}", bSwap: "換手，改執{c}", bYama: "轉山口", pZone: "下第 {n} 手（{c}），要在中央 {w}×{w} 內", pOffer: "點棋盤選 {k} 個第五手候選（形狀一樣的不能同時選）", bOffer: "送出候選 {n}/{k}", bClear: "清除", pPick: "從黑方的候選裡挑一個當第五手", pS2Place: "放第 {n} 顆（{c}）", pS2Choice: "要執黑、執白，還是再加一黑一白？", bTakeB: "執黑", bTakeW: "執白", bAdd: "再加一黑一白", pS2Color: "選你要執的顏色", waitDecide: "等對手決定…", watchPhase: "觀戰中・等{name}", swapped: "換手了：你現在執{c}", zoneErr: "這手要下在中央 {w}×{w} 內", symmetric: "候選裡有形狀一樣的，換一個", notoffer: "要從黑方的候選裡挑", pCenter: "第 1 手（黑棋）下在天元", centerErr: "第 1 手要下在天元",
   },
   en: {
@@ -311,7 +312,7 @@ const I18N = {
     closed: 'Room closed', started: 'Opponent seated — game on!',
     idleT: "Still there?", idleSub: "You’ll leave your seat in {s} s if there’s no reply", idleStay: "I’m here", idleLeave: "Leave", idleOut: "No reply for too long — you left your seat", waited: "waiting {m} min", whyIdle: "{c} didn’t respond",
     studyReq: "Request study", studyCancel: "Cancel request", studyWait: "Study requested — waiting for a reply…", studyAsk: "{name} wants to study together (this game won’t count)", studyYes: "Accept", studyNo: "Decline", studyDeclined: "Your opponent declined", studyCool: "Declined — wait a bit before asking again", studyOn: "Studying", studyStatus: "Studying · move {n} of {m} · both can play", studyWatch: "Watching · study move {n} of {m}", sPrev: "◀ Back", sNext: "Forward ▶", sReal: "Back to game", sEnd: "End study", review: "Study", studyOverTitle: "Study", studyOverWhy: "Study ended · this game doesn’t count", studyStarted: "Study started",
-    kindL: "Mode", kGomoku: "Gomoku", kVcf: "VCF Mirror", vRankL: "Puzzle rank", vThinkL: "Thinking time per puzzle", vT60: "1 min", vT180: "3 min", vT300: "5 min", vTargetL: "Puzzles to win", vP3: "3", vP5: "5", vNote: "Same puzzles in the same order; each player goes at their own pace, first to solve the target number wins · A wrong move, time-out or skip takes you to the next puzzle · Thinking is free; once you play your first move you have 5 s, +1 s per move · All puzzles are 20 moves or fewer", vThinkShort: "{t} per puzzle", vTargetShort: "first to {p}", vThink: "Thinking", vArmed: "Playing · move {n}", vOutS: "Out", vSolvedS: "Solved!", vReady: "Get ready…", vStThink: "Read it, then play · {t} left", vStArmed: "Playing · {s} s left", vStOut: "{why} · next puzzle…", vStWatch: "Watching · puzzle {n} · {t} left", vPuzzleN: "Puzzle {n}", vAtkB: "Black to play", vAtkW: "White to play", vWhy_five: "Opponent made five", vWhy_forbid: "Forced onto a forbidden point", vWhy_nofour: "No fours left", vWhy_time: "Time’s up", vWhy_bad: "That move fails", notfour: "That move is not a four", noMiss: "Doesn’t count as a miss", vEndScore: "Solved {a} : {b}", vNoBank: "Couldn’t load puzzles; game cancelled", ranks: ["Apprentice", "1 dan", "2 dan", "3 dan", "4 dan", "5 dan", "6 dan", "7 dan", "8 dan", "9 dan", "Legend"], vP10: "10", vSkip: "Skip", vWhy_skip: "Skipped", vSolvedNext: "Solved! Next puzzle…", vSolvedR: "Solved", rvBtn: "Review the puzzles", rvPrev: "Prev", rvNext: "Next", rvSol: "Answer", rvMine: "Mine", rvK: "Puzzle {k}/{n}", rvNone: "Not reached", rvNoSol: "No solution found", rvOpp: "Theirs",
+    kindL: "Mode", kGomoku: "Gomoku", kVcf: "VCF Mirror", vRankL: "Puzzle rank", vThinkL: "Thinking time per puzzle", vT60: "1 min", vT180: "3 min", vT300: "5 min", vTargetL: "Puzzles to win", vP3: "3", vP5: "5", vNote: "Same puzzles in the same order; each player goes at their own pace, first to solve the target number wins · A wrong move, time-out or skip takes you to the next puzzle · Thinking is free; once you play your first move you have 5 s, +1 s per move · All puzzles are 20 moves or fewer", vThinkShort: "{t} per puzzle", vTargetShort: "first to {p}", vThink: "Thinking", vArmed: "Playing · move {n}", vOutS: "Out", vSolvedS: "Solved!", vReady: "Get ready…", vStThink: "Read it, then play · {t} left", vStArmed: "Playing · {s} s left", vStOut: "{why} · next puzzle…", vStWatch: "Watching · puzzle {n} · {t} left", vPuzzleN: "Puzzle {n}", vAtkB: "Black to play", vAtkW: "White to play", vWhy_five: "Opponent made five", vWhy_forbid: "Forced onto a forbidden point", vWhy_nofour: "No fours left", vWhy_time: "Time’s up", vWhy_bad: "That move fails", notfour: "That move is not a four", noMiss: "Doesn’t count as a miss", vEndScore: "Solved {a} : {b}", vNoBank: "Couldn’t load puzzles; game cancelled", ranks: ["Apprentice", "1 dan", "2 dan", "3 dan", "4 dan", "5 dan", "6 dan", "7 dan", "8 dan", "9 dan", "Legend"], vP10: "10", vSkip: "Skip", vWhy_skip: "Skipped", vSolvedNext: "Solved! Next puzzle…", vSolvedR: "Solved", rvBtn: "Review the puzzles", rvPrev: "Prev", rvNext: "Next", rvSol: "Answer", rvMine: "Mine", rvK: "Puzzle {k}/{n}", rvNone: "Not reached", rvNoSol: "No solution found", rvOpp: "Theirs", vModeL: "Play style", vm_line: "Sky Gap", vm_eight: "Eight Immortals", vmn_line: "Same puzzle · first to solve scores", vmn_eight: "Own pace · first to solve {p} wins", vNoteC: "Thinking is free; once you play your first move you have 5 s, +1 s per move · All puzzles are 20 moves or fewer", vRoundWin: "{name} solved it! +1", vRoundNone: "Nobody solved it · here’s the answer", vNext: "Next puzzle coming…", vWhy_late: "Too slow", vStOutWait: "{why} · waiting for the result…",
     ruleL: "Rules", r_free: "Freestyle", r_renju: "Renju", r_tara: "Taraguchi", r_tara10: "Taraguchi-10", r_swap2: "Swap2", n_free: "No forbidden moves · five or more wins · Black first", n_renju: "Black first · Black can’t play 3-3, 4-4 or overlines (you’ll be warned)", n_tara: "1st stone on the center; the first five expand from 3×3 to 9×9 with a swap option after each; then Renju", n_tara10: "Like Taraguchi; after move 4 Black may go Yamaguchi: offer 10 fifth moves, White picks one", n_swap2: "First player places 2 black + 1 white; second takes Black, White, or adds one of each and lets the first choose. No forbidden moves; overlines don’t win", sideFirst: "First (opens)", sideSecond: "Second", pSwap: "Move {n} is down — swap colors? (you hold {c})", bKeep: "Keep {c}", bSwap: "Swap to {c}", bYama: "Yamaguchi", pZone: "Place move {n} ({c}) inside the central {w}×{w}", pOffer: "Tap {k} candidate fifth moves (no two of the same shape)", bOffer: "Send {n}/{k}", bClear: "Clear", pPick: "Pick one of Black’s candidates as move 5", pS2Place: "Place stone {n} ({c})", pS2Choice: "Take Black, take White, or add one of each?", bTakeB: "Take Black", bTakeW: "Take White", bAdd: "Add one of each", pS2Color: "Choose your color", waitDecide: "Waiting for your opponent to decide…", watchPhase: "Watching · waiting for {name}", swapped: "Colors swapped: you now play {c}", zoneErr: "This move must be inside the central {w}×{w}", symmetric: "Two candidates have the same shape — pick another", notoffer: "Pick one of Black’s candidates", pCenter: "Place move 1 (Black) on the center point", centerErr: "Move 1 must go on the center point",
   },
   ja: {
@@ -332,7 +333,7 @@ const I18N = {
     closed: '部屋が閉じられました', started: '相手が着席、対局開始！',
     idleT: "まだいますか？", idleSub: "{s} 秒以内に返事がないと自動で退席します", idleStay: "います", idleLeave: "退出", idleOut: "応答がなかったので退席しました", waited: "{m} 分待機", whyIdle: "{c}の応答なし",
     studyReq: "検討を申し込む", studyCancel: "申し込みを取り消す", studyWait: "検討を申し込みました。返事待ち…", studyAsk: "{name} が検討を申し込みました（この対局は勝敗なし）", studyYes: "承諾", studyNo: "断る", studyDeclined: "相手が断りました", studyCool: "断られたばかりです。少し待ってから", studyOn: "検討中", studyStatus: "検討中・{n}／{m}手・どちらも打てる", studyWatch: "観戦中・検討 {n}／{m}手", sPrev: "◀ 一手戻る", sNext: "一手進む ▶", sReal: "実戦に戻る", sEnd: "検討終了", review: "検討", studyOverTitle: "検討", studyOverWhy: "検討終了・この対局は勝敗なし", studyStarted: "検討開始",
-    kindL: "モード", kGomoku: "五目並べ", kVcf: "VCF 明鏡台", vRankL: "問題の段位", vThinkL: "1問の考慮時間", vT60: "1分", vT180: "3分", vT300: "5分", vTargetL: "先に解く問題数", vP3: "3問", vP5: "5問", vNote: "同じ問題を同じ順番で、それぞれのペースで解き進め、先に目標数を解いた方の勝ち・失敗・時間切れ・パスで次の問題へ・考える間は減らず、初手を打つと残り5秒、1手ごとに+1秒・問題はすべて20手以内", vThinkShort: "1問 {t}", vTargetShort: "{p}問先取", vThink: "考慮中", vArmed: "着手中・{n}手目", vOutS: "脱落", vSolvedS: "正解！", vReady: "準備…", vStThink: "読んでから打つ・残り {t}", vStArmed: "着手中・残り {s} 秒", vStOut: "{why}・次の問題へ…", vStWatch: "観戦中・第{n}問・残り {t}", vPuzzleN: "第{n}問", vAtkB: "黒先", vAtkW: "白先", vWhy_five: "相手が五連", vWhy_forbid: "禁手に追い込まれた", vWhy_nofour: "四がなくなった", vWhy_time: "時間切れ", vWhy_bad: "その手は失敗", notfour: "この手は四ではありません", noMiss: "ミスにはなりません", vEndScore: "正解 {a} : {b}", vNoBank: "問題を読み込めず中止", ranks: ["見習い", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "伝説"], vP10: "10問", vSkip: "パス", vWhy_skip: "パス", vSolvedNext: "正解！次の問題へ…", vSolvedR: "正解", rvBtn: "各問の解答を見る", rvPrev: "前の問題", rvNext: "次の問題", rvSol: "正解手順", rvMine: "自分", rvK: "第{k}／{n}問", rvNone: "未到達", rvNoSol: "解が見つかりません", rvOpp: "相手",
+    kindL: "モード", kGomoku: "五目並べ", kVcf: "VCF 明鏡台", vRankL: "問題の段位", vThinkL: "1問の考慮時間", vT60: "1分", vT180: "3分", vT300: "5分", vTargetL: "先に解く問題数", vP3: "3問", vP5: "5問", vNote: "同じ問題を同じ順番で、それぞれのペースで解き進め、先に目標数を解いた方の勝ち・失敗・時間切れ・パスで次の問題へ・考える間は減らず、初手を打つと残り5秒、1手ごとに+1秒・問題はすべて20手以内", vThinkShort: "1問 {t}", vTargetShort: "{p}問先取", vThink: "考慮中", vArmed: "着手中・{n}手目", vOutS: "脱落", vSolvedS: "正解！", vReady: "準備…", vStThink: "読んでから打つ・残り {t}", vStArmed: "着手中・残り {s} 秒", vStOut: "{why}・次の問題へ…", vStWatch: "観戦中・第{n}問・残り {t}", vPuzzleN: "第{n}問", vAtkB: "黒先", vAtkW: "白先", vWhy_five: "相手が五連", vWhy_forbid: "禁手に追い込まれた", vWhy_nofour: "四がなくなった", vWhy_time: "時間切れ", vWhy_bad: "その手は失敗", notfour: "この手は四ではありません", noMiss: "ミスにはなりません", vEndScore: "正解 {a} : {b}", vNoBank: "問題を読み込めず中止", ranks: ["見習い", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "伝説"], vP10: "10問", vSkip: "パス", vWhy_skip: "パス", vSolvedNext: "正解！次の問題へ…", vSolvedR: "正解", rvBtn: "各問の解答を見る", rvPrev: "前の問題", rvNext: "次の問題", rvSol: "正解手順", rvMine: "自分", rvK: "第{k}／{n}問", rvNone: "未到達", rvNoSol: "解が見つかりません", rvOpp: "相手", vModeL: "ルール", vm_line: "一線天", vm_eight: "八仙渡", vmn_line: "同じ問題・先に解いた方が得点", vmn_eight: "それぞれ解く・先に{p}問解いた方の勝ち", vNoteC: "考える間は減らず、初手を打つと残り5秒、1手ごとに+1秒・問題はすべて20手以内", vRoundWin: "{name} 正解！+1", vRoundNone: "誰も解けず・正解はこちら", vNext: "次の問題を準備中…", vWhy_late: "一歩遅れ", vStOutWait: "{why}・結果待ち…",
     ruleL: "ルール", r_free: "自由ルール", r_renju: "連珠", r_tara: "タラグチ", r_tara10: "タラグチ10", r_swap2: "Swap2", n_free: "禁手なし・五連以上で勝ち・黒先", n_renju: "黒先・黒は三三・四四・長連が打てません（打つと警告）", n_tara: "1手目は天元。5手目まで中央3×3から9×9へ広がり、毎手後に交代を選べる。その後は連珠", n_tara10: "タラグチと同じ。4手目の後に山口へ：黒が5手目候補を10個出し、白が1つ選ぶ", n_swap2: "先手が黒2白1を置き、後手が黒・白を選ぶか、黒白1つずつ追加して相手に選ばせる。禁手なし、長連は勝ちにならない", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "{n}手目が置かれました。交代しますか？（今は{c}）", bKeep: "交代しない（{c}）", bSwap: "交代して{c}", bYama: "山口へ", pZone: "{n}手目（{c}）を中央 {w}×{w} 内に", pOffer: "5手目の候補を{k}個タップ（同じ形は不可）", bOffer: "候補を送る {n}/{k}", bClear: "クリア", pPick: "黒の候補から5手目を1つ選ぶ", pS2Place: "{n}個目（{c}）を置く", pS2Choice: "黒を持つ、白を持つ、または黒白1つずつ追加？", bTakeB: "黒を持つ", bTakeW: "白を持つ", bAdd: "黒白を1つずつ追加", pS2Color: "自分の色を選ぶ", waitDecide: "相手の判断を待っています…", watchPhase: "観戦中・{name}の番", swapped: "交代：あなたは{c}になりました", zoneErr: "この手は中央 {w}×{w} 内に", symmetric: "同じ形の候補があります。別の点を", notoffer: "黒の候補から選んでください", pCenter: "1手目（黒）を天元に", centerErr: "1手目は天元に打ってください",
   },
   ko: {
@@ -353,7 +354,7 @@ const I18N = {
     closed: '방이 닫혔습니다', started: '상대 착석, 대국 시작!',
     idleT: "아직 계신가요?", idleSub: "{s}초 안에 답이 없으면 자동으로 자리에서 나갑니다", idleStay: "있어요", idleLeave: "나가기", idleOut: "응답이 없어 자리에서 나갔습니다", waited: "{m}분 대기", whyIdle: "{c} 응답 없음",
     studyReq: "복기 신청", studyCancel: "신청 취소", studyWait: "복기를 신청했습니다. 답을 기다리는 중…", studyAsk: "{name}님이 복기를 신청했습니다(이 대국은 승패 없음)", studyYes: "수락", studyNo: "거절", studyDeclined: "상대가 거절했습니다", studyCool: "방금 거절됐습니다. 잠시 후 다시", studyOn: "복기 중", studyStatus: "복기 중 · {n}/{m}수 · 둘 다 둘 수 있음", studyWatch: "관전 중 · 복기 {n}/{m}수", sPrev: "◀ 이전", sNext: "다음 ▶", sReal: "실전으로", sEnd: "복기 끝내기", review: "복기", studyOverTitle: "복기", studyOverWhy: "복기 종료 · 이 대국은 승패 없음", studyStarted: "복기 시작",
-    kindL: "모드", kGomoku: "오목", kVcf: "VCF 명경대", vRankL: "문제 단", vThinkL: "문제당 생각 시간", vT60: "1분", vT180: "3분", vT300: "5분", vTargetL: "먼저 풀 문제 수", vP3: "3문제", vP5: "5문제", vNote: "같은 문제를 같은 순서로 각자 풀어 나가고, 목표 개수를 먼저 푼 쪽이 승리 · 실패·시간 초과·패스하면 다음 문제로 · 생각하는 동안은 줄지 않고, 첫 수를 두면 5초, 수마다 +1초 · 모두 20수 이내 문제", vThinkShort: "문제당 {t}", vTargetShort: "{p}문제 선승", vThink: "생각 중", vArmed: "착수 중 · {n}수째", vOutS: "탈락", vSolvedS: "정답!", vReady: "준비…", vStThink: "읽고 두기 · {t} 남음", vStArmed: "착수 중 · {s}초 남음", vStOut: "{why} · 다음 문제…", vStWatch: "관전 중 · {n}번 문제 · {t} 남음", vPuzzleN: "{n}번 문제", vAtkB: "흑 선", vAtkW: "백 선", vWhy_five: "상대가 5목 완성", vWhy_forbid: "금수에 몰림", vWhy_nofour: "4가 더 없음", vWhy_time: "시간 초과", vWhy_bad: "그 수는 실패", notfour: "이 수는 4가 아닙니다", noMiss: "실수로 치지 않음", vEndScore: "정답 {a} : {b}", vNoBank: "문제를 불러오지 못해 취소", ranks: ["견습생", "초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "전설"], vP10: "10문제", vSkip: "패스", vWhy_skip: "패스", vSolvedNext: "정답! 다음 문제…", vSolvedR: "정답", rvBtn: "문제별 정답 보기", rvPrev: "이전 문제", rvNext: "다음 문제", rvSol: "정답", rvMine: "나", rvK: "{k}/{n}번 문제", rvNone: "도달 못 함", rvNoSol: "해답을 찾지 못함", rvOpp: "상대",
+    kindL: "모드", kGomoku: "오목", kVcf: "VCF 명경대", vRankL: "문제 단", vThinkL: "문제당 생각 시간", vT60: "1분", vT180: "3분", vT300: "5분", vTargetL: "먼저 풀 문제 수", vP3: "3문제", vP5: "5문제", vNote: "같은 문제를 같은 순서로 각자 풀어 나가고, 목표 개수를 먼저 푼 쪽이 승리 · 실패·시간 초과·패스하면 다음 문제로 · 생각하는 동안은 줄지 않고, 첫 수를 두면 5초, 수마다 +1초 · 모두 20수 이내 문제", vThinkShort: "문제당 {t}", vTargetShort: "{p}문제 선승", vThink: "생각 중", vArmed: "착수 중 · {n}수째", vOutS: "탈락", vSolvedS: "정답!", vReady: "준비…", vStThink: "읽고 두기 · {t} 남음", vStArmed: "착수 중 · {s}초 남음", vStOut: "{why} · 다음 문제…", vStWatch: "관전 중 · {n}번 문제 · {t} 남음", vPuzzleN: "{n}번 문제", vAtkB: "흑 선", vAtkW: "백 선", vWhy_five: "상대가 5목 완성", vWhy_forbid: "금수에 몰림", vWhy_nofour: "4가 더 없음", vWhy_time: "시간 초과", vWhy_bad: "그 수는 실패", notfour: "이 수는 4가 아닙니다", noMiss: "실수로 치지 않음", vEndScore: "정답 {a} : {b}", vNoBank: "문제를 불러오지 못해 취소", ranks: ["견습생", "초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "전설"], vP10: "10문제", vSkip: "패스", vWhy_skip: "패스", vSolvedNext: "정답! 다음 문제…", vSolvedR: "정답", rvBtn: "문제별 정답 보기", rvPrev: "이전 문제", rvNext: "다음 문제", rvSol: "정답", rvMine: "나", rvK: "{k}/{n}번 문제", rvNone: "도달 못 함", rvNoSol: "해답을 찾지 못함", rvOpp: "상대", vModeL: "방식", vm_line: "일선천", vm_eight: "팔선도", vmn_line: "같은 문제 · 먼저 푼 쪽이 득점", vmn_eight: "각자 풀기 · {p}문제 먼저 푼 쪽 승리", vNoteC: "생각하는 동안은 줄지 않고, 첫 수를 두면 5초, 수마다 +1초 · 모두 20수 이내 문제", vRoundWin: "{name} 정답! +1", vRoundNone: "아무도 못 풂 · 정답", vNext: "다음 문제 준비 중…", vWhy_late: "한발 늦음", vStOutWait: "{why} · 결과 대기 중…",
     ruleL: "규칙", r_free: "자유룰", r_renju: "렌주", r_tara: "타라구치", r_tara10: "타라구치-10", r_swap2: "Swap2", n_free: "금수 없음 · 5목 이상이면 승 · 흑 선", n_renju: "흑 선 · 흑은 삼삼·사사·장목 금지(두면 경고)", n_tara: "첫 수는 천원, 다섯 수까지 3×3에서 9×9로 넓어지며 매 수 뒤 교대 가능. 이후 렌주", n_tara10: "타라구치와 같음. 4수 뒤 야마구치 가능: 흑이 5수 후보 10개 제시, 백이 하나 선택", n_swap2: "선수가 흑2 백1을 놓고, 후수가 흑·백을 고르거나 흑백 하나씩 더 놓고 상대에게 선택권. 금수 없음, 장목은 승리 아님", sideFirst: "선수(개국)", sideSecond: "후수", pSwap: "{n}수째를 두었습니다. 교대할까요? (지금 {c})", bKeep: "교대 안 함({c})", bSwap: "교대하여 {c}", bYama: "야마구치", pZone: "{n}수째({c})를 중앙 {w}×{w} 안에", pOffer: "5수째 후보 {k}개를 탭(같은 모양 불가)", bOffer: "후보 보내기 {n}/{k}", bClear: "지우기", pPick: "흑의 후보 중 하나를 5수째로", pS2Place: "{n}번째 돌({c}) 놓기", pS2Choice: "흑, 백, 아니면 흑백 하나씩 추가?", bTakeB: "흑 잡기", bTakeW: "백 잡기", bAdd: "흑백 하나씩 추가", pS2Color: "내 색을 고르세요", waitDecide: "상대의 결정을 기다리는 중…", watchPhase: "관전 중 · {name} 차례", swapped: "교대: 이제 {c}입니다", zoneErr: "이 수는 중앙 {w}×{w} 안에", symmetric: "같은 모양의 후보가 있습니다. 다른 점을", notoffer: "흑의 후보 중에서 고르세요", pCenter: "1수째(흑)를 천원에", centerErr: "1수째는 천원에 두어야 합니다",
   },
 };
@@ -446,6 +447,7 @@ const cfg = {
   rule: pick('rule', Object.values(RULE), RULE.RENJU),
   kind: pick('kind', ['gomoku', 'vcf'], 'gomoku'),
   vrank: pick('vrank', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], '3'),
+  vmode: pick('vmode', ['line', 'eight'], 'eight'),   // 使用者 2026-11-12：兩種玩法並存，預設八仙渡
   think: pick('think', ['60', '180', '300'], '180'),   // 使用者 2026-11-11：預設一題 3 分鐘
   target: pick('target', ['3', '5', '10'], '5'),   // 使用者 2026-11-11：搶五
   side: pick('side', ['b', 'w', 'r'], 'r'),
@@ -460,6 +462,8 @@ function renderCreate() {
   $('gOpts').hidden = cfg.kind !== 'gomoku'; $('vOpts').hidden = cfg.kind !== 'vcf';
   $('vRkName').textContent = rankName(+cfg.vrank);
   $('vRkDown').disabled = +cfg.vrank <= 1; $('vRkUp').disabled = +cfg.vrank >= 10;
+  chips('cVmode', 'vmode', [['line', T('vm_line')], ['eight', T('vm_eight')]]);
+  $('vNote').textContent = T('vmn_' + cfg.vmode, { p: cfg.target }) + '・' + T('vNoteC');
   chips('cThink', 'think', [['60', T('vT60')], ['180', T('vT180')], ['300', T('vT300')]]);
   chips('cTarget', 'target', [['3', T('vP3')], ['5', T('vP5')], ['10', T('vP10')]]);
   chips('cTime', 'time', TIME_OPTS.map(k => [k, k === 'custom' ? T('tCustom') : k === 'none' ? T('tNone') : T('tMSc', { m: k.split('+')[0], s: k.split('+')[1] })]));   // 按鈕用短寫法，四個才排得下
@@ -475,7 +479,7 @@ document.querySelectorAll('.modal [data-close]').forEach(b => b.onclick = () => 
 $('openCreate').onclick = () => openModal('mCreate');
 $('doCreate').onclick = () => {
   $('mCreate').hidden = true;
-  if (cfg.kind === 'vcf') send({ t: 'create', kind: 'vcf', rank: +cfg.vrank, think: +cfg.think, target: +cfg.target });
+  if (cfg.kind === 'vcf') send({ t: 'create', kind: 'vcf', rank: +cfg.vrank, think: +cfg.think, target: +cfg.target, vmode: cfg.vmode });
   else {
     let time = cfg.time;
     if (time === 'custom') {
@@ -728,7 +732,7 @@ function renderPhase() {
 // 底部按鈕：認輸（對局中）、再來一局（下完）、離開／回大廳（五子棋、搶答共用）
 function renderActs(me) {
   const acts = [];
-  if (me >= 0 && room.state === 'play' && room.kind === 'vcf') acts.push(`<button type="button" class="btn gold" id="aSkip" style="flex:1.3"${vCanSkip() ? '' : ' disabled'}>${esc(T('vSkip'))}</button>`);   // VCF 競速：看不出來就跳下一題
+  if (me >= 0 && room.state === 'play' && room.kind === 'vcf' && !isLine()) acts.push(`<button type="button" class="btn gold" id="aSkip" style="flex:1.3"${vCanSkip() ? '' : ' disabled'}>${esc(T('vSkip'))}</button>`);   // VCF 競速：看不出來就跳下一題
   if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
   if (me >= 0 && room.state === 'play' && room.canStudy && !(room.req && room.req.seat !== me)) {
     const mine = room.req && room.req.seat === me;
@@ -936,8 +940,10 @@ cv.addEventListener('click', (ev) => {
 setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom').hidden) { renderBar($('pTop'), 1 - bottomSeat()); renderBar($('pBot'), bottomSeat()); } }, CLOCK_TICK_MS);
 addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && mySeat() >= 0) { e.preventDefault(); e.returnValue = ''; } });
 
-// ================= VCF 明鏡台競速（2026-11-11 使用者改版） =================
-// 兩人做同一串題目、同樣順序，各自往下做，先解開 N 題的贏。下錯、時間到、放棄＝這題失敗，直接下一題。
+// ================= VCF 明鏡台（2026-11-12 起兩種玩法並存，room.vcf.vmode） =================
+// 八仙渡 eight：兩人做同一串題目、同樣順序，各自往下做，先解開 N 題的贏。下錯、時間到、放棄＝這題失敗，直接下一題。
+// 一線天 line：兩人同一題，先解開得 1 分，兩人一起換題（停幾秒公開解法）；下錯／時間到＝這題出局只能等，沒有放棄鈕。
+// 兩種玩法共用同一套題目、計時、落子判定、賽後逐題看解法；差別只在伺服器何時換題（vs.p[座位].i 一線天兩人相同）和少數畫面字樣（isLine()）。
 // 想的時候不扣落子時間；第一手落下後 5 秒、每手 +1 秒（照 Rush 單人明鏡台）。比賽中看不到對手手順，結束後逐題看正解和兩人手順。
 // 解題判定用 Rush 的引擎（score-worker.js 的 vcf_move：電腦擋、判對方連五／被禁手／沒四了），跟 game.html 同一套。
 const COLS = 'ABCDEFGHJKLMNOP';
@@ -946,6 +952,8 @@ const PIPS_MAX = 5;                // 搶 10 題用數字，不畫圓點（太�
 const tToP = (t) => (SIZE - parseInt(t.slice(1), 10)) * SIZE + COLS.indexOf(t[0]);
 const pToT = (p) => COLS[p % SIZE] + (SIZE - Math.floor(p / SIZE));
 const srvNow = () => Date.now() + srvOff;
+const vmodeOf = (r) => (r && r.vcf && r.vcf.vmode) || 'eight';   // 舊房間沒這欄就是八仙渡
+const isLine = () => vmodeOf(room) === 'line';
 let vEngine = null, vReq = 0;
 const vPending = new Map();
 function engineCall(msg) {
@@ -980,12 +988,28 @@ function vcfOnRoom() {
   if (!st || !st.puzzle) { VR = null; return; }
   if (!VR || VR.i !== st.i || VR.room !== room.id || VR.games !== room.games) {   // 新的一題
     const p = vPuzzle(st.puzzle);
-    VR = { room: room.id, games: room.games, i: st.i, p, black: [...p.black], white: [...p.white], seq: [], moves: [], lastDef: null, armed: false, left: MJ_START, hold: false, done: false, out: null };
+    VR = { room: room.id, games: room.games, i: st.i, p, black: [...p.black], white: [...p.white], seq: [], moves: [], lastDef: null, armed: false, left: MJ_START, hold: false, done: false, out: null, reveal: null, endSeen: false };
     ghost = null;
   }
-  if (mySeat() >= 0 && st.s === 'out' && !VR.out && !VR.done) {   // 伺服器判的（思考時間到）
+  if (mySeat() >= 0 && st.s === 'out' && !VR.out && !VR.done) {   // 伺服器判的（思考時間到；一線天：對手先解開＝慢了一步）
     VR.out = st.why; VR.hold = true; ghost = null;
     flash(T('vWhy_' + st.why), '', 'bad', 1200);
+  }
+  if (vs.phase === 'reveal' && vs.rv && !VR.endSeen) vRoundEnd(vs.rv);
+}
+function vRoundEnd(rv) {   // 一線天：這題結束，公開解法（有人解開就用他的手順，沒人解開用引擎算）
+  VR.endSeen = true; VR.hold = true; ghost = null;
+  if (rv.winner !== null) {
+    flash(T('vRoundWin', { name: room.seats[rv.winner]?.nick || '' }), '', rv.winner === mySeat() ? 'info' : 'warn', 1800);
+    if (rv.winner === mySeat()) chime();
+    VR.reveal = rv.seq || [];
+  } else {
+    flash(T('vRoundNone'), '', 'warn', 1800);
+    const p = VR.p, want = VR;
+    vSolve(p.black.join(' '), p.white.join(' '), p.atkWhite).then((r) => {
+      const sol = r && r.result && r.result.solution ? String(r.result.solution).replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : [];
+      if (VR === want) { VR.reveal = sol; draw(); }
+    }).catch(() => {});
   }
 }
 function vStatusOf(st) {
@@ -1001,7 +1025,7 @@ function vcfCard(r, wait) {
   const seat = (s) => s ? `<span class="seat"><i class="st p"></i><span class="nm">${esc(s.nick)}</span>${s.online ? '' : '<i class="dot off"></i>'}</span>`
     : `<span class="seat empty"><i class="st p" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
   const v = r.vcf || {};
-  const extra = [T('kVcf'), rankName(v.rank), waitedLabel(r), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target }), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.score ? r.score.join(' : ') : ''].filter(Boolean).join('・');
+  const extra = [T('kVcf') + '・' + T('vm_' + vmodeOf(r)), rankName(v.rank), waitedLabel(r), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target }), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.score ? r.score.join(' : ') : ''].filter(Boolean).join('・');
   return roomCard(r, wait, extra, seat(r.seats[0]) + seat(r.seats[1]));
 }
 function vcfBar(el, seat) {
@@ -1011,7 +1035,7 @@ function vcfBar(el, seat) {
   el.className = 'pbar' + (live && live.s === 'armed' ? ' on' : '');
   const tag = !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
   const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
-  const num = live && seat !== mySeat() ? `<span class="vst">${esc(T('vPuzzleN', { n: live.i + 1 }))}</span>` : '';   // 對手做到第幾題
+  const num = live && seat !== mySeat() && !isLine() ? `<span class="vst">${esc(T('vPuzzleN', { n: live.i + 1 }))}</span>` : '';   // 對手做到第幾題
   const score = room.vs ? room.vs.score[seat] : 0;
   el.innerHTML = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}</span>${pips(score, v.target)}`;
 }
@@ -1023,15 +1047,16 @@ function vcfStatus() {
   if (!st || !st.puzzle || vIsCounting(st)) return esc(T('vReady'));
   const n = T('vPuzzleN', { n: st.i + 1 }) + '・', thinkLeft = mmss(st.deadline - srvNow());
   if (me < 0) return esc(T('vStWatch', { n: st.i + 1, t: thinkLeft }));
-  if (VR && VR.out) return esc(n + T('vStOut', { why: T('vWhy_' + VR.out) }));
-  if (VR && VR.done) return esc(n + T('vSolvedNext'));
+  if (isLine() && room.vs.phase === 'reveal') return esc(n + T('vNext'));
+  if (VR && VR.out) return esc(n + T(isLine() ? 'vStOutWait' : 'vStOut', { why: T('vWhy_' + VR.out) }));
+  if (VR && VR.done) return esc(n + T(isLine() ? 'vSolvedS' : 'vSolvedNext'));
   if (ghost != null) return esc(T('tap2Hint'));
   if (VR && VR.armed) return esc(n + T('vStArmed', { s: Math.max(0, Math.ceil(VR.left)) }));
   return esc(n + T('vStThink', { t: thinkLeft }));
 }
 function vcfRenderRoom() {
   const me = mySeat(), bs = vView(), v = room.vcf;
-  $('rTitle').textContent = T('kVcf') + ' ' + room.id;
+  $('rTitle').textContent = T('vm_' + vmodeOf(room)) + ' ' + room.id;
   $('rSub').textContent = [rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })].join('・');
   vcfBar($('pTop'), 1 - bs);
   vcfBar($('pBot'), bs);
@@ -1133,6 +1158,12 @@ function vcfDraw() {
   const st = vSt(vView());
   if (!VR || !st || vIsCounting(st)) return;   // 倒數中不給看題目，兩人同時看到
   const p = VR.p, mine = mySeat() >= 0;
+  if (VR.endSeen && room.vs.phase === 'reveal') {   // 一線天：這題結束，公開解法
+    for (const t of p.black) stone(tToP(t), true);
+    for (const t of p.white) stone(tToP(t), false);
+    if (VR.reveal) numbered(VR.reveal, p.atkWhite);
+    return;
+  }
   for (const t of mine ? VR.black : p.black) stone(tToP(t), true);
   for (const t of mine ? VR.white : p.white) stone(tToP(t), false);
   if (mine && VR.lastDef) { const [x, y] = xyOf(tToP(VR.lastDef)); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
@@ -1149,7 +1180,7 @@ function vOut(why) {
   flash(T('vWhy_' + why), '', 'bad', 1200);
   renderRoom();
 }
-const vCanSkip = () => room && room.kind === 'vcf' && room.state === 'play' && mySeat() >= 0 && VR && !VR.out && !VR.done && vIsLive(vSt(mySeat()));
+const vCanSkip = () => room && room.kind === 'vcf' && !isLine() && room.state === 'play' && mySeat() >= 0 && VR && !VR.out && !VR.done && vIsLive(vSt(mySeat()));
 async function vcfClick(ev) {
   const st = vSt(mySeat());
   if (room.state !== 'play' || mySeat() < 0 || !vIsLive(st) || !VR || VR.i !== st.i || VR.hold || VR.done || VR.out) return;
@@ -1173,7 +1204,7 @@ async function vcfClick(ev) {
     def.push(res.def); round.seq.push(res.def); round.lastDef = res.def; setTimeout(() => stoneSound(true), 160);
     if (res.nofour) { renderRoom(); return vOut(res.forcedForbidden ? 'forbid' : 'nofour'); }
     if (!round.armed) { round.armed = true; round.left = MJ_START; } else round.left += MJ_STEP;   // 明鏡台：第一手開錶，之後每手 +1 秒
-    send({ t: 'vprog', n: round.i, moves: round.moves.length, armed: true });
+    send({ t: 'vprog', n: round.i, moves: round.moves.length, armed: true, seq: round.seq });
     round.hold = false; renderRoom();
     return;
   }
@@ -1186,7 +1217,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(a.destination); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, get VR() { return VR; }, get RV() { return RV; }, get room() { return room; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get RV() { return RV; }, get room() { return room; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {
@@ -1197,7 +1228,7 @@ setInterval(() => {
   if (vIsCounting(st)) {   // 開局倒數 3、2、1
     const k = Math.ceil((st.at - srvNow()) / 1000);
     if (k !== vLastCount) { vLastCount = k; flash(String(k), T(st.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB'), 'info', 950); if (k <= 3) beep(false); }
-  } else if (vLastCount !== null) { vLastCount = null; beep(true); renderRoom(); }   // 倒數結束：整個重畫（題目、黑先／白先那行）
+  } else if (vLastCount !== null) { vLastCount = null; beep(true); renderRoom(); layout(); }   // 倒數結束：整個重畫（題目、黑先／白先那行多出來，棋盤跟著重算大小，小手機才不會多捲 3px）
   if (VR && VR.armed && !VR.done && !VR.out && !VR.hold && vIsLive(st)) {
     const before = Math.ceil(VR.left);
     VR.left -= dt;

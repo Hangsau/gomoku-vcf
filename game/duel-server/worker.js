@@ -1,8 +1,8 @@
 // Gomoku Rush 對戰大廳（2026-11-11）：一個 Durable Object（Hall）放所有房間和棋局，玩家用 WebSocket 連進來。
-// 兩種房間：kind 'gomoku'（五子棋，game/duel/match.js 每一手都在這裡驗）、kind 'vcf'（VCF 明鏡台競速，見 vcf.js）。
+// 兩種房間：kind 'gomoku'（五子棋，game/duel/match.js 每一手都在這裡驗）、kind 'vcf'（VCF 明鏡台：一線天搶答／八仙渡競速，見 vcf.js）。
 // 狀態只放記憶體：大廳重開（部署、長時間沒人）房間就清空；第一版夠用，人多了再拆成一個房間一個 DO。
 import { BLACK, WHITE, EMPTY, CELLS, FORBID_NONE, forbidType } from '../duel/rules.js';
-import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, newVs, initList, startPuzzle, stopTimers, publicVs, COUNT_MS, NEXT_MS } from './vcf.js';
+import { cleanVcfSettings, cleanSeq, cleanWhy, loadBank, newVs, initList, startPuzzle, stopTimers, publicVs, COUNT_MS, NEXT_MS, REVEAL_MS } from './vcf.js';
 import { RULE, ACTION, PHASE, OFFER_COUNT, SWAP2_ADD_CHOICE, createMatch, applyAction, actorOf, colorOf, checkTimeout, clockMs, isWinningMove, serializeMatch, ruleHasForbidden } from '../duel/match.js';
 
 // 時間：'none'＝不計時，或「分+每手加秒」字串（2026-11-11 使用者：5+5、10+10、自訂；分 1–180、秒 0–60）
@@ -424,7 +424,7 @@ export class Hall {
     this.armTimer(room);
   }
 
-  // ---------- VCF 明鏡台競速 ----------
+  // ---------- VCF 明鏡台（room.vcf.vmode：'line' 一線天／'eight' 八仙渡） ----------
   async vcfStart(room) {   // 抽好題目串，倒數 3 秒後兩人同時從第 1 題開始
     const vs = room.vs, token = vs.token;
     let bank;
@@ -446,9 +446,11 @@ export class Hall {
     const vs = room.vs, st = vs && vs.p[seat];
     if (!st || vs.result || Number(m.n) !== st.i || Date.now() < st.at - EARLY_MSG_MS) return;
     if (st.s !== 'think' && st.s !== 'armed') return;
+    if (m.t === 'vskip' && room.vcf.vmode === 'line') return;   // 一線天沒有「放棄這題」
     if (m.t === 'vprog') {
       st.s = m.armed ? 'armed' : 'think';
       st.moves = Math.max(0, Math.min(MAX_REPORTED_MOVES, Number(m.moves) | 0));
+      if (m.seq !== undefined) st.seq = cleanSeq(m.seq);   // 一線天：對手先解開時，輸的人的手順就用最後一次回報的（只在結束後公開）
       return this.roomChanged(room);
     }
     if (m.t === 'vdone') return this.vcfFinish(room, seat, 'solved', null, cleanSeq(m.seq));
@@ -459,8 +461,9 @@ export class Hall {
     if (!st || vs.result || room.state !== 'play' || (st.s !== 'think' && st.s !== 'armed')) return;
     clearTimeout(st.timer);
     st.s = r; st.why = why;
-    st.log[st.i] = { r, why, seq: seq || [] };
+    st.log[st.i] = { r, why, seq: seq || st.seq || [] };
     if (r === 'solved') vs.score[seat] += 1;
+    if (room.vcf.vmode === 'line') return this.vcfLineStep(room, seat, r);
     if (vs.score[seat] >= room.vcf.target) {
       vs.result = { winner: seat, note: 'score' };
       room.state = 'over';
@@ -473,6 +476,34 @@ export class Hall {
       this.vcfBegin(room, seat, i + 1, Date.now());
       this.roomChanged(room);
     }, NEXT_MS);
+    this.roomChanged(room);
+  }
+  // 一線天：有人解開＝這題結束（另一人還沒做完的記成「慢了一步」）；兩人都出局＝沒人得分。結束後停 REVEAL_MS 公開解法，兩人一起換題
+  vcfLineStep(room, seat, r) {
+    const vs = room.vs, i = vs.p[seat].i;
+    if (r !== 'solved' && vs.p.some((x) => x.s === 'think' || x.s === 'armed')) return this.roomChanged(room);   // 還有人在做
+    const winner = r === 'solved' ? seat : null;
+    for (const x of vs.p) {
+      if (x.s !== 'think' && x.s !== 'armed') continue;
+      clearTimeout(x.timer); x.timer = null;
+      x.s = 'out'; x.why = 'late'; x.log[x.i] = { r: 'out', why: 'late', seq: x.seq || [] };
+    }
+    if (winner !== null && vs.score[winner] >= room.vcf.target) {
+      vs.result = { winner, note: 'score' };
+      room.state = 'over';
+      stopTimers(vs);
+      return this.roomChanged(room);
+    }
+    vs.phase = 'reveal';
+    vs.rv = { winner, seq: winner !== null ? vs.p[winner].log[i].seq : null };   // 沒人解開 → seq null，前端用引擎算正解
+    clearTimeout(vs.rtimer);
+    vs.rtimer = setTimeout(() => {
+      if (room.vs !== vs || vs.result || room.state !== 'play' || vs.p[0].i !== i) return;
+      vs.phase = 'play'; vs.rv = null;
+      const now = Date.now();
+      for (const k of [0, 1]) this.vcfBegin(room, k, i + 1, now);
+      this.roomChanged(room);
+    }, REVEAL_MS);
     this.roomChanged(room);
   }
   // 黑棋非擋不可的點是禁手（Rush 的「被禁手」）：白棋只有一個連五點、那點對黑是禁手、黑自己又沒有連五 → 判黑輸

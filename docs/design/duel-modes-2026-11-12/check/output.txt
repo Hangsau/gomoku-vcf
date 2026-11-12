@@ -1,0 +1,234 @@
+== 1 一線天整場
+  PASS 房間 vmode=line
+  PASS 房間標題顯示玩法名稱「一線天」：一線天 4537
+  PASS 兩邊同一題 id=GYEZ4TP0
+  PASS 一線天沒有「放棄這題」按鈕
+  PASS A 解開 → A 1 分（1,0）
+  PASS B 記成慢了一步、A 解開
+  PASS 進入公開解法，贏家=A
+  PASS B 畫面拿到公開的解法手順
+  PASS 兩邊一起進第 2 題、題目相同 id=KDPKZB39
+  PASS A 出局後 B 仍在做、沒換題
+  PASS B 解開 → B 得分（1,1）
+  PASS A 先出局時這題還沒結束
+  PASS 兩人都出局 → 沒人得分、winner=null
+  PASS 一起換到第 4 題、同題
+  PASS A 2 分
+  PASS 結束：A 3 : B 1（3,1，winner=0）
+  PASS 結束畫面：A「你贏了」B「你輸了」
+  PASS 比分文字 A「解開 3 : 1」B「解開 1 : 3」
+  PASS 逐題看解法共 5 題（5）
+  PASS 每題兩人都有紀錄
+   紀錄 A: solved/null out/bad out/bad solved/null solved/null | B: out/late solved/null out/bad out/late out/late
+  PASS 第 1 題 A 解開，手順 7 手
+  PASS 第 1 題 B 慢了一步
+  PASS 第 2 題 A 出局，留下他下到出局的手（G9 J7）
+  PASS 第 2 題 B 解開，手順完整
+  PASS 第 3 題兩人出局，各自手順都在
+  PASS 第 4 題 B 慢了一步，下過的手還在（L14 H11）
+   facts: 第 1／5 題我的：解開對手：慢了一步 // 第 2／5 題我的：這手不行對手：解開 // 第 3／5 題我的：這手不行對手：這手不行 // 第 4／5 題我的：解開對手：慢了一步 // 第 5／5 題我的：解開對手：慢了一步
+  PASS 逐題看解法每題都有字、沒有 undefined
+  PASS 再來一局：一線天、比分歸零
+  PASS 頁面沒有 JS 錯誤 []
+== 2 八仙渡整場
+  PASS 房間標題「八仙渡」：八仙渡 8298
+  PASS 開局兩人第 1 題同一題
+  PASS 八仙渡有「放棄這題」按鈕
+  PASS A 解兩題時 B 還在第 1 題（A i=2，B i=0，分數 2,0）
+  PASS 對手那條顯示他做到第 3 題：Alice 第 3 題 思考中
+  PASS 先解開 3 題的贏（3,0）
+  PASS 結束畫面輸贏正確
+  PASS 逐題看解法 3 題，A 的手順都在
+  PASS B 看解法畫面：第 1／3 題我的：沒做到對手：解開
+  PASS 頁面沒有 JS 錯誤 []
+== 3 舊客戶端相容
+   {"label":"沒有 vmode","vmode":"eight","errs":[],"alive":true,"types":"hello,lobby,room,pong"}
+   {"label":"vmode=null","vmode":"eight","errs":[],"alive":true,"types":"hello,lobby,room,pong"}
+   {"label":"vmode=line","vmode":"line","errs":[],"alive":true,"types":"hello,lobby,room,pong"}
+   {"label":"vmode=xxx","vmode":null,"errs":["bad"],"alive":true,"types":"hello,lobby,err,pong"}
+   {"label":"vmode=數字 7","vmode":null,"errs":["bad"],"alive":true,"types":"hello,lobby,err,pong"}
+   {"label":"vmode=物件","vmode":null,"errs":["bad"],"alive":true,"types":"hello,lobby,err,pong"}
+   {"label":"vmode=eight","vmode":"eight","errs":[],"alive":true,"types":"hello,lobby,room,pong"}
+  PASS 沒有 vmode → eight
+  PASS vmode=null → eight
+  PASS 合法值照收
+  PASS vmode=xxx → 被拒絕（bad）、連線沒斷
+  PASS vmode=數字 7 → 被拒絕（bad）、連線沒斷
+  PASS vmode=物件 → 被拒絕（bad）、連線沒斷
+  PASS wrangler 紀錄沒有例外
+== 5 五子棋基本流程
+   結束畫面 你贏了 你輸了
+  PASS 五子棋分出勝負
+  PASS 先手（黑）連五贏
+  PASS 頁面沒有 JS 錯誤 []
+== 4 版面
+  PASS line zh_360x640 開房表單(line)
+  PASS line zh_360x640 開房表單(eight)
+  PASS line zh_360x640 等倒數
+  PASS line zh_360x640 對局中
+  PASS line zh_360x640 落子中
+  PASS line zh_360x640 出局等對手
+  PASS line zh_360x640 公開解法
+  PASS line zh_360x640 結束畫面
+  PASS line zh_360x640 逐題看解法
+  PASS line zh_360x640 對手端結束後看解法前
+  PASS line zh_360x640 沒有 JS 錯誤 []
+  PASS eight zh_360x640 開房表單(line)
+  PASS eight zh_360x640 開房表單(eight)
+  PASS eight zh_360x640 等倒數
+  PASS eight zh_360x640 對局中
+  PASS eight zh_360x640 落子中
+  PASS eight zh_360x640 下一題
+  PASS eight zh_360x640 結束畫面
+  PASS eight zh_360x640 逐題看解法
+  PASS eight zh_360x640 對手端結束後看解法前
+  PASS eight zh_360x640 沒有 JS 錯誤 []
+  PASS line en_360x640 開房表單(line)
+  PASS line en_360x640 開房表單(eight)
+  PASS line en_360x640 等倒數
+  PASS line en_360x640 對局中
+  PASS line en_360x640 落子中
+  PASS line en_360x640 出局等對手
+  PASS line en_360x640 公開解法
+  PASS line en_360x640 結束畫面
+  PASS line en_360x640 逐題看解法
+  PASS line en_360x640 對手端結束後看解法前
+  PASS line en_360x640 沒有 JS 錯誤 []
+  PASS eight en_360x640 開房表單(line)
+  PASS eight en_360x640 開房表單(eight)
+  PASS eight en_360x640 等倒數
+  PASS eight en_360x640 對局中
+  PASS eight en_360x640 落子中
+  PASS eight en_360x640 下一題
+  PASS eight en_360x640 結束畫面
+  PASS eight en_360x640 逐題看解法
+  PASS eight en_360x640 對手端結束後看解法前
+  PASS eight en_360x640 沒有 JS 錯誤 []
+  PASS line ja_360x640 開房表單(line)
+  PASS line ja_360x640 開房表單(eight)
+  PASS line ja_360x640 等倒數
+  PASS line ja_360x640 對局中
+  PASS line ja_360x640 落子中
+  PASS line ja_360x640 出局等對手
+  PASS line ja_360x640 公開解法
+  PASS line ja_360x640 結束畫面
+  PASS line ja_360x640 逐題看解法
+  PASS line ja_360x640 對手端結束後看解法前
+  PASS line ja_360x640 沒有 JS 錯誤 []
+  PASS eight ja_360x640 開房表單(line)
+  PASS eight ja_360x640 開房表單(eight)
+  PASS eight ja_360x640 等倒數
+  PASS eight ja_360x640 對局中
+  PASS eight ja_360x640 落子中
+  PASS eight ja_360x640 下一題
+  PASS eight ja_360x640 結束畫面
+  PASS eight ja_360x640 逐題看解法
+  PASS eight ja_360x640 對手端結束後看解法前
+  PASS eight ja_360x640 沒有 JS 錯誤 []
+  PASS line ko_360x640 開房表單(line)
+  PASS line ko_360x640 開房表單(eight)
+  PASS line ko_360x640 等倒數
+  PASS line ko_360x640 對局中
+  PASS line ko_360x640 落子中
+  PASS line ko_360x640 出局等對手
+  PASS line ko_360x640 公開解法
+  PASS line ko_360x640 結束畫面
+  PASS line ko_360x640 逐題看解法
+  PASS line ko_360x640 對手端結束後看解法前
+  PASS line ko_360x640 沒有 JS 錯誤 []
+  PASS eight ko_360x640 開房表單(line)
+  PASS eight ko_360x640 開房表單(eight)
+  PASS eight ko_360x640 等倒數
+  PASS eight ko_360x640 對局中
+  PASS eight ko_360x640 落子中
+  PASS eight ko_360x640 下一題
+  PASS eight ko_360x640 結束畫面
+  PASS eight ko_360x640 逐題看解法
+  PASS eight ko_360x640 對手端結束後看解法前
+  PASS eight ko_360x640 沒有 JS 錯誤 []
+  PASS line zh_375x667 開房表單(line)
+  PASS line zh_375x667 開房表單(eight)
+  PASS line zh_375x667 等倒數
+  PASS line zh_375x667 對局中
+  PASS line zh_375x667 落子中
+  PASS line zh_375x667 出局等對手
+  PASS line zh_375x667 公開解法
+  PASS line zh_375x667 結束畫面
+  PASS line zh_375x667 逐題看解法
+  PASS line zh_375x667 對手端結束後看解法前
+  PASS line zh_375x667 沒有 JS 錯誤 []
+  PASS eight zh_375x667 開房表單(line)
+  PASS eight zh_375x667 開房表單(eight)
+  PASS eight zh_375x667 等倒數
+  PASS eight zh_375x667 對局中
+  PASS eight zh_375x667 落子中
+  PASS eight zh_375x667 下一題
+  PASS eight zh_375x667 結束畫面
+  PASS eight zh_375x667 逐題看解法
+  PASS eight zh_375x667 對手端結束後看解法前
+  PASS eight zh_375x667 沒有 JS 錯誤 []
+  PASS line en_375x667 開房表單(line)
+  PASS line en_375x667 開房表單(eight)
+  PASS line en_375x667 等倒數
+  PASS line en_375x667 對局中
+  PASS line en_375x667 落子中
+  PASS line en_375x667 出局等對手
+  PASS line en_375x667 公開解法
+  PASS line en_375x667 結束畫面
+  PASS line en_375x667 逐題看解法
+  PASS line en_375x667 對手端結束後看解法前
+  PASS line en_375x667 沒有 JS 錯誤 []
+  PASS eight en_375x667 開房表單(line)
+  PASS eight en_375x667 開房表單(eight)
+  PASS eight en_375x667 等倒數
+  PASS eight en_375x667 對局中
+  PASS eight en_375x667 落子中
+  PASS eight en_375x667 下一題
+  PASS eight en_375x667 結束畫面
+  PASS eight en_375x667 逐題看解法
+  PASS eight en_375x667 對手端結束後看解法前
+  PASS eight en_375x667 沒有 JS 錯誤 []
+  PASS line ja_375x667 開房表單(line)
+  PASS line ja_375x667 開房表單(eight)
+  PASS line ja_375x667 等倒數
+  PASS line ja_375x667 對局中
+  PASS line ja_375x667 落子中
+  PASS line ja_375x667 出局等對手
+  PASS line ja_375x667 公開解法
+  PASS line ja_375x667 結束畫面
+  PASS line ja_375x667 逐題看解法
+  PASS line ja_375x667 對手端結束後看解法前
+  PASS line ja_375x667 沒有 JS 錯誤 []
+  PASS eight ja_375x667 開房表單(line)
+  PASS eight ja_375x667 開房表單(eight)
+  PASS eight ja_375x667 等倒數
+  PASS eight ja_375x667 對局中
+  PASS eight ja_375x667 落子中
+  PASS eight ja_375x667 下一題
+  PASS eight ja_375x667 結束畫面
+  PASS eight ja_375x667 逐題看解法
+  PASS eight ja_375x667 對手端結束後看解法前
+  PASS eight ja_375x667 沒有 JS 錯誤 []
+  PASS line ko_375x667 開房表單(line)
+  PASS line ko_375x667 開房表單(eight)
+  PASS line ko_375x667 等倒數
+  PASS line ko_375x667 對局中
+  PASS line ko_375x667 落子中
+  PASS line ko_375x667 出局等對手
+  PASS line ko_375x667 公開解法
+  PASS line ko_375x667 結束畫面
+  PASS line ko_375x667 逐題看解法
+  PASS line ko_375x667 對手端結束後看解法前
+  PASS line ko_375x667 沒有 JS 錯誤 []
+  PASS eight ko_375x667 開房表單(line)
+  PASS eight ko_375x667 開房表單(eight)
+  PASS eight ko_375x667 等倒數
+  PASS eight ko_375x667 對局中
+  PASS eight ko_375x667 落子中
+  PASS eight ko_375x667 下一題
+  PASS eight ko_375x667 結束畫面
+  PASS eight ko_375x667 逐題看解法
+  PASS eight ko_375x667 對手端結束後看解法前
+  PASS eight ko_375x667 沒有 JS 錯誤 []
+PASS 217／FAIL 0
+exit 0
