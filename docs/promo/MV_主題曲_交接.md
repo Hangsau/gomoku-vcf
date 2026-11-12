@@ -154,3 +154,9 @@ cinematic Chinese ancient-style, cool moonlit blue and soft warm lantern gold pa
 - 使用者把素材分成兩個資料夾：`docs\promo\MV素材\落子無聲橫\`（橫式影片＋九張原圖）、`docs\promo\MV素材\落子無聲916\`（直式影片）。
 - 腳本用法改成 `python tools/promo/mv_build_v2.py h|v [build|check|all]`；`hdry` 只列橫式素材路徑不輸出；不帶參數只印用法。
 - 使用者考慮做「戰鬥版」音樂（Suno Cover《落子無聲》、140 BPM 純音樂）給限時挑戰與兩儀殿用；建議的配置：首頁／選單／練習用《落子無聲》伴奏，限時與對局用戰鬥版。尚未確認、線上音樂未動。
+
+## 使用者回覆（2026-11-13）
+
+- 直式 MV：使用者原話「直式新的沒有了」（助理的理解：新版直式已沒有 KlingAI 小字；未再確認）。
+- 宣傳片：使用者說「可以用」（改用副歌有唱版可以）。
+- 手機實聽（九種落子聲、iPhone 音量滑桿、音樂輪播與起播速度）：使用者說「可以，先這樣」，這幾項結案。
