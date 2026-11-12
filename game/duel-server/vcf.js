@@ -4,6 +4,7 @@
 //   line 一線天（舊的搶答）：兩人同一題同時開始，先解開得 1 分，然後兩人一起換下一題（停 REVEAL_MS 公開解法）；先拿到 N 分贏。
 //     下錯／時間到＝這題出局只能等；兩人都出局＝沒人得分。沒有「放棄這題」（客戶端不送 vskip，伺服器也不收）。
 //   兩種玩法共用 vs.p[座位].i（目前題號；一線天兩人永遠相同）和同一份計時、log、review。
+// 玩家比賽中看不到對手下在哪；觀戰者看得到（伺服器只把每人目前的手順 seq 送給不在座位上的人）。
 // 明鏡台規則（想的時候不扣落子時間，第一手落下後 5 秒、每手 +1 秒）在前端計時；伺服器管出題、每題思考上限、誰解開幾題。
 // 題目從 Rush 題庫（game/p/段位.json）抽，只用 20 手內的題。開局抽 N×3 題，任何人做到剩 3 題就往後補，不會用完。
 // 第一版相信前端回報的解法；之後要防作弊，把 vcfscore.wasm 放進伺服器重驗 seq。
@@ -73,14 +74,15 @@ export function stopTimers(vs) {
   if (vs) { for (const st of vs.p) { clearTimeout(st.timer); st.timer = null; } clearTimeout(vs.rtimer); vs.rtimer = null; }
 }
 
-// 送給前端的樣子：比賽中只送每人目前那題的題目和進度，不送手順（不能偷看對手下哪）；結束才送整串題目和兩人手順
-export function publicVs(vs) {
+// 送給前端的樣子：比賽中只送每人目前那題的題目和進度，不送手順給玩家（不能偷看對手下哪）；結束才送整串題目和兩人手順
+// withSeq（只有不在座位上的觀戰者收到，2026-11-13 使用者）：比賽中多送每人這題目前的手順 seq，讓觀戰者看得到下在哪
+export function publicVs(vs, withSeq = false) {
   if (!vs) return null;
   const over = !!vs.result;
   return {
     score: vs.score, startAt: vs.startAt, result: vs.result,
     phase: vs.phase, rv: vs.phase === 'reveal' ? vs.rv : null,   // 一線天：一題結束停下來公開解法（rv＝{ winner, seq }）
-    p: vs.p.map((st) => ({ i: st.i, at: st.at, deadline: st.deadline, s: st.s, moves: st.moves, why: st.why, puzzle: vs.list[st.i] || null })),
+    p: vs.p.map((st) => ({ i: st.i, at: st.at, deadline: st.deadline, s: st.s, moves: st.moves, why: st.why, puzzle: vs.list[st.i] || null, ...(withSeq && !over ? { seq: st.seq } : {}) })),
     review: over ? {
       list: vs.list.slice(0, Math.max(...vs.p.map((st) => st.i)) + 1),
       logs: vs.p.map((st) => st.log),

@@ -675,6 +675,7 @@ function onJoinErr(code) {   // nocode：找不到碼或私人房沒碼；slow�
 // ---------- 連線 ----------
 const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
 let ws = null, online = false, failCount = 0, retryT = 0, replaced = false;
+let watchSeat = 0;   // 觀戰者現在看哪個座位的題目和手順（VCF 明鏡台）
 let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0;   // srvOff：伺服器時間－本機時間   // viewing：我正在看的房號
 function connect() {
   clearTimeout(retryT);
@@ -768,11 +769,11 @@ function renderLobby() {
   });
 }
 let leftRoom = null;   // 剛離開的房號：離開那一刻還在路上的舊房間更新不要把人拉回去
-function enterRoom(id) { leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
+function enterRoom(id) { watchSeat = 0; leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
 function toLobby(tell = true) {
   if (tell) send({ t: 'leave' });
   leftRoom = viewing;
-  viewing = null; room = null; match = null; ghost = null; layoutSig = '';
+  viewing = null; room = null; match = null; ghost = null; layoutSig = ''; watchSeat = 0;
   $('mEnd').hidden = true;
   show('sLobby');
 }
@@ -1179,7 +1180,7 @@ addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && m
 // 八仙渡 eight：兩人做同一串題目、同樣順序，各自往下做，先解開 N 題的贏。下錯、時間到、放棄＝這題失敗，直接下一題。
 // 一線天 line：兩人同一題，先解開得 1 分，兩人一起換題（停幾秒公開解法）；下錯／時間到＝這題出局只能等，沒有放棄鈕。
 // 兩種玩法共用同一套題目、計時、落子判定、賽後逐題看解法；差別只在伺服器何時換題（vs.p[座位].i 一線天兩人相同）和少數畫面字樣（isLine()）。
-// 想的時候不扣落子時間；第一手落下後 5 秒、每手 +1 秒（照 Rush 單人明鏡台）。比賽中看不到對手手順，結束後逐題看正解和兩人手順。
+// 想的時候不扣落子時間；第一手落下後 5 秒、每手 +1 秒（照 Rush 單人明鏡台）。玩家比賽中看不到對手手順；觀戰者看得到（伺服器只把 seq 送給不在座位上的人），點上方玩家列換看另一位（2026-11-13）。結束後逐題看正解和兩人手順。
 // 解題判定用 Rush 的引擎（score-worker.js 的 vcf_move：電腦擋、判對方連五／被禁手／沒四了），跟 game.html 同一套。
 const COLS = 'ABCDEFGHJKLMNOP';
 const MJ_START = 5, MJ_STEP = 1;   // 照 Rush 單人明鏡台（使用者 2026-11-11：對戰參考單人）
@@ -1205,7 +1206,12 @@ let VR = null;   // 我這一題的狀態（觀戰時是下方那位的題目）
 let RV = null;   // 比賽結束後逐題看解法：{ key, k 第幾題, who 'sol' 或座位, sol 每題正解 }
 function vPuzzle(x) { return { black: x[0].split(' ').filter(Boolean), white: x[1].split(' ').filter(Boolean), L: x[2], score: x[3], atkWhite: x[4] === 'w', id: x[5] }; }
 const vSt = (seat) => (room && room.vs && room.vs.p ? room.vs.p[seat] : null);
-const vView = () => (mySeat() >= 0 ? mySeat() : 0);
+const vView = () => (mySeat() >= 0 ? mySeat() : watchSeat);   // 觀戰者預設看座位 0，點上方玩家列換邊
+const vCanFlip = () => !!room && room.kind === 'vcf' && room.state === 'play' && mySeat() < 0 && !$('sRoom').hidden;
+$('pTop').addEventListener('click', (e) => {
+  if (!vCanFlip() || e.target.closest('button')) return;
+  watchSeat = 1 - watchSeat; vcfOnRoom(); renderRoom();   // 八仙渡兩人題號可能不同，先換成這位的題目
+});
 const vIsCounting = (st) => st && st.i === 0 && srvNow() < st.at;   // 開局倒數（只有第 1 題前）
 const rvIsOn = () => RV && room && room.state === 'over' && room.vs && room.vs.review;   // 收到新局時畫面可能先重畫，舊的覆盤狀態不能用
 const vIsLive = (st) => st && (st.s === 'think' || st.s === 'armed') && srvNow() >= st.at;
@@ -1272,7 +1278,9 @@ function vcfBar(el, seat) {
   const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
   const num = live && seat !== mySeat() && !isLine() ? `<span class="vst">${esc(T('vPuzzleN', { n: live.i + 1 }))}</span>` : '';   // 對手做到第幾題
   const score = room.vs ? room.vs.score[seat] : 0;
-  el.innerHTML = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}</span>${pips(score, v.target)}`;
+  const flip = el.id === 'pTop' && vCanFlip() ? '<span class="vst" aria-hidden="true">⇅</span>' : '';   // 觀戰者：點這條換看另一位
+  el.style.cursor = flip ? 'pointer' : '';
+  el.innerHTML = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}${flip}</span>${pips(score, v.target)}`;
 }
 function vcfStatus() {
   const me = mySeat();
@@ -1401,6 +1409,7 @@ function vcfDraw() {
   }
   for (const t of mine ? VR.black : p.black) stone(tToP(t), true);
   for (const t of mine ? VR.white : p.white) stone(tToP(t), false);
+  if (!mine) { const sq = st.seq; if (sq && sq.length) numbered(sq, p.atkWhite); }   // 觀戰：畫出這位玩家目前的手順（舊伺服器不送 seq 就只有題目）
   if (mine && VR.lastDef) { const [x, y] = xyOf(tToP(VR.lastDef)); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
   if (ghost != null) {
     stone(ghost, !p.atkWhite, 0.55);
@@ -1453,7 +1462,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get RV() { return RV; }, get room() { return room; }, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { return bgmEl; }, get bgmGain() { return bgmGain; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { return bgmEl; }, get bgmGain() { return bgmGain; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {

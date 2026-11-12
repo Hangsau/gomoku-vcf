@@ -500,7 +500,8 @@ export class Hall {
     if (!st || vs.result || room.state !== 'play' || (st.s !== 'think' && st.s !== 'armed')) return;
     clearTimeout(st.timer);
     st.s = r; st.why = why;
-    st.log[st.i] = { r, why, seq: seq || st.seq || [] };
+    st.seq = seq || st.seq || [];   // 最後一手也讓觀戰者在換題前的停頓看得到
+    st.log[st.i] = { r, why, seq: st.seq };
     if (r === 'solved') vs.score[seat] += 1;
     if (room.vcf.vmode === 'line') return this.vcfLineStep(room, seat, r);
     if (vs.score[seat] >= room.vcf.target) {
@@ -585,13 +586,13 @@ export class Hall {
   }
 
   // ---------- 廣播 ----------
-  roomMsg(room) {
+  roomMsg(room, watcher = false) {
     const m = room.match, now = Date.now();
     return {
       t: 'room', now,
       room: {
         id: room.id, code: room.code, priv: room.priv, kind: room.kind, vcf: room.vcf, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
-        vs: publicVs(room.vs),
+        vs: publicVs(room.vs, watcher),
         seats: room.seats.map(s => s && { id: s.id, nick: s.nick, online: s.online }),
         watchers: this.watchers(room),
         again: [...room.again],
@@ -609,8 +610,13 @@ export class Hall {
   }
   roomChanged(room) {
     if (!room || !this.rooms.has(room.id)) return this.broadcastLobby();
-    const msg = this.roomMsg(room);
-    for (const c of this.clients.values()) if (c.room === room.id) this.send(c.ws, msg);
+    // 座位上的人收不帶手順的訊息，觀戰者收帶 seq 的（各序列化一次）
+    const msgs = {};
+    for (const [id, c] of this.clients) {
+      if (c.room !== room.id) continue;
+      const w = !room.seats.some(s => s && s.id === id);
+      try { c.ws.send(msgs[w] || (msgs[w] = JSON.stringify(this.roomMsg(room, w)))); } catch {}
+    }
     this.broadcastLobby();
   }
   lobbyMsg() {
