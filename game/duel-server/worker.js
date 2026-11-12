@@ -84,18 +84,22 @@ export class Hall {
     const url = new URL(req.url);
     const id = cleanId(url.searchParams.get('id'));
     if (!id) return new Response('bad id', { status: 400 });
+    // v=2：2026-11-12 起的頁面，被同一玩家的另一個畫面取代後不會自動重連。沒帶 v 的是更早的舊頁面，會每 1.6 秒自動重連；
+    // 同一玩家已經有新頁面連著時不讓舊頁面搶走（不然新頁面永遠連不上）。舊頁面重新整理就變新版。
+    const v2 = url.searchParams.get('v') === '2', cur = this.clients.get(id);
+    if (!v2 && cur && cur.v2 && cur.ws.readyState === 1) return new Response('newer page connected', { status: 409 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     server.accept();
-    this.connect(id, cleanNick(url.searchParams.get('nick')), server);
+    this.connect(id, cleanNick(url.searchParams.get('nick')), server, v2);
     return new Response(null, { status: 101, webSocket: client });
   }
 
   // ---------- 連線 ----------
-  connect(id, nick, ws) {
+  connect(id, nick, ws, v2 = false) {
     const old = this.clients.get(id);
     if (old && old.ws !== ws) try { old.ws.close(4000, 'replaced'); } catch {}
-    const c = { ws, nick, room: null, passed: new Set(), joinFails: [], slowUntil: 0 };   // passed：用邀請碼進過的私人房號
+    const c = { ws, v2, nick, room: null, passed: new Set(), joinFails: [], slowUntil: 0 };   // passed：用邀請碼進過的私人房號
     this.clients.set(id, c);
     this.ensureAlarm();
     ws.addEventListener('message', (ev) => { try { this.onMessage(id, ws, JSON.parse(ev.data)); } catch (e) { this.send(ws, { t: 'err', code: 'bad' }); } });

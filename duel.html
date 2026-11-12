@@ -679,7 +679,7 @@ let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0
 function connect() {
   clearTimeout(retryT);
   let sock;
-  try { sock = ws = new WebSocket(`${WS_URL}?id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
+  try { sock = ws = new WebSocket(`${WS_URL}?v=2&id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
   ws.onopen = () => {
     if (ws !== sock) return;
     online = true; failCount = 0; replaced = false; $('mReplaced').hidden = true; renderNet(); passed.clear();   // 新連線：私人房的通行紀錄在伺服器那邊也是新的
