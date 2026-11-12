@@ -25,7 +25,7 @@ button, a, input { touch-action: manipulation; }
 button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .45; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
-.app { max-width: 520px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+.app { max-width: 520px; margin: 0 auto; height: 100dvh; height: var(--appH, 100dvh); display: flex; flex-direction: column; }   /* --appH＝layout() 寫進來的 window.innerHeight：整頁高度跟算棋盤用同一個數字（裝成 App 時 100dvh 可能比看得到的高） */
 .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .screen[hidden] { display: none; }
 .pad { padding-left: 16px; padding-right: 16px; }
@@ -125,6 +125,17 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 .flash.info span { color: var(--text); border: 2px solid var(--line2); font-size: 18px; }
 .flash span small { font-size: 15px; font-weight: 500; color: var(--text2); }
 .facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; padding: 2px 16px 0; font-size: 13px; color: var(--text2); }
+/* 視窗矮到棋盤縮到下限還放不下（layout() 加上 .tight）：其他列讓出高度，頁面才不用捲 */
+#sRoom.tight .rhead .icob { height: 40px; }
+#sRoom.tight .pbar { min-height: 44px; padding-top: 2px; padding-bottom: 2px; }
+#sRoom.tight .status { min-height: 24px; padding-top: 2px; padding-bottom: 2px; }
+#sRoom.tight .facts { flex-wrap: nowrap; overflow: hidden; }
+#sRoom.tight .facts span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#sRoom.tight .facts span:last-child:not(:first-child) { flex: 0 0 auto; }
+#sRoom.tight .phase { padding-top: 6px; }
+#sRoom.tight .phase .btn { height: 44px; }
+#sRoom.tight .thumb { padding-top: 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+#sRoom.tight .thumb .btn { height: 48px; }
 
 /* 浮層 */
 .modal { position: fixed; inset: 0; background: rgba(5,7,12,.6); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
@@ -886,15 +897,29 @@ function setBoardPx(v) {
   draw();
 }
 function layout() {   // 一屏放得下：先照寬度放，再看房間畫面其他東西佔多少高度，剩下的給棋盤（最小 240）
+  document.documentElement.style.setProperty('--appH', window.innerHeight + 'px');
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
   if ($('sRoom').hidden) return setBoardPx(Math.max(240, w - 16));
-  setBoardPx(Math.max(240, w - 16));
-  const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && !el.classList.contains('grow')).reduce((s, el) => s + el.getBoundingClientRect().height, 0);
-  setBoardPx(Math.max(240, Math.min(w - 16, window.innerHeight - used - 16)));
-  const over = document.documentElement.scrollHeight - window.innerHeight;   // 還是超出（字換行等）：超出多少縮多少
-  if (over > 0) setBoardPx(Math.max(240, px - over));
+  const overBy = () => document.documentElement.scrollHeight - window.innerHeight;
+  const fit = (min) => {
+    setBoardPx(Math.max(min, w - 16));
+    const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && !el.classList.contains('grow')).reduce((s, el) => s + el.getBoundingClientRect().height, 0);
+    setBoardPx(Math.max(min, Math.min(w - 16, window.innerHeight - used - 16)));
+    const over = overBy();   // 還是超出（字換行等）：超出多少縮多少
+    if (over > 0) setBoardPx(Math.max(min, px - over));
+  };
+  $('sRoom').classList.remove('tight');
+  fit(240);
+  if (overBy() > 0) { $('sRoom').classList.add('tight'); fit(200); }   // 很矮的視窗：其他列縮緊（CSS .tight），棋盤下限放到 200
 }
 addEventListener('resize', layout);
+// 保險：棋盤以外的列高度一變（字換行、字型晚到、按鈕列變化）或視窗高度變了卻沒收到 resize，就重算一次。
+// 不會無限迴圈：棋盤（boardWrap）跟吃剩餘空間的 .grow 不觀察，layout() 只改棋盤大小與 .tight；同樣的視窗與內容算出來的結果固定，第二次量到的高度不變就不再觸發。
+let layoutQ = 0;
+function layoutSoon() { if (!layoutQ) layoutQ = requestAnimationFrame(() => { layoutQ = 0; layout(); }); }
+if (window.ResizeObserver) { const ro = new ResizeObserver(layoutSoon); ro.observe($('sRoom')); for (const el of $('sRoom').children) if (el !== $('boardWrap') && !el.classList.contains('grow')) ro.observe(el); }
+if (window.visualViewport) window.visualViewport.addEventListener('resize', layoutSoon);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutSoon);
 function cellAt(ev) {
   const r = cv.getBoundingClientRect();
   const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);

@@ -1,0 +1,113 @@
+PASS 修改前 412x915（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-16,"listScroll":"2137/692"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/56/29/396/52/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改前 412x915 安全區上48下32（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-48,"listScroll":"2002/612"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/52/29/396/56/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 修改前 412x870（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-16,"listScroll":"1465/647"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/56/29/396/52/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改前 412x870 安全區上48下32（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-48,"listScroll":"1199/567"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/56/29/396/52/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 修改前＋dvh多48 412x915（預期：要捲）
+     大廳：{"ih":915,"appH":963,"over":48,"openCreate":32,"listScroll":"932/740"}
+     一進房（等對手）：{"ih":915,"appH":963,"over":48,"resign":null,"leave":0,"px":348,"tight":false,"status":"等對手入座…","rows":"56/52/29/348/52/40/0/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":915,"appH":963,"over":48,"resign":null,"leave":32,"px":348,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/56/29/348/52/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":915,"appH":963,"over":48,"resign":0,"leave":0,"px":348,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/348/52/40/0/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":915,"appH":963,"over":48,"resign":32,"leave":32,"px":348,"tight":false,"status":"等對手下…","rows":"56/52/29/348/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":915,"appH":963,"over":48,"resign":0,"leave":0,"px":348,"tight":false,"status":"等對手決定…","rows":"56/52/29/348/52/40/0/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":915,"appH":963,"over":48,"resign":32,"leave":32,"px":348,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/348/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改前＋dvh多48 412x870（預期：要捲）
+     大廳：{"ih":870,"appH":918,"over":48,"openCreate":32,"listScroll":"695/695"}
+     一進房（等對手）：{"ih":870,"appH":918,"over":48,"resign":null,"leave":0,"px":348,"tight":false,"status":"等對手入座…","rows":"56/52/29/348/52/40/0/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":870,"appH":918,"over":48,"resign":null,"leave":32,"px":348,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/52/29/348/56/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":870,"appH":918,"over":48,"resign":0,"leave":0,"px":348,"tight":false,"status":"等對手下…","rows":"56/52/29/348/52/40/0/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":870,"appH":918,"over":48,"resign":32,"leave":32,"px":348,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/348/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":870,"appH":918,"over":48,"resign":0,"leave":0,"px":348,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/348/52/40/56/82","top":-32,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":870,"appH":918,"over":48,"resign":32,"leave":32,"px":348,"tight":false,"status":"等對手決定…","rows":"56/52/29/348/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改後 412x915（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-16,"listScroll":"799/692"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/52/29/396/56/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改後 412x915 安全區上48下32（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-48,"listScroll":"932/612"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/52/29/396/56/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 修改後 412x870（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-16,"listScroll":"1066/647"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/56/29/396/52/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改後 412x870 安全區上48下32（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-48,"listScroll":"1199/567"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/52/29/396/56/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 修改後＋dvh多48 412x915（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-16,"listScroll":"1332/692"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/52/29/396/56/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改後＋dvh多48 412x915 安全區上48下32（預期：不用捲）
+     大廳：{"ih":915,"appH":915,"over":0,"openCreate":-48,"listScroll":"1465/612"}
+     一進房（等對手）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":915,"appH":915,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/56/29/396/52/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":915,"appH":915,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 修改後＋dvh多48 412x870（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-16,"listScroll":"1465/647"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"等對手入座…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-16,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"56/56/29/396/52/65/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手下…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"等對手決定…","rows":"56/52/29/396/52/40/0/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-16,"leave":-16,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"56/52/29/396/52/40/56/82","top":0,"actsPadB":"16px","headPadT":"4px"}
+PASS 修改後＋dvh多48 412x870 安全區上48下32（預期：不用捲）
+     大廳：{"ih":870,"appH":870,"over":0,"openCreate":-48,"listScroll":"1465/567"}
+     一進房（等對手）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"等對手入座…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     B 進房（還沒入座）：{"ih":870,"appH":870,"over":0,"resign":null,"leave":-48,"px":396,"tight":false,"status":"看看房間，想下就按「入座」","rows":"104/56/29/396/52/65/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手（黑棋）下在天元","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     開始對局 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手下…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 A：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"等對手決定…","rows":"104/52/29/396/52/40/0/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+     第 1 手後 B：{"ih":870,"appH":870,"over":0,"resign":-48,"leave":-48,"px":396,"tight":false,"status":"第 1 手下好了，要換手嗎？（你現在執白棋）","rows":"104/52/29/396/52/40/56/114","top":0,"actsPadB":"48px","headPadT":"52px"}
+PASS 14／FAIL 0

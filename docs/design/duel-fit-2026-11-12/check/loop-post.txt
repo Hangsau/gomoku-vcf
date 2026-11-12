@@ -1,0 +1,6 @@
+PASS 412x790 tara zh：進房後 ResizeObserver 回呼 2 次，靜止 3 秒內再多 0 次；縮緊=false 棋盤=396
+PASS 320x570 swap2 en：進房後 ResizeObserver 回呼 2 次，靜止 3 秒內再多 0 次；縮緊=true 棋盤=304
+PASS 275x527 tara en：進房後 ResizeObserver 回呼 2 次，靜止 3 秒內再多 0 次；縮緊=true 棋盤=259
+PASS 412x450 tara zh：進房後 ResizeObserver 回呼 2 次，靜止 3 秒內再多 0 次；縮緊=true 棋盤=204
+PASS 360x640 free ko：進房後 ResizeObserver 回呼 2 次，靜止 3 秒內再多 0 次；縮緊=false 棋盤=333
+PASS 5／FAIL 0

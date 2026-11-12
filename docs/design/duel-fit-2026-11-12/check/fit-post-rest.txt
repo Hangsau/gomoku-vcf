@@ -1,0 +1,51 @@
+[4/50] 375x667 renju none en  6.6s 超出 0
+[5/50] 375x667 renju none zh  6.8s 超出 0
+[6/50] 375x667 renju none ko  6.9s 超出 0
+[7/50] 375x667 renju none ja  7.1s 超出 0
+[8/50] 375x667 renju 10+10 zh  5.9s 超出 0
+[9/50] 375x667 renju 10+10 en  6.0s 超出 0
+[10/50] 375x667 renju 10+10 ko  6.1s 超出 0
+[11/50] 375x667 renju 10+10 ja  6.3s 超出 0
+[12/50] 375x667 tara none zh  6.5s 超出 0
+[13/50] 375x667 tara none en  6.3s 超出 0
+[14/50] 375x667 tara none ja  6.6s 超出 0
+[15/50] 375x667 tara none ko  6.9s 超出 0
+[16/50] 375x667 tara 10+10 zh  6.2s 超出 0
+[17/50] 375x667 tara 10+10 en  6.3s 超出 0
+[18/50] 375x667 tara 10+10 ko  7.1s 超出 0
+[19/50] 375x667 tara 10+10 ja  7.7s 超出 0
+[20/50] 375x667 tara10 none en  6.0s 超出 0
+[21/50] 375x667 tara10 none zh  6.3s 超出 0
+[22/50] 375x667 tara10 none ko  6.1s 超出 0
+[23/50] 375x667 tara10 none ja  6.3s 超出 0
+[24/50] 375x667 tara10 10+10 en  6.1s 超出 0
+[25/50] 375x667 tara10 10+10 zh  6.5s 超出 0
+[26/50] 375x667 tara10 10+10 ja  6.3s 超出 0
+[27/50] 375x667 tara10 10+10 ko  6.6s 超出 0
+[28/50] 375x667 swap2 none en  6.0s 超出 0
+[29/50] 375x667 swap2 none zh  6.5s 超出 0
+[30/50] 375x667 swap2 none ja  5.9s 超出 0
+[31/50] 375x667 swap2 none ko  6.4s 超出 0
+[32/50] 375x667 swap2 10+10 zh  6.0s 超出 0
+[33/50] 375x667 swap2 10+10 en  6.4s 超出 0
+[34/50] 375x667 swap2 10+10 ja  5.7s 超出 0
+[35/50] 375x667 swap2 10+10 ko  6.9s 超出 0
+[36/50] 412x790 free none zh 字放大1.25 5.8s 超出 0
+[37/50] 360x690 free none zh 字放大1.5 6.1s 超出 0
+[38/50] 412x790 free none zh 字型晚到1.5秒 12.2s 超出 0
+[39/50] 412x790 free none zh 視窗高 790→850→790(進房後) 7.5s 超出 0
+[40/50] 412x790 free none zh 申請研棋 7.1s 超出 0
+[41/50] 412x790 free none zh 研棋進出 7.4s 超出 0
+[42/50] 412x790 free none zh 落子點兩下 20.8s 超出 0
+[43/50] 412x790 swap2 none zh 有人觀戰 6.7s 超出 0
+[44/50] 412x790 tara none zh 落子點兩下 21.2s 超出 0
+[45/50] 412x790 free none en 申請研棋 8.2s 超出 0
+[46/50] 412x790 free none en 研棋進出 7.9s 超出 0
+[47/50] 412x790 swap2 none en 有人觀戰 7.0s 超出 0
+[48/50] 412x790 free none ja 申請研棋 8.0s 超出 0
+[49/50] 412x790 free none ja 研棋進出 7.8s 超出 0
+[50/50] 412x790 swap2 none ja 有人觀戰 8.0s 超出 0
+[50/50] 412x790 free none ko 申請研棋 8.0s 超出 0
+[50/50] 412x790 free none ko 研棋進出 7.6s 超出 0
+[50/50] 412x790 swap2 none ko 有人觀戰 6.8s 超出 0
+案例 50，取樣畫面 609，超出 0，錯誤 0
