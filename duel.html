@@ -931,14 +931,13 @@ function renderActs(me) {
   }
   if (me >= 0 && room.state === 'study') acts.push(`<button type="button" class="btn gold" id="aStudyEnd" style="flex:1.4">${esc(T('sEnd'))}</button>`);
   if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
-  acts.push(`<button type="button" class="btn ghost" id="aLeave" style="flex:1">${esc(T(me >= 0 ? 'leaveRoom' : 'back'))}</button>`);
+  // 離開只留左上角的返回鍵（#rBack）：放底部太容易誤觸（2026-11-12）
   $('rActs').innerHTML = acts.join('');
   if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
   if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
   if ($('aSkip')) $('aSkip').onclick = () => { if (vCanSkip()) vOut('skip'); };
   if ($('aStudy')) $('aStudy').onclick = () => send({ t: room.req && room.req.seat === me ? 'studyCancel' : 'studyReq' });
   if ($('aStudyEnd')) $('aStudyEnd').onclick = () => send({ t: 'studyEnd' });
-  $('aLeave').onclick = leaveRoom;
 }
 function leaveRoom() {
   if (room && room.state === 'play' && mySeat() >= 0 && !confirm(T('leaveQ'))) return;
