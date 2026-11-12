@@ -1,0 +1,35 @@
+== T1 兩個分頁不互踢
+  PASS A1 出現 #mReplaced
+  PASS A1 連線燈 = netRepl：已在別的畫面開啟
+  PASS 10 秒內 A1 連線次數不增加（0→0）
+  PASS 10 秒內 A2 連線次數不增加（1→1）
+  PASS Bob 10 秒內 room 訊息不重複（1→1）
+== T2 A2 回到座位並能下子
+  PASS A2 在原座位 seat=1
+  PASS A2 沒有對話框
+  PASS 輪到 A2（Alice）
+  PASS Bob 看得到 Alice 下的子（64→126）
+== T3 A1 按「改用這裡」
+  PASS A1 對話框消失
+  PASS A1 回到房間座位
+  PASS A2 出現對話框
+  PASS 之後 10 秒連線次數不增加（A1 1→1、A2 1→1）
+  PASS A1 能下子
+== T4 切回前景自動接手
+  PASS A2 對話框關掉
+  PASS A2 接手回到座位
+  PASS A1 被取代、出現對話框（自動接手會讓對方被取代）
+== T5 沒連線時點棋盤
+  FAIL A1 顯示 netWait flash：
+  PASS 棋局狀態沒變
+== T6 版面（對話框開著）
+  PASS zh 375x667 「已在別的畫面開啟」
+  PASS en 375x667 「Opened on another screen」
+  PASS ja 375x667 「別の画面で開いています」
+  PASS ko 375x667 「다른 화면에서 열려 있습니다」
+  PASS zh 360x640 「已在別的畫面開啟」
+  PASS en 360x640 「Opened on another screen」
+  PASS ja 360x640 「別の画面で開いています」
+  PASS ko 360x640 「다른 화면에서 열려 있습니다」
+  PASS 全程沒有 JS 錯誤 []
+PASS 27／FAIL 1

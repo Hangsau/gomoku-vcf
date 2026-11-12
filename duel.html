@@ -266,6 +266,15 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   </div>
 </div>
 
+<!-- 同一玩家在別的畫面開啟，這個畫面被取代 -->
+<div class="modal" id="mReplaced" hidden role="alertdialog" aria-modal="true" aria-labelledby="replT">
+  <div class="box" style="align-items: stretch; text-align: center;">
+    <h2 id="replT" data-i18n="replT">已在別的畫面開啟</h2>
+    <span class="muted" data-i18n="replSub">這個畫面先暫停</span>
+    <button type="button" class="btn gold" id="replUse" data-i18n="replUse">改用這裡</button>
+  </div>
+</div>
+
 <!-- 網址帶的邀請碼找不到房間 -->
 <div class="modal" id="mGone" hidden role="alertdialog" aria-modal="true" aria-labelledby="goneT">
   <div class="box" style="align-items: stretch; text-align: center;">
@@ -324,7 +333,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 const I18N = {
   zh: {
     title: '兩儀殿', home: '回挑戰', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
-    netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…',
+    netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…', replT: '已在別的畫面開啟', replSub: '這個畫面先暫停', replUse: '改用這裡', netRepl: '已在別的畫面開啟', netWait: '連線中，請稍候',
     create: '開房', createGo: '開房，等人入座',
     privL: '誰能進', pubOpt: '公開', privOpt: '私人', pubNote: '列在大廳，誰都能入座', privNote: '大廳看得到但上鎖，要邀請碼才進得來', privTag: '私人',
     invite: '邀請', inviteT: '邀請朋友', inviteCode: '邀請碼', shareLink: '分享連結', copyLink: '複製連結', copied: '已複製', inviteNote: '朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。', shareText: '來兩儀殿跟我對戰',
@@ -348,7 +357,7 @@ const I18N = {
   },
   en: {
     title: 'Yin-Yang Hall', home: 'Challenge', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
-    netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…',
+    netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…', replT: 'Opened on another screen', replSub: 'This screen is paused', replUse: 'Use this screen', netRepl: 'Opened on another screen', netWait: 'Connecting, please wait',
     create: 'Open a room', createGo: 'Open room and wait',
     privL: 'Who can join', pubOpt: 'Public', privOpt: 'Private', pubNote: 'Listed in the lobby; anyone can sit', privNote: 'Shown locked in the lobby; invite code needed', privTag: 'Private',
     invite: 'Invite', inviteT: 'Invite a friend', inviteCode: 'Invite code', shareLink: 'Share link', copyLink: 'Copy link', copied: 'Copied', inviteNote: 'Friends tap the link, or press “Enter code” in the lobby, to land in this room. No install, no sign-up.', shareText: 'Play me in the Yin-Yang Hall',
@@ -372,7 +381,7 @@ const I18N = {
   },
   ja: {
     title: '両儀殿', home: 'チャレンジへ', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
-    netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…',
+    netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…', replT: '別の画面で開いています', replSub: 'この画面は一時停止中です', replUse: 'この画面で続ける', netRepl: '別の画面で開いています', netWait: '接続中です。お待ちください',
     create: '部屋を作る', createGo: '部屋を作って待つ',
     privL: '参加できる人', pubOpt: '公開', privOpt: '非公開', pubNote: 'ロビーに表示・誰でも着席できます', privNote: 'ロビーに鍵つきで表示・招待コードが必要', privTag: '非公開',
     invite: '招待', inviteT: '友だちを招待', inviteCode: '招待コード', shareLink: 'リンクを共有', copyLink: 'リンクをコピー', copied: 'コピーしました', inviteNote: '友だちがリンクを開くか、ロビーの「招待コード」から入ると、この部屋に入れます。インストールも登録も不要です。', shareText: '兩儀殿で対戦しよう',
@@ -396,7 +405,7 @@ const I18N = {
   },
   ko: {
     title: '음양전', home: '도전으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
-    netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…',
+    netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…', replT: '다른 화면에서 열려 있습니다', replSub: '이 화면은 일시 정지되었습니다', replUse: '이 화면에서 계속', netRepl: '다른 화면에서 열려 있습니다', netWait: '연결 중입니다. 잠시만요',
     create: '방 만들기', createGo: '방 만들고 기다리기',
     privL: '입장', pubOpt: '공개', privOpt: '비공개', pubNote: '로비에 표시 · 누구나 앉을 수 있음', privNote: '로비에 잠금 표시 · 초대 코드 필요', privTag: '비공개',
     invite: '초대', inviteT: '친구 초대', inviteCode: '초대 코드', shareLink: '링크 공유', copyLink: '링크 복사', copied: '복사했습니다', inviteNote: '친구가 링크를 누르거나 로비에서 「초대 코드」를 입력하면 이 방으로 들어옵니다. 설치도 가입도 필요 없습니다.', shareText: '양의전에서 대결하자',
@@ -665,24 +674,35 @@ function onJoinErr(code) {   // nocode：找不到碼或私人房沒碼；slow�
 
 // ---------- 連線 ----------
 const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
-let ws = null, online = false, failCount = 0, retryT = 0;
+let ws = null, online = false, failCount = 0, retryT = 0, replaced = false;
 let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0;   // srvOff：伺服器時間－本機時間   // viewing：我正在看的房號
 function connect() {
   clearTimeout(retryT);
-  try { ws = new WebSocket(`${WS_URL}?id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
+  let sock;
+  try { sock = ws = new WebSocket(`${WS_URL}?id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
   ws.onopen = () => {
-    online = true; failCount = 0; renderNet(); passed.clear();   // 新連線：私人房的通行紀錄在伺服器那邊也是新的
+    if (ws !== sock) return;
+    online = true; failCount = 0; replaced = false; $('mReplaced').hidden = true; renderNet(); passed.clear();   // 新連線：私人房的通行紀錄在伺服器那邊也是新的
     if (!viewing) return;
     if (codes[viewing]) { joinFrom = 're'; joinCode = codes[viewing]; send({ t: 'join', code: codes[viewing] }); }   // 用碼再進一次（私人房靠這個接回去）
     else send({ t: 'view', room: viewing });
   };
-  ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
-  ws.onclose = () => { online = false; failCount++; renderNet(); retry(); };
+  ws.onmessage = (ev) => { if (ws !== sock) return; let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
+  ws.onclose = (ev) => {
+    if (ws !== sock) return;
+    online = false;
+    if (ev && ev.code === 4000) { replaced = true; clearTimeout(retryT); $('mReplaced').hidden = false; renderNet(); return; }   // 被同一玩家的另一個畫面取代：不重連，免得互踢
+    failCount++; renderNet(); retry();
+  };
 }
 function retry() { clearTimeout(retryT); retryT = setTimeout(connect, Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** Math.min(failCount, RETRY_MAX_POW))); }
-function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
+const isUp = () => !!ws && ws.readyState === 1;
+function send(m) { if (!isUp()) return false; ws.send(JSON.stringify(m)); return true; }
+$('replUse').onclick = () => { replaced = false; $('mReplaced').hidden = true; connect(); };
+function takeOver() { if (document.visibilityState === 'visible' && (!ws || ws.readyState > 1)) { replaced = false; $('mReplaced').hidden = true; connect(); } }
+addEventListener('pageshow', takeOver);
 setInterval(() => send({ t: 'ping' }), PING_MS);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!ws || ws.readyState > 1)) connect(); });
+document.addEventListener('visibilitychange', takeOver);
 
 function onMsg(m) {
   if (m.t === 'lobby') { lobby = m.rooms; onlineN = m.online || 0; if (m.now) srvOff = m.now - Date.now(); renderLobby(); renderNet(); }
@@ -715,7 +735,7 @@ function onMsg(m) {
 }
 function renderNet() {
   $('net').querySelector('i').className = 'dot ' + (online ? 'teal' : 'off');
-  $('net').querySelector('span').textContent = online ? T('netOn', { n: Math.max(1, onlineN) }) : T(failCount > 2 ? 'netFail' : 'netOff');
+  $('net').querySelector('span').textContent = online ? T('netOn', { n: Math.max(1, onlineN) }) : replaced ? T('netRepl') : T(failCount > 2 ? 'netFail' : 'netOff');
 }
 
 // ---------- 大廳 ----------
@@ -1122,6 +1142,7 @@ cv.addEventListener('click', (ev) => {
     const p = cellAt(ev);
     if (p === null) return;
     if (studyShown().some(([q]) => q === p)) { flash(T('occupied'), '', 'warn', 800); return; }
+    if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
     if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
     ghost = null; send({ t: 'smove', p }); return;
   }
@@ -1136,6 +1157,7 @@ cv.addEventListener('click', (ev) => {
   }
   if (ph === PHASE.OFFER_PICK) {
     if (!match.offers.includes(p)) { flash(T('notoffer'), '', 'warn'); return; }
+    if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
     if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
     ghost = null; send({ t: 'act', action: { type: ACTION.PICK, p } }); return;
   }
@@ -1144,6 +1166,7 @@ cv.addEventListener('click', (ev) => {
   if (placeError(match, p)) { flash(zoneMsg(), '', 'warn'); return; }
   // Rush 的規則：自己點到禁手只提醒，棋子不落、不判輸（伺服器也會擋）；只有連珠、塔拉系列有禁手
   if (ph === PHASE.PLAY && ruleHasForbidden(match.rule) && colorOf(match, mySeat()) === BLACK && forbidType(match.cells, p) !== FORBID_NONE) { ghost = null; renderRoom(); flash(T('forbidden'), T('forbiddenSub'), 'warn'); return; }
+  if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
   if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
   ghost = null;
   send({ t: 'move', p });
@@ -1398,6 +1421,7 @@ async function vcfClick(ev) {
   if (room.state !== 'play' || mySeat() < 0 || !vIsLive(st) || !VR || VR.i !== st.i || VR.hold || VR.done || VR.out) return;
   const p = cellAt(ev);
   if (p === null) return;
+  if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }   // 沒連線：在動到 VR 之前擋掉
   const t = pToT(p);
   if (VR.black.includes(t) || VR.white.includes(t)) return;
   if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
