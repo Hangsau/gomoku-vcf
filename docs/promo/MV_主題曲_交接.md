@@ -82,14 +82,49 @@ cinematic Chinese ancient-style, cool moonlit blue and soft warm lantern gold pa
 | 鏡頭 | 歌詞 | 秒數 | 檔名 | 畫面提示詞 | 轉影片的動作描述 |
 |---|---|---|---|---|---|
 | 1 | 月色鋪成一張盤 | 22.0–25.8 | 1_月色 | A wooden Go board on a low table in a moonlit Chinese courtyard at night, moonlight falling across the empty board like silver, plum blossom branches above, wide shot from slightly above | slow push in toward the board, mist drifting, plum petals falling gently |
-| 2 | 星子零落 無人看 | 26.4–29.7 | 2_星子 | Close-up of black and white round stones scattered in two wooden bowls, reflecting a starry night sky, a few stars visible in the polished black stones, macro shot | slow slide to the right, starlight shimmering on the stones |
-| 3 | 你執黑 我執白 | 30.7–33.7 | 3_執黑 | A young woman in flowing pale hanfu sitting at a board game table seen from behind, long black hair with a simple hairpin, an unseen opponent's sleeve at the opposite edge of the frame, lantern light, medium shot | slow push in from behind, her sleeve moves slightly, lantern light flickers softly |
+| 2 | 星子零落 無人看 | 26.4–29.7 | 2_星子 | Close-up of a single wooden bowl filled with glossy black Go stones, a starry night sky reflected in the polished stones, a few bright stars visible on their surfaces, a second bowl of white stones blurred in the far background, macro shot | slow slide to the right, starlight shimmering on the stones |
+| 3 | 你執黑 我執白 | 30.7–33.7 | 3_執黑 | A young woman in flowing pale hanfu sitting at a low table with a wooden Go board and two bowls of stones, seen from behind, long black hair with a simple hairpin, an unseen opponent's sleeve at the opposite edge of the frame, lantern light, medium shot | slow push in from behind, her sleeve moves slightly, lantern light flickers softly |
 | 4 | 誰先動了心 誰先亂 | 34.1–38.5 | 4_動心 | Extreme close-up of a woman's slender fingers holding a single black stone between index and middle finger, hovering above a wooden board, hesitating, pale hanfu sleeve, moonlight on her hand, background blurred | fingers lower the stone slowly toward the board, camera holds still |
-| 5 | 一步近 一步遠／輸贏都在 一念間 | 39.4–52.8（14 秒，中段插遊戲畫面） | 5_一步 | Low angle macro shot across the surface of a wooden board, one black stone and one white stone in sharp focus in the foreground, grid lines fading into blur, tiny dust particles in moonlight | slow slide forward across the board, dust particles drifting in moonlight |
+| 5 | 一步近 一步遠／輸贏都在 一念間 | 39.4–52.8（14 秒，中段插遊戲畫面） | 5_一步 | Low angle macro shot across the surface of a wooden Go board, four glossy black stones lined up in one straight row receding into the distance, the nearest stone in sharp focus, an empty spot at the far end of the row, the rest of the board empty, moonlight raking across the wood, tiny dust particles floating in the light | slow slide forward along the row of stones toward the empty spot, dust particles drifting in moonlight |
 | 6 | 落子無聲 風也不敢喧 | 54.2–58.1 | 6_落子 | A woman's hand in a pale hanfu sleeve placing a black stone on a wooden board, frozen moment at contact, a soft ring of light rippling outward from the stone like water, plum petals suspended motionless in the air | the ring of light expands outward slowly, petals stay frozen in the air |
 | 7 | 五星連成線 劃過長夜的邊 | 58.3–62.4 | 7_五星 | Five bright stars aligned in a perfect diagonal line across a deep blue night sky above dark tiled rooftops, a thin streak of light connecting them, vast and silent, wide shot | slow tilt up to the stars, the line of light brightens gradually |
 | 8 | 等你看見 那一瞬間 | 62.6–67.1 | 8_看見 | Close-up of a young woman's eyes and upper face in profile, long black hair with a simple hairpin, looking down, a faint line of light reflected in her eyes, calm and certain expression, soft lantern glow | she slowly raises her eyes, the light in her eyes brightens |
 | 9 | 萬籟俱寂 只剩心跳的弦 | 67.3–75.4（8 秒，不夠就慢放） | 9_心弦 | A young woman in flowing pale hanfu seen from behind standing up from a low table in a moonlit courtyard, sleeves moving slightly, the wooden board glowing faintly behind her, five stars aligned in a line in the night sky above, wide shot | she rises slowly, sleeves flowing, camera pulls back and tilts up to the stars |
+
+提示詞修訂（2026-11-12 深夜，使用者實測後）：
+- 鏡頭 2 原句「black and white stones scattered in two bowls」會把黑白子混在一碗 → 改成只拍黑子一碗、白子碗在背景模糊。
+- 鏡頭 3 原句「board game table」太籠統 → 明寫 Go board 和兩個棋罐。
+- 鏡頭 5 原本一黑一白看不出是五子棋 → 改成四顆黑子連成一排、盡頭空一格（差一步成五），接鏡頭 6 落子、鏡頭 7 五星連線。驗收時數棋子：要 4 顆（3 顆可接受），5 顆以上重生。
+- 寫法通則：棋具一律寫 Go board／Go stones（五子棋用同一套棋具，模型認得這個詞）；不寫 scattered、不寫 grid lines；數量寫明確。
+- 以上三段都還沒有使用者實測結果。
+
+### 剪接時間表（第二版，2026-11-12 深夜；使用者說「用你的版本」）
+
+上表的「秒數」是歌詞起訖；實際下刀點如下（歌曲時間，秒）。鏡頭 5 的圖要轉成**兩段**影片（5a、5b，同一張圖、不同動作），中間夾遊戲實錄。
+
+| 片段 | 起–迄 | 長度 | 歌詞 | 素材 |
+|---|---|---|---|---|
+| 1 | 22.0–26.1 | 4.1 | 月色鋪成一張盤 | 1_月色.mp4 |
+| 2 | 26.1–30.3 | 4.2 | 星子零落 無人看 | 2_星子.mp4 |
+| 3 | 30.3–33.9 | 3.6 | 你執黑 我執白 | 3_執黑.mp4 |
+| 4 | 33.9–39.0 | 5.1 | 誰先動了心 誰先亂 | 4_動心.mp4（略慢放） |
+| 5a | 39.0–43.2 | 4.2 | 一步近 | 5a_一步.mp4：`slow slide forward along the row of stones toward the empty spot, dust particles drifting in moonlight` |
+| 遊戲 | 43.2–50.4 | 7.2 | 一步遠／輸贏都在 | 遊戲實錄：連續沖四，停在落最後一子之前（rush_promo.py 錄） |
+| 5b | 50.4–53.6 | 3.2 | 一念間 | 5b_一念.mp4：`camera holds still, focus slowly shifts from the nearest stone to the empty spot at the end of the row, moonlight brightens slightly` |
+| 6 | 53.6–58.2 | 4.6 | 落子無聲 風也不敢喧 | 6_落子.mp4 |
+| 7 | 58.2–62.5 | 4.3 | 五星連成線 劃過長夜的邊 | 7_五星.mp4 |
+| 8 | 62.5–67.2 | 4.7 | 等你看見 那一瞬間 | 8_看見.mp4 |
+| 9 | 67.2–75.4 | 8.2 | 萬籟俱寂 只剩心跳的弦 | 9_心弦.mp4（10 秒版，或 5 秒慢放） |
+| 結尾 | 75.4–81.4 | 6.0 | （間奏，音樂淡出） | 遊戲解題成功畫面＋網址 |
+
+總長約 59 秒。女主角維持執黑（跟鏡頭 5 的黑子四連、遊戲實錄接得上）。
+
+### 階段一驗收（2026-11-12 深夜）
+
+- 使用者已交 9 張圖，在 `C:\claudehome\projects\VCF\docs\promo\MV素材\`（檔名是 `N_名稱.png.png`，多一層副檔名，不影響）。九張全部通過，人物一致。
+- 鏡頭 3、4、6 棋盤上有暗紅色棋子，已在本機調成黑色另存 `3_執黑_修.png`、`4_動心_修.png`、`6_落子_修.png`（原圖保留）。**轉影片用這三個修檔**。
+- 放過的瑕疵：4、6 棋子沒在交叉點上、盤面無四連（當氣氛鏡頭）；9 的棋盤有極小紅棋子沒修、連線五星旁多一顆小星；8 表情偏憂傷。
+- 下一步：使用者做階段二，共 10 段影片（鏡頭 5 做 5a、5b 兩段）→ 助理照上面的剪接時間表剪。
 
 ## 工具備註
 
