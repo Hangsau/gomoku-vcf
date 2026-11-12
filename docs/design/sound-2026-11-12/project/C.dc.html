@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>聲音設定 C 置中卡片五段格</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 375px; height: 667px; box-sizing: border-box; overflow: hidden; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif;">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 0;">
+    <button type="button" aria-label="聲音設定" style="width: 48px; height: 48px; border: 0; border-radius: 14px; background: transparent; color: #EDEFF5; display: inline-flex; align-items: center; justify-content: center;">
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+    </button>
+    <div style="display: flex;">
+      <button type="button" aria-label="語言" style="width: 48px; height: 48px; border: 0; background: transparent; color: #EDEFF5; display: inline-flex; align-items: center; justify-content: center;">
+        <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      </button>
+      <button type="button" aria-label="排行榜" style="width: 48px; height: 48px; border: 0; background: transparent; color: #F2B544; display: inline-flex; align-items: center; justify-content: center;">
+        <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4a4 4 0 0 0 4 4M16 6h4a4 4 0 0 1-4 4M12 14v4M8 20h8"/></svg>
+      </button>
+    </div>
+  </div>
+  <div style="padding: 10px 20px 0; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 36px; color: #F2B544; text-align: center;">Gomoku Rush</div>
+    <div style="border-radius: 16px; background: #161A24; padding: 14px 16px;"><div style="font-size: 18px; font-weight: 700;">無限之塔</div><div style="font-size: 14px; color: #B6BCCB; margin-top: 4px;">60 秒・答對 +20 秒・錯 3 題結束</div></div>
+    <div style="border-radius: 16px; background: #161A24; padding: 14px 16px;"><div style="font-size: 18px; font-weight: 700;">火眼金睛</div><div style="font-size: 14px; color: #B6BCCB; margin-top: 4px;">只看第一手・一題 8 秒</div></div>
+    <div style="border-radius: 16px; background: #161A24; padding: 14px 16px;"><div style="font-size: 18px; font-weight: 700;">象牙塔</div><div style="font-size: 14px; color: #B6BCCB; margin-top: 4px;">由易到難・大家同一組</div></div>
+  </div>
+
+  <div style="position: absolute; inset: 0; background: rgba(5,7,12,.7); display: flex; align-items: center; justify-content: center;">
+    <div style="width: 327px; box-sizing: border-box; border-radius: 20px; background: #161A24; border: 1px solid #2E3546; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 20px;">聲音</h2>
+        <button type="button" aria-label="關閉" style="width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; background: transparent; color: #B6BCCB; display: inline-flex; align-items: center; justify-content: center;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round;"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 16px;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; flex: none;"><circle cx="12" cy="12" r="8" fill="#EDEFF5"/></svg>
+          <span style="flex-grow: 1;">落子音效</span><span style="font-size: 14px; color: #F2B544;">中</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; align-items: end;">
+          <button type="button" aria-label="落子音效 關" aria-pressed="false" style="height: 52px; border: 1px solid #2E3546; border-radius: 12px; background: transparent; color: #B6BCCB; font-family: inherit; font-size: 14px;">關</button>
+          <button type="button" aria-label="落子音效 1 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 8px; border-radius: 3px; background: #F2B544;"></i></button>
+          <button type="button" aria-label="落子音效 2 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 16px; border-radius: 3px; background: #F2B544;"></i></button>
+          <button type="button" aria-label="落子音效 3 格" aria-pressed="true" style="height: 52px; border: 2px solid #F2B544; border-radius: 12px; background: #3A2F17; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 8px;"><i style="width: 22px; height: 24px; border-radius: 3px; background: #F2B544;"></i></button>
+          <button type="button" aria-label="落子音效 4 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 32px; border-radius: 3px; background: #2E3546;"></i></button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 16px;">
+          <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 20px; height: 20px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
+          <span style="flex-grow: 1;">音樂</span><span style="font-size: 14px; color: #F2B544;">小</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; align-items: end;">
+          <button type="button" aria-label="音樂 關" aria-pressed="false" style="height: 52px; border: 1px solid #2E3546; border-radius: 12px; background: transparent; color: #B6BCCB; font-family: inherit; font-size: 14px;">關</button>
+          <button type="button" aria-label="音樂 1 格" aria-pressed="true" style="height: 52px; border: 2px solid #F2B544; border-radius: 12px; background: #3A2F17; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 8px;"><i style="width: 22px; height: 8px; border-radius: 3px; background: #F2B544;"></i></button>
+          <button type="button" aria-label="音樂 2 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 16px; border-radius: 3px; background: #2E3546;"></i></button>
+          <button type="button" aria-label="音樂 3 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 24px; border-radius: 3px; background: #2E3546;"></i></button>
+          <button type="button" aria-label="音樂 4 格" aria-pressed="false" style="height: 52px; border: 0; border-radius: 12px; background: #1F2A3D; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 10px;"><i style="width: 22px; height: 32px; border-radius: 3px; background: #2E3546;"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>聲音設定 B 按鈕旁小浮窗</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input[type=range]{accent-color:#F2B544}
+</style>
+</helmet>
+<div style="position: relative; width: 375px; height: 667px; box-sizing: border-box; overflow: hidden; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif;">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px 0 6px;">
+    <button type="button" aria-label="聲音設定" aria-expanded="true" style="width: 44px; height: 44px; border: 0; border-radius: 14px; background: #1F2A3D; color: #F2B544; display: inline-flex; align-items: center; justify-content: center;">
+      <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+    </button>
+    <span style="font-size: 15px; color: #B6BCCB;">可錯</span>
+    <span style="display: flex; gap: 4px;"><i style="width: 12px; height: 12px; border-radius: 50%; background: #FF7A6B;"></i><i style="width: 12px; height: 12px; border-radius: 50%; background: #FF7A6B;"></i><i style="width: 12px; height: 12px; border-radius: 50%; background: #FF7A6B;"></i></span>
+    <span style="flex-grow: 1;"></span>
+    <span style="font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 34px; color: #3CC6B4;">0:47</span>
+  </div>
+  <div style="padding: 10px 16px 0; display: flex; justify-content: space-between; font-size: 15px; color: #B6BCCB;">
+    <span>無限之塔・第 5 題</span><span style="font-family: 'Chakra Petch', sans-serif; color: #F2B544;">1,240</span>
+  </div>
+
+  <div style="position: relative; margin: 14px 16px 0; width: 343px; height: 343px; border-radius: 10px; background-color: #D9A95B; background-image: linear-gradient(#6B4A1E 1px, transparent 1px), linear-gradient(90deg, #6B4A1E 1px, transparent 1px); background-size: 24.5px 24.5px; background-position: 12px 12px;">
+    <i style="position: absolute; left: 148px; top: 148px; width: 22px; height: 22px; border-radius: 50%; background: #14161C;"></i>
+    <i style="position: absolute; left: 172px; top: 148px; width: 22px; height: 22px; border-radius: 50%; background: #14161C;"></i>
+    <i style="position: absolute; left: 197px; top: 148px; width: 22px; height: 22px; border-radius: 50%; background: #14161C;"></i>
+    <i style="position: absolute; left: 123px; top: 148px; width: 22px; height: 22px; border-radius: 50%; background: #F4F4F0;"></i>
+    <i style="position: absolute; left: 172px; top: 172px; width: 22px; height: 22px; border-radius: 50%; background: #F4F4F0;"></i>
+    <i style="position: absolute; left: 197px; top: 197px; width: 22px; height: 22px; border-radius: 50%; background: #14161C;"></i>
+    <i style="position: absolute; left: 148px; top: 197px; width: 22px; height: 22px; border-radius: 50%; background: #F4F4F0;"></i>
+  </div>
+  <div style="padding: 16px 16px 0; font-size: 15px; color: #B6BCCB; text-align: center;">黑先・連續衝四取勝</div>
+
+  <div style="position: absolute; left: 8px; top: 58px; width: 268px; box-sizing: border-box; background: #161A24; border: 1px solid #2E3546; border-radius: 14px; padding: 6px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5); display: flex; flex-direction: column;">
+    <div style="display: flex; align-items: center; gap: 10px; height: 48px;">
+      <label for="bSfx" style="display: flex; align-items: center; gap: 6px; width: 62px; flex: none; font-size: 14px;">
+        <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 18px; height: 18px; flex: none;"><circle cx="12" cy="12" r="8" fill="#EDEFF5"/></svg>落子
+      </label>
+      <input id="bSfx" type="range" min="0" max="100" value="60" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+      <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">60</span>
+    </div>
+    <div style="height: 1px; background: #252B3A;"></div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 48px;">
+      <label for="bBgm" style="display: flex; align-items: center; gap: 6px; width: 62px; flex: none; font-size: 14px;">
+        <svg aria-hidden="true" viewBox="0 0 24 24" style="width: 18px; height: 18px; flex: none; stroke: #EDEFF5; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>音樂
+      </label>
+      <input id="bBgm" type="range" min="0" max="100" value="30" style="flex-grow: 1; min-width: 0; height: 44px; margin: 0;">
+      <span style="width: 26px; text-align: right; font-family: 'Chakra Petch', sans-serif; font-size: 16px; color: #F2B544;">30</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
