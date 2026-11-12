@@ -12,7 +12,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 from playwright.async_api import async_playwright
 
 ROOT = r'C:\claudehome\projects\VCF'
-OUT = os.path.join(ROOT, 'docs', 'promo', '2026-11-12')
+OUT = os.path.join(ROOT, 'docs', 'promo', '無聲原片')
+OUT_PNG = os.path.join(ROOT, 'docs', 'promo', '檢查截圖')
 FFMPEG = r'C:\Users\hangs\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build\bin\ffmpeg.exe'
 FFPROBE = FFMPEG.replace('ffmpeg.exe', 'ffprobe.exe')
 NICK = 'Rush'
@@ -550,7 +551,7 @@ async def main(name):
         times = sorted(times[:6], key=lambda x: x[1]) if len(rec.marks) <= 6 else times[:6]
         report['frames'] = []
         for k, (n, t) in enumerate(times, 1):
-            png = os.path.join(OUT, f'rush_{name}_{k}.png')
+            png = os.path.join(OUT_PNG, f'rush_{name}_{k}.png')
             subprocess.run([FFMPEG, '-y', '-loglevel', 'error', '-ss', f'{t:.2f}', '-i', mp4, '-frames:v', '1', png], check=True)
             report['frames'].append((png, n, round(t, 2)))
     finally:
