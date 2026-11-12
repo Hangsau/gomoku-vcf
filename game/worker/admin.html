@@ -107,7 +107,7 @@ details.sec summary { cursor: pointer; font-weight: 700; min-height: 32px; displ
   </div>
 </header>
 <main id="list" aria-live="polite"><p class="msg">載入中…</p></main>
-<script src="/game/skin.js"></script>
+<script>document.write('<script src="/game/skin.js?v=' + Date.now() + '"><\/script>');</script><!-- 每次都抓最新的清單，不吃瀏覽器快取 -->
 <script>
 'use strict';
 const SITE = 'https://rush.hangsau.app';
