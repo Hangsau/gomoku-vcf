@@ -878,17 +878,33 @@ function renderSound() {
 }
 document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); bgmSync(); if (soundOn) stoneSound(); });
 
-// ---------- 背景音樂（2026-11-12）：HTMLAudioElement、preload none；首頁／選單／開始／結算／設定播 menu，解題畫面播 play ----------
-// 點過畫面才開始播（手機限制）；兩首交叉淡化 0.6 秒；曲尾 1.5 秒淡出、回開頭淡入；切到背景、靜音、音樂 0 都直接 pause；載不到就安靜失敗。
-const MUSIC = { menu: 'game/music/menu.mp3', play: 'game/music/play.mp3' };
-const BGM_MAX = 0.8, BGM_XFADE = 0.6, BGM_EDGE = 1.5;
-const bgm = {};
-let bgmTrack = 'menu', bgmTouched = false, bgmTimer = null, bgmLast = 0;
+// ---------- 背景音樂（2026-11-12 起；2026-11-13 改多首輪播）：HTMLAudioElement、preload none ----------
+// 【改歌單】只改下面的 BGM_LISTS：鍵是場景（menu＝首頁／選單／開始／結算／設定，play＝解題畫面），值是曲名陣列（曲名＝game/music/ 底下不含 .mp3 的檔名）。
+// 加新歌：把 mp3 放進 game/music/，再把檔名（不含 .mp3）加進想要的清單即可。BGM_REPEAT 可指定某首連播幾次才換下一首（預設 1 次，play 只有 34 秒所以連播 3 次）。
+// 每個場景各記自己播到第幾首；選單場景每次載入頁面隨機一首開始，解題場景固定從清單第一首開始。同一首歌全頁只有一個 Audio 元素，兩個場景剛好都輪到同一首時切場景不中斷。
+// 點過畫面才開始播（手機限制）；場景切換交叉淡化 0.6 秒；曲尾 1.5 秒淡出、下一首從頭淡入（頁面第一次出聲只淡入 0.4 秒）；切到背景、靜音、音樂 0 都直接 pause；
+// 載不到的歌標記為壞檔、跳到清單下一首（不重試）；整份清單都壞就安靜不播。
+const BGM_LISTS = { menu: ['theme', 'menu'], play: ['play', 'theme'] };
+const BGM_REPEAT = { play: 3 };
+const BGM_MAX = 0.8, BGM_XFADE = 0.6, BGM_EDGE = 1.5, BGM_FIRST_EDGE = 0.4;
+const bgm = {}, bgmBad = {};
+const bgmIdx = { menu: Math.floor(Math.random() * BGM_LISTS.menu.length), play: 0 };
+const bgmPlays = { menu: 0, play: 0 };
+let bgmTrack = 'menu', bgmTouched = false, bgmTimer = null, bgmLast = 0, bgmFirstPlay = true;
+// 場景目前那一首（跳過壞檔）；整份清單都壞回傳 null
+function bgmCur(sc) {
+  const L = BGM_LISTS[sc];
+  for (let k = 0; k < L.length; k++) {
+    const i = (bgmIdx[sc] + k) % L.length;
+    if (!bgmBad[L[i]]) { if (i !== bgmIdx[sc]) { bgmIdx[sc] = i; bgmPlays[sc] = 0; } return L[i]; }
+  }
+  return null;
+}
 function bgmGet(n) {
   if (!bgm[n]) {
-    const el = new Audio(); el.preload = 'none'; el.loop = false; el.volume = 0; el.src = MUSIC[n];
-    el.addEventListener('error', () => {});
-    bgm[n] = { el, f: 0, gain: null };
+    const el = new Audio(); el.preload = 'none'; el.loop = false; el.volume = 0; el.src = 'game/music/' + n + '.mp3';
+    el.addEventListener('error', () => { bgmBad[n] = true; if (bgmWanted()) bgmSync(); });
+    bgm[n] = { el, f: 0, gain: null, inEdge: BGM_EDGE };
     bgmWire(bgm[n]);
   }
   return bgm[n];
@@ -905,12 +921,32 @@ function bgmWire(t) {
 function bgmSetVol(t, x) { if (t.gain) t.gain.gain.value = x; else t.el.volume = x; }
 function bgmWanted() { return soundOn && vol.bgm > 0 && bgmTouched && document.visibilityState === 'visible'; }
 function bgmPauseAll() { for (const n in bgm) { bgm[n].f = 0; bgmSetVol(bgm[n], 0); if (!bgm[n].el.paused) bgm[n].el.pause(); } }
+// 目前這首播完：連播次數夠了就換清單下一首（輪完回第一首），下一首從頭
+function bgmAdvance(sc, name) {
+  const L = BGM_LISTS[sc];
+  bgmPlays[sc]++;
+  let next = name;
+  if (bgmPlays[sc] >= (BGM_REPEAT[name] || 1)) {
+    bgmPlays[sc] = 0;
+    for (let k = 1; k <= L.length; k++) { const i = (bgmIdx[sc] + k) % L.length; if (!bgmBad[L[i]]) { bgmIdx[sc] = i; next = L[i]; break; } }
+  }
+  for (const n of (next === name ? [name] : [name, next])) {
+    const t = bgm[n] || (n === next ? bgmGet(n) : null); if (!t) continue;
+    try { t.el.currentTime = 0; } catch {}
+    t.inEdge = BGM_EDGE;
+  }
+  return next;
+}
 function bgmStep() {
   const now = performance.now(), dt = Math.min(0.25, (now - bgmLast) / 1000); bgmLast = now;
   if (!bgmWanted()) { bgmPauseAll(); bgmStop(); return; }
+  let active = bgmCur(bgmTrack);
+  if (!active) { bgmPauseAll(); bgmStop(); return; }
+  bgmGet(active);
   let busy = false;
   for (const n in bgm) {
-    const t = bgm[n], el = t.el, tgt = n === bgmTrack ? 1 : 0;
+    const t = bgm[n], el = t.el, tgt = n === active ? 1 : 0;
+    if (bgmBad[n] && tgt === 0) { t.f = 0; if (!el.paused) el.pause(); continue; }
     t.f = tgt > t.f ? Math.min(1, t.f + dt / BGM_XFADE) : Math.max(0, t.f - dt / BGM_XFADE);
     if (tgt === 0 && t.f <= 0.001) { t.f = 0; if (!el.paused) el.pause(); continue; }
     busy = true;
@@ -918,8 +954,11 @@ function bgmStep() {
     const d = el.duration;
     if (Number.isFinite(d) && d > 0) {
       const rem = d - el.currentTime;
-      if (el.ended || rem <= 0.05) { try { el.currentTime = 0; } catch {} lf = 0; }
-      else lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / BGM_EDGE));
+      if (tgt === 1 && (el.ended || rem <= 0.05)) {
+        const nx = bgmAdvance(bgmTrack, n); lf = 0;
+        if (nx !== n) { active = nx; bgm[nx].f = 0; t.f = 0; if (!el.paused) el.pause(); continue; }
+      } else if (tgt === 0 && (el.ended || rem <= 0.05)) { lf = 0; }
+      else lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / t.inEdge));
     }
     if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); }
     bgmSetVol(t, Math.max(0, Math.min(1, (vol.bgm / 100) * BGM_MAX * t.f * lf)));
@@ -929,7 +968,9 @@ function bgmStep() {
 function bgmStop() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
 function bgmSync() {
   if (!bgmWanted()) { bgmPauseAll(); bgmStop(); return; }
-  bgmGet(bgmTrack);
+  const n = bgmCur(bgmTrack); if (!n) { bgmPauseAll(); bgmStop(); return; }
+  const t = bgmGet(n);
+  if (bgmFirstPlay) { bgmFirstPlay = false; t.f = 1; t.inEdge = BGM_FIRST_EDGE; }   // 第一次出聲：不做場景交叉淡化，邊緣淡入 0.4 秒
   if (!bgmTimer) { bgmLast = performance.now(); bgmTimer = setInterval(bgmStep, 80); }
   bgmStep();
 }
@@ -938,7 +979,7 @@ function bgmSetTrack() {
   if (n !== bgmTrack) { bgmTrack = n; bgmSync(); }
 }
 const bgmTouch = () => { if (!bgmTouched) bgmTouched = true; if (bgmWanted()) { audio();   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume 一次，不然音樂播進暫停中的 context 會沒聲音（2026-11-12 使用者：首頁沒音樂，要先下過棋才有）
-  const t = bgm[bgmTrack]; if (!t || t.el.paused) bgmSync(); } };
+  const n = bgmCur(bgmTrack), t = n && bgm[n]; if (n && (!t || t.el.paused)) bgmSync(); } };
 for (const ev of ['pointerdown', 'click', 'keydown', 'touchend']) addEventListener(ev, bgmTouch, { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => bgmSync());
 new MutationObserver(bgmSetTrack).observe($('sPlay'), { attributes: true, attributeFilter: ['hidden'] });
