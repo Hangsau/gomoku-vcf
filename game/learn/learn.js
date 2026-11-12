@@ -349,7 +349,8 @@
   const isDone = (id) => (prog().done || []).includes(id);
 
   // ---------- 入口：首頁卡片區最上面插一張教學卡（還沒看過開場的人多一行「新手從這裡開始」） ----------
-  const entry = document.createElement('button'); entry.type = 'button'; entry.id = 'toLearn'; entry.className = 'mode slim';
+  const preset = document.getElementById('toLearn');   // game.html 已經寫好這張卡（2026-11-13，免得晚一拍才冒出來）；沒有才自己建
+  const entry = preset || document.createElement('button'); entry.type = 'button'; entry.id = 'toLearn'; entry.className = 'mode slim';
   entry.style.cssText = 'border-color:#3CC6B4;border-style:dashed';   // 高度、留白由 game.html 的 #sHome #toLearn 管（2026-11-11 使用者：選單大小對齊）
   const entryLabel = () => {
     entry.innerHTML = `<span class="big" style="color:#3CC6B4"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><circle cx="15" cy="9" r="2.2" fill="currentColor"/></svg></span><span class="tx"><b></b><span></span></span>`;
@@ -357,7 +358,7 @@
     entry.querySelector('.tx span').textContent = prog().opening ? '' : U('entrySub');
   };
   const cards = document.getElementById('toPick')?.parentNode;   // 首頁卡片區：教學卡放最上面（2026-11-11 使用者：教學、練習、挑戰、對戰）
-  if (cards) { cards.insertBefore(entry, cards.firstElementChild); entryLabel(); }
+  if (cards) { if (!preset) cards.insertBefore(entry, cards.firstElementChild); entryLabel(); }
   new MutationObserver(entryLabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
   entry.onclick = () => open();
 
