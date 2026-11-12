@@ -37,6 +37,10 @@ const STUDY_COOLDOWN_MS = 30000;   // 被拒絕後多久才能再申請
 // 閒置退出（2026-11-11 使用者：開房等到睡著怎麼辦、要有入座時間退出機制）：坐著 IDLE_MS 沒動作就問「還在嗎？」，ASK_MS 內沒回應就離座（對局中＝判負）
 // 本機測試可以用 --var IDLE_MS:8000 --var IDLE_ASK_MS:5000 縮短
 const IDLE_MS = 10 * 60000, IDLE_ASK_MS = 60000;
+// 今日棋局集（2026-11-13 使用者）：每一局結束存一筆（summary 放 rec:<id>，整筆放 full:<id>；id 以 13 位結束時間開頭，key 依時間排序）
+const REC_LIST_MAX = 200, REC_BATCH = 400, REC_BATCH_ROUNDS = 5;
+const REC_RATE_N = 4, REC_RATE_MS = 1000;   // 同一連線每秒最多 4 次 recs／rec
+const pad13 = (n) => String(Math.max(0, Math.floor(n))).padStart(13, '0');
 const canStudy = (room) => room.kind === 'gomoku' && !STUDY_FAST_TIMES.includes(room.time);
 // 只接受 Rush 網頁連進來（瀏覽器一定會帶 Origin）；本機測試用 127.0.0.1／localhost
 const ORIGIN_OK = [/^https:\/\/rush\.hangsau\.app$/, /^https:\/\/([a-z0-9-]+\.)?gomoku-rush\.pages\.dev$/, /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/];
@@ -272,6 +276,13 @@ export class Hall {
         this.send(ws, this.lobbyMsg());
         return;
       }
+      case 'recs': case 'rec': {   // 今日棋局集：清單／單筆（唯讀，不碰房間）
+        const now = Date.now();
+        c.recHits = (c.recHits || []).filter((t) => now - t < REC_RATE_MS);
+        if (c.recHits.length >= REC_RATE_N) return err('slow');
+        c.recHits.push(now);
+        return (m.t === 'recs' ? this.sendRecs(id, ws, m) : this.sendRec(id, ws, m)).catch((e) => { console.error('棋局集讀取失敗', e); err('bad'); });
+      }
       default: return err('bad');
     }
   }
@@ -457,6 +468,7 @@ export class Hall {
     room.endNote = null;
     room.study = null; room.req = null; room.reqBlock = [0, 0];
     room.again.clear();
+    room.recorded = false;
     room.games += 1;
     if (room.kind === 'vcf') { room.vs = newVs(); this.vcfStart(room); return; }
     room.match = createMatch({ rule: room.rule, clock: parseTime(room.time).clock }, Date.now());
@@ -508,6 +520,7 @@ export class Hall {
       vs.result = { winner: seat, note: 'score' };
       room.state = 'over';
       stopTimers(vs);
+      this.recordGame(room);
       return this.roomChanged(room);
     }
     const i = st.i;
@@ -532,6 +545,7 @@ export class Hall {
       vs.result = { winner, note: 'score' };
       room.state = 'over';
       stopTimers(vs);
+      this.recordGame(room);
       return this.roomChanged(room);
     }
     vs.phase = 'reveal';
@@ -563,6 +577,7 @@ export class Hall {
       stopTimers(room.vs);
       if (room.vs) room.vs.result = { winner: 1 - seat, note };
       room.endNote = note; room.state = 'over';
+      this.recordGame(room);
       return this.roomChanged(room);
     }
     room.match = applyAction(room.match, seat, { type: ACTION.RESIGN }, Date.now()).match;
@@ -570,7 +585,7 @@ export class Hall {
     this.afterChange(room);
   }
   afterChange(room) {
-    if (room.match && room.match.result) { room.state = 'over'; room.req = null; clearTimeout(room.timer); }
+    if (room.match && room.match.result) { room.state = 'over'; room.req = null; clearTimeout(room.timer); this.recordGame(room); }
     else this.armTimer(room);
     this.roomChanged(room);
   }
@@ -583,6 +598,60 @@ export class Hall {
       const next = checkTimeout(room.match, Date.now());
       if (next !== room.match) { room.match = next; this.afterChange(room); } else this.armTimer(room);
     }, left + TIMER_SLACK_MS);
+  }
+
+  // ---------- 今日棋局集（2026-11-13 使用者：每一局結束就存，不管在哪、公開私人都先蒐集） ----------
+  // 所有「對局結束」的路徑最後都經過這裡（五子棋：afterChange；VCF：endBy／vcfFinish／vcfLineStep）；room.recorded 確保一局只存一次，start() 歸零。
+  // 不存：五子棋 0 手、VCF 題庫讀不到（nobank）或一題都還沒抽出來、對局中研棋（沒有勝負）。存檔失敗只記 log，不影響對局。
+  recordGame(room) {
+    if (room.recorded) return;
+    try {
+      const now = Date.now(), pids = room.seats.map((s) => (s ? s.id : null)), names = room.seats.map((s) => (s ? s.nick : '?'));
+      let sum, body;
+      if (room.kind === 'vcf') {
+        const vs = room.vs;
+        if (!vs || !vs.result || vs.result.note === 'nobank' || !vs.list.length) return;
+        const review = publicVs(vs, false).review;
+        sum = { kind: 'vcf', vmode: room.vcf.vmode, rank: room.vcf.rank, score: vs.score.slice(), win: vs.result.winner, note: vs.result.note };
+        body = { vcf: room.vcf, score: vs.score.slice(), review, startedAt: vs.startAt || null };
+      } else {
+        const m = room.match;
+        if (!m || !m.result || !m.moves.length) return;
+        sum = { kind: 'gomoku', rule: room.rule, time: room.time, n: m.moves.length, win: m.result.winnerSeat, note: room.endNote || null, cols: [colorOf(m, 0), colorOf(m, 1)] };
+        body = { match: serializeMatch(m), result: m.result, startedAt: m.startedAt };
+      }
+      room.recorded = true;
+      const id = pad13(now) + Math.random().toString(36).slice(2, 6);
+      Object.assign(sum, { id, at: now, priv: room.priv === true, names, pids });
+      const full = { ...sum, ...body };
+      this.state.storage.put({ ['full:' + id]: full, ['rec:' + id]: sum }).catch((e) => console.error('棋局存檔失敗', e));
+    } catch (e) { console.error('棋局存檔失敗', e); }
+  }
+  // 給客戶端的樣子：不送玩家 id，改送 mine（我坐哪個座位，不是我的局＝null）；私人房的局只有當時兩位玩家看得到
+  recView(r, id) {
+    const mine = r.pids.indexOf(id);
+    if (r.priv && mine < 0) return null;
+    const { pids, ...rest } = r;
+    return { ...rest, mine: mine >= 0 ? mine : null };
+  }
+  async sendRecs(id, ws, m) {
+    const since = Number.isFinite(Number(m.since)) ? Number(m.since) : Date.now() - 86400000;
+    const list = [], start = 'rec:' + pad13(since);
+    let end = 'rec;';
+    for (let round = 0; round < REC_BATCH_ROUNDS && list.length < REC_LIST_MAX; round++) {
+      const got = await this.state.storage.list({ start, end, reverse: true, limit: REC_BATCH });
+      for (const [, r] of got) { const v = this.recView(r, id); if (v && list.length < REC_LIST_MAX) list.push(v); }
+      if (got.size < REC_BATCH) break;
+      end = [...got.keys()].at(-1);   // reverse：最後一個是最舊的，下一輪接著往更舊的找
+    }
+    this.send(ws, { t: 'recs', list });
+  }
+  async sendRec(id, ws, m) {
+    const key = String(m.id || '');
+    const full = /^\d{13}[a-z0-9]{1,6}$/.test(key) ? await this.state.storage.get('full:' + key) : null;
+    const v = full && this.recView(full, id);
+    if (!v) return this.send(ws, { t: 'err', code: 'gone' });   // 找不到、或私人房的局不是你的：一律當沒有
+    this.send(ws, { t: 'rec', rec: v });
   }
 
   // ---------- 廣播 ----------

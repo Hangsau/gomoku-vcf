@@ -15,7 +15,7 @@
 |---|---|
 | `duel.html` | 對戰頁：大廳、開房、房間（五子棋、VCF 明鏡台一線天／八仙渡都在這一頁） |
 | `game/duel/match.js`、`rules.js` | 五子棋規則（從棋神之雞複製；塔拉系列第一手改成開局方自己下天元，跟原版不同） |
-| `game/duel-server/worker.js` | Cloudflare Worker＋Durable Object `Hall`：大廳、房間、五子棋每一手驗證 |
+| `game/duel-server/worker.js` | Cloudflare Worker＋Durable Object `Hall`：大廳、房間、五子棋每一手驗證、每局結束存檔（今日棋局集） |
 | `game/duel-server/vcf.js` | VCF 明鏡台：設定檢查（含 `vmode`）、從題庫抽題串、每人進度、送給前端的狀態 |
 | `game.html` | 首頁加「對戰」卡片 |
 
@@ -69,6 +69,28 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 
 - 閒置退出、離座判負、再來一局兩種玩法行為一致。
 - 本機測試腳本：`docs/design/duel-modes-2026-11-12/check/`（Playwright＋系統 Chrome，`node run.mjs`；http.server 8793、wrangler dev 8789、`.dev.vars` 的 `BANK_URL` 指 8793；頁面的 WebSocket 由腳本從 8787 改接 8789）。
+
+## 今日棋局集（2026-11-13 使用者）
+
+使用者原話：「可以做一個今日下過的棋局集嗎？不管在哪的都先蒐集起來，可以回看。現在只能看上一局的。」
+
+**存什麼**：每一局結束就存一筆（`worker.js` 的 `recordGame`，所有結束路徑都經過它；`room.recorded` 確保一局只存一次，`start()` 歸零，所以同房再來一局是另一筆）。五子棋含連五、禁手、認輸、超時、斷線判負、閒置判負、和棋；VCF 含分數到、認輸、斷線、閒置。**不存**：五子棋 0 手就結束、VCF 題庫讀不到（`nobank`）或還沒抽出題目、對局中研棋（沒有勝負）。存檔失敗只 `console.error`，不影響對局。
+
+**key 格式**（Durable Object 的 `state.storage`，SQLite 型，重啟、部署後還在）：
+- `rec:<id>`：摘要（清單用）：`id、at（結束時間 ms）、kind、vmode／rule、time、rank、n（五子棋手數）、score（VCF 座位 0:座位 1）、names[2]、win（座位或 null）、note、priv、cols（五子棋兩座位的顏色）、pids[2]（玩家 id，只在伺服器，不送出）`。
+- `full:<id>`：整筆＝摘要＋五子棋 `match`（`serializeMatch`：config、log，可重播）、`result`、VCF 的 `vcf` 設定、`score`、`review`（`list` 題目串、`logs` 兩人手順，跟賽後 `review` 同格式）、`startedAt`。
+- `id`＝13 位補零的結束時間＋4 碼亂數，所以 key 依時間排序，之後要清舊的用範圍刪。目前**不刪**。
+
+**訊息**（客戶端→伺服器，都唯讀、不碰房間；同一連線每秒最多 4 次，超過回 `err slow`）：
+- `{ t: 'recs', since }` → `{ t: 'recs', list }`：結束時間 ≥ `since`（毫秒，頁面送當地今天 0 點）的摘要，新的在前，最多 200 筆。
+- `{ t: 'rec', id }` → `{ t: 'rec', rec }` 整筆；找不到（或私人局不是你的）回 `{ t: 'err', code: 'gone' }`。
+- 可見範圍：公開房的局所有人看得到；私人房（`priv`）的局只有當時兩位玩家（比對連線玩家 id）看得到，清單和單筆都擋。回給客戶端不含玩家 id，改送 `mine`（我坐哪個座位 0／1，不是我的局＝`null`）。
+
+**頁面**：大廳清單上方兩個切換鈕「對局」（原本的房間清單，預設）｜「今日棋局」。切到後送 `recs`（待在這頁不即時更新，重新切進來再抓）；每筆一張卡（時間、結果＝手數或比分、玩法、兩位暱稱，贏的標「勝」、有我參與標「你」）。點卡送 `rec`，收到後進回看：**重用 `#sRoom`**，用 `enterReplay` 在本機組一個唯讀 `room`（座位 id 故意不等於自己，一律當觀戰），不送 `view`／`sit`／`leave`。`REPLAY` 不為空時 `onRoom` 直接略過，大廳／房間廣播和斷線重連都不會把畫面拉走。
+- 五子棋：棋盤＋「|◀ ◀ ▶ ▶|」，顯示第 n／共 m 手，預設停在最後一手；最後一手標記、連五連線、抓禁紅叉沿用實戰畫法（連線與紅叉只在最後一手畫）。超時的結果不在動作紀錄裡，用存的 `result` 補上。
+- VCF：直接走既有賽後逐題回看（`RV`：◀ ▶ 換題、正解／兩位暱稱的手順）。
+- 返回鍵回「今日棋局」清單（保留捲動位置）。舊伺服器（不認得 `recs`）回 `err bad`，清單顯示空狀態、不跳錯誤。
+- 本機測試：`docs/design/duel-records-2026-11-13/check/run.mjs`（自己起停 wrangler dev 8789，資料放 `--persist-to` 暫存資料夾；http.server 8793、8791 要先開）。
 
 ## 還沒做 / 上線前要決定
 
