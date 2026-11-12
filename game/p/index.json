@@ -1,6 +1,6 @@
 {
  "ver": "2026-11-09b",
- "at": "2026-11-12 08:26",
+ "at": "2026-11-12 08:58",
  "blocked": 0,
  "dans": [
   {
@@ -70,7 +70,7 @@
    "white": 578,
    "trained": 2631,
    "bank": 2659,
-   "pool": 4350,
+   "pool": 4355,
    "blocked": 524
   },
   {
@@ -80,7 +80,7 @@
    "white": 72,
    "trained": 1064,
    "bank": 901,
-   "pool": 2030,
+   "pool": 2044,
    "blocked": 78
   },
   {
@@ -90,20 +90,20 @@
    "white": 22,
    "trained": 797,
    "bank": 307,
-   "pool": 1894,
+   "pool": 1927,
    "blocked": 27
   },
   {
    "dan": "傳說",
    "file": "10.json",
-   "n": 1589,
+   "n": 1591,
    "white": 1,
    "trained": 716,
-   "bank": 873,
-   "pool": 2263,
+   "bank": 875,
+   "pool": 2311,
    "blocked": 11
   }
  ],
  "hiddenRoute": 12683,
- "total": 179715
+ "total": 179717
 }
