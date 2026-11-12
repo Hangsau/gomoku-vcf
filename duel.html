@@ -628,15 +628,23 @@ const passed = new Set(), codes = {};   // passed：這條連線進得去的私�
 const normCode = (c) => String(c || '').replace(/\s+/g, '').toUpperCase().slice(0, 6);
 const inviteUrl = () => location.origin + location.pathname + '?r=' + room.code + '&lang=' + lang;
 function openInvite() { if (!room || !room.code) return; $('invCode').textContent = room.code; openModal('mInvite'); }
-async function copyInvite(url) { try { await navigator.clipboard.writeText(url); toast(T('copied')); } catch { prompt(T('copyLink'), url); } }
+// 邀請訊息帶棋局設定，朋友一看就知道是什麼局（2026-11-12）
+function inviteDesc() {
+  const v = room.vcf;
+  return (room.kind === 'vcf' && v
+    ? [T('kVcf'), T('vm_' + vmodeOf(room)), rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })]
+    : [T('kGomoku'), T('r_' + room.rule), timeLabel(room.time)]).filter(Boolean).join('・');
+}
+const inviteText = () => T('shareText') + '\n' + inviteDesc();
+async function copyInvite(text) { try { await navigator.clipboard.writeText(text); toast(T('copied')); } catch { prompt(T('copyLink'), text.split('\n').pop()); } }
 $('rInvite').onclick = openInvite;
 $('invShare').onclick = async () => {
   if (!room) return;
   const url = inviteUrl();
-  if (navigator.share) { try { await navigator.share({ title: T('title'), text: T('shareText'), url }); } catch {} return; }
-  copyInvite(url);
+  if (navigator.share) { try { await navigator.share({ title: T('title'), text: inviteText(), url }); } catch {} return; }
+  copyInvite(inviteText() + '\n' + url);
 };
-$('invCopy').onclick = () => { if (room) copyInvite(inviteUrl()); };
+$('invCopy').onclick = () => { if (room) copyInvite(inviteText() + '\n' + inviteUrl()); };
 function openJoin(priv) { $('joinPriv').hidden = !priv; $('joinErr').textContent = ''; $('joinCode').value = ''; openModal('mJoin'); $('joinCode').focus(); }
 $('openJoin').onclick = () => openJoin(false);
 $('joinCode').addEventListener('input', () => { const v = normCode($('joinCode').value); if ($('joinCode').value !== v) $('joinCode').value = v; $('joinErr').textContent = ''; });
