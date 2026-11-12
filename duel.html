@@ -512,49 +512,79 @@ function chime() {   // 有人入座：兩聲輕響
     o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + 0.3);
   });
 }
-// ---------- 背景音樂：全程只播 game/music/duel.mp3，循環；點過畫面才開始（手機限制）----------
-// HTMLAudioElement、preload none；經 GainNode 控音量（建不起來退回 el.volume）；曲尾 1.5 秒淡出、回開頭淡入；靜音／音樂 0／切到背景就 pause；載不到安靜失敗
-const BGM_SRC = 'game/music/duel.mp3', BGM_MAX = 0.8, BGM_EDGE = 1.5;
-let bgmEl = null, bgmGain = null, bgmTouched = false, bgmTimer = null;
+// ---------- 背景音樂：兩首輪播，進頁就預載、進頁就試著播（瀏覽器不准就等第一次操作）----------
+// 【改歌單】只改下面的 BGM_LIST：曲名＝game/music/ 底下不含 .mp3 的檔名；每次載入頁面固定從第一首開始，播到曲尾（1.5 秒淡出）換下一首從頭淡入，輪完回第一首。
+// 每首一個 HTMLAudioElement；第一首 preload auto（進頁就載），其餘 preload none、輪到才建立才載。經 GainNode 控音量（建不起來退回 el.volume）。
+// 頁面第一次出聲淡入 0.4 秒，換曲／循環邊緣 1.5 秒；靜音／音樂 0／切到背景就 pause；載不到的歌標壞檔跳下一首（不重試），整份都壞就安靜。
+// AudioContext 不是 running（被瀏覽器擋）或 play() 被拒時不出聲、不報錯，等 pointerdown／click／keydown／touchend 或 statechange 再試。
+const BGM_LIST = ['duel', 'theme'];
+const BGM_MAX = 0.8, BGM_EDGE = 1.5, BGM_FIRST_EDGE = 0.4;
+const bgm = {}, bgmBad = {};
+let bgmIdx = 0, bgmTimer = null, bgmBlocked = false;
 function bgmVolume() { return volOf('bgm', 30); }
-function bgmWanted() { return soundOn && bgmVolume() > 0 && bgmTouched && document.visibilityState === 'visible'; }
-function bgmSetVol(x) { if (bgmGain) bgmGain.gain.value = x; else if (bgmEl) bgmEl.volume = x; }
-function bgmGet() {
-  if (!bgmEl) {
-    bgmEl = new Audio(); bgmEl.preload = 'none'; bgmEl.loop = false; bgmEl.volume = 0; bgmEl.src = BGM_SRC;
-    bgmEl.addEventListener('error', () => {});
-    try {
-      const a = audio(); if (a) { const g = a.createGain(); g.gain.value = 0; a.createMediaElementSource(bgmEl).connect(g).connect(a.destination); bgmGain = g; bgmEl.volume = 1; }
-    } catch { bgmGain = null; }
+function bgmWanted() { return soundOn && bgmVolume() > 0 && document.visibilityState === 'visible'; }
+function bgmCur() {   // 目前這首（跳過壞檔）；全壞回傳 null
+  for (let k = 0; k < BGM_LIST.length; k++) {
+    const i = (bgmIdx + k) % BGM_LIST.length;
+    if (!bgmBad[BGM_LIST[i]]) { bgmIdx = i; return BGM_LIST[i]; }
   }
-  return bgmEl;
+  return null;
+}
+function bgmSetVol(t, x) { if (t.gain) t.gain.gain.value = x; else t.el.volume = x; }
+function bgmGet(n) {
+  if (!bgm[n]) {
+    const el = new Audio(); el.preload = n === BGM_LIST[0] ? 'auto' : 'none'; el.loop = false; el.volume = 0; el.src = 'game/music/' + n + '.mp3';
+    const t = bgm[n] = { el, gain: null, inEdge: n === BGM_LIST[0] ? BGM_FIRST_EDGE : BGM_EDGE };
+    el.addEventListener('error', () => { bgmBad[n] = true; bgmSync(); });
+    try {
+      const a = audio();
+      if (a) {
+        const g = a.createGain(); g.gain.value = 0; a.createMediaElementSource(el).connect(g).connect(a.destination); t.gain = g; el.volume = 1;
+        if (!a.__bgmL) { a.__bgmL = 1; a.addEventListener('statechange', () => bgmSync()); }
+      }
+    } catch { t.gain = null; }
+  }
+  return bgm[n];
 }
 function bgmStop() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
-function bgmPause() { bgmSetVol(0); if (bgmEl && !bgmEl.paused) bgmEl.pause(); }
+function bgmPause() { for (const n in bgm) { bgmSetVol(bgm[n], 0); if (!bgm[n].el.paused) bgm[n].el.pause(); } }
+function bgmReady(t) { return !t.gain || (actx && actx.state === 'running'); }
 function bgmStep() {
   if (!bgmWanted()) { bgmPause(); bgmStop(); return; }
-  const el = bgmGet();
-  let lf = 1; const d = el.duration;
+  const n = bgmCur(); if (!n) { bgmPause(); bgmStop(); return; }
+  const t = bgmGet(n), el = t.el;
+  for (const o in bgm) if (o !== n) { bgmSetVol(bgm[o], 0); if (!bgm[o].el.paused) bgm[o].el.pause(); }
+  if (!bgmReady(t) || (bgmBlocked && el.paused)) { bgmStop(); return; }   // 還不准出聲：不假裝在播，等操作／statechange
+  let lf = 0; const d = el.duration;
   if (Number.isFinite(d) && d > 0) {
     const rem = d - el.currentTime;
-    if (el.ended || rem <= 0.05) { try { el.currentTime = 0; } catch {} lf = 0; }
-    else lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / BGM_EDGE));
+    if (el.ended || rem <= 0.05) {   // 曲尾：換下一首（輪完回第一首）從頭，邊緣淡入 1.5 秒
+      let nx = n;
+      for (let k = 1; k <= BGM_LIST.length; k++) { const i = (bgmIdx + k) % BGM_LIST.length; if (!bgmBad[BGM_LIST[i]]) { bgmIdx = i; nx = BGM_LIST[i]; break; } }
+      t.inEdge = BGM_EDGE; bgmSetVol(t, 0);
+      try { el.currentTime = 0; } catch {}
+      if (nx !== n) { el.pause(); const t2 = bgmGet(nx); t2.inEdge = BGM_EDGE; try { t2.el.currentTime = 0; } catch {} }
+      return;
+    }
+    lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / t.inEdge));
   }
-  if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); }
-  bgmSetVol(Math.max(0, Math.min(1, (bgmVolume() / 100) * BGM_MAX * lf)));
+  if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(e => { if (e && e.name === 'NotAllowedError') { bgmBlocked = true; bgmStop(); } }); }
+  bgmSetVol(t, Math.max(0, Math.min(1, (bgmVolume() / 100) * BGM_MAX * lf)));
 }
 function bgmSync() {
   if (!bgmWanted()) { bgmPause(); bgmStop(); return; }
-  bgmGet();
+  const n = bgmCur(); if (!n) { bgmPause(); bgmStop(); return; }
+  bgmGet(n); audio();
   if (!bgmTimer) bgmTimer = setInterval(bgmStep, 80);
   bgmStep();
 }
-function bgmTouch() {   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume 一次
-  bgmTouched = true;
-  if (bgmWanted()) { audio(); if (!bgmEl || bgmEl.paused) bgmSync(); }
+function bgmTouch() {   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume；resume 完由 statechange 接手
+  bgmBlocked = false;
+  if (bgmWanted()) { const a = audio(); if (a && a.state !== 'running') { try { a.resume().then(() => bgmSync(), () => {}); } catch {} } bgmSync(); }
 }
 ['pointerdown', 'click', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, bgmTouch, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') bgmSync(); else { bgmPause(); bgmStop(); } });
+bgmSync();   // 進頁就預載第一首並試著播；被擋就安靜等第一次操作
 function renderSound() {
   document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); });
 }
@@ -1571,7 +1601,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, setRecs(l) { recs = l; recsDrawn = false; renderLobby(); }, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { return bgmEl; }, get bgmGain() { return bgmGain; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, setRecs(l) { recs = l; recsDrawn = false; renderLobby(); }, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {
