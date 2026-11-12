@@ -871,12 +871,23 @@ function bgmGet(n) {
   if (!bgm[n]) {
     const el = new Audio(); el.preload = 'none'; el.loop = false; el.volume = 0; el.src = MUSIC[n];
     el.addEventListener('error', () => {});
-    bgm[n] = { el, f: 0 };
+    bgm[n] = { el, f: 0, gain: null };
+    bgmWire(bgm[n]);
   }
   return bgm[n];
 }
+// iPhone Safari 的 HTMLAudioElement.volume 唯讀、永遠 1：音樂改經 Web Audio GainNode 控音量（仍用元素串流）；建不起來就退回 el.volume
+function bgmWire(t) {
+  try {
+    const a = audio(); if (!a) return;
+    const g = a.createGain(); g.gain.value = 0;
+    a.createMediaElementSource(t.el).connect(g).connect(a.destination);
+    t.gain = g; t.el.volume = 1;
+  } catch { t.gain = null; }
+}
+function bgmSetVol(t, x) { if (t.gain) t.gain.gain.value = x; else t.el.volume = x; }
 function bgmWanted() { return soundOn && vol.bgm > 0 && bgmTouched && document.visibilityState === 'visible'; }
-function bgmPauseAll() { for (const n in bgm) { bgm[n].f = 0; bgm[n].el.volume = 0; if (!bgm[n].el.paused) bgm[n].el.pause(); } }
+function bgmPauseAll() { for (const n in bgm) { bgm[n].f = 0; bgmSetVol(bgm[n], 0); if (!bgm[n].el.paused) bgm[n].el.pause(); } }
 function bgmStep() {
   const now = performance.now(), dt = Math.min(0.25, (now - bgmLast) / 1000); bgmLast = now;
   if (!bgmWanted()) { bgmPauseAll(); bgmStop(); return; }
@@ -894,7 +905,7 @@ function bgmStep() {
       else lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / BGM_EDGE));
     }
     if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); }
-    el.volume = Math.max(0, Math.min(1, (vol.bgm / 100) * BGM_MAX * t.f * lf));
+    bgmSetVol(t, Math.max(0, Math.min(1, (vol.bgm / 100) * BGM_MAX * t.f * lf)));
   }
   if (!busy) bgmStop();
 }
