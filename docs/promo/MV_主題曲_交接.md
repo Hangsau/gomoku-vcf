@@ -137,3 +137,12 @@ cinematic Chinese ancient-style, cool moonlit blue and soft warm lantern gold pa
 
 - 九種落子聲還沒聽；iPhone 音量滑桿沒實機確認。
 - 邀請連結從 LINE 開啟沒實機確認；私人房在大廳顯示暱稱是否要隱藏。
+
+## 橫式 MV 已剪出（2026-11-12 23:35）
+
+- 成品：`C:\claudehome\projects\VCF\docs\promo\成品_有配樂\落子無聲_MV_橫式.mp4`（1920×1080、24fps、60.4 秒）。等使用者看過回饋。
+- 使用者在 Kling 轉出的十段影片是**橫式 1920×1080**（圖是直式），右下角有 KlingAI 4.0 浮水印（不去除）。所以 MV 改橫式；要直式短影音版得在 Kling 以 9:16 重轉。
+- 腳本：`C:\claudehome\projects\VCF\tools\promo\mv_build_v2.py`（可重跑；直式初版是 `mv_build.py`，另一個工作階段寫的、未提交）。檢查圖在 `docs\promo\MV素材\第二版\`。
+- 片段 1、4 略慢放，9 整段 1.18 倍速，其餘原速從頭取。遊戲段兩句字幕加了深色底條。
+- 已知可改進：字幕（楷體 54px）偏細偏小；遊戲畫面在橫框裡偏小。
+- Suno 分軌已到：`docs\遊戲音樂_原檔\主題曲_分軌\落子無聲 (Without Lead Vocal).mp3`（伴奏）、`落子無聲 (Lead Vocal).mp3`。遊戲音樂怎麼換仍待使用者決定，線上未動。
