@@ -80,3 +80,7 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 ## 同一玩家開兩個畫面（2026-11-12）
 
 同一瀏覽器兩個分頁、或 LINE／FB 內建瀏覽器重複點連結，會用同一個玩家 ID 連線；伺服器只留最新那條，舊的用關閉碼 4000 踢掉。前端收到 4000 不自動重連（以前會，兩邊每 2 秒互踢、落子被吃掉），改顯示「已在別的畫面開啟」＋「改用這裡」；切回該畫面（visibilitychange／pageshow）會自動接手。沒連線時點棋盤提示「連線中，請稍候」。測試腳本在 docs/design/duel-replaced-2026-11-12/check/run.mjs（同一個 browser context 開兩頁＝同 ID）。
+
+伺服器配合（同日）：前端連線網址帶 `v=2`。同一玩家已經有 `v=2` 連線時，沒帶 `v` 的連線（還沒重新整理的舊頁面，會每 1.6 秒自動重連）回 409，不讓它把新頁面踢掉；舊對舊、新取代舊、新取代新照舊。
+
+**部署伺服器後不會馬上換版**：Cloudflare 2026-10-30 起預設讓使用中的 Durable Object 延後最多 5 分鐘才換新程式（這裡的大廳一直有人連著，所以每次都等滿 5 分鐘）；換版那一刻所有房間與連線重置。部署後要驗證就等 5 分鐘，或用 `wrangler tail --format json` 看 `entrypoint: Hall` 那筆的 `scriptVersion.id` 是不是新版。要立刻換可在 wrangler.toml 設 `[durable_objects.code_update_strategy] mode = "immediate"`（未設）。
