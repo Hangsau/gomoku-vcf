@@ -60,6 +60,12 @@ input.nick { flex: 1; min-width: 0; height: 44px; border-radius: 12px; border: 1
 .list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 16px 4px; display: flex; flex-direction: column; gap: 10px; }
 .roomc { width: 100%; text-align: left; border-radius: 18px; border: 2px solid var(--line2); background: var(--panel); color: var(--text); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .roomc.wait { border-color: var(--gold); }
+.roomc.priv { opacity: .72; border-style: dashed; }   /* 私人房：看得到但上鎖，比公開房暗一階 */
+.roomc .pv { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; color: var(--text2); white-space: nowrap; }
+.lk { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; flex: none; }
+.rhead .ttl b .lk { margin-left: 6px; color: var(--gold); }
+.code { display: block; font-family: var(--num); font-size: 44px; line-height: 1.15; letter-spacing: .28em; padding-left: .28em; text-align: center; color: var(--gold); user-select: all; }
+input.code-in { font-family: var(--num); font-size: 22px; letter-spacing: .15em; text-transform: uppercase; text-align: center; }
 .roomc .hd { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text2); }
 .roomc .hd b { font-family: var(--num); font-size: 18px; color: var(--text); }
 .roomc .hd .tag { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
@@ -148,7 +154,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   .modal .lbl { margin-top: 0; font-size: 13px; }
   .modal .chips button { min-height: 38px; }
   .ctime input { height: 36px; }
-  #mCreate .icob { height: 40px; }
+  .modal .icob { height: 40px; }
   #doCreate { height: 52px !important; margin-top: 4px !important; }
   #ruleNote { min-height: 0 !important; }
   .stepper button, .stepper .val { height: 40px; }
@@ -157,7 +163,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   .modal h2 { font-size: 18px; }
   .modal .chips button { min-height: 36px; }
   #ruleNote, #vNote { font-size: 12px !important; line-height: 1.3 !important; }
-  .modal .box { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .modal .box { padding-bottom: calc(10px + env(safe-area-inset-bottom)); gap: 3px; }
 }
 .stamp { align-self: center; width: 124px; height: 124px; flex: none; border-radius: 50%; border: 7px double var(--gold); color: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); text-align: center; }
 .stamp.lose { border-color: var(--fail); color: var(--fail); }
@@ -188,7 +194,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   </div>
   <div class="net muted" id="net" role="status"><i class="dot off"></i><span></span></div>
   <div class="list" id="list"></div>
-  <div class="thumb"><button type="button" class="btn gold" id="openCreate" style="flex: 1; height: 60px; font-size: 21px;" data-i18n="create">開房</button></div>
+  <div class="thumb"><button type="button" class="btn ghost" id="openJoin" style="flex: 1; height: 60px; font-size: 16px; font-weight: 700; line-height: 1.15; padding: 0 6px;" data-i18n="joinCode">輸入邀請碼</button><button type="button" class="btn gold" id="openCreate" style="flex: 1; height: 60px; font-size: 21px;" data-i18n="create">開房</button></div>
 </section>
 
 <!-- 房間（看房間資訊、入座、下棋、觀戰都在這裡） -->
@@ -196,6 +202,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="rhead">
     <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
+    <button type="button" class="icob" id="rInvite" aria-label="邀請" data-i18n-aria="invite" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></button>
     <button type="button" class="icob" data-sound aria-pressed="true"></button>
   </div>
   <div class="pbar" id="pTop"></div>
@@ -215,8 +222,9 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 <!-- 開房 -->
 <div class="modal" id="mCreate" hidden role="dialog" aria-modal="true" aria-labelledby="mCreateT">
   <div class="box">
-    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mCreateT" data-i18n="create">開房</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h2 id="mCreateT" data-i18n="create">開房</h2><div class="chips" id="cPriv" role="group" aria-label="誰能進" data-i18n-aria="privL" style="--n: 2; flex: 1; max-width: 176px;"></div><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <span class="lbl" data-i18n="kindL">類型</span><div class="chips" id="cKind" style="--n: 2;"></div>
+    <span class="muted" id="privNote" style="font-size: 12px; line-height: 1.2;"></span>
     <div class="kopt" id="gOpts">
     <span class="lbl" data-i18n="ruleL">規則</span><div class="chips" id="cRule"></div>
     <span class="muted" id="ruleNote" style="font-size: 13px; line-height: 1.45; min-height: 38px;"></span>
@@ -234,6 +242,35 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     </div>
     <span class="lbl" data-i18n="tapL">落子方式</span><div class="chips" id="cTap" style="--n: 2;"></div>
     <button type="button" class="btn gold" id="doCreate" style="margin-top: 8px; height: 60px;" data-i18n="createGo">開房，等人入座</button>
+  </div>
+</div>
+
+<!-- 邀請朋友（2026-11-12）：每間房都有 6 碼邀請碼，公開私人用法一樣 -->
+<div class="modal" id="mInvite" hidden role="dialog" aria-modal="true" aria-labelledby="mInviteT">
+  <div class="box" style="align-items: stretch;">
+    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mInviteT" data-i18n="inviteT">邀請朋友</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <span class="lbl" style="text-align: center;" data-i18n="inviteCode">邀請碼</span>
+    <b class="code" id="invCode"></b>
+    <div class="row2"><button type="button" class="btn gold" id="invShare" style="font-size: 17px;" data-i18n="shareLink">分享連結</button><button type="button" class="btn ghost" id="invCopy" style="font-size: 17px; font-weight: 700;" data-i18n="copyLink">複製連結</button></div>
+    <span class="muted" style="font-size: 13px; line-height: 1.45;" data-i18n="inviteNote">朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。</span>
+  </div>
+</div>
+
+<!-- 輸入邀請碼（大廳；點私人房也開這個） -->
+<div class="modal" id="mJoin" hidden role="dialog" aria-modal="true" aria-labelledby="mJoinT">
+  <div class="box" style="align-items: stretch;">
+    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mJoinT" data-i18n="joinCode">輸入邀請碼</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <span id="joinPriv" hidden style="font-size: 14px; color: var(--gold);" data-i18n="joinPrivNote">這是私人房，要邀請碼才能進</span>
+    <div style="display: flex; gap: 8px;"><input id="joinCode" class="nick code-in" autocapitalize="characters" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="邀請碼" data-i18n-aria="inviteCode" data-i18n-ph="joinPh" placeholder="6 碼邀請碼"><button type="button" class="btn gold" id="joinGo" style="height: 48px; padding: 0 22px; font-size: 18px;" data-i18n="joinGo">進房</button></div>
+    <span id="joinErr" role="alert" style="font-size: 14px; color: var(--fail); min-height: 20px;"></span>
+  </div>
+</div>
+
+<!-- 網址帶的邀請碼找不到房間 -->
+<div class="modal" id="mGone" hidden role="alertdialog" aria-modal="true" aria-labelledby="goneT">
+  <div class="box" style="align-items: stretch; text-align: center;">
+    <h2 id="goneT" data-i18n="goneT">這間房已經關了</h2>
+    <div class="row2"><button type="button" class="btn ghost" id="goneBack" data-i18n="back">回大廳</button><button type="button" class="btn gold" id="goneNew" data-i18n="goneNew">開一間新的</button></div>
   </div>
 </div>
 
@@ -289,6 +326,9 @@ const I18N = {
     title: '兩儀殿', home: '回挑戰', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
     netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…',
     create: '開房', createGo: '開房，等人入座',
+    privL: '誰能進', pubOpt: '公開', privOpt: '私人', pubNote: '列在大廳，誰都能入座', privNote: '大廳看得到但上鎖，要邀請碼才進得來', privTag: '私人',
+    invite: '邀請', inviteT: '邀請朋友', inviteCode: '邀請碼', shareLink: '分享連結', copyLink: '複製連結', copied: '已複製', inviteNote: '朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。', shareText: '來兩儀殿跟我對戰',
+    joinCode: '輸入邀請碼', joinPh: '6 碼邀請碼', joinGo: '進房', joinPrivNote: '這是私人房，要邀請碼才能進', nocode: '找不到這間房，可能已經關了', slow: '試太多次了，等一下再試', goneT: '這間房已經關了', goneNew: '開一間新的',
     timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
     tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
     emptyHall: '還沒有人開房', emptyHall2: '開一間，等人進來', room: '房間', waiting: '等待中', playing: '對局中', emptySeat: '空位',
@@ -310,6 +350,9 @@ const I18N = {
     title: 'Yin-Yang Hall', home: 'Challenge', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
     netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…',
     create: 'Open a room', createGo: 'Open room and wait',
+    privL: 'Who can join', pubOpt: 'Public', privOpt: 'Private', pubNote: 'Listed in the lobby; anyone can sit', privNote: 'Shown locked in the lobby; invite code needed', privTag: 'Private',
+    invite: 'Invite', inviteT: 'Invite a friend', inviteCode: 'Invite code', shareLink: 'Share link', copyLink: 'Copy link', copied: 'Copied', inviteNote: 'Friends tap the link, or press “Enter code” in the lobby, to land in this room. No install, no sign-up.', shareText: 'Play me in the Yin-Yang Hall',
+    joinCode: 'Enter code', joinPh: '6-character code', joinGo: 'Join', joinPrivNote: 'This room is private — you need the invite code', nocode: 'Room not found — it may have closed', slow: 'Too many tries, wait a moment', goneT: 'This room has closed', goneNew: 'Open a new one',
     timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
     tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
     emptyHall: 'No rooms yet', emptyHall2: 'Open one and wait for someone', room: 'Room', waiting: 'Waiting', playing: 'Playing', emptySeat: 'Empty',
@@ -331,6 +374,9 @@ const I18N = {
     title: '両儀殿', home: 'チャレンジへ', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
     netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…',
     create: '部屋を作る', createGo: '部屋を作って待つ',
+    privL: '参加できる人', pubOpt: '公開', privOpt: '非公開', pubNote: 'ロビーに表示・誰でも着席できます', privNote: 'ロビーに鍵つきで表示・招待コードが必要', privTag: '非公開',
+    invite: '招待', inviteT: '友だちを招待', inviteCode: '招待コード', shareLink: 'リンクを共有', copyLink: 'リンクをコピー', copied: 'コピーしました', inviteNote: '友だちがリンクを開くか、ロビーの「招待コード」から入ると、この部屋に入れます。インストールも登録も不要です。', shareText: '兩儀殿で対戦しよう',
+    joinCode: '招待コード', joinPh: '6文字のコード', joinGo: '入室', joinPrivNote: '非公開の部屋です。招待コードが必要です', nocode: '部屋が見つかりません。閉じた可能性があります', slow: '試行が多すぎます。少し待ってください', goneT: 'この部屋は閉じました', goneNew: '新しく作る',
     timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
     tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
     emptyHall: 'まだ部屋がありません', emptyHall2: '部屋を作って相手を待ちましょう', room: '部屋', waiting: '待機中', playing: '対局中', emptySeat: '空席',
@@ -352,6 +398,9 @@ const I18N = {
     title: '음양전', home: '도전으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
     netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…',
     create: '방 만들기', createGo: '방 만들고 기다리기',
+    privL: '입장', pubOpt: '공개', privOpt: '비공개', pubNote: '로비에 표시 · 누구나 앉을 수 있음', privNote: '로비에 잠금 표시 · 초대 코드 필요', privTag: '비공개',
+    invite: '초대', inviteT: '친구 초대', inviteCode: '초대 코드', shareLink: '링크 공유', copyLink: '링크 복사', copied: '복사했습니다', inviteNote: '친구가 링크를 누르거나 로비에서 「초대 코드」를 입력하면 이 방으로 들어옵니다. 설치도 가입도 필요 없습니다.', shareText: '양의전에서 대결하자',
+    joinCode: '초대 코드', joinPh: '6자리 코드', joinGo: '입장', joinPrivNote: '비공개 방입니다. 초대 코드가 필요합니다', nocode: '방을 찾을 수 없습니다. 닫혔을 수 있습니다', slow: '시도가 너무 많습니다. 잠시 후 다시', goneT: '이 방은 닫혔습니다', goneNew: '새로 만들기',
     timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
     tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
     emptyHall: '아직 방이 없습니다', emptyHall2: '방을 만들고 상대를 기다려 보세요', room: '방', waiting: '대기 중', playing: '대국 중', emptySeat: '빈자리',
@@ -372,7 +421,9 @@ const I18N = {
 };
 const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
 function pickLang() {
+  const q = new URLSearchParams(location.search).get('lang');   // 邀請連結帶的語言（第一次來的人用；已選過語言的人照自己的，同 game.html）
   const saved = store.get('vcfgame.lang');
+  if (!saved && q && I18N[q]) return q;
   if (saved && I18N[saved]) return saved;
   const nav = (navigator.languages || [navigator.language || 'zh']).join(',').toLowerCase();
   for (const l of nav.split(',')) { const k = l.slice(0, 2); if (I18N[k]) return k; }
@@ -515,6 +566,7 @@ const cfg = {
   cinc: store.get('vcfgame.duel.cinc') || '5',
   rule: pick('rule', Object.values(RULE), RULE.RENJU),
   kind: pick('kind', ['gomoku', 'vcf'], 'gomoku'),
+  priv: pick('priv', ['0', '1'], '0'),   // 誰能進：0 公開／1 私人（使用者 2026-11-12）
   vrank: pick('vrank', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], '3'),
   vmode: pick('vmode', ['line', 'eight'], 'eight'),   // 使用者 2026-11-12：兩種玩法並存，預設八仙渡
   think: pick('think', ['60', '180', '300'], '180'),   // 使用者 2026-11-11：預設一題 3 分鐘
@@ -528,6 +580,8 @@ function chips(id, key, opts) {
 }
 function renderCreate() {
   chips('cKind', 'kind', [['vcf', T('kVcf')], ['gomoku', T('kGomoku')]]);   // 2026-11-11 使用者：VCF 放五子棋左邊
+  chips('cPriv', 'priv', [['0', T('pubOpt')], ['1', T('privOpt')]]);
+  $('privNote').textContent = T(cfg.priv === '1' ? 'privNote' : 'pubNote');
   $('gOpts').hidden = cfg.kind !== 'gomoku'; $('vOpts').hidden = cfg.kind !== 'vcf';
   $('vRkName').textContent = rankName(+cfg.vrank);
   $('vRkDown').disabled = +cfg.vrank <= 1; $('vRkUp').disabled = +cfg.vrank >= 10;
@@ -547,8 +601,8 @@ function openModal(id) { $(id).hidden = false; const c = $(id).querySelector('[d
 document.querySelectorAll('.modal [data-close]').forEach(b => b.onclick = () => { b.closest('.modal').hidden = true; });
 $('openCreate').onclick = () => openModal('mCreate');
 $('doCreate').onclick = () => {
-  $('mCreate').hidden = true;
-  if (cfg.kind === 'vcf') send({ t: 'create', kind: 'vcf', rank: +cfg.vrank, think: +cfg.think, target: +cfg.target, vmode: cfg.vmode });
+  $('mCreate').hidden = true; justCreated = true;
+  if (cfg.kind === 'vcf') send({ t: 'create', kind: 'vcf', rank: +cfg.vrank, think: +cfg.think, target: +cfg.target, vmode: cfg.vmode, priv: cfg.priv === '1' });
   else {
     let time = cfg.time;
     if (time === 'custom') {
@@ -557,12 +611,49 @@ $('doCreate').onclick = () => {
       cfg.cmin = String(m); cfg.cinc = String(s); store.set('vcfgame.duel.cmin', cfg.cmin); store.set('vcfgame.duel.cinc', cfg.cinc);
       time = `${m}+${s}`;
     }
-    send({ t: 'create', time, rule: cfg.rule, color: cfg.side });
+    send({ t: 'create', time, rule: cfg.rule, color: cfg.side, priv: cfg.priv === '1' });
   }
 };
 const stepRank = (d) => { cfg.vrank = String(Math.min(10, Math.max(1, +cfg.vrank + d))); store.set('vcfgame.duel.vrank', cfg.vrank); renderCreate(); };
 $('cMin').value = cfg.cmin; $('cInc').value = cfg.cinc;
 $('vRkDown').onclick = () => stepRank(-1); $('vRkUp').onclick = () => stepRank(1);
+
+// ---------- 邀請碼、公開／私人房（2026-11-12） ----------
+// 每間房有 6 碼邀請碼（公開私人用法一樣）；私人房在大廳看得到但上鎖，要碼才進得去（伺服器擋）。
+const LOCK_SVG = '<svg class="lk" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+let justCreated = false;          // 剛開房：第一次收到房間資料時，私人房自動打開邀請面板
+let joinFrom = null, joinCode = '';   // 等 join 的結果：'panel' 輸入面板／'url' 網址帶碼／'re' 斷線重連
+let urlCode = (new URLSearchParams(location.search).get('r') || '').trim();
+const passed = new Set(), codes = {};   // passed：這條連線進得去的私人房號；codes：房號→邀請碼（重連時用碼再進一次）
+const normCode = (c) => String(c || '').replace(/\s+/g, '').toUpperCase().slice(0, 6);
+const inviteUrl = () => location.origin + location.pathname + '?r=' + room.code + '&lang=' + lang;
+function openInvite() { if (!room || !room.code) return; $('invCode').textContent = room.code; openModal('mInvite'); }
+async function copyInvite(url) { try { await navigator.clipboard.writeText(url); toast(T('copied')); } catch { prompt(T('copyLink'), url); } }
+$('rInvite').onclick = openInvite;
+$('invShare').onclick = async () => {
+  if (!room) return;
+  const url = inviteUrl();
+  if (navigator.share) { try { await navigator.share({ title: T('title'), text: T('shareText'), url }); } catch {} return; }
+  copyInvite(url);
+};
+$('invCopy').onclick = () => { if (room) copyInvite(inviteUrl()); };
+function openJoin(priv) { $('joinPriv').hidden = !priv; $('joinErr').textContent = ''; $('joinCode').value = ''; openModal('mJoin'); $('joinCode').focus(); }
+$('openJoin').onclick = () => openJoin(false);
+$('joinCode').addEventListener('input', () => { const v = normCode($('joinCode').value); if ($('joinCode').value !== v) $('joinCode').value = v; $('joinErr').textContent = ''; });
+function doJoin() { const c = normCode($('joinCode').value); if (!c) return; joinFrom = 'panel'; joinCode = c; send({ t: 'join', code: c }); }
+$('joinGo').onclick = doJoin;
+$('joinCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
+$('goneBack').onclick = () => { $('mGone').hidden = true; };
+$('goneNew').onclick = () => { $('mGone').hidden = true; openModal('mCreate'); };
+function onJoinErr(code) {   // nocode：找不到碼或私人房沒碼；slow：猜太多次
+  const from = joinFrom; joinFrom = null;
+  if (from === 'panel') $('joinErr').textContent = T(code);
+  else if (from === 'url') { if (code === 'nocode') openModal('mGone'); else toast(T('slow')); }
+  else if (from === 're') { toast(T('gone')); toLobby(false); }
+  else if (code === 'nocode') { if (viewing) toLobby(false); openJoin(true); }   // 直接點私人房／入座被擋：改問邀請碼
+  else toast(T('slow'));
+}
+
 
 // ---------- 連線 ----------
 const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
@@ -571,7 +662,12 @@ let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0
 function connect() {
   clearTimeout(retryT);
   try { ws = new WebSocket(`${WS_URL}?id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
-  ws.onopen = () => { online = true; failCount = 0; renderNet(); if (viewing) send({ t: 'view', room: viewing }); };
+  ws.onopen = () => {
+    online = true; failCount = 0; renderNet(); passed.clear();   // 新連線：私人房的通行紀錄在伺服器那邊也是新的
+    if (!viewing) return;
+    if (codes[viewing]) { joinFrom = 're'; joinCode = codes[viewing]; send({ t: 'join', code: codes[viewing] }); }   // 用碼再進一次（私人房靠這個接回去）
+    else send({ t: 'view', room: viewing });
+  };
   ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
   ws.onclose = () => { online = false; failCount++; renderNet(); retry(); };
 }
@@ -582,6 +678,13 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function onMsg(m) {
   if (m.t === 'lobby') { lobby = m.rooms; onlineN = m.online || 0; if (m.now) srvOff = m.now - Date.now(); renderLobby(); renderNet(); }
+  else if (m.t === 'hello') {   // 網址帶 ?r=碼：連上就自動進房，並把 r 從網址拿掉（重新整理不會重複進）
+    if (urlCode) {
+      const c = urlCode; urlCode = '';
+      try { const u = new URL(location.href); u.searchParams.delete('r'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch {}
+      joinFrom = 'url'; joinCode = normCode(c); send({ t: 'join', code: c });
+    }
+  }
   else if (m.t === 'room') onRoom(m.room, m.now);
   else if (m.t === 'idleAsk') idleAsk(m.ms);
   else if (m.t === 'idleClear') idleHide();
@@ -599,6 +702,7 @@ function onMsg(m) {
     else if (m.code === 'taken') toast(T('taken'));
     else if (m.code === 'full') toast(T('full'));
     else if (m.code === 'cool') toast(T('studyCool'));
+    else if (m.code === 'nocode' || m.code === 'slow') onJoinErr(m.code);
   }
 }
 function renderNet() {
@@ -610,8 +714,8 @@ function renderNet() {
 // 大廳的一張房間卡（五子棋、搶答共用外框）
 // 等人的房間：等了幾分鐘（1 分鐘內不顯示）
 const waitedLabel = (r) => { if (r.state !== 'wait' || !r.waitSince) return ''; const m = Math.floor((Date.now() + srvOff - r.waitSince) / 60000); return m >= 1 ? T('waited', { m }) : ''; };
-const roomCard = (r, wait, extra, seatsHtml) => `<button type="button" class="roomc ${wait ? 'wait' : 'play'}" data-room="${esc(r.id)}">
-      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>
+const roomCard = (r, wait, extra, seatsHtml) => `<button type="button" class="roomc ${wait ? 'wait' : 'play'}${r.priv && !passed.has(r.id) ? ' priv' : ''}" data-room="${esc(r.id)}">
+      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>${r.priv ? `<span class="pv">${LOCK_SVG}${esc(T('privTag'))}</span>` : ''}
         <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : r.state === 'study' ? 'studyOn' : 'playing'))}</span></span>
       <span class="ex">${esc(extra)}</span>
       <span class="seats">${seatsHtml}</span></button>`;
@@ -629,7 +733,11 @@ function renderLobby() {
     const extra = [T('r_' + r.rule), timeLabel(r.time), waitedLabel(r), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.moves ? T('moveN', { n: r.moves }) : ''].filter(Boolean).join('・');
     return roomCard(r, wait, extra, seat(r.seats[0], 'b') + seat(r.seats[1], 'w'));
   }).join('');
-  $('list').querySelectorAll('[data-room]').forEach(b => b.onclick = () => enterRoom(b.dataset.room));
+  $('list').querySelectorAll('[data-room]').forEach(b => b.onclick = () => {
+    const r = lobby.find(x => x.id === b.dataset.room);
+    if (r && r.priv && !passed.has(r.id)) openJoin(true);   // 私人房：不送 view，問邀請碼
+    else enterRoom(b.dataset.room);
+  });
 }
 let leftRoom = null;   // 剛離開的房號：離開那一刻還在路上的舊房間更新不要把人拉回去
 function enterRoom(id) { leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
@@ -646,7 +754,19 @@ function show(id) { for (const s of ['sLobby', 'sRoom']) $(s).hidden = s !== id;
 let sel = [];   // 山口：我點選的候選（送出前只在自己畫面）
 let match = null, ghost = null, flashT = 0, endShownFor = null, layoutSig = '';
 const mySeat = () => room ? room.seats.findIndex(s => s && s.id === myId) : -1;
+const mySeat0 = (r) => r.seats.findIndex(s => s && s.id === myId);
 function onRoom(r, serverNow) {
+  if (r.priv) passed.add(r.id);
+  if (r.code) codes[r.id] = r.code;
+  if (joinFrom && r.code === joinCode) {   // 邀請碼進房成功：進房間畫面，關掉輸入面板
+    const from = joinFrom; joinFrom = null; leftRoom = null;
+    $('mJoin').hidden = true; $('mGone').hidden = true;
+    if (from !== 're' || $('sRoom').hidden) { layoutSig = ''; show('sRoom'); }
+  }
+  if (justCreated && mySeat0(r) >= 0) {   // 剛開的房：私人房對手座位還空著就自動打開邀請面板一次
+    justCreated = false;
+    if (r.priv && r.state === 'wait' && r.seats.some((s) => !s)) setTimeout(() => { if (room && room.id === r.id && room.state === 'wait') openInvite(); }, 0);
+  }
   if (r.id === leftRoom && viewing !== r.id) return;
   const prev = room, prevMoves = match ? match.moves.length : 0, prevMatch = match;
   room = r; roomAt = Date.now();
@@ -700,12 +820,14 @@ function renderBar(el, seat) {
   const ck = clockOf(seat);
   el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < LOW_CLOCK_MS ? ' low' : ''}">${ck != null && room.state !== 'wait' && room.state !== 'study' ? mmss(ck) : ''}</span>`;
 }
+const setTitle = (t) => { $('rTitle').innerHTML = esc(t) + (room && room.priv ? LOCK_SVG : ''); };   // 私人房：房名旁一個小鎖
 function renderRoom() {
   if ($('sRoom').hidden) return;
+  $('rInvite').hidden = !room;
   if (!room) { $('rTitle').textContent = T('room') + ' ' + (viewing || ''); $('rSub').textContent = ''; $('pTop').innerHTML = ''; $('pBot').innerHTML = ''; $('rActs').innerHTML = ''; draw(); return; }
   if (room.kind === 'vcf') return vcfRenderRoom();
   const me = mySeat(), bs = bottomSeat();
-  $('rTitle').textContent = T('room') + ' ' + room.id;
+  setTitle(T('room') + ' ' + room.id);
   $('rSub').textContent = [T('r_' + room.rule), timeLabel(room.time), T(room.state === 'play' ? 'playing' : room.state === 'wait' ? 'waiting' : room.state === 'study' ? 'studyOn' : 'stOver')].join('・');
   renderBar($('pTop'), 1 - bs);
   renderBar($('pBot'), bs);
@@ -1139,7 +1261,7 @@ function vcfStatus() {
 }
 function vcfRenderRoom() {
   const me = mySeat(), bs = vView(), v = room.vcf;
-  $('rTitle').textContent = T('vm_' + vmodeOf(room)) + ' ' + room.id;
+  setTitle(T('vm_' + vmodeOf(room)) + ' ' + room.id);
   $('rSub').textContent = [rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })].join('・');
   vcfBar($('pTop'), 1 - bs);
   vcfBar($('pBot'), bs);

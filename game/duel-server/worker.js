@@ -20,6 +20,9 @@ const ERR_CODES = [['中央', 'zone'], ['對稱', 'symmetric'], ['黑方提出',
 const errCode = (msg) => (ERR_CODES.find(([k]) => String(msg).includes(k)) || [null, 'bad'])[1];
 const MAX_ROOMS = 200;
 const MAX_NICK = 12;
+// 邀請碼（2026-11-12）：每間房一組 6 碼，字元表去掉容易看錯的 I、O、0、1；私人房要碼才進得去，公開房碼也能用
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_LEN = 6;
+const JOIN_FAIL_MAX = 10, JOIN_WINDOW_MS = 60000, JOIN_BLOCK_MS = 60000;   // 同一連線 60 秒內 join 失敗滿 10 次，之後 60 秒一律 slow
 const PLAY_GRACE_MS = 60000;   // 對局中斷線，60 秒內回來可以繼續，過了判輸
 const WAIT_GRACE_MS = 15000;   // 等人時斷線（例如重新整理），15 秒內回來還在座位上
 const ROOM_ID_MIN = 1000, ROOM_ID_SPAN = 9000;   // 房號 4 位數
@@ -92,7 +95,7 @@ export class Hall {
   connect(id, nick, ws) {
     const old = this.clients.get(id);
     if (old && old.ws !== ws) try { old.ws.close(4000, 'replaced'); } catch {}
-    const c = { ws, nick, room: null };
+    const c = { ws, nick, room: null, passed: new Set(), joinFails: [], slowUntil: 0 };   // passed：用邀請碼進過的私人房號
     this.clients.set(id, c);
     this.ensureAlarm();
     ws.addEventListener('message', (ev) => { try { this.onMessage(id, ws, JSON.parse(ev.data)); } catch (e) { this.send(ws, { t: 'err', code: 'bad' }); } });
@@ -158,7 +161,7 @@ export class Hall {
         if (kind === 'vcf' ? !vcf : !parseTime(m.time).ok || !RULES.includes(m.rule)) return err('bad');
         this.leaveAll(id);
         const room = {
-          id: this.newRoomId(), kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), waitSince: Date.now(), state: 'wait',
+          id: this.newRoomId(), code: this.newCode(), priv: m.priv === true, kind, vcf, time: kind === 'gomoku' ? String(m.time) : null, rule: kind === 'gomoku' ? m.rule : null, createdAt: Date.now(), waitSince: Date.now(), state: 'wait',
           seats: [null, null], match: null, vs: null, endNote: null, again: new Set(), timer: null, games: 0,
         };
         this.rooms.set(room.id, room);
@@ -171,6 +174,24 @@ export class Hall {
       case 'view': {   // 點進房間看（還沒入座）
         const room = this.rooms.get(String(m.room));
         if (!room) { c.room = null; return err('gone'); }
+        if (!this.canEnter(id, c, room)) return err('nocode');
+        if (c.room && c.room !== room.id) this.leaveAll(id);
+        c.room = room.id;
+        this.roomChanged(room);
+        return;
+      }
+      case 'join': {   // 用邀請碼進房（進去看，還沒入座）
+        const now = Date.now();
+        if (c.slowUntil > now) return err('slow');
+        const code = String(m.code || '').replace(/\s+/g, '').toUpperCase();
+        const room = code.length === CODE_LEN ? [...this.rooms.values()].find((r) => r.code === code) : null;
+        if (!room) {
+          c.joinFails = c.joinFails.filter((t) => now - t < JOIN_WINDOW_MS);
+          c.joinFails.push(now);
+          if (c.joinFails.length >= JOIN_FAIL_MAX) { c.slowUntil = now + JOIN_BLOCK_MS; c.joinFails = []; }
+          return err('nocode');
+        }
+        c.passed.add(room.id);
         if (c.room && c.room !== room.id) this.leaveAll(id);
         c.room = room.id;
         this.roomChanged(room);
@@ -180,6 +201,7 @@ export class Hall {
         const room = this.rooms.get(String(m.room));
         const seat = Number(m.seat);
         if (!room) return err('gone');
+        if (!this.canEnter(id, c, room)) return err('nocode');
         if (![0, 1].includes(seat) || room.state === 'play' || room.state === 'study' || room.seats[seat]) return err('taken');
         const mine = this.seatOf(id);
         if (mine && mine.room !== room) this.leaveAll(id);
@@ -336,6 +358,19 @@ export class Hall {
   // ---------- 房間 ----------
   newRoomId() {
     for (;;) { const k = String(ROOM_ID_MIN + Math.floor(Math.random() * ROOM_ID_SPAN)); if (!this.rooms.has(k)) return k; }
+  }
+  // 之後有帳號時，邀請網址會多帶 from=<邀請人>，伺服器這邊不用改格式
+  newCode() {
+    for (;;) {
+      let k = '';
+      for (let i = 0; i < CODE_LEN; i++) k += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+      if (![...this.rooms.values()].some((r) => r.code === k)) return k;
+    }
+  }
+  // 私人房：只有用正確邀請碼 join 過、或本來就坐在這間的連線進得去；公開房誰都行
+  canEnter(id, c, room) {
+    if (!room.priv || c.passed.has(room.id)) return true;
+    return room.seats.some((s) => s && s.id === id);
   }
   seatRec(id, nick) { return { id, nick, online: true, graceT: null, lastAct: Date.now(), askUntil: null }; }
   // 多久沒動作：五子棋對局中只看輪到的人（從上一手算起），等人從開始等算起，其他從自己最後一個操作算起
@@ -551,7 +586,7 @@ export class Hall {
     return {
       t: 'room', now,
       room: {
-        id: room.id, kind: room.kind, vcf: room.vcf, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
+        id: room.id, code: room.code, priv: room.priv, kind: room.kind, vcf: room.vcf, time: room.time, rule: room.rule, state: room.state, games: room.games, endNote: room.endNote,
         vs: publicVs(room.vs),
         seats: room.seats.map(s => s && { id: s.id, nick: s.nick, online: s.online }),
         watchers: this.watchers(room),
@@ -576,7 +611,7 @@ export class Hall {
   }
   lobbyMsg() {
     const rooms = [...this.rooms.values()].map(r => ({
-      id: r.id, kind: r.kind, vcf: r.vcf, score: r.vs ? r.vs.score : null, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt, waitSince: r.waitSince,
+      id: r.id, priv: r.priv, kind: r.kind, vcf: r.vcf, score: r.vs ? r.vs.score : null, time: r.time, rule: r.rule, state: r.state, createdAt: r.createdAt, waitSince: r.waitSince,
       seats: r.seats.map(s => s && { nick: s.nick, online: s.online }),
       watchers: this.watchers(r),
       moves: r.match ? r.match.moves.length : 0,
