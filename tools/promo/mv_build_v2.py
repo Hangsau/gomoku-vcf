@@ -34,17 +34,17 @@ TH = ['-threads', '4']
 
 # 名稱, 起, 迄, 素材
 SEGS = [
-    ('1_月色', 21.0, 26.1, '1_月色.mp4.mp4'),
-    ('2_星子', 26.1, 30.3, '2_星子.mp4.mp4'),
-    ('3_執黑', 30.3, 33.9, '3_執黑.mp4.mp4'),
-    ('4_動心', 33.9, 39.0, '4_動心.mp4.mp4'),
-    ('5a_一步', 39.0, 43.2, '5a_一步.mp4.mp4'),
+    ('1_月色', 21.0, 26.1, '1.mp4'),
+    ('2_星子', 26.1, 30.3, '2.mp4'),
+    ('3_執黑', 30.3, 33.9, '3.mp4'),
+    ('4_動心', 33.9, 39.0, '4.mp4'),
+    ('5a_一步', 39.0, 43.2, '5a.mp4'),
     ('game', 43.2, 50.4, None),
-    ('5b_一念', 50.4, 53.6, '5b_一念.mp4.mp4'),
-    ('6_落子', 53.6, 58.2, '6_落子.mp4.mp4'),
-    ('7_五星', 58.2, 62.5, '7_五星.mp4.mp4'),
-    ('8_看見', 62.5, 67.2, '8_看見.mp4.mp4'),
-    ('9_心弦', 67.2, 75.4, '9_心弦.mp4.mp4'),
+    ('5b_一念', 50.4, 53.6, '5b.mp4'),
+    ('6_落子', 53.6, 58.2, '6.mp4'),
+    ('7_五星', 58.2, 62.5, '7.mp4'),
+    ('8_看見', 62.5, 67.2, '8.mp4'),
+    ('9_心弦', 67.2, 75.4, '9.mp4'),
     ('end_win', 75.4, 77.4, None),
     ('end_home', 77.4, 81.4, None),
 ]
@@ -235,8 +235,8 @@ def build():
     src = lambda f: os.path.join(ASSET, f)
     bg_game = os.path.join(WORK, 'bg_game.png')
     bg_end = os.path.join(WORK, 'bg_end.png')
-    blurred_bg(src('5a_一步.mp4.mp4'), 0, bg_game)
-    blurred_bg(src('9_心弦.mp4.mp4'), 0, bg_end)
+    blurred_bg(src('5a.mp4'), 0, bg_game)
+    blurred_bg(src('9.mp4'), 0, bg_end)
     clips, info = [], []
     for i, (name, a, b, f) in enumerate(SEGS):
         out = os.path.join(WORK, f'clip_{i:02d}_{name}.mp4')
