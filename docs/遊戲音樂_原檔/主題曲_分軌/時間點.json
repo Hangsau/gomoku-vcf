@@ -1,0 +1,271 @@
+{
+ "duration": 224.2,
+ "lines": [
+  {
+   "section": "主歌一",
+   "text": "月色鋪成一張盤",
+   "start": 22.0,
+   "end": 25.8,
+   "confident": true,
+   "heard": "月色鋪成一張盤"
+  },
+  {
+   "section": "主歌一",
+   "text": "星子零落 無人看",
+   "start": 26.4,
+   "end": 29.7,
+   "confident": true,
+   "heard": "星子零落無人看"
+  },
+  {
+   "section": "主歌一",
+   "text": "你執黑 我執白",
+   "start": 30.7,
+   "end": 33.7,
+   "confident": true,
+   "heard": "你只黑我只白"
+  },
+  {
+   "section": "主歌一",
+   "text": "誰先動了心 誰先亂",
+   "start": 34.1,
+   "end": 38.5,
+   "confident": true,
+   "heard": "誰先動了心誰先亂"
+  },
+  {
+   "section": "導歌",
+   "text": "一步近 一步遠",
+   "start": 39.4,
+   "end": 46.2,
+   "confident": true,
+   "heard": "一步驚一步怨",
+   "note": "分成兩個音段 39.4-42.6 與 43.5-46.2"
+  },
+  {
+   "section": "導歌",
+   "text": "輸贏都在 一念間",
+   "start": 46.8,
+   "end": 52.8,
+   "confident": true,
+   "heard": "樹影都在一面前",
+   "note": "分成兩個音段 46.8-50.2 與 50.6-52.8"
+  },
+  {
+   "section": "副歌",
+   "text": "落子無聲 風也不敢喧",
+   "start": 54.2,
+   "end": 58.1,
+   "confident": true,
+   "heard": "落子無聲風也不感覺",
+   "note": "開始取自辨識字時間，結束為下一句開始前 0.2 秒（副歌連續演唱，無明顯停頓）"
+  },
+  {
+   "section": "副歌",
+   "text": "五星連成線 劃過長夜的邊",
+   "start": 58.3,
+   "end": 62.4,
+   "confident": true,
+   "heard": "無心連成線花過長夜的別",
+   "note": "開始取自辨識字時間，結束為下一句開始前 0.2 秒（副歌連續演唱，無明顯停頓）"
+  },
+  {
+   "section": "副歌",
+   "text": "等你看見 那一瞬間",
+   "start": 62.6,
+   "end": 67.1,
+   "confident": true,
+   "heard": "等你看見那一瞬間",
+   "note": "開始取自辨識字時間，結束為下一句開始前 0.2 秒（副歌連續演唱，無明顯停頓）"
+  },
+  {
+   "section": "副歌",
+   "text": "萬籟俱寂 只剩心跳的弦",
+   "start": 67.3,
+   "end": 75.4,
+   "confident": true,
+   "heard": "晚來聚集只剩心跳的弦",
+   "note": "結束取自人聲音量"
+  },
+  {
+   "section": "主歌二",
+   "text": "指尖還留著餘溫",
+   "start": 107.9,
+   "end": 111.3,
+   "confident": true,
+   "heard": "指尖還留著余溫"
+  },
+  {
+   "section": "主歌二",
+   "text": "棋聲敲碎了黃昏",
+   "start": 111.9,
+   "end": 115.5,
+   "confident": true,
+   "heard": "七聲敲碎了黃昏"
+  },
+  {
+   "section": "主歌二",
+   "text": "進是局 退是痕",
+   "start": 116.0,
+   "end": 119.3,
+   "confident": true,
+   "heard": "今是句對是狠"
+  },
+  {
+   "section": "主歌二",
+   "text": "步步都是 來時的門",
+   "start": 120.2,
+   "end": 123.4,
+   "confident": true,
+   "heard": "步步都是來時的門"
+  },
+  {
+   "section": "導歌",
+   "text": "一步近 一步遠",
+   "start": 124.8,
+   "end": 131.8,
+   "confident": true,
+   "heard": "一步驚一步怨",
+   "note": "分成兩個音段 124.8-128.1 與 128.9-131.8"
+  },
+  {
+   "section": "導歌",
+   "text": "輸贏都在 一念間",
+   "start": 132.2,
+   "end": 139.4,
+   "confident": true,
+   "heard": "樹影都在一面前",
+   "note": "開始取自音量，結束為副歌開始前 0.2 秒"
+  },
+  {
+   "section": "副歌",
+   "text": "落子無聲 風也不敢喧",
+   "start": 139.6,
+   "end": 143.6,
+   "confident": true,
+   "heard": "落子無聲風也不感覺",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "副歌",
+   "text": "五星連成線 劃過長夜的邊",
+   "start": 143.8,
+   "end": 147.8,
+   "confident": true,
+   "heard": "無心連成線花過長夜的別",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "副歌",
+   "text": "等你看見 那一瞬間",
+   "start": 148.0,
+   "end": 152.4,
+   "confident": true,
+   "heard": "等你看見那一瞬間",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "副歌",
+   "text": "萬籟俱寂 只剩心跳的弦",
+   "start": 152.6,
+   "end": 160.8,
+   "confident": true,
+   "heard": "晚來聚集只剩心跳的弦",
+   "note": "結束取自人聲音量"
+  },
+  {
+   "section": "橋段",
+   "text": "時間很短 夠我走完這一段",
+   "start": 161.2,
+   "end": 168.4,
+   "confident": true,
+   "heard": "時間很短跟我走完這一段",
+   "note": "音段 161.2-162.4、162.9-164.1、164.4-168.4"
+  },
+  {
+   "section": "橋段",
+   "text": "一局很長 像把一生都看穿",
+   "start": 169.5,
+   "end": 177.9,
+   "confident": true,
+   "heard": "一句很長想把一生都看穿",
+   "note": "開始取自音量，結束為最後副歌開始前 0.3 秒；兩小句的分界約 172.7"
+  },
+  {
+   "section": "最後副歌",
+   "text": "落子無聲 風也不敢喧",
+   "start": 178.2,
+   "end": 182.1,
+   "confident": true,
+   "heard": "落子無聲風也不感覺",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "最後副歌",
+   "text": "五星連成線 劃過長夜的邊",
+   "start": 182.3,
+   "end": 186.2,
+   "confident": true,
+   "heard": "無心連成線花過長夜的別",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "最後副歌",
+   "text": "等你看見 那一瞬間",
+   "start": 186.4,
+   "end": 190.1,
+   "confident": true,
+   "heard": "等你看見那一瞬間",
+   "note": "結束為下一句開始前 0.2 秒"
+  },
+  {
+   "section": "最後副歌",
+   "text": "萬籟俱寂 只剩心跳的弦",
+   "start": 190.3,
+   "end": 198.5,
+   "confident": true,
+   "heard": "晚來聚集只剩心跳的弦",
+   "note": "結束取自人聲音量"
+  },
+  {
+   "section": "尾奏",
+   "text": "落子無聲",
+   "start": 213.3,
+   "end": 218.2,
+   "confident": false,
+   "heard": "落子無聲",
+   "note": "208.1-213.3 有人聲能量但辨識不出歌詞（可能是哼唱／拖音）；落子無聲的實際分界不確定"
+  }
+ ],
+ "instrumental": [
+  {
+   "start": 0.0,
+   "end": 22.0,
+   "label": "前奏"
+  },
+  {
+   "start": 75.4,
+   "end": 107.9,
+   "label": "間奏"
+  },
+  {
+   "start": 198.5,
+   "end": 208.1,
+   "label": "其他",
+   "note": "最後副歌後、尾奏人聲進來前的純伴奏"
+  },
+  {
+   "start": 218.2,
+   "end": 224.2,
+   "label": "尾奏",
+   "note": "剛好 6.0 秒，貼近門檻"
+  }
+ ],
+ "threshold": {
+  "value_db": -40,
+  "rms": 0.01,
+  "window_sec": 0.1,
+  "min_len_sec": 6,
+  "note": "人聲軌 0.1 秒 RMS 呈雙峰（靜音 <0.001／有唱 >0.01），-50 到 -35 dB 結果大致相同；-45 dB 時尾奏縮到不足 6 秒"
+ }
+}
