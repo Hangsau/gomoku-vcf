@@ -920,7 +920,8 @@ function bgmSetTrack() {
   const n = (!$('sPlay').hidden) ? 'play' : 'menu';
   if (n !== bgmTrack) { bgmTrack = n; bgmSync(); }
 }
-const bgmTouch = () => { if (!bgmTouched) bgmTouched = true; if (bgmWanted()) { const t = bgm[bgmTrack]; if (!t || t.el.paused) bgmSync(); } };
+const bgmTouch = () => { if (!bgmTouched) bgmTouched = true; if (bgmWanted()) { audio();   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume 一次，不然音樂播進暫停中的 context 會沒聲音（2026-11-12 使用者：首頁沒音樂，要先下過棋才有）
+  const t = bgm[bgmTrack]; if (!t || t.el.paused) bgmSync(); } };
 for (const ev of ['pointerdown', 'click', 'keydown', 'touchend']) addEventListener(ev, bgmTouch, { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => bgmSync());
 new MutationObserver(bgmSetTrack).observe($('sPlay'), { attributes: true, attributeFilter: ['hidden'] });
