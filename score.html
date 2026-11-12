@@ -294,7 +294,7 @@ section.panel[aria-label] { position: relative; }
     <li><b>白先 VCF</b>：白棋只用衝四連續取勝；黑棋防守時有禁手，逼黑擋在禁手點（禁手勝）也算白勝。白先的題目黑可以比白多一顆。</li>
     <li><b>自動判斷</b>：每題黑先、白先各算一次。只有一種成立就是那一種；兩種都成立叫<b>雙先</b>，兩個分數都會列出來。</li>
     <li><b>唯一解</b>：每一手都只有一個致勝走法。同一組位置先後對調不算別解；插一手空四再照答案走完也不算。</li>
-    <li><b>沒有別解</b>：除了解答以外，還有另一條不同的贏法（多走幾手也能贏），就不是唯一解，不算詰題。同一解換走法（兩手先後對調、插一手空四再照答案走）不算別解。最後一手成活四時，上一手的活三已經贏定，所以只比到上一手。</li>
+    <li><b>沒有別解</b>：除了解答還有另一條贏法（多走幾手也算）就不收。先後對調、插一手空四再照答案走不算別解；但空四若讓攻方能跳過答案某一點也贏，就算別解。最後一手成活四時只比到上一手。</li>
     <li><b>評定</b>：長短篇共用一套分數。每一手各值多少分再加總（底分 20，這一手能下的衝四越多越高），加上深誘餌、禁手陷阱、解禁、反四、預備反四、手順這些技巧分。棋子使用率另外顯示，代表題目乾不乾淨，不影響分數。</li>
   </ol>
   <p class="hint">段位：用 4 手題當尺定初段到四段，五段以上一段比一段窄，傳說不再細分。分數線照玩家實際解題的結果校準過。評分引擎跟出題 AI 用的是同一套程式。</p>
@@ -374,7 +374,7 @@ function startTrial() {
 function endTrial() { trial = null; drawBoard(); renderPlay(); }
 function tryMove(t) {
   if (!trial || trial.over || tryBusy) return;
-  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261109a');
+  if (!tryWorker) tryWorker = new Worker('score-worker.js?v=20261112a');
   const { B, W } = trialStones(), aw = atkWhite(), me = { t };
   const atkN = aw ? '白' : '黑', defN = aw ? '黑' : '白';
   tryBusy = true; trial.msg = `${esc(t)}：計算中…`; renderPlay();
@@ -563,7 +563,7 @@ $('btnHelp').onclick = () => $('dlgHelp').showModal();
 
 // ---------- 評分（背景 Worker；可取消） ----------
 let worker = null, reqId = 0;
-function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261109a'); worker.onmessage = onResult; }
+function newWorker() { if (worker) worker.terminate(); worker = new Worker('score-worker.js?v=20261112a'); worker.onmessage = onResult; }
 function score() {
   trial = null;
   stopUsage();
@@ -640,7 +640,7 @@ function startUsage(base) {
     w.postMessage({ id: ++rid, black: B.join(' '), white: W.join(' '), attackerWhite: myResult.attacker === 'white' ? 1 : 0, scale: curScale, anyCount: 1 });   // 拿掉一顆子造成的子數差不算不合法（2026-11-07b）
   };
   for (let k = 0; k < n; k++) {
-    const w = new Worker('score-worker.js?v=20261109a');
+    const w = new Worker('score-worker.js?v=20261112a');
     w.onmessage = ev => {
       if (result !== myResult || !usage) return;   // 已經換題或重算
       const v = ev.data.ok ? ev.data.result : null;

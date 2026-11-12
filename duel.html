@@ -950,7 +950,7 @@ let vEngine = null, vReq = 0;
 const vPending = new Map();
 function engineCall(msg) {
   if (!vEngine) {
-    vEngine = new Worker('score-worker.js?v=20261108a-m-r1109');   // 跟 game.html 的 ENGINE_V 一樣，共用瀏覽器快取
+    vEngine = new Worker('score-worker.js?v=20261112a');   // 跟 game.html 的 ENGINE_V 一樣，共用瀏覽器快取
     vEngine.onmessage = (e) => { const f = vPending.get(e.data.id); if (f) { vPending.delete(e.data.id); f(e.data); } };
   }
   return new Promise((resolve) => { const id = ++vReq; vPending.set(id, resolve); vEngine.postMessage({ id, ...msg }); });
