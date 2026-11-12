@@ -1,0 +1,140 @@
+{
+ "song": "6_戰鬥_兩儀_有唱.mp3（人聲軌 兩儀 (Lead Vocal).mp3，時間軸同歌曲）",
+ "method": "faster-whisper large-v3 (int8, CPU) word timestamps + 人聲軌能量（0.05s）校正句首／句尾；辨識字以歌詞為準對齊",
+ "precision": "起迄約 ±0.3 秒；句尾含拉長音（end 是人聲消失點，不是最後一字的咬字點）",
+ "lines": [
+  {
+   "i": 1,
+   "text": "黑是長夜 白是刀光",
+   "start": 21.8,
+   "end": 24.8,
+   "guess": false,
+   "asr_text": "黑是長夜白是刀光",
+   "asr_start": 21.3,
+   "asr_end": 24.8,
+   "note": ""
+  },
+  {
+   "i": 2,
+   "text": "一張棋盤 兩處鋒芒",
+   "start": 24.8,
+   "end": 28.7,
+   "guess": false,
+   "asr_text": "一張棋盤兩處鋒芒",
+   "asr_start": 24.8,
+   "asr_end": 27.9,
+   "note": ""
+  },
+  {
+   "i": 3,
+   "text": "你來我往 不聲不響",
+   "start": 29.2,
+   "end": 32.0,
+   "guess": false,
+   "asr_text": "你来我往不声不响",
+   "asr_start": 28.8,
+   "asr_end": 32.1,
+   "note": ""
+  },
+  {
+   "i": 4,
+   "text": "殺機藏在 最靜的地方",
+   "start": 32.1,
+   "end": 35.7,
+   "guess": false,
+   "asr_text": "杀鸡藏在最近的地方",
+   "asr_start": 32.1,
+   "asr_end": 34.6,
+   "note": ""
+  },
+  {
+   "i": 5,
+   "text": "退一步 萬丈深淵",
+   "start": 36.4,
+   "end": 40.4,
+   "guess": false,
+   "asr_text": "退一步安掌深渊",
+   "asr_start": 36.3,
+   "asr_end": 40.3,
+   "note": "辨識成「退一步安掌深渊」，後半字錯，起迄取自辨識段落與能量"
+  },
+  {
+   "i": 6,
+   "text": "進一步 就在眼前",
+   "start": 43.5,
+   "end": 49.1,
+   "guess": false,
+   "asr_text": "进一步就在眼前",
+   "asr_start": 43.4,
+   "asr_end": 47.3,
+   "note": ""
+  },
+  {
+   "i": 7,
+   "text": "我以黑夜為刃 劈開這一線天",
+   "start": 50.3,
+   "end": 53.5,
+   "guess": false,
+   "asr_text": "我以黑夜为人劈开这一线天",
+   "asr_start": 49.8,
+   "asr_end": 53.5,
+   "note": ""
+  },
+  {
+   "i": 8,
+   "text": "你用白雪作盾 也擋不住這一劍",
+   "start": 53.9,
+   "end": 57.1,
+   "guess": false,
+   "asr_text": "你用白雪做灯也挡不住这一劫",
+   "asr_start": 53.5,
+   "asr_end": 57.2,
+   "note": ""
+  },
+  {
+   "i": 9,
+   "text": "四手連環 步步都是險",
+   "start": 57.2,
+   "end": 60.7,
+   "guess": true,
+   "asr_text": "厮守戀魂步步都實現",
+   "asr_start": 57.2,
+   "asr_end": 60.7,
+   "note": "辨識成「厮守戀魂步步都實現」對不上；起迄取自前一句終點與後一句起點（辨識段落 57.2–60.7）"
+  },
+  {
+   "i": 10,
+   "text": "落下這一子 山河都改變",
+   "start": 60.7,
+   "end": 65.2,
+   "guess": false,
+   "asr_text": "我下這一次山河都改變",
+   "asr_start": 60.7,
+   "asr_end": 63.5,
+   "note": ""
+  }
+ ],
+ "vocalise_72_80": {
+  "start": 72.3,
+  "end": 79.9,
+  "asr": "辨識不出字：large-v3 在此段只吐出幻覺文字「詞曲 李宗盛」（no_speech_prob 0.80），自動語言偵測無結果；能量連續平穩（約 1700–3000），判斷為無詞哼唱／拉長音（vocalise）",
+  "energy_rms": "72.3 起連續有聲、79.4 後衰減"
+ },
+ "sections_energy": {
+  "no_vocal_before": 21.7,
+  "chorus_vocal_ends": 65.9,
+  "gap": [
+   65.9,
+   72.3
+  ],
+  "vocalise": [
+   72.3,
+   79.9
+  ],
+  "instrumental_break": [
+   79.9,
+   97.5
+  ],
+  "verse2_starts": 97.5
+ }
+}

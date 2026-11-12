@@ -1,0 +1,91 @@
+{
+ "file": "duel_line.mp4",
+ "duration": 41.21,
+ "frames_captured": 676,
+ "capture_fps": 16.4,
+ "viewport": "390x844 DPR3",
+ "marks": [
+  {
+   "name": "countdown_start",
+   "t": 1.86
+  },
+  {
+   "name": "q1_start",
+   "t": 4.91
+  },
+  {
+   "name": "q1_solve",
+   "t": 8.93
+  },
+  {
+   "name": "q1_reveal",
+   "t": 8.94
+  },
+  {
+   "name": "q2_start",
+   "t": 13.93
+  },
+  {
+   "name": "q2_solve_opp",
+   "t": 18.53
+  },
+  {
+   "name": "q2_reveal",
+   "t": 18.53
+  },
+  {
+   "name": "q3_start",
+   "t": 23.52
+  },
+  {
+   "name": "q3_solve",
+   "t": 27.23
+  },
+  {
+   "name": "q3_reveal",
+   "t": 27.23
+  },
+  {
+   "name": "q4_start",
+   "t": 32.23
+  },
+  {
+   "name": "q4_solve",
+   "t": 36
+  },
+  {
+   "name": "result",
+   "t": 37.48
+  }
+ ],
+ "report": {
+  "room": {
+   "id": "1341",
+   "vmode": "line",
+   "rank": "初段",
+   "target": 3,
+   "think": 180
+  },
+  "end": {
+   "endTitle": "你贏了",
+   "endWhy": "解開 3 : 1",
+   "score": [
+    3,
+    1
+   ]
+  },
+  "notes": [
+   "q1 解 J7 K6 H6 F4 K8 L9 J8",
+   "q2 解 G9 F10 F8 D6 H10 J11 H9",
+   "q3 解 K6 L5 F10 G9 H10 E10 H9",
+   "q4 解 G7 J9 E5 D4 F5 D5 F7"
+  ],
+  "blocked_requests": [
+   "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap",
+   "https://vcf-game-api.psyhangsau.workers.dev/skins",
+   "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap",
+   "https://vcf-game-api.psyhangsau.workers.dev/skins"
+  ],
+  "js_errors": []
+ }
+}
