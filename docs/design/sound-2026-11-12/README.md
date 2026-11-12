@@ -19,3 +19,13 @@
 - 兩儀殿邀請碼＋公開／私人房已上線，施工單與驗證截圖在 `docs/design/duel-invite-2026-11-12/`。
 - 踩雷：`wrangler deploy` 對戰伺服器後，線上的 Durable Object 約 9 分鐘內還在跑舊程式（期間新頁面送 `join` 會收到 `bad`）。部署後要實際探測伺服器行為，不能只看 `deployments status`。
 - 仍待使用者手機實聽與實測：九種落子聲、iPhone 音量滑桿、邀請連結在 LINE 裡點開的行為。
+
+## 2026-11-13 音樂輪播（已上線 bb067d3）
+
+- 使用者回報「遊戲音樂太單調」「兩儀殿音樂很慢才播」。
+- `game/music/theme.mp3`＝主題曲《落子無聲》Suno 伴奏（來源 `docs\遊戲音樂_原檔\主題曲_分軌\落子無聲 (Without Lead Vocal).mp3`）。
+- Rush（`game.html` 的 `BGM_LISTS`）：選單 `['theme','menu']` 隨機起播；解題 `['play','theme']`，`play` 播 3 次才換。
+- 兩儀殿（`duel.html` 的 `BGM_LIST`）：`['duel','theme']`；進頁預載第一首並嘗試自動播放，被瀏覽器擋就等第一次操作。
+- `menu.mp3`、`duel.mp3` 去掉開頭約 0.75 秒靜音；首次出聲淡入 0.4 秒。
+- 加新歌：檔案放 `game/music/`，檔名加進上述清單。煉丹爐的 `web/music/bgm.mp3` 這次沒動。
+- 待使用者：實機聽輪播與起播速度；新歌《爭先》（戰鬥曲，Suno 提示詞已給）做好後加進兩儀殿與限時挑戰的清單。未在真實 iPhone 驗證。
