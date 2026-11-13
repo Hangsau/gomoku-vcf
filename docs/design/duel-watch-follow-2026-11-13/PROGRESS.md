@@ -1,0 +1,5 @@
+- 階段1：duel.html 追焦邏輯、玩家列標示、自動鈕、四語字串已寫入，module node --check 通過（未改伺服器）
+- 階段2：check/check_follow.mjs 寫好，開始跑
+- 階段3：第一輪檢查 104 PASS／5 FAIL（八仙渡倒數期狀態行時序、五子棋 pbar 殘留 role 屬性）；已修 duel.html clearBarAttrs 與檢查等待，重跑中
+- 階段4：正向 109/0、負向已跑、語法通過；看截圖後寫 REPORT
+- 階段5：REPORT.md 完成（正向 109/0、負向 108/1 如預期）

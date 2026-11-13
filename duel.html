@@ -116,6 +116,16 @@ input.code-in { font-family: var(--num); font-size: 22px; letter-spacing: .15em;
 .pbar .ck { font-family: var(--num); font-size: 26px; font-weight: 700; }
 .pbar .ck.low { color: var(--fail); }
 .pbar .sit { height: 40px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--gold); color: var(--goldInk); font-size: 16px; font-weight: 900; }
+.pbar.view { border-color: var(--gold); background: var(--goldBg); box-shadow: inset 0 0 0 1px var(--gold); }
+.pbar[role=button] { cursor: pointer; }
+.pbar[role=button]:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.pbar .vwatch { flex: 0 0 auto; font-size: 12px; font-weight: 900; padding: 2px 8px; border-radius: 999px; background: var(--gold); color: var(--goldInk); }
+.pbar .vlook { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--text2); }
+.status .vwho { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 700; }
+.status .vrest { white-space: nowrap; flex: 0 0 auto; }
+.status .vauto { flex: 0 0 auto; font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); }
+.icob.wauto { width: auto; min-width: 48px; padding: 0 10px; font-size: 14px; font-weight: 900; border: 2px solid var(--gold); color: var(--gold); border-radius: 14px; height: 44px; }
+#sRoom.tight .rhead .icob.wauto { height: 44px; }
 .rhead { display: flex; align-items: center; gap: 8px; padding: calc(4px + env(safe-area-inset-top)) 8px 4px; }
 .rhead .ttl { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .rhead .ttl b { font-family: var(--num); font-size: 18px; }
@@ -202,6 +212,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
     <button type="button" class="icob" id="rInvite" aria-label="邀請" data-i18n-aria="invite" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></button>
+    <button type="button" class="icob wauto" id="bWatchAuto" aria-label="自動追焦" data-i18n-aria="vAutoAria" data-i18n="vAuto" hidden></button>
     <button type="button" class="icob" data-sound aria-haspopup="dialog" aria-expanded="false"></button>
     <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
@@ -356,6 +367,7 @@ const I18N = {
     timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
     tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
     emptyHall: '還沒有人開房', emptyHall2: '開一間，等人進來', room: '房間', waiting: '等待中', playing: '對局中', emptySeat: '空位',
+    vOn: '觀看中', vLook: '看他', vWatchN: '正在看：{name}', vFirst: '等第一手', vSwitch: '改看 {name}', vAuto: '自動', vAutoAria: '自動追焦', vWatchRest: '第 {n} 題・剩 {t}', vLookAria: '改看 {name}',
     watchers: '{n} 人觀戰', moveN: '第 {n} 手', you: '你', offline: '斷線中', sit: '入座', black: '黑棋', white: '白棋',
     stWaitOther: '等對手入座…', stView: '看看房間，想下就按「入座」', stTurnYou: '輪到你', stTurnOther: '等對手下…', stWatch: '觀戰中', stTurnColor: '輪到{c}',
     stOver: '這盤下完了', tap2Hint: '同一格再點一下就下', leaveRoom: '離開房間', resign: '認輸', back: '回大廳',
@@ -380,6 +392,7 @@ const I18N = {
     timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
     tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
     emptyHall: 'No rooms yet', emptyHall2: 'Open one and wait for someone', room: 'Room', waiting: 'Waiting', playing: 'Playing', emptySeat: 'Empty',
+    vOn: 'Watching', vLook: 'Watch', vWatchN: 'Watching: {name}', vFirst: 'Waiting for 1st move', vSwitch: 'Now watching {name}', vAuto: 'Auto', vAutoAria: 'Auto-follow', vWatchRest: 'puzzle {n} · {t} left', vLookAria: 'Watch {name}',
     watchers: '{n} watching', moveN: 'Move {n}', you: 'You', offline: 'Offline', sit: 'Sit', black: 'Black', white: 'White',
     stWaitOther: 'Waiting for an opponent…', stView: 'Look around — tap “Sit” to play', stTurnYou: 'Your move', stTurnOther: 'Opponent’s move…', stWatch: 'Watching', stTurnColor: '{c} to move',
     stOver: 'Game over', tap2Hint: 'Tap the same point again to place', leaveRoom: 'Leave room', resign: 'Resign', back: 'Lobby',
@@ -404,6 +417,7 @@ const I18N = {
     timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
     tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
     emptyHall: 'まだ部屋がありません', emptyHall2: '部屋を作って相手を待ちましょう', room: '部屋', waiting: '待機中', playing: '対局中', emptySeat: '空席',
+    vOn: '注目中', vLook: '見る', vWatchN: '注目：{name}', vFirst: '初手待ち', vSwitch: '{name}に切替', vAuto: '自動', vAutoAria: '自動追従', vWatchRest: '第{n}問・残り {t}', vLookAria: '{name}を見る',
     watchers: '{n} 人観戦', moveN: '{n} 手目', you: 'あなた', offline: '切断中', sit: '着席', black: '黒', white: '白',
     stWaitOther: '相手の着席を待っています…', stView: '部屋を見て、打つなら「着席」', stTurnYou: 'あなたの番', stTurnOther: '相手の番…', stWatch: '観戦中', stTurnColor: '{c}の番',
     stOver: '対局終了', tap2Hint: '同じ場所をもう一度タップで打つ', leaveRoom: '部屋を出る', resign: '投了', back: 'ロビー',
@@ -428,6 +442,7 @@ const I18N = {
     timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
     tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
     emptyHall: '아직 방이 없습니다', emptyHall2: '방을 만들고 상대를 기다려 보세요', room: '방', waiting: '대기 중', playing: '대국 중', emptySeat: '빈자리',
+    vOn: '보는 중', vLook: '보기', vWatchN: '보는 중: {name}', vFirst: '첫 수 대기', vSwitch: '{name} 관전', vAuto: '자동', vAutoAria: '자동 따라가기', vWatchRest: '{n}번 문제 · {t} 남음', vLookAria: '{name} 보기',
     watchers: '{n}명 관전', moveN: '{n}수째', you: '나', offline: '연결 끊김', sit: '착석', black: '흑', white: '백',
     stWaitOther: '상대가 앉기를 기다리는 중…', stView: '방을 둘러보고, 두려면 「착석」', stTurnYou: '내 차례', stTurnOther: '상대 차례…', stWatch: '관전 중', stTurnColor: '{c} 차례',
     stOver: '대국 종료', tap2Hint: '같은 자리를 한 번 더 탭하면 착수', leaveRoom: '방 나가기', resign: '기권', back: '로비',
@@ -768,6 +783,9 @@ function showInApp() {
 const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
 let ws = null, online = false, failCount = 0, retryT = 0, replaced = false;
 let watchSeat = 0;   // 觀戰者現在看哪個座位的題目和手順（VCF 明鏡台）
+// 自動追焦（2026-11-13 使用者）：watchAuto＝跟著規則走；watchFocus＝正在看的人（null＝一線天這題還沒人落子）；watchPuz＝一線天現在第幾題；watchKey＝哪房哪一局（換局回自動）
+let watchAuto = true, watchFocus = null, watchPuz = -1, watchKey = '';
+const watchReset = () => { watchSeat = 0; watchAuto = true; watchFocus = null; watchPuz = -1; watchKey = ''; };
 let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0;   // srvOff：伺服器時間－本機時間   // viewing：我正在看的房號
 function connect() {
   clearTimeout(retryT);
@@ -907,11 +925,11 @@ function renderLobby() {
   });
 }
 let leftRoom = null;   // 剛離開的房號：離開那一刻還在路上的舊房間更新不要把人拉回去
-function enterRoom(id) { watchSeat = 0; leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
+function enterRoom(id) { watchReset(); leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
 function toLobby(tell = true) {
   if (tell) send({ t: 'leave' });
   leftRoom = viewing;
-  viewing = null; room = null; match = null; ghost = null; layoutSig = ''; watchSeat = 0;
+  viewing = null; room = null; match = null; ghost = null; layoutSig = ''; watchReset();
   $('mEnd').hidden = true;
   show('sLobby');
 }
@@ -971,7 +989,9 @@ function clockOf(seat) {
 const LOW_CLOCK_MS = 30000, CLOCK_TICK_MS = 250, VCF_TICK_MS = 100;   // 剩 30 秒變紅；五子棋時鐘、搶答計時多久重畫一次
 const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 // 空座位：沒入座的人在等人時看得到「入座」（五子棋、搶答共用）
+const clearBarAttrs = (el) => { el.__h = null; el.style.cursor = ''; for (const a of ['data-seat', 'role', 'tabindex', 'aria-label']) el.removeAttribute(a); };   // 觀戰追焦（VCF）留下的屬性：換成別種畫面時清掉
 function emptySeatBar(el, seat, stoneHtml) {
+  clearBarAttrs(el);
   el.className = 'pbar empty';
   const canSit = room && room.state !== 'play' && mySeat() < 0;
   el.innerHTML = `${stoneHtml}<span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
@@ -982,6 +1002,7 @@ function renderBar(el, seat) {
   const stone = `<i class="st ${c === null ? 'q' : c === BLACK ? 'b' : 'w'}"></i>`;
   if (!s) return emptySeatBar(el, seat, stone);
   const act = match && room.state === 'play' ? actorOf(match) : null;
+  clearBarAttrs(el);
   el.className = 'pbar' + (act === seat ? ' on' : '');
   const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
   const tag = REPLAY ? replayTag(seat) : !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
@@ -1250,7 +1271,7 @@ function enterReplay(rec) {
   }
   const kindName = () => (rec.kind === 'vcf' ? T('vm_' + (rec.vmode || 'eight')) : T('r_' + rec.rule));
   REPLAY = { rec, cur: mt ? mt.moves.length : 0, title: () => recTime(rec.at) + ' ' + kindName() };
-  room = r; match = mt; viewing = null; ghost = null; layoutSig = ''; watchSeat = 0; RV = null; VR = null;
+  room = r; match = mt; viewing = null; ghost = null; layoutSig = ''; watchReset(); RV = null; VR = null;
   if (rec.kind === 'vcf') vcfOnRoom();
   show('sRoom'); renderRoom(); layout();
 }
@@ -1398,10 +1419,53 @@ function vPuzzle(x) { return { black: x[0].split(' ').filter(Boolean), white: x[
 const vSt = (seat) => (room && room.vs && room.vs.p ? room.vs.p[seat] : null);
 const vView = () => (mySeat() >= 0 ? mySeat() : watchSeat);   // 觀戰者預設看座位 0，點上方玩家列換邊
 const vCanFlip = () => !!room && room.kind === 'vcf' && room.state === 'play' && mySeat() < 0 && !$('sRoom').hidden;
-$('pTop').addEventListener('click', (e) => {
-  if (!vCanFlip() || e.target.closest('button')) return;
-  watchSeat = 1 - watchSeat; vcfOnRoom(); renderRoom();   // 八仙渡兩人題號可能不同，先換成這位的題目
-});
+// 觀戰者點某位玩家列＝手動看他（停止自動）；已經在看的那位點了不動
+function watchTo(seat, toastIt) {
+  const changed = watchFocus !== seat;
+  watchFocus = seat; watchSeat = seat;
+  if (changed && toastIt && room.seats[seat]) toast(T('vSwitch', { name: room.seats[seat].nick }));
+}
+function watchManual(seat) {
+  if (!vCanFlip() || watchFocus === seat) return;
+  watchAuto = false;
+  watchTo(seat, true);
+  vcfOnRoom(); renderRoom();   // 八仙渡兩人題號可能不同，先換成這位的題目
+}
+function watchBackAuto() {
+  if (!vCanFlip() || watchAuto) return;
+  watchAuto = true; watchPuz = -1;
+  if (!isLine()) watchFocus = watchSeat;   // 八仙渡：從現在看的人起算，同分不換
+  else watchFocus = null;
+  vcfOnRoom(); renderRoom();
+}
+function watchFollow() {   // 觀戰者每次收到房間狀態：自動模式下決定該看誰（只靠 room.vs.p 的 seq／s、vs.score，不用多送欄位）
+  const key = room.id + ':' + room.games;
+  if (watchKey !== key) { watchReset(); watchKey = key; }
+  if (!watchAuto) return;
+  const vs = room.vs, p = vs.p;
+  if (isLine()) {
+    if (vs.phase === 'reveal') return;   // 公開解法中：不動
+    if (watchPuz !== p[0].i) { watchPuz = p[0].i; watchFocus = null; }
+    const live = (s) => p[s].s !== 'out';
+    const moved = (s) => p[s].s === 'solved' || p[s].s === 'armed' || !!(p[s].seq && p[s].seq.length);
+    const order = [watchSeat, 1 - watchSeat];
+    if (watchFocus !== null && !live(watchFocus) && live(1 - watchFocus)) watchTo(1 - watchFocus, true);   // 跟著的人出局：換另一位
+    else if (watchFocus === null) {
+      const f = order.find((s) => moved(s) && live(s)) ?? order.find(moved) ?? (live(0) !== live(1) ? (live(0) ? 0 : 1) : undefined);
+      if (f !== undefined) watchTo(f, true);   // 誰先落子就跟誰
+    }
+  } else {
+    if (watchFocus === null) watchTo(watchSeat, false);   // 0:0 照預設（座位 0）
+    const sc = vs.score, f = watchFocus;
+    if (sc[1 - f] > sc[f]) watchTo(1 - f, true);   // 超車才換；同分不動
+  }
+}
+for (const id of ['pTop', 'pBot']) {
+  const el = $(id);
+  el.addEventListener('click', (e) => { if (e.target.closest('button')) return; const s = el.dataset.seat; if (s !== undefined) watchManual(Number(s)); });
+  el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && el.getAttribute('role') === 'button') { e.preventDefault(); const s = el.dataset.seat; if (s !== undefined) watchManual(Number(s)); } });
+}
+$('bWatchAuto').addEventListener('click', watchBackAuto);
 const vIsCounting = (st) => st && st.i === 0 && srvNow() < st.at;   // 開局倒數（只有第 1 題前）
 const rvIsOn = () => RV && room && room.state === 'over' && room.vs && room.vs.review;   // 收到新局時畫面可能先重畫，舊的覆盤狀態不能用
 const vIsLive = (st) => st && (st.s === 'think' || st.s === 'armed') && srvNow() >= st.at;
@@ -1415,6 +1479,7 @@ function vcfOnRoom() {
     return;
   }
   RV = null;
+  if (mySeat() < 0 && room.state === 'play' && !REPLAY) watchFollow();
   const st = vSt(vView());
   if (!st || !st.puzzle) { VR = null; return; }
   if (!VR || VR.i !== st.i || VR.room !== room.id || VR.games !== room.games) {   // 新的一題
@@ -1459,18 +1524,25 @@ function vcfCard(r, wait) {
   const extra = [T('kVcf') + '・' + T('vm_' + vmodeOf(r)), rankName(v.rank), waitedLabel(r), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target }), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.score ? r.score.join(' : ') : ''].filter(Boolean).join('・');
   return roomCard(r, wait, extra, seat(r.seats[0]) + seat(r.seats[1]));
 }
-function vcfBar(el, seat) {
+function vcfBar(el, seat, force) {
   const s = room.seats[seat], v = room.vcf;
   if (!s) return emptySeatBar(el, seat, '<i class="st p"></i>');
   const st = room.state === 'play' ? vSt(seat) : null, live = st && !vIsCounting(st) ? st : null;
-  el.className = 'pbar' + (live && live.s === 'armed' ? ' on' : '');
+  const spec = vCanFlip();   // 觀戰者（進行中）：正在看的那位整列金框＋「觀看中」，另一位有「看他」
+  const viewing = spec && watchFocus === seat;
+  const cls = 'pbar' + (viewing ? ' view' : '') + (!spec && live && live.s === 'armed' ? ' on' : '');
   const tag = REPLAY ? replayTag(seat) : !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
   const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
   const num = live && seat !== mySeat() && !isLine() ? `<span class="vst">${esc(T('vPuzzleN', { n: live.i + 1 }))}</span>` : '';   // 對手做到第幾題
   const score = room.vs ? room.vs.score[seat] : 0;
-  const flip = el.id === 'pTop' && vCanFlip() ? '<span class="vst" aria-hidden="true">⇅</span>' : '';   // 觀戰者：點這條換看另一位
-  el.style.cursor = flip ? 'pointer' : '';
-  el.innerHTML = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}${flip}</span>${pips(score, v.target)}`;
+  const mark = !spec ? '' : viewing ? `<b class="vwatch">${esc(T('vOn'))}</b>` : `<span class="vlook" aria-hidden="true">${esc(T('vLook'))}</span>`;
+  const html = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}${mark}</span>${pips(score, v.target)}`;
+  const role = spec && !viewing;
+  if (force || el.__h !== html || el.className !== cls) { el.className = cls; el.innerHTML = html; el.__h = html; }
+  el.style.cursor = role ? 'pointer' : '';
+  if (spec) el.dataset.seat = String(seat); else el.removeAttribute('data-seat');
+  if (role) { el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0'); el.setAttribute('aria-label', T('vLookAria', { name: s.nick })); }
+  else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); }
 }
 function vcfStatus() {
   const me = mySeat();
@@ -1479,7 +1551,11 @@ function vcfStatus() {
   const st = vSt(vView());
   if (!st || !st.puzzle || vIsCounting(st)) return esc(T('vReady'));
   const n = T('vPuzzleN', { n: st.i + 1 }) + '・', thinkLeft = mmss(st.deadline - srvNow());
-  if (me < 0) return esc(T('vStWatch', { n: st.i + 1, t: thinkLeft }));
+  if (me < 0) {
+    const rest = esc(T('vWatchRest', { n: st.i + 1, t: thinkLeft }));
+    const who = watchFocus === null ? esc(T('vFirst')) : esc(T('vWatchN', { name: room.seats[watchFocus]?.nick || '' }));
+    return `<span class="vwho">${who}</span><span class="vrest">・${rest}</span>${watchAuto ? `<b class="vauto">${esc(T('vAuto'))}</b>` : ''}`;
+  }
   if (isLine() && room.vs.phase === 'reveal') return esc(n + T('vNext'));
   if (VR && VR.out) return esc(n + T(isLine() ? 'vStOutWait' : 'vStOut', { why: T('vWhy_' + VR.out) }));
   if (VR && VR.done) return esc(n + T(isLine() ? 'vSolvedS' : 'vSolvedNext'));
@@ -1491,9 +1567,10 @@ function vcfRenderRoom() {
   const me = mySeat(), bs = vView(), v = room.vcf;
   setTitle(T('vm_' + vmodeOf(room)) + ' ' + room.id);
   $('rSub').textContent = [rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })].join('・');
-  vcfBar($('pTop'), 1 - bs);
-  vcfBar($('pBot'), bs);
+  vcfBar($('pTop'), 1 - bs, true);
+  vcfBar($('pBot'), bs, true);
   $('status').innerHTML = vcfStatus();
+  $('bWatchAuto').hidden = !(vCanFlip() && !watchAuto);
   const st = room.state === 'play' ? vSt(bs) : null;
   const atk = st && st.puzzle && !vIsCounting(st) ? T(st.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB') : '';
   if (rvIsOn()) $('facts').innerHTML = rvFacts();
@@ -1672,7 +1749,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, bgmVolume, volOf, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get watchFocus() { return watchFocus; }, get watchAuto() { return watchAuto; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, bgmVolume, volOf, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {
@@ -1691,7 +1768,7 @@ setInterval(() => {
     if (after !== before && after >= 1 && after <= 3) beep(after === 1);
     if (VR.left <= 0) { VR.left = 0; vOut('time'); return; }
   }
-  $('status').innerHTML = vcfStatus();
+  const sh = vcfStatus(); if ($('status').__h !== sh) { $('status').innerHTML = sh; $('status').__h = sh; }   // 沒變就不重寫，免得按鈕被換掉
   vcfBar($('pTop'), 1 - vView()); vcfBar($('pBot'), vView());
   const sk = $('aSkip'); if (sk) sk.disabled = !vCanSkip();
 }, VCF_TICK_MS);
