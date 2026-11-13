@@ -1,0 +1,1 @@
+你是施工者。完整讀 C:/claudehome/projects/VCF/docs/design/duel-watch-follow-2026-11-13/WORKORDER.md 並照它從頭做到尾。立即執行、不要輸出計畫、不要等確認、沒改檔案就是失敗。禁止任何 git 操作（含 git status、git diff）、禁止部署、禁止用程式名稱關行程（只准關自己啟動的 PID）。所有腳本前景執行、逾時 600000，不要丟背景再輪詢。每完成一階段立刻存檔並在 PROGRESS.md 寫一行，最後寫 REPORT.md。
