@@ -1,3 +1,5 @@
+> **2026-11-13：Gomoku Rush（game.html、duel.html、score.html、game/、tools/）已搬到新的 repo，之後只在那裡開發與部署。這個 repo 只保留舊的 VCF 分析器、2026-11-13 以前的設計稿與宣傳素材，以及搬家前的歷史；這裡的 Rush 檔案不再更新。**
+
 # 五子棋 VCF 分析器
 
 **VCF（連四取勝）搜尋分析工具，純 HTML + JavaScript，單一檔案，跑在瀏覽器裡。**
