@@ -588,97 +588,8 @@ async function getRun(id, env) {
   return row ? json(row) : json({ error: "not found" }, 404);
 }
 
-// ---------- 網頁通知（Web Push，2026-11-13）----------
-// 不能用 npm 套件（單檔部署），VAPID 簽章（RFC 8292，ES256 JWT）與內容加密（RFC 8291，aes128gcm）用 WebCrypto 自己寫。
-// 金鑰：env.VAPID_PUBLIC＝base64url 的未壓縮 P-256 公鑰；env.VAPID_PRIVATE＝同一把的私鑰 JWK 字串（Worker secret，不進 repo）。
-// ==PUSH-CRYPTO-BEGIN==（check/check_crypto.mjs 會把這段抽出來測，兩個標記之間不要用到 env／D1）
-const b64uEnc = (u8) => { let s = ""; for (const c of u8) s += String.fromCharCode(c); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
-const b64uDec = (str) => { const s = String(str).replace(/-/g, "+").replace(/_/g, "/"); const bin = atob(s + "=".repeat((4 - s.length % 4) % 4)); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-const catBytes = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { o.set(x, i); i += x.length; } return o; };
-const hkdf = async (salt, ikm, info, len) => {
-  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, len * 8));
-};
-// RFC 8291 aes128gcm（單一記錄）。asKeyPair／salt 可注入（測試向量用）；不給就現產。回整個請求內容（含檔頭）。
-async function encryptPush(plain, uaPublic, authSecret, asKeyPair, salt) {
-  const enc = new TextEncoder();
-  if (!asKeyPair) asKeyPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
-  if (!salt) salt = crypto.getRandomValues(new Uint8Array(16));
-  const asPub = new Uint8Array(await crypto.subtle.exportKey("raw", asKeyPair.publicKey));
-  const uaKey = await crypto.subtle.importKey("raw", uaPublic, { name: "ECDH", namedCurve: "P-256" }, false, []);
-  const ecdh = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: uaKey }, asKeyPair.privateKey, 256));
-  const ikm = await hkdf(authSecret, ecdh, catBytes(enc.encode("WebPush: info\0"), uaPublic, asPub), 32);
-  const cek = await hkdf(salt, ikm, enc.encode("Content-Encoding: aes128gcm\0"), 16);
-  const nonce = await hkdf(salt, ikm, enc.encode("Content-Encoding: nonce\0"), 12);
-  const data = catBytes(typeof plain === "string" ? enc.encode(plain) : plain, new Uint8Array([2]));   // 0x02＝最後一筆記錄的分隔符
-  const aes = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aes, data));
-  const rs = new Uint8Array([0, 0, 0x10, 0]);   // 記錄大小 4096（big-endian）
-  return catBytes(salt, rs, new Uint8Array([asPub.length]), asPub, ct);
-}
-// VAPID（RFC 8292）：回 Authorization 標頭值。privJwk＝私鑰 JWK 物件；pubB64u＝公鑰；now 秒（可注入）。
-async function vapidAuth(endpoint, privJwk, pubB64u, now) {
-  const enc = new TextEncoder();
-  const aud = new URL(endpoint).origin;
-  const head = b64uEnc(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
-  const claim = b64uEnc(enc.encode(JSON.stringify({ aud, exp: (now || Math.floor(Date.now() / 1000)) + 12 * 3600, sub: "https://rush.hangsau.app/" })));
-  const key = await crypto.subtle.importKey("jwk", privJwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
-  const sig = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(head + "." + claim)));
-  return "vapid t=" + head + "." + claim + "." + b64uEnc(sig) + ", k=" + pubB64u;
-}
-// ==PUSH-CRYPTO-END==
-// 發一則通知。sub＝{ endpoint, p256dh, auth }（push_subs 的欄位）；回端點的 HTTP 狀態碼（網路錯誤回 0，沒設金鑰回 -1）。之後邀請功能重用這個。
-async function sendPush(env, sub, payloadObj, ttl) {
-  if (!env.VAPID_PRIVATE || !env.VAPID_PUBLIC) return -1;
-  try {
-    const body = await encryptPush(JSON.stringify(payloadObj), b64uDec(sub.p256dh), b64uDec(sub.auth));
-    const auth = await vapidAuth(sub.endpoint, JSON.parse(env.VAPID_PRIVATE), env.VAPID_PUBLIC);
-    const r = await fetch(sub.endpoint, { method: "POST", headers: { Authorization: auth, "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: String(ttl == null ? 60 : ttl), Urgency: "high" }, body });
-    return r.status;
-  } catch { return 0; }
-}
-const pushPidOk = (p) => typeof p === "string" && /^[A-Za-z0-9_-]{8,40}$/.test(p);
-const b64uLen = (s, n) => { try { return typeof s === "string" && /^[A-Za-z0-9_-]+$/.test(s) && b64uDec(s).length === n; } catch { return false; } };
-const pushHits = new Map();   // pid → 最近的發送時間（記憶體計數，Worker 重啟就歸零，測試用夠了）
-async function getPushKey(env) {
-  return env.VAPID_PUBLIC ? json({ key: env.VAPID_PUBLIC }) : json({ error: "push not configured" }, 503);
-}
-async function postPushSub(req, env) {
-  let b;
-  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
-  if (!b || !pushPidOk(b.pid)) return json({ error: "bad pid" }, 400);
-  const s = b.sub, k = s && s.keys;
-  if (!s || typeof s.endpoint !== "string" || s.endpoint.length > 1000 || !/^https:\/\/[^\s]+$/.test(s.endpoint)) return json({ error: "bad endpoint" }, 400);
-  if (!k || !b64uLen(k.p256dh, 65) || !b64uLen(k.auth, 16)) return json({ error: "bad keys" }, 400);
-  const ua = (req.headers.get("User-Agent") || "").slice(0, 200);
-  await env.DB.prepare("INSERT INTO push_subs(endpoint, pid, p256dh, auth, ua, t) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(endpoint) DO UPDATE SET pid = ?2, p256dh = ?3, auth = ?4, ua = ?5, t = ?6").bind(s.endpoint, b.pid, k.p256dh, k.auth, ua, Date.now()).run();
-  return json({ ok: true });
-}
-async function postPushTest(req, env, ctx) {
-  let b;
-  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
-  if (!b || !pushPidOk(b.pid)) return json({ error: "bad pid" }, 400);
-  const delay = b.delay === undefined ? 5 : num(b.delay, 0, 30);
-  if (delay === null) return json({ error: "bad delay" }, 400);
-  const url = b.url === undefined ? "/game/push-test.html?from=push" : b.url;
-  if (typeof url !== "string" || url.length > 300 || !/^\/(?!\/)[^\s\\]*$/.test(url)) return json({ error: "bad url" }, 400);
-  const now = Date.now(), hits = (pushHits.get(b.pid) || []).filter(t => now - t < 60000);
-  if (hits.length >= 5) return json({ error: "too many" }, 429);
-  hits.push(now); pushHits.set(b.pid, hits);
-  const { results } = await env.DB.prepare("SELECT endpoint, p256dh, auth FROM push_subs WHERE pid = ?1").bind(b.pid).all();
-  const run = async () => {
-    if (delay > 0) await new Promise(r => setTimeout(r, delay * 1000));
-    for (const sub of results) {
-      const st = await sendPush(env, sub, { title: "Gomoku Rush", body: "通知測試：點我", url }, 60);
-      if (st === 404 || st === 410) await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ?1").bind(sub.endpoint).run();
-    }
-  };
-  if (results.length) ctx.waitUntil(run());
-  return json({ ok: true, n: results.length });
-}
-
 export default {
-  async fetch(req, env, ctx) {
+  async fetch(req, env) {
     if (req.method === "OPTIONS") return new Response(null, { headers: cors });
     const url = new URL(req.url);
     try {
@@ -715,9 +626,6 @@ export default {
       if (req.method === "GET" && url.pathname === "/shop") return await getShop(url, env);
       if (req.method === "POST" && url.pathname === "/shop/claim") return await postShopClaim(req, env);
       if (req.method === "GET" && url.pathname === "/admin/shop") return await adminShop(req, env);
-      if (req.method === "GET" && url.pathname === "/push/key") return await getPushKey(env);
-      if (req.method === "POST" && url.pathname === "/push/sub") return await postPushSub(req, env);
-      if (req.method === "POST" && url.pathname === "/push/test") return await postPushTest(req, env, ctx);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);

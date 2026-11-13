@@ -12,20 +12,3 @@ self.addEventListener('fetch', e => {
     return r;
   }).catch(() => caches.match(e.request, { ignoreSearch: false }).then(r => r || caches.match(e.request, { ignoreSearch: true }))));
 });
-// 網頁通知（2026-11-13）：iOS 規定每個 push 都要顯示通知，不能默默吃掉
-self.addEventListener('push', e => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Gomoku Rush', { body: d.body || '', data: { url: d.url || '/' }, tag: 'rush-test' }));
-});
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  const url = new URL((e.notification.data && e.notification.data.url) || '/', location.origin).href;
-  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
-    const c = list.find(w => new URL(w.url).origin === location.origin);
-    if (!c) return clients.openWindow(url);
-    try { if (c.navigate) await c.navigate(url); else c.postMessage({ t: 'push-open', url }); }
-    catch { c.postMessage({ t: 'push-open', url }); }
-    return c.focus();
-  }));
-});
