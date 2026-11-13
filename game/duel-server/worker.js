@@ -41,6 +41,53 @@ const IDLE_MS = 10 * 60000, IDLE_ASK_MS = 60000;
 const REC_LIST_MAX = 200, REC_BATCH = 400, REC_BATCH_ROUNDS = 5;
 const REC_RATE_N = 4, REC_RATE_MS = 1000;   // 同一連線每秒最多 4 次 recs／rec
 const pad13 = (n) => String(Math.max(0, Math.floor(n))).padStart(13, '0');
+// ==CHUNK BEGIN==（check/check_chunk.mjs 會把這段抽出來單獨測）
+// 大紀錄拆存（2026-11-13）：Durable Object 單一 value 上限約 128 KiB，超過門檻的 full 轉成 JSON 字串後以 UTF-8 位元組切段，存成 full:<id>:p0、p1…，
+// full:<id> 改存標頭 { id, at, chunked: true, parts, bytes }。切點不切壞多位元組字元；讀回時接起來比對總位元組數再 JSON.parse。
+const FULL_CHUNK_BYTES = 96 * 1024, PUT_KEYS_MAX = 128;
+const utf8 = new TextEncoder(), utf8d = new TextDecoder('utf-8', { fatal: true });
+function fnv1a(bytes) { let h = 0x811c9dc5; for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; } return h; }   // 標頭帶整段的雜湊：片段順序錯、被改同長度的內容也認得出來
+function splitByBytes(text, max) {   // 回傳字串陣列，每段 UTF-8 位元組數 ≤ max，接回去與原字串相同
+  const bytes = utf8.encode(text), out = [];
+  for (let i = 0; i < bytes.length;) {
+    let j = Math.min(bytes.length, i + max);
+    while (j < bytes.length && j > i && (bytes[j] & 0xc0) === 0x80) j--;   // 落在多位元組字元中間：往前退到字元開頭
+    if (j === i) { j = i + 1; while (j < bytes.length && (bytes[j] & 0xc0) === 0x80) j++; }   // max 小到連一個字元都放不下（不會發生在正常門檻）：這段放一個完整字元、略超過 max
+    out.push(utf8d.decode(bytes.subarray(i, j)));
+    i = j;
+  }
+  return out;
+}
+// 把一局的 full 與摘要 sum 排成要寫入的鍵值批次（每批 ≤ PUT_KEYS_MAX 把鍵）。小紀錄：一批一把 full 加 rec。
+// 大紀錄：片段鍵先寫，標頭與 rec 放在最後一批（標頭出現時片段一定已經在）。
+function planFullPuts(id, sum, full, maxBytes = FULL_CHUNK_BYTES) {
+  const text = JSON.stringify(full), tb = utf8.encode(text), size = tb.length;
+  if (size <= maxBytes) return { chunked: false, size, batches: [{ ['full:' + id]: full, ['rec:' + id]: sum }] };
+  const parts = splitByBytes(text, maxBytes), kv = [];
+  parts.forEach((t, i) => kv.push(['full:' + id + ':p' + i, t]));
+  kv.push(['full:' + id, { id, at: full.at, chunked: true, parts: parts.length, bytes: size, h: fnv1a(tb) }], ['rec:' + id, sum]);
+  const batches = [];
+  for (let i = 0; i < kv.length; i += PUT_KEYS_MAX) batches.push(Object.fromEntries(kv.slice(i, i + PUT_KEYS_MAX)));
+  return { chunked: true, size, batches };
+}
+const partKeys = (id, n) => Array.from({ length: n }, (_, i) => 'full:' + id + ':p' + i);
+// 標頭加片段（Map 或物件：鍵→字串）接回原物件；任何不對（少段、順序錯、不是字串、位元組數不符、JSON 壞）回 null，不丟例外
+function joinFull(head, id, got) {
+  try {
+    if (!head || head.chunked !== true || !Number.isInteger(head.parts) || head.parts < 1 || !Number.isInteger(head.bytes)) return null;
+    const get = (k) => (got instanceof Map ? got.get(k) : got[k]);
+    let text = '', total = 0;
+    for (const k of partKeys(id, head.parts)) {
+      const t = get(k);
+      if (typeof t !== 'string') return null;
+      text += t; total += utf8.encode(t).length;
+    }
+    if (total !== head.bytes) return null;
+    if (head.h !== undefined && fnv1a(utf8.encode(text)) !== head.h) return null;
+    return JSON.parse(text);
+  } catch { return null; }
+}
+// ==CHUNK END==
 const canStudy = (room) => room.kind === 'gomoku' && !STUDY_FAST_TIMES.includes(room.time);
 // 只接受 Rush 網頁連進來（瀏覽器一定會帶 Origin）；本機測試用 127.0.0.1／localhost
 const ORIGIN_OK = [/^https:\/\/rush\.hangsau\.app$/, /^https:\/\/([a-z0-9-]+\.)?gomoku-rush\.pages\.dev$/, /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/];
@@ -70,6 +117,7 @@ export class Hall {
     this.idleMs = Number(env.IDLE_MS) || IDLE_MS;
     this.askMs = Number(env.IDLE_ASK_MS) || IDLE_ASK_MS;
     this.sweepMs = Math.min(15000, this.idleMs / 4);
+    this.chunkBytes = Number(env.FULL_CHUNK_BYTES) || FULL_CHUNK_BYTES;   // 本機測試可以用 --var FULL_CHUNK_BYTES:2000 縮小，讓一般對局也被拆存
     this.alarmSet = false;
   }
   // 閒置檢查用 Durable Object 的 alarm 定時喚醒（建構時設的 setInterval 不會跑，2026-11-11 實測）；有人連著才一直排
@@ -624,8 +672,24 @@ export class Hall {
       const id = pad13(now) + Math.random().toString(36).slice(2, 6);
       Object.assign(sum, { id, at: now, priv: room.priv === true, names, pids });
       const full = { ...sum, ...body };
-      this.state.storage.put({ ['full:' + id]: full, ['rec:' + id]: sum }).catch((e) => console.error('棋局存檔失敗', e));
+      this.saveRec(id, sum, full);
     } catch (e) { console.error('棋局存檔失敗', e); }
+  }
+  // 寫入：小紀錄一次 put 兩把鍵；大紀錄拆片段（見上面 CHUNK 區塊）。失敗再試一次只存摘要，標 lost: true（有這一局、內容沒存到）
+  async saveRec(id, sum, full) {
+    try {
+      const plan = planFullPuts(id, sum, full, this.chunkBytes);
+      for (const batch of plan.batches) await this.state.storage.put(batch);
+    } catch (e) {
+      console.error('棋局存檔失敗', e);
+      try { await this.state.storage.put({ ['rec:' + id]: { ...sum, lost: true } }); } catch (e2) { console.error('棋局摘要存檔也失敗', e2); }
+    }
+  }
+  async readFull(key) {
+    const full = await this.state.storage.get('full:' + key);
+    if (!full || full.chunked !== true) return full || null;
+    if (!Number.isInteger(full.parts) || full.parts < 1 || full.parts > 4096) return null;
+    return joinFull(full, key, await this.state.storage.get(partKeys(key, full.parts)));
   }
   // 給客戶端的樣子：不送玩家 id，改送 mine（我坐哪個座位，不是我的局＝null）；私人房的局只有當時兩位玩家看得到
   recView(r, id) {
@@ -648,7 +712,7 @@ export class Hall {
   }
   async sendRec(id, ws, m) {
     const key = String(m.id || '');
-    const full = /^\d{13}[a-z0-9]{1,6}$/.test(key) ? await this.state.storage.get('full:' + key) : null;
+    const full = /^\d{13}[a-z0-9]{1,6}$/.test(key) ? await this.readFull(key) : null;
     const v = full && this.recView(full, id);
     if (!v) return this.send(ws, { t: 'err', code: 'gone' });   // 找不到、或私人房的局不是你的：一律當沒有
     this.send(ws, { t: 'rec', rec: v });
@@ -669,6 +733,7 @@ export class Hall {
         canStudy: canStudy(room), req: room.req || null,
         study: room.study ? { seq: room.study.seq.map((x) => [x.p, x.color]), cur: room.study.cur, realN: room.study.real.length, from: room.study.from } : null,
         clock: m && m.clock ? clockMs(m, now) : null,
+        result: m && m.result ? m.result : null,   // 五子棋結果（誰贏、原因）；超時的結果不在動作紀錄裡，前端不用靠時鐘猜（2026-11-13 新增欄位）
       },
     };
   }

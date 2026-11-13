@@ -1,0 +1,72 @@
+  PASS 預設門檻 98304 = 96 KiB
+== 門檻附近
+  PASS   批次 2 把鍵 ≤ 128
+  PASS 小紀錄：不切，一把 full＋一把 rec
+  PASS   批次 2 把鍵 ≤ 128
+  PASS 剛好等於門檻（98304 bytes）：不切
+  PASS   批次 4 把鍵 ≤ 128
+  PASS 多 1 byte：切成 2 段
+  PASS 多 1 byte：接回相同
+== 500 KiB
+  PASS   批次 8 把鍵 ≤ 128
+  PASS 500 KiB：6 段
+  PASS 每段 ≤ 門檻
+  PASS 標頭 bytes 512017 = 實際總位元組
+  PASS 接回後逐位元組相同
+  PASS 標頭有 id、at，另有 rec 摘要鍵
+== 多位元組字元（中文、表情符號）
+  PASS 中文 門檻 98304：1 段，接回相同、每段不超過
+  PASS 中文 門檻 1000：91 段，接回相同、每段不超過
+  PASS 中文 門檻 7：15009 段，接回相同、每段不超過
+  PASS 中文 門檻 5：30013 段，接回相同、每段不超過
+  PASS 中文 門檻 4：30017 段，接回相同、每段不超過
+  PASS 中文 門檻 3：30019 段，接回相同（門檻小於 4 byte 的退化情況）
+  PASS   批次 128 把鍵 ≤ 128
+  PASS   批次 19 把鍵 ≤ 128
+  PASS 中文 經 plan→join：145 段，內容相同
+  PASS 表情 門檻 98304：2 段，接回相同、每段不超過
+  PASS 表情 門檻 1000：106 段，接回相同、每段不超過
+  PASS 表情 門檻 7：15011 段，接回相同、每段不超過
+  PASS 表情 門檻 5：30013 段，接回相同、每段不超過
+  PASS 表情 門檻 4：30017 段，接回相同、每段不超過
+  PASS 表情 門檻 3：30019 段，接回相同（門檻小於 4 byte 的退化情況）
+  PASS   批次 128 把鍵 ≤ 128
+  PASS   批次 43 把鍵 ≤ 128
+  PASS 表情 經 plan→join：169 段，內容相同
+  PASS 混合 門檻 98304：1 段，接回相同、每段不超過
+  PASS 混合 門檻 1000：76 段，接回相同、每段不超過
+  PASS 混合 門檻 7：11258 段，接回相同、每段不超過
+  PASS 混合 門檻 5：22511 段，接回相同、每段不超過
+  PASS 混合 門檻 4：22514 段，接回相同、每段不超過
+  PASS 混合 門檻 3：22518 段，接回相同（門檻小於 4 byte 的退化情況）
+  PASS   批次 123 把鍵 ≤ 128
+  PASS 混合 經 plan→join：121 段，內容相同
+  PASS 空字串 → 0 段
+== 片段鍵超過一批（> 126 段）
+  PASS   批次 128 把鍵 ≤ 128
+  PASS   批次 79 把鍵 ≤ 128
+  PASS 205 段 → 2 批，標頭與 rec 在最後一批
+  PASS 前面批次沒有標頭（標頭出現時片段一定已寫入）
+  PASS 分批寫入後接回相同
+== 壞資料：回 null、不丟例外
+  PASS 測試資料：6 段
+  PASS 完整：接得回
+  PASS 少最後一段 → null
+  PASS 少第一段 → null
+  PASS 前兩段順序錯（內容互換）→ null（靠標頭雜湊）
+  PASS 一段被改（長度變）→ null
+  PASS 一段被改（同位元組數）→ null（靠標頭雜湊）
+  PASS 片段不是字串 → null
+  PASS 標頭總位元組數不符 → null
+  PASS 標頭壞（parts 0／null／缺欄位／非數字）→ null
+  PASS 位元組數吻合但 JSON 壞 → null
+== Hall.saveRec／readFull（假 storage）
+  PASS saveRec 大紀錄：標頭＋片段＋rec 都寫進去（共 10 把鍵）
+  PASS readFull 讀回與原物件相同
+  PASS readFull 少一段 → null（不丟例外）
+  PASS readFull 沒有這一局 → null
+  PASS saveRec 小紀錄：只有 full＋rec 兩把鍵，readFull 直接回物件（舊格式）
+  PASS readFull 標頭 parts 離譜 → null
+  PASS put 失敗 → 再存一次只有 rec，帶 lost: true，沒有 full
+  PASS 兩次 put 都失敗 → 不丟例外、console.error 3 次
+PASS 65／FAIL 0

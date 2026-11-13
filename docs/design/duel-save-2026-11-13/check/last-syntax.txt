@@ -1,0 +1,6 @@
+$ node --input-type=module --check < game/duel-server/worker.js
+OK
+$ node --check tools/duel_busy.mjs
+OK
+$ node --check duel.html 的 module script（抽出）
+OK

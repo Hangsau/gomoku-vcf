@@ -886,8 +886,8 @@ function recordToday(r) {   // 我坐在座位上、這一局結束：寫一筆�
     rec = { kind: 'vcf', vmode: r.vcf.vmode, rank: r.vcf.rank, score: vs.score.slice(), win, note: vs.result.note, vcf: r.vcf, review: vs.review, startedAt: vs.startAt || null };
   } else {
     if (!match || !match.moves.length || r.endNote === 'study') return;   // 0 手、對局中研棋（沒有勝負）不存
-    let result = match.result;
-    if (!result) {   // 時間到的結果不在動作紀錄裡：時鐘歸零的那一位判負
+    let result = match.result || r.result;   // 時間到的結果不在動作紀錄裡：伺服器的房間資料帶 result（2026-11-13 起）；舊伺服器沒有 → 下面用時鐘歸零的那一位判負
+    if (!result) {
       const lose = r.clock ? r.clock.findIndex(v => v <= 0) : -1;
       if (lose < 0) return;
       result = { winnerSeat: 1 - lose, winnerColor: colorOf(match, 1 - lose), reason: END_REASON.TIMEOUT };
