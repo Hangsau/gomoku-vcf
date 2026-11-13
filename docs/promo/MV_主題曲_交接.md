@@ -204,3 +204,11 @@ cinematic Chinese ancient-style, cool moonlit blue and soft warm lantern gold pa
 - 做法：第一格用 codex 生圖（swim-coach 的 `tools/companion/codex-image.mjs` 的 `generatePhoto`，可附參考圖讓貓長相一致；prompt 寫明直式 1024x1536），裁 9:16 後用 Kling 格線頁右上的上傳鈕傳進專案，之後照舊「Use as references → Keyframes → 5s」。Kling 只花影片點數（4 段 300 點），餘額 521。
 - 規則：貓不碰棋子（同人手問題）；四段都一次過，沒有重抽。
 - 待使用者看片：黑貓撲出只拍到起跳前半秒；「先拿 3 分獲勝」字幕疊在實錄頂端標題列（人類版同樣）；音樂對點沒人聽過。
+
+## 兩儀殿廣告貓咪熱血版（2026-11-13 10:30）
+
+- 使用者嫌第一支貓咪版「戰鬥不熱血」，要求保留第一支、另做一支。成品 `docs/promo/成品_有配樂/兩儀殿_廣告_直式_貓_熱血.mp4`（22.3 秒）；重剪 `python tools/promo/liangyi_build.py adcat2 all`。
+- 新素材 `docs/promo/MV素材/兩儀貓/` 的 f1_黑貓出爪、f2_白貓反擊、f3_空中對撞（1176×1764，2:3；剪輯時放大到滿高、左右各裁約 100）。第一格圖是 `圖/直_黑貓出爪.png` 等三張（v1；`_v2` 是留邊距的版本，氣勢弱，沒用）。
+- 做法心得：第一格直接給「動作正在發生的定格」（騰空、光刃、衝擊波），Kling 接著演就有速度感；坐姿第一格再怎麼下 prompt 都只會微動。codex 原圖 2:3 不裁，Kling 選 Adaptive 直接出 2:3。三段都一次過。
+- Kling 花 225 點，餘額 296。
+- 待使用者看片：白閃在成品 5.33 秒（衝擊波最亮格），想更貼爆開瞬間可提前 0.15 秒；「先拿 3 分獲勝」字幕位置同前；音樂對點沒人聽過。

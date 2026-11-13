@@ -1,9 +1,10 @@
 """《兩儀》MV 橫式與「兩儀殿」直式廣告 剪接腳本（可重跑）
 用法：
-    python C:/claudehome/projects/VCF/tools/promo/liangyi_build.py <mv|ad|adcat> [build|check|all] [選項]
+    python C:/claudehome/projects/VCF/tools/promo/liangyi_build.py <mv|ad|adcat|adcat2> [build|check|all] [選項]
     mv  ＝橫式 1920x1080、24fps、約 57 秒（歌曲 15.0–72.3）→ docs/promo/成品_有配樂/兩儀_MV_橫式.mp4
     ad  ＝直式 1080x1920、24fps、約 22 秒（副歌）          → docs/promo/成品_有配樂/兩儀殿_廣告_直式.mp4
     adcat＝直式 1080x1920、24fps、同 ad 長度（貓咪版）       → docs/promo/成品_有配樂/兩儀殿_廣告_直式_貓.mp4（素材 MV素材/兩儀貓/c1~c4）
+    adcat2＝直式 1080x1920、24fps、同 adcat 長度（貓咪熱血版：f1~f3 打鬥三段硬切＋白閃＋震動）→ 兩儀殿_廣告_直式_貓_熱血.mp4；--fit23 A|B（2:3 素材放法，預設 B）
     不帶參數只印這段用法（避免誤覆蓋成品）。預設動作 build；check 產生縮圖總覽＋每個切點前後對照圖；all＝build＋check。
 選項：
     --assets DIR   AI 影片資料夾（預設 docs/promo/MV素材/兩儀橫 或 兩儀916）
@@ -41,13 +42,15 @@ DUEL = os.path.join(ROOT, 'promo', '無聲原片', 'duel_line.mp4')
 DUEL_JSON = os.path.join(ROOT, 'promo', '無聲原片', 'duel_line_時間點.json')
 FINAL_DIR = os.path.join(ROOT, 'promo', '成品_有配樂')
 FINALS = {'mv': os.path.join(FINAL_DIR, '兩儀_MV_橫式.mp4'), 'ad': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式.mp4'),
-          'adcat': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式_貓.mp4')}
+          'adcat': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式_貓.mp4'), 'adcat2': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式_貓_熱血.mp4')}
 CHECK_DIR = os.path.join(ROOT, 'promo', '檢查截圖', '兩儀')
-AIDIR = {'mv': os.path.join(ASSET, '兩儀橫'), 'ad': os.path.join(ASSET, '兩儀916'), 'adcat': os.path.join(ASSET, '兩儀貓')}
+AIDIR = {'mv': os.path.join(ASSET, '兩儀橫'), 'ad': os.path.join(ASSET, '兩儀916'), 'adcat': os.path.join(ASSET, '兩儀貓'), 'adcat2': os.path.join(ASSET, '兩儀貓')}
 FONT = r'C:\Windows\Fonts\kaiu.ttf'
 MV_FILES = ['1_對坐', '2_黑衣', '3_兩手', '5_白衣', '6_深淵', '7_劍', '8_雪盾', '8b_棋盤前破盾', '9_落子', '10_山河']
 AD_FILES = ['a1_對坐', 'a2_劍']
 ADCAT_FILES = ['c1_對峙', 'c2_黑貓', 'c3_白貓雪盾', 'c4_並坐']
+ADCAT2_FILES = ['c1_對峙', 'f1_黑貓出爪', 'f2_白貓反擊', 'f3_空中對撞', 'c4_並坐']
+FIT23 = 'B'      # 2:3 素材放進 9:16：A＝高 1740 置中裁寬＋上下 90px 模糊墊底；B＝高 1920 置中裁寬
 FPS = 24
 C3_A = 1.0      # c3 白貓雪盾取用起點（秒）；碎開約 2–2.7 秒，視抽格結果微調
 TH = ['-threads', '4']
@@ -60,6 +63,7 @@ VID = WORK = FINAL = CHECK = ''
 SEGS = []       # dict: name, a, b(歌曲或影片時間，僅供檢查圖標示), dur(淨長), kind, ...
 SUBS = []       # (png, t_start, t_end) 影片時間
 XF = 0.3
+XFS = []         # compose 用：各片段轉場長度（build 填；merge 的片段已被併進前一片段，硬切不經 xfade）
 SONG_START = SONG_LEN = 0.0
 AUDIO_FADE_IN, AUDIO_FADE_OUT = 0.5, 1.5
 MISSING = []
@@ -154,6 +158,45 @@ def render_ai(src, L, out, win=None, fit=False):
     return {'src': os.path.basename(src), 'L': round(L, 2), 'speed': round(f, 3), 'used': tuple(round(x, 2) for x in used)}
 
 
+def ai_speed(sd, win, L, fit):
+    a, b = (0.0, sd) if win is None else (max(0.0, win[0]), min(sd, win[1]))
+    seg = b - a
+    if seg < L or (fit and seg / L <= 1.45):
+        return a, seg, seg / L
+    return a, seg, 1.0
+
+
+def render_ai23(src, L, out, win, fit, shakes=()):
+    """2:3（1176x1764）素材放進 1080x1920。FIT23=A：高 1740 置中裁寬、上下 90px 以同格放大模糊墊底（接縫羽化 40px）；B：高 1920 置中裁寬。
+    整段放大 3%，shakes=[(來源秒, 長度, 振幅px)] 疊加畫面震動（衰減正弦），不露邊（邊距 16px，振幅 <=14）。"""
+    a, seg, f = ai_speed(probe_dur(src), win, L, fit)
+    used = (a, a + min(seg, L * f))
+    base = (f'[0:v]setpts={1.0 / f:.6f}*(PTS-STARTPTS),fps={FPS},tpad=stop_mode=clone:stop_duration=0.5,trim=duration={L:.4f},'
+            f'setpts=PTS-STARTPTS,setsar=1')
+    xe, ye = '(iw-ow)/2', '(ih-oh)/2'
+    for (st_src, du, amp) in shakes:
+        t0 = (st_src - a) / f
+        k = f'between(t\\,{t0:.3f}\\,{t0 + du:.3f})*(1-(t-{t0:.3f})/{du:.3f})'
+        xe += f'+{k}*{amp}*sin(52*(t-{t0:.3f}))'
+        ye += f'+{k}*{amp * 0.8:.1f}*sin(47*(t-{t0:.3f})+1.3)'
+    post = f'scale=1112:1978,crop=1080:1920:x={xe}:y={ye},format=yuv420p[v]'
+    if FIT23 == 'A':
+        import numpy as np
+        ramp = np.minimum(np.minimum(np.arange(1740), 1739 - np.arange(1740)) / 40.0, 1.0) * 255
+        m = Image.fromarray(np.repeat(ramp[:, None], 1080, axis=1).astype(np.uint8), 'L')
+        mp = os.path.join(WORK, 'mask23.png')
+        m.save(mp)
+        fc = (base + '[v0];[v0]split[a][b];[a]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,gblur=sigma=30,eq=brightness=-0.05[bg];'
+              '[b]scale=-2:1740,crop=1080:1740,format=yuva420p[f0];[1:v]format=gray[m];[f0][m]alphamerge[fg];[bg][fg]overlay=0:90:format=auto,' + post)
+        extra = ['-loop', '1', '-framerate', str(FPS), '-i', mp]
+    else:
+        fc = base + ',scale=-2:1920,crop=1080:1920,' + post
+        extra = []
+    run([FFMPEG, '-v', 'error', '-y'] + TH + ['-ss', f'{a:.3f}', '-t', f'{seg:.3f}', '-i', src] + extra + ['-an', '-filter_complex', fc, '-map', '[v]',
+         '-t', f'{L:.4f}', '-c:v', 'libx264', '-crf', '14', '-preset', 'fast', out])
+    return {'src': os.path.basename(src), 'L': round(L, 2), 'speed': round(f, 3), 'used': tuple(round(x, 2) for x in used)}
+
+
 def solid_card(L, out, top=(22, 30, 54), bot=(8, 10, 22)):
     """缺檔時的底：上下漸層純色"""
     im = Image.new('RGB', (W, H))
@@ -202,7 +245,7 @@ def render_duel(name, L, t_a, t_b, out, crop_h, freeze=0.0, cx_frac=0.5, fh=1040
     直式廣告：裁 1170x2080 鋪滿全螢幕。來源區段 [t_a,t_b] 以 (t_b-t_a)/(L-freeze) 的速度播放（>1 快轉），最後 freeze 秒定格。"""
     play = L - freeze
     f = (t_b - t_a) / play            # 來源秒 / 輸出秒
-    if MODE in ('ad', 'adcat'):
+    if MODE in ('ad', 'adcat', 'adcat2'):
         fw, fhh, x0, y0 = W, H, 0, 0
         vf_src = f'crop=1170:2080:0:0,scale={W}:{H}'
         base_png = None
@@ -219,7 +262,7 @@ def render_duel(name, L, t_a, t_b, out, crop_h, freeze=0.0, cx_frac=0.5, fh=1040
         base.save(base_png)
     fg = (f'[1:v]setpts=(PTS-STARTPTS)/{f:.6f},{vf_src},fps={FPS},tpad=stop_mode=clone:stop_duration={freeze + 0.5:.3f},'
           f'trim=duration={L:.4f},setpts=PTS-STARTPTS[fg]')
-    if MODE in ('ad', 'adcat'):
+    if MODE in ('ad', 'adcat', 'adcat2'):
         fc = fg.replace('[fg]', ',format=yuv420p[v]')
         cmd = [FFMPEG, '-v', 'error', '-y'] + TH + ['-ss', f'{t_a:.3f}', '-t', f'{(t_b - t_a) + 0.2:.3f}', '-i', DUEL, '-filter_complex',
                fc.replace('[1:v]', '[0:v]'), '-map', '[v]', '-t', f'{L:.4f}', '-c:v', 'libx264', '-crf', '14', '-preset', 'fast', out]
@@ -238,7 +281,9 @@ def lens_of(segs):
     n = len(segs)
     out = []
     for i, s in enumerate(segs):
-        out.append(s['dur'] + (XF / 2 if i > 0 else 0) + (XF / 2 if i < n - 1 else 0))
+        pre = s.get('xf', XF) / 2 if i > 0 and not s.get('merge') else 0
+        post = segs[i + 1].get('xf', XF) / 2 if i < n - 1 and not segs[i + 1].get('merge') else 0
+        out.append(s['dur'] + pre + post)
     return out
 
 
@@ -264,9 +309,10 @@ def compose(clips, lens, overlays, total):
     M = lens[0]
     prev = '[0:v]'
     for i in range(1, n):
-        fc.append(f'{prev}[{i}:v]xfade=transition=fade:duration={XF}:offset={M - XF:.3f}[x{i}]')
+        xi = XFS[i]
+        fc.append(f'{prev}[{i}:v]xfade=transition=fade:duration={xi}:offset={M - xi:.4f}[x{i}]')
         prev = f'[x{i}]'
-        M = M + lens[i] - XF
+        M = M + lens[i] - xi
     for k, ov in enumerate(overlays):
         pth, s, e = ov[:3]
         fd = ov[3] if len(ov) > 3 else 0.3
@@ -465,6 +511,77 @@ def plan_adcat():
     return st
 
 
+# ---------------------------------------------------------------- 廣告（貓咪熱血版）規劃
+def plan_adcat2():
+    """c1 1.2 → f1 1.7 → f2 1.7 → f3 2.4（f1~f3 硬切）→ 實錄五段（同 adcat）→ c4 4.5。前 7 秒與 adcat 的前 7 秒等長。"""
+    global SONG_START, SONG_LEN, SEGS, SUBS, AUDIO_FADE_IN, AUDIO_FADE_OUT
+    L = load_lines()
+    mk, _ = load_marks()
+    t0 = L[7]['start'] - 0.3
+    t_end = 72.3
+    SONG_START, SONG_LEN = t0, t_end - t0
+    AUDIO_FADE_IN, AUDIO_FADE_OUT = 0.3, 1.2
+    d_c1, d_f1, d_f2, d_f3, d_end = 1.2, 1.7, 1.7, 2.4, 4.5
+    foot = SONG_LEN - d_c1 - d_f1 - d_f2 - d_f3 - d_end
+    d1, d3, d4, d5 = 1.6, 1.3, 1.5, 2.8
+    d2 = foot - d1 - d3 - d4 - d5
+    q1s, q1v, res = mk['q1_start'], mk['q1_solve'], mk['result']
+    segs = [
+        dict(name='c1_對峙', kind='ai', f='c1_對峙', dur=d_c1, win=(0.0, 1.3)),
+        dict(name='f1_黑貓出爪', kind='ai', f='f1_黑貓出爪', dur=d_f1, win=(0.2, 2.0), fit23=True, shake=[(1.4, 0.3, 12)]),
+        dict(name='f2_白貓反擊', kind='ai', f='f2_白貓反擊', dur=d_f2, merge=True, win=(0.3, 2.0), fit23=True),
+        dict(name='f3_空中對撞', kind='ai', f='f3_空中對撞', dur=d_f3, merge=True, win=(0.2, 3.0), fit23=True, shake=[(1.12, 0.4, 14)]),
+        dict(name='實錄1_倒數', kind='duel', win=(mk['countdown_start'] + 0.3, mk['countdown_start'] + 0.3 + d1), dur=d1, freeze=0.0),
+        dict(name='實錄2_沖四', kind='duel', win=(q1s + 0.6, q1v - 0.1), dur=d2, freeze=0.0),
+        dict(name='實錄3_得分', kind='duel', win=(q1v - 0.1, q1v - 0.1 + d3), dur=d3, freeze=0.0),
+        dict(name='實錄4_快轉', kind='duel', win=(q1v + 1.5, mk['q4_solve'] - 3.3), dur=d4, freeze=0.0),
+        dict(name='實錄5_獲勝', kind='duel', win=(mk['q4_solve'] - 1.0, res + 2.0), dur=d5, freeze=0.0),
+        dict(name='c4_片尾並坐', kind='ai', f='c4_並坐', dur=d_end, win=(0.3, 4.9)),
+    ]
+    t = 0.0
+    for s in segs:
+        s['a'], s['b'] = t, t + s['dur']
+        t += s['dur']
+    SEGS = segs
+    st = starts_of(segs)
+    SUBS = []
+
+    def txt(png_name, text, ts, te, fd=0.15, y=0.86):
+        layer, _ = bold_text_layer(82, text, W / 2, H * y, pad=True, maxw=980, stroke_in=2, stroke_out=5)
+        pth = os.path.join(WORK, png_name)
+        layer.save(pth)
+        SUBS.append((pth, ts, te, fd))
+    l1, _ = bold_text_layer(200, '兩儀殿', W / 2, H * 0.16, stroke_in=4, stroke_out=9)
+    l2, _ = bold_text_layer(96, '真人對戰', W / 2, H * 0.27, stroke_in=3, stroke_out=7, maxw=980)
+    p = os.path.join(WORK, 'cap_c1.png'); merge_layers(l1, l2).save(p)
+    SUBS.append((p, 0.0, d_c1 + 0.1, 0.15))
+    txt('cap_f1.png', '同一題', st[1] + 0.05, st[2])
+    txt('cap_f2.png', '同時開戰', st[2] + 0.05, st[3])
+    txt('cap_f3.png', '誰先解開', st[3] + 0.05, st[4] + 0.1)
+    txt('cap_1.png', '同時開始', st[4] + 0.2, st[5] + 0.1, 0.3)
+    txt('cap_2.png', '連續沖四', st[5] + 0.2, st[6] + 0.1, 0.3)
+    txt('cap_3.png', '先解開的得分', st[6] + 0.1, st[8], 0.3)
+    txt('cap_4.png', '先拿 3 分獲勝', st[8] + 0.1, st[9] + 0.2, 0.3, y=0.07)
+    r1, _ = bold_text_layer(200, '兩儀殿', W / 2, H * 0.13, stroke_in=4, stroke_out=9)
+    r2, _ = bold_text_layer(90, '免登入 馬上開戰', W / 2, H * 0.25, stroke_in=3, stroke_out=7, maxw=980)
+    r3, _ = bold_text_layer(76, 'rush.hangsau.app', W / 2, H * 0.33, stroke_in=2, stroke_out=6, maxw=980)
+    cp = os.path.join(WORK, 'endcard_adcat2.png')
+    merge_layers(r1, r2, r3).save(cp)
+    SUBS.append((cp, st[9] + 0.1, st[9] + d_end))
+    # 白閃：f3 衝擊波最亮（來源約 1.08 秒）前後共 0.12 秒；來源秒 -> 成品時間
+    lens = lens_of(segs)
+    f3 = segs[3]
+    sd = probe_dur(os.path.join(VID, 'f3_空中對撞.mp4'))
+    a3, _, sp = ai_speed(sd, f3['win'], lens[3], True)
+    clip0 = st[3]                       # f3 併在 f2 後面硬切，片段從 st[3] 起算
+    tf = clip0 + (1.08 - a3) / sp - 0.06
+    w = Image.new('RGBA', (W, H), (255, 255, 255, 235))
+    wp = os.path.join(WORK, 'flash.png'); w.save(wp)
+    SUBS.append((wp, tf, tf + 0.12, 0.06))
+    print('白閃時間', round(tf, 3), '-', round(tf + 0.12, 3))
+    return st
+
+
 # ---------------------------------------------------------------- build
 def pick_ai_window(seg, sd, state):
     """回傳 (win 或 None, 備註)。pos=mid/tail/head_avoid 為 5_白衣 的分段使用規則（句1後 取尾、句4 取不重疊的開頭）。"""
@@ -488,11 +605,11 @@ def pick_ai_window(seg, sd, state):
 def build():
     os.makedirs(WORK, exist_ok=True)
     os.makedirs(os.path.dirname(FINAL), exist_ok=True)
-    st = {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat}[MODE]()
-    names = {'mv': MV_FILES, 'ad': AD_FILES, 'adcat': ADCAT_FILES}[MODE]
+    st = {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat, 'adcat2': plan_adcat2}[MODE]()
+    names = {'mv': MV_FILES, 'ad': AD_FILES, 'adcat': ADCAT_FILES, 'adcat2': ADCAT2_FILES}[MODE]
     src = lambda f: os.path.join(VID, f + '.mp4')
     miss = [src(f) for f in names if not os.path.exists(src(f))]
-    if MODE in ('mv', 'adcat') and miss:
+    if MODE in ('mv', 'adcat', 'adcat2') and miss:
         print('缺素材（等 AI 影片放進來再跑）：')
         for m in miss:
             print('  缺', m)
@@ -513,7 +630,7 @@ def build():
             else:
                 sd = probe_dur(pth)
                 win = s.get('win')
-                r = render_ai(pth, Lc, out, win, fit=win is not None)
+                r = (render_ai23(pth, Lc, out, win, True, s.get('shake', ())) if s.get('fit23') else render_ai(pth, Lc, out, win, fit=win is not None))
         elif s['kind'] == 'duel':
             ta, tb = s['win']
             if s.get('end'):
@@ -539,8 +656,31 @@ def build():
         print('完成', s['name'], round(Lc, 2), 'x%s' % r['speed'], r['used'])
         clips.append(out)
         info.append(r)
+    global XFS
+    gclips, glens, XFS = [], [], []
+    for i, s in enumerate(SEGS):
+        if s.get('merge'):
+            glens[-1] += lens[i]
+            gclips[-1].append(clips[i])
+        else:
+            gclips.append([clips[i]])
+            glens.append(lens[i])
+            XFS.append(s.get('xf', XF))
+    final_clips = []
+    for gi, g in enumerate(gclips):
+        if len(g) == 1:
+            final_clips.append(g[0])
+            continue
+        outg = os.path.join(WORK, f'group_{gi:02d}.mp4')
+        cmd = [FFMPEG, '-v', 'error', '-y'] + TH
+        for c in g:
+            cmd += ['-i', c]
+        cmd += ['-filter_complex', ''.join(f'[{k}:v]' for k in range(len(g))) + f'concat=n={len(g)}:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14',
+                '-preset', 'fast', '-pix_fmt', 'yuv420p', outg]
+        run(cmd)
+        final_clips.append(outg)
     total = sum(s['dur'] for s in SEGS)
-    compose(clips, lens, SUBS, total)
+    compose(final_clips, glens, SUBS, total)
     json.dump({'mode': MODE, 'final': FINAL, 'total': round(total, 2), 'segs': [{'name': s['name'], 'start': round(a, 2), 'dur': round(s['dur'], 2)}
               for s, a in zip(SEGS, st)], 'clips': [{k: (list(v) if isinstance(v, tuple) else v) for k, v in x.items()} for x in info]},
               open(os.path.join(WORK, 'build_info.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=1)
@@ -572,7 +712,7 @@ def check():
     import numpy as np
     os.makedirs(CHECK, exist_ok=True)
     if not SEGS:
-        {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat}[MODE]()
+        {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat, 'adcat2': plan_adcat2}[MODE]()
     st = starts_of(SEGS)
     dur = probe_dur(FINAL)
     wide = MODE == 'mv'
@@ -618,9 +758,9 @@ def make_fake(d):
 
 
 def main():
-    global MODE, W, H, VID, WORK, FINAL, CHECK, XF
+    global MODE, W, H, VID, WORK, FINAL, CHECK, XF, FIT23
     a = sys.argv[1:]
-    if not a or a[0] not in ('mv', 'ad', 'adcat', 'fake'):
+    if not a or a[0] not in ('mv', 'ad', 'adcat', 'adcat2', 'fake'):
         print(__doc__)
         return
     if a[0] == 'fake':
@@ -640,9 +780,10 @@ def main():
     act = rest[0] if rest else 'build'
     W, H = (1920, 1080) if MODE == 'mv' else (1080, 1920)
     XF = 0.3 if MODE == 'mv' else 0.2
+    FIT23 = opts.get('fit23', 'B')
     VID = opts.get('assets', AIDIR[MODE])
     FINAL = opts.get('out', FINALS[MODE])
-    CHECK = opts.get('check-dir', os.path.join(ROOT, 'promo', '檢查截圖', '兩儀貓') if MODE == 'adcat' else CHECK_DIR)
+    CHECK = opts.get('check-dir', os.path.join(ROOT, 'promo', '檢查截圖', '兩儀貓') if MODE in ('adcat', 'adcat2') else CHECK_DIR)
     WORK = opts.get('work', os.path.join(tempfile.gettempdir(), 'liangyi_build_work', MODE))
     os.makedirs(WORK, exist_ok=True)
     if act in ('build', 'all'):
