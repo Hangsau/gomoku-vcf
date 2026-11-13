@@ -1,0 +1,5 @@
+- 階段1 完成：worker.js（加密／VAPID／3 條路由）、schema.sql、sw.js 已寫入、語法通過
+- 階段2 完成：check/check_crypto.mjs 11/11 PASS（RFC 8291 附錄 A 密文逐字一致）
+- 階段3 完成：game/push-test.html 寫好、script 語法通過
+- 階段4 完成：check_e2e.mjs 36/36（本機 wrangler dev＋假端點，密文解回原文）；下一步截圖與瀏覽器測試
+- 階段5 完成：REPORT.md 寫好；本機 wrangler 已關（PID 21184／40792）

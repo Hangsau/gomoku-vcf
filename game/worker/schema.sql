@@ -84,3 +84,7 @@ CREATE TABLE IF NOT EXISTS settings(k TEXT PRIMARY KEY, v TEXT NOT NULL, t INTEG
 
 -- 商店擁有紀錄（2026-11-13）：vid 匿名編號、item 'b:<棋盤id>' 或 's:<棋子id>'、price 當時價格（免費期 0）、src 來源（'free' 免費領取／'grand' 上線前已在用）
 CREATE TABLE IF NOT EXISTS owned(vid TEXT NOT NULL, item TEXT NOT NULL, t INTEGER NOT NULL, price INTEGER NOT NULL DEFAULT 0, src TEXT NOT NULL DEFAULT 'free', PRIMARY KEY(vid, item));
+
+-- 通知訂閱（2026-11-13）：pid 玩家匿名編號、endpoint 推播端點（每個裝置一個）、p256dh／auth 加密用、ua 裝置字串（除錯）
+CREATE TABLE IF NOT EXISTS push_subs(endpoint TEXT PRIMARY KEY, pid TEXT NOT NULL, p256dh TEXT NOT NULL, auth TEXT NOT NULL, ua TEXT, t INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS push_subs_pid ON push_subs(pid);

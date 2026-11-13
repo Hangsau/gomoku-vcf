@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F121A">
+<meta name="robots" content="noindex">
+<title>通知測試 — Gomoku Rush</title>
+<link rel="icon" type="image/png" sizes="192x192" href="../app/icon-192.png">
+<link rel="apple-touch-icon" href="../app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="通知測試">
+<style>
+/* 2026-11-13 通知最小測試頁：給使用者自己用真手機測，只有繁體中文。顏色抄 game.html 的 :root */
+:root {
+  --bg: #0F121A; --panel: #161A24; --panel2: #1F2A3D; --line: #252B3A; --line2: #2E3546;
+  --text: #EDEFF5; --text2: #B6BCCB; --gold: #F2B544; --goldInk: #1A1300;
+  --teal: #3CC6B4; --tealBg: #1F3B39; --fail: #FF7A6B; --failBg: #3D1F1F; --goldBg: #3A2F17;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', -apple-system, 'PingFang TC', sans-serif; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+main { max-width: 480px; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)); }
+h1 { font-size: 20px; margin: 0 0 12px; }
+h2 { font-size: 13px; color: var(--text2); font-weight: 500; margin: 0 0 8px; letter-spacing: .04em; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+.from { border-radius: 14px; padding: 14px; margin-bottom: 12px; font-size: 20px; font-weight: 900; line-height: 1.35; text-align: center; }
+.from.yes { background: var(--tealBg); border: 2px solid var(--teal); color: var(--teal); }
+.from.no { background: var(--panel); border: 1px dashed var(--line2); color: var(--text2); font-size: 15px; font-weight: 500; }
+.from small { display: block; font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--text); }
+.env { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; }
+.env b { font-size: 17px; font-weight: 700; text-align: right; }
+.env .k { font-size: 14px; color: var(--text2); }
+.ok { color: var(--teal); } .bad { color: var(--fail); } .warn { color: var(--gold); }
+.help { background: var(--goldBg); border: 1px solid #5a4719; font-size: 14px; line-height: 1.6; }
+.help ol { margin: 6px 0 0; padding-left: 20px; }
+.help p { margin: 0 0 4px; }
+button { font: inherit; width: 100%; min-height: 52px; border: 0; border-radius: 14px; font-size: 17px; font-weight: 700; margin-bottom: 10px; background: var(--gold); color: var(--goldInk); }
+button.sec { background: var(--panel2); color: var(--text); border: 1px solid var(--line2); }
+button:disabled { opacity: .45; }
+#cd { text-align: center; font-size: 15px; color: var(--gold); min-height: 22px; margin-bottom: 8px; }
+#log { font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow: auto; background: #0B0E14; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--text2); min-height: 56px; }
+.tip { font-size: 12.5px; color: var(--text2); line-height: 1.55; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+<a href="../game.html" style="display:inline-block;padding:10px 0;color:#3CC6B4;font-weight:700;text-decoration:none">← 回遊戲</a>
+<h1>通知測試</h1>
+
+<div id="from" class="from no">這頁不是從通知點進來的</div>
+
+<div class="card"><h2>現在的環境</h2><div class="env" id="env"></div></div>
+
+<div class="card help" id="iosHelp" hidden>
+  <p><b>iPhone 要先「加到主畫面」，再從主畫面打開才能收通知。</b></p>
+  <ol>
+    <li>點 Safari 底部的分享鈕（方塊加向上箭頭）。</li>
+    <li>選「加入主畫面」，名稱保持「通知測試」，按「加入」。</li>
+    <li>回到主畫面，點新出現的「通知測試」圖示開啟。它會直接開在這一頁，往下就能按「允許通知」。</li>
+  </ol>
+  <p style="margin-top:8px">提示：安裝版沒有網址列。如果打開來是 Gomoku Rush 首頁而不是這頁，代表 iPhone 用了主程式的設定，請把畫面截圖回報。</p>
+</div>
+
+<button id="bAllow">1. 允許通知</button>
+<button id="bTest" class="sec">2. 5 秒後發一則通知給我</button>
+<div id="cd"></div>
+<p class="tip">按完第 2 顆後，馬上把畫面關掉或切到別的 App，等通知跳出來，再點它。</p>
+
+<div class="card"><h2>記錄</h2><div id="log"></div></div>
+<button id="bCopy" class="sec">複製測試結果</button>
+</main>
+<script>
+const API = (['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('api')) || 'https://vcf-game-api.psyhangsau.workers.dev';
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const logEl = $('log');
+const log = (m) => { const t = new Date().toTimeString().slice(0, 8); logEl.textContent += (logEl.textContent ? '\n' : '') + t + ' ' + m; logEl.scrollTop = logEl.scrollHeight; };
+const errStr = (e) => (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : String(e));
+
+// ---------- 身分（跟 duel.html 同一個做法與同一個 key）----------
+let pid = store.get('vcfgame.duel.id');
+if (!/^[A-Za-z0-9_-]{8,40}$/.test(pid || '')) { pid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 20); store.set('vcfgame.duel.id', pid); }
+
+// ---------- 環境偵測 ----------
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const inApp = /Line\/|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|Messenger/i.test(ua);
+const fromPush = new URLSearchParams(location.search).get('from') === 'push';
+const hasPush = 'PushManager' in window && 'serviceWorker' in navigator && 'Notification' in window;
+const perm = () => ('Notification' in window ? Notification.permission : '不支援');
+function row(k, v, cls) { return `<span class="k">${k}</span><b class="${cls || ''}">${v}</b>`; }
+function renderEnv() {
+  $('env').innerHTML =
+    row('開在哪裡', standalone ? '安裝版' : '瀏覽器分頁', standalone ? 'ok' : 'warn') +
+    row('App 內建瀏覽器', inApp ? '是（LINE／FB／IG 等）' : '否', inApp ? 'bad' : 'ok') +
+    row('支援通知', hasPush ? '支援' : '不支援', hasPush ? 'ok' : 'bad') +
+    row('通知權限', perm(), perm() === 'granted' ? 'ok' : perm() === 'denied' ? 'bad' : 'warn') +
+    row('裝置', isIOS ? 'iPhone／iPad' : /Android/.test(ua) ? 'Android' : '其他');
+  const f = $('from');
+  if (fromPush) {
+    f.className = 'from yes';
+    f.innerHTML = '你是從通知進來的<small>現在開在：' + (standalone ? '✅ 安裝版' : '⚠️ 瀏覽器分頁（沒有開進安裝版）') + '</small>';
+  }
+  $('iosHelp').hidden = !(isIOS && !standalone);
+}
+renderEnv();
+
+// ---------- 讓這頁自己能被「加到主畫面」（第 5 點）----------
+// game.html 不能改，所以這頁自帶一份 manifest（data: 網址）：start_url 指向這頁、scope 是整個網站，
+// 這樣加到主畫面的圖示會開在這頁，且跟主程式同一個 sw.js（同一個 scope）。已經是安裝版就不再加。
+if (!standalone) {
+  const base = new URL('../', location.href).href;
+  const mf = {
+    name: '通知測試 — Gomoku Rush', short_name: '通知測試', lang: 'zh-Hant',
+    id: base + 'game/push-test.html', start_url: base + 'game/push-test.html', scope: base, display: 'standalone',
+    background_color: '#0F121A', theme_color: '#0F121A',
+    icons: [{ src: base + 'app/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: base + 'app/icon-512.png', sizes: '512x512', type: 'image/png' }],
+  };
+  const l = document.createElement('link'); l.rel = 'manifest';
+  l.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(mf));
+  document.head.appendChild(l);
+}
+
+// ---------- Service worker：跟 game.html 同一個註冊（sw.js，scope = 整個網站）----------
+let swReg = null;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('../sw.js').then(r => { swReg = r; log('service worker 已註冊，scope=' + r.scope); }, e => log('service worker 註冊失敗：' + errStr(e)));
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.t === 'push-open' && e.data.url) { log('收到通知點擊（SW 轉達），網址：' + e.data.url); location.href = e.data.url; }
+  });
+} else log('這個瀏覽器沒有 service worker');
+log('環境：' + (standalone ? '安裝版' : '瀏覽器分頁') + (isIOS ? '／iOS' : '') + (inApp ? '／App 內建瀏覽器' : '') + '；pid=' + pid.slice(0, 4) + '…');
+if (fromPush) log('★ 這頁是從通知點進來的；網址：' + location.href.replace(location.origin, ''));
+
+// ---------- 允許通知 ----------
+const b64uToU8 = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); const bin = atob(s + '='.repeat((4 - s.length % 4) % 4)); return Uint8Array.from(bin, c => c.charCodeAt(0)); };
+$('bAllow').onclick = async () => {
+  if (!hasPush) { log('✘ 這個環境不支援通知（PushManager／Notification 缺）' + (isIOS && !standalone ? '。iPhone 要先加到主畫面再從主畫面開。' : '')); return; }
+  $('bAllow').disabled = true;
+  try {
+    log('要求通知權限…');
+    const p = await Notification.requestPermission();   // 必須在點擊裡直接呼叫
+    log('權限結果：' + p); renderEnv();
+    if (p !== 'granted') return;
+    log('取得伺服器公鑰…');
+    const kr = await fetch(API + '/push/key');
+    const kj = await kr.json().catch(() => ({}));
+    if (!kr.ok || !kj.key) { log('✘ /push/key 失敗：HTTP ' + kr.status + ' ' + JSON.stringify(kj)); return; }
+    const reg = swReg || await navigator.serviceWorker.ready;
+    await navigator.serviceWorker.ready;
+    log('訂閱推播…');
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToU8(kj.key) });
+    const j = sub.toJSON();
+    log('取得端點：' + j.endpoint.slice(0, 60) + '…（長度 ' + j.endpoint.length + '）');
+    const r = await fetch(API + '/push/sub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid, sub: j }) });
+    const rj = await r.json().catch(() => ({}));
+    log((r.ok && rj.ok ? '✔ 訂閱已送到伺服器：' : '✘ /push/sub 失敗：') + 'HTTP ' + r.status + ' ' + JSON.stringify(rj));
+  } catch (e) { log('✘ 錯誤：' + errStr(e)); }
+  finally { $('bAllow').disabled = false; renderEnv(); }
+};
+
+// ---------- 發測試通知 ----------
+let cdTimer = 0;
+$('bTest').onclick = async () => {
+  $('bTest').disabled = true;
+  try {
+    const r = await fetch(API + '/push/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid, delay: 5 }) });
+    const rj = await r.json().catch(() => ({}));
+    log('/push/test：HTTP ' + r.status + ' ' + JSON.stringify(rj));
+    if (!r.ok) return;
+    if (!rj.n) { log('✘ 伺服器上沒有你的訂閱，先按「允許通知」'); return; }
+    let s = 5; clearInterval(cdTimer);
+    const tick = () => { $('cd').textContent = s > 0 ? `${s} 秒後送出 — 現在把畫面關掉或切到別的 App` : '已送出，等通知跳出來'; s--; if (s < -3) { clearInterval(cdTimer); $('cd').textContent = ''; } };
+    tick(); cdTimer = setInterval(tick, 1000);
+  } catch (e) { log('✘ 錯誤：' + errStr(e)); }
+  finally { setTimeout(() => { $('bTest').disabled = false; }, 2000); }
+};
+
+// ---------- 複製結果 ----------
+$('bCopy').onclick = async () => {
+  const envText = [...$('env').querySelectorAll('.k')].map(k => k.textContent + '：' + k.nextElementSibling.textContent).join('\n');
+  const text = '【通知測試結果】\n' + ($('from').classList.contains('yes') ? $('from').innerText.replace(/\n+/g, ' ') : '不是從通知進來的') + '\n' + envText + '\nUA：' + ua + '\n網址：' + location.href.replace(location.origin, '') + '\n--- 記錄 ---\n' + logEl.textContent;
+  try { await navigator.clipboard.writeText(text); log('已複製'); }
+  catch {
+    const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); log('已複製（備用方法）'); } catch (e) { log('✘ 複製失敗：' + errStr(e)); }
+    t.remove();
+  }
+};
+</script>
+</body>
+</html>

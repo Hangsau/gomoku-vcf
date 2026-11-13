@@ -1,0 +1,14 @@
+我的輸出  : DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN
+RFC 預期  : DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN
+PASS RFC 8291 附錄 A：密文與範例完全一致
+PASS 獨立解密函式能解開 RFC 範例密文
+PASS 檔頭：rs=4096、idlen=65
+PASS 隨機金鑰：加密後能解回原文（含中文）
+PASS Authorization 格式：vapid t=<jwt>, k=<pub>
+PASS header alg=ES256
+PASS claims：aud 只含 origin、exp、sub
+PASS k= 是公鑰
+PASS 簽章是 64 bytes（r||s，不是 DER）
+PASS JWT 用公鑰驗簽成功
+PASS 改一個 bit 驗簽失敗（負向對照）
+PASS 11／FAIL 0
