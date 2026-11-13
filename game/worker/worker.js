@@ -9,6 +9,7 @@
 // POST /practice 練習場一局（2026-11-08，不上排行，另存 practice 表）；GET /admin/practice（Bearer／Access）
 // POST /blitz 4 手無限一局（2026-11-08）→ {id, place:{today,all}}；GET /board?by=b4 → 4 手無限排行（分數＝解開題目的單手分數〔題目分÷手數〕加總，同分用時短的在前）；GET /admin/blitz
 // POST /mirror 明鏡台一局（2026-11-10）→ {id, place:{today,all}}（inf=1 無限才排名；inf=0 分級只存後台）；GET /board?by=mj → 明鏡台無限排行；GET /admin/mirror
+// POST /wuxiang 無相界一局（2026-11-13）→ {id, place:{today,all}}；GET /board?by=wx → 無相界排行（total 高者在前、同分答對多者在前）；GET /admin/wuxiang
 // POST /eye 火眼金睛一局（2026-11-10）→ {id, place:{today,all}}；GET /board?by=eye → 火眼金睛排行（total 高者在前、同分用時少者在前）；GET /admin/eye
 // 象牙塔（2026-11-09）：POST /tower/pause {day,vid,i} 離開時停錶；GET /tower?vid= → 今天 100 題＋自己的進度；POST /tower/open {day,vid,nick,lang,i} 開第 i 題（伺服器記時）；
 //      POST /tower/step {day,vid,i,ok,hints,undos,wk,m} 交第 i 題；POST /tower/end {vid} 結束今天；GET /board?by=tower&day=&vid= 排行；GET /admin/tower
@@ -187,7 +188,45 @@ async function adminMirror(req, env) {
   return json({ rows: results });
 }
 
+// 無相界（2026-11-13 使用者：第一手落下全盤變進攻方顏色、不計時、錯 3 題結束）：獨立的 wuxiang 表
+// 分數＝解開題目的（題目分×子數階加成）加總（前端算好，這裡只驗上限）；同分答對題數多的在前
+async function postWuxiang(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  const nick = String(b.nick || "").trim().slice(0, 12), lang = String(b.lang || "").slice(0, 5);
+  const solved = num(b.solved, 0, 1000), wrong = num(b.wrong, 0, 3), seconds = num(b.seconds, 0, 500000),
+    total = num(b.total, 0, 100000000), top = num(b.top, 0, 10);
+  if (!nick || [solved, wrong, seconds, total, top].some(v => v === null)) return json({ error: "bad fields" }, 400);
+  if (total > solved * 30000) return json({ error: "bad total" }, 400);
+  const now = Date.now(), day = taipeiDay(now);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM wuxiang WHERE t > ?").bind(now - 60000).first();
+  if (recent.n >= 60) return json({ error: "too many" }, 429);
+  const detail = JSON.stringify(Array.isArray(b.detail) ? b.detail.slice(0, 1000) : []).slice(0, 200000);
+  const res = await env.DB.prepare("INSERT INTO wuxiang(t, day, nick, lang, top_rank, total, solved, wrong, seconds, quit, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+    .bind(now, day, nick, lang, top, total, solved, wrong, seconds, b.quit ? 1 : 0, detail).run();
+  const id = res.meta.last_row_id;
+  if (!solved) return json({ id, day, place: null });
+  const better = "solved > 0 AND (total > ? OR (total = ? AND solved > ?))";
+  const today = await env.DB.prepare(`SELECT COUNT(*) AS n FROM wuxiang WHERE day = ? AND ${better}`).bind(day, total, total, solved).first();
+  const all = await env.DB.prepare(`SELECT COUNT(*) AS n FROM wuxiang WHERE ${better}`).bind(total, total, solved).first();
+  return json({ id, day, place: { today: today.n + 1, all: all.n + 1 } });
+}
+async function getWuxiangBoard(url, env) {
+  const today = url.searchParams.get("scope") !== "all";
+  const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
+  const day = taipeiDay(Date.now());
+  const st = env.DB.prepare(`SELECT id, nick, total, solved, wrong, seconds, top_rank, t FROM wuxiang WHERE solved > 0 ${today ? "AND day = ?1" : ""} ORDER BY total DESC, solved DESC, t ASC LIMIT ${limit}`);
+  const { results } = await (today ? st.bind(day) : st).all();
+  return json({ by: "wx", scope: today ? "today" : "all", day, rows: results });
+}
+async function adminWuxiang(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT id, t, day, lang, top_rank, total, solved, wrong, seconds, quit, detail FROM wuxiang ORDER BY id").all();
+  return json({ rows: results });
+}
+
 async function getBoard(url, env) {
+  if (url.searchParams.get("by") === "wx") return getWuxiangBoard(url, env);
   if (url.searchParams.get("by") === "mj") return getMirrorBoard(url, env);
   if (url.searchParams.get("by") === "b4") return getBlitzBoard(url, env);
   if (url.searchParams.get("by") === "eye") return getEyeBoard(url, env);
@@ -606,6 +645,8 @@ export default {
       if (req.method === "POST" && url.pathname === "/admin/feedback") return await adminSetFeedback(req, env);
       if (req.method === "POST" && url.pathname === "/blitz") return await postBlitz(req, env);
       if (req.method === "POST" && url.pathname === "/mirror") return await postMirror(req, env);
+      if (req.method === "POST" && url.pathname === "/wuxiang") return await postWuxiang(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/wuxiang") return await adminWuxiang(req, env);
       if (req.method === "POST" && url.pathname === "/eye") return await postEye(req, env);
       if (req.method === "GET" && url.pathname === "/admin/eye") return await adminEye(req, env);
       if (req.method === "GET" && url.pathname === "/admin/mirror") return await adminMirror(req, env);

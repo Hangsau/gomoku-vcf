@@ -84,3 +84,11 @@ CREATE TABLE IF NOT EXISTS settings(k TEXT PRIMARY KEY, v TEXT NOT NULL, t INTEG
 
 -- 商店擁有紀錄（2026-11-13）：vid 匿名編號、item 'b:<棋盤id>' 或 's:<棋子id>'、price 當時價格（免費期 0）、src 來源（'free' 免費領取／'grand' 上線前已在用）
 CREATE TABLE IF NOT EXISTS owned(vid TEXT NOT NULL, item TEXT NOT NULL, t INTEGER NOT NULL, price INTEGER NOT NULL DEFAULT 0, src TEXT NOT NULL DEFAULT 'free', PRIMARY KEY(vid, item));
+
+-- 2026-11-13：無相界（第一手落下全盤變進攻方顏色、不計時、錯 3 題結束）。total＝解開題目的（題目分×子數階加成）加總；top_rank＝最高段位；seconds＝全局用時；quit 1＝按結束；detail 每題作答（含 k、n 子數、tier 子數階、pts）
+CREATE TABLE IF NOT EXISTS wuxiang(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, day TEXT NOT NULL, nick TEXT NOT NULL, lang TEXT,
+  top_rank INTEGER NOT NULL, total REAL NOT NULL, solved INTEGER NOT NULL, wrong INTEGER NOT NULL,
+  seconds REAL NOT NULL, quit INTEGER NOT NULL, detail TEXT);
+CREATE INDEX IF NOT EXISTS wuxiang_rank ON wuxiang(total DESC, solved DESC);
+CREATE INDEX IF NOT EXISTS wuxiang_day ON wuxiang(day);
