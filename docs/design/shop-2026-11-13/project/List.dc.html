@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>商店：一列一件、直接領</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FDCCD}
+</style>
+</helmet>
+<div style="width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; padding: 8px 16px 12px; gap: 8px; overflow: hidden;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" aria-label="回首頁" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #161A24; color: #EDEFF5; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 900; flex-grow: 1;">商店</h1>
+    <span style="font-size: 13px; font-weight: 700; color: #1A1300; background: #F2B544; border-radius: 999px; padding: 5px 12px;">限時免費</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+    <button type="button" onClick="{{tabS.pick}}" style="{{tabS.style}}">棋子造型</button>
+    <button type="button" onClick="{{tabB.pick}}" style="{{tabB.style}}">棋盤花色</button>
+  </div>
+  <p style="margin: 0; font-size: 13px; color: #B6BCCB;">{{desc}}</p>
+
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <sc-for list="{{rows}}" as="o" hint-placeholder-count="7">
+      <div style="{{o.row}}">
+        <div style="{{o.sc.outer}}">
+          <sc-if value="{{o.sc.hasImg}}" hint-placeholder-val="{{ false }}"><img src="{{o.sc.img}}" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>
+          <div style="{{o.sc.grid}}"></div>
+          <sc-for list="{{o.sc.figs}}" as="s" hint-placeholder-count="0"><img src="{{s.src}}" alt="" style="{{s.style}}"></sc-for>
+          <sc-for list="{{o.sc.dots}}" as="s" hint-placeholder-count="0"><div style="{{s.style}}"></div></sc-for>
+        </div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <b style="font-size: 15px; font-weight: 900;">{{o.name}}</b>
+          <span style="{{o.tagStyle}}">{{o.tag}}</span>
+        </div>
+        <button type="button" onClick="{{o.act}}" style="{{o.btn}}">{{o.label}}</button>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+const U = '/_blob/';
+const ST = [
+  ['poop', '便便與霜淇淋', '133cfe8abd3a097310470994927a6f0b', '20327859441fc71713da97b7d82f6997'],
+  ['bunny', '蘿蔔與兔子', 'be31f88b0eb9c95101999c70cc895fef', '6a4ad79866e171584e5111403ac1da9b'],
+  ['pets', '黑貓與白狗', '60e9ed8751071fba0c3bfa89205049bc', '58fb4324817a3922a9932018c5d51df3'],
+  ['onigiri', '飯糰', 'acf38e69d9ff27e1869cedc71c988b09', 'a2df6736df8d6438d44d7bf25da15ad5'],
+  ['sky', '月亮與太陽', 'c18b799887567849280ecc07c86327ff', 'd1f00184210ee3ce488f4375c9f44218'],
+  ['boo', '炸彈與幽靈', '9548d4f1ad3f6e9a5a03c4c58760474f', 'a32e1995cd359001e1f950ba6aa07184'],
+  ['donut', '甜甜圈', '980ef2a5b39e1e29c740460a2ac2f3bb', '023117a447c6726f6723b910689a462f']
+].map(([id, name, b, w]) => ({ id, kind: 's', name, b: U + b, w: U + w }));
+const BD = [
+  ['grass', '草地', '8eba0c38aecf73ef36db5eea4339d5bc', '#1F4A17'],
+  ['starry', '星空', '9df3be01cd1db27ea46b295a9ef020e1', '#5E6A9A'],
+  ['beach', '沙灘', 'df2661f463b704d0b58ed4bdac1343c3', '#8A6E3E'],
+  ['chalk', '黑板', 'cc732e270f789469d8ccd6f6e8b6fba4', '#B9CDBF'],
+  ['ice', '冰湖', 'a6e8f2f7a986a46785ec4c315be5be5b', '#3F6A86'],
+  ['denim', '牛仔布', 'b728d3e0d154610f9b12931da6c8fe32', '#B8C9E6'],
+  ['pool', '泳池', '9527b53d938d70f419fca581b98731d2', '#0E5F73']
+].map(([id, name, img, line]) => ({ id, kind: 'b', name, img: U + img, line }));
+const PRE = [[0, 1, 'b'], [1, 1, 'w'], [2, 1, 'b'], [1, 0, 'w'], [1, 2, 'b'], [2, 2, 'w'], [3, 1, 'w'], [0, 2, 'b']];
+function scene(w, h, stone, board) {
+  const cell = 22, padX = (w - 3 * cell) / 2, padY = (h - 2 * cell) / 2, r = cell * 0.46, fr = r * 1.12;
+  const line = board ? board.line : '#5B4524';
+  const at = (x, y, rr) => `position:absolute;left:${padX + x * cell - rr}px;top:${padY + y * cell - rr}px;width:${2 * rr}px;height:${2 * rr}px;`;
+  return {
+    outer: `position:relative;flex:none;width:${w}px;height:${h}px;border-radius:10px;overflow:hidden;background:#E9C98B`,
+    hasImg: !!board, img: board ? board.img : '',
+    grid: `position:absolute;left:${padX - cell}px;top:${padY - cell}px;width:${5 * cell + 1}px;height:${4 * cell + 1}px;background-image:linear-gradient(${line} 1px, transparent 1px),linear-gradient(90deg, ${line} 1px, transparent 1px);background-size:${cell}px ${cell}px`,
+    figs: stone ? PRE.map(([x, y, c]) => ({ src: c === 'b' ? stone.b : stone.w, style: at(x, y, fr) })) : [],
+    dots: stone ? [] : PRE.map(([x, y, c]) => ({ style: at(x, y, r) + `border-radius:50%;background:${c === 'b' ? '#1B1A17' : '#FBFAF6'};box-shadow:${c === 'b' ? '0 0 0 1px rgba(255,255,255,.35)' : 'inset 0 0 0 1.5px #1B1A17'}` }))
+  };
+}
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { owned: { bunny: true }, using: { s: 'bunny', b: null }, tab: 's' }; }
+  renderVals() {
+    const { owned, using, tab } = this.state;
+    const tabStyle = (k) => `height:44px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;border:2px solid ${tab === k ? '#EDEFF5' : '#252B3A'};background:${tab === k ? '#EDEFF5' : 'transparent'};color:${tab === k ? '#0F121A' : '#B6BCCB'}`;
+    const b = 'flex:none;width:84px;height:44px;border:0;border-radius:12px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;';
+    return {
+      tabS: { pick: () => this.setState({ tab: 's' }), style: tabStyle('s') },
+      tabB: { pick: () => this.setState({ tab: 'b' }), style: tabStyle('b') },
+      desc: tab === 's' ? '換掉下棋時黑子和白子的樣子。' : '換掉下棋時棋盤的底。',
+      rows: (tab === 's' ? ST : BD).map((o) => {
+        const h = !!owned[o.id], u = using[o.kind] === o.id;
+        return {
+          name: o.name,
+          sc: scene(104, 58, o.kind === 's' ? o : null, o.kind === 'b' ? o : null),
+          row: `display:flex;align-items:center;gap:12px;height:68px;box-sizing:border-box;padding:0 10px 0 5px;border-radius:14px;background:#161A24;border:2px solid ${u ? '#3CC6B4' : '#252B3A'}`,
+          tag: h ? '已擁有' : '限時免費',
+          tagStyle: `font-size:12px;font-weight:700;color:${h ? '#3CC6B4' : '#F2B544'}`,
+          label: u ? '使用中' : h ? '換上' : '領取',
+          btn: b + (u ? 'background:#1F3B39;color:#3CC6B4;cursor:default' : h ? 'background:#3CC6B4;color:#06231F' : 'background:#F2B544;color:#1A1300'),
+          act: u ? () => {} : h ? () => this.setState({ using: { ...using, [o.kind]: o.id } }) : () => this.setState({ owned: { ...owned, [o.id]: true } })
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
