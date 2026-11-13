@@ -114,6 +114,8 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 
 **測試**：`docs/design/today-home-2026-11-13/check/run.mjs`（首頁、單人各模式、兩儀殿兩人對局、回看、容量、版面；自己起停 http.server 8793／8791 與 wrangler dev 8789）。伺服器存檔與 `recs`／`rec` 訊息本身的測試仍在 `docs/design/duel-records-2026-11-13/check/run.mjs`。
 
+**存譜補強（2026-11-13）**：`recordGame` → `saveRec`：整局 JSON 超過 96 KiB（UTF-8 位元組）就切成 `full:<id>:p0…pN`，`full:<id>` 改放標頭（`chunked`、段數、總 byte、指紋），同一次 `put` 寫入；讀取走 `readFull`，缺段／指紋不合回 `gone`。`put` 失敗會再存一筆只有摘要的 `rec:<id>`＋`lost: true`。房間訊息多一個欄位 `result`（五子棋 `match.result`），前端 `recordToday` 優先用它、沒有才看時鐘。實測一局 VCF 紀錄只有 1–5 KB，拆存是保險；超時局本來就存得到。**已知沒存到的情況**：斷線判負的那位，自己手機上的「今日棋局」沒有那一局（伺服器有存）。部署對戰伺服器前先跑 `node tools/duel_busy.mjs`（有人對局 exit 1；`--wait 秒數` 會等到沒人）。測試在 `docs/design/duel-save-2026-11-13/check/`。
+
 ## 還沒做 / 上線前要決定
 
 - **VCF 防作弊**：第一版相信前端回報的解法；要擋就把 `vcfscore.wasm` 放進 Worker 重驗 `seq`（先量 CPU 時間再決定要不要升 Workers Paid）。
