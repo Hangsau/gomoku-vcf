@@ -566,7 +566,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html 同步 -->
 <script src="game/skin.js?v=20261113a"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
-<script src="game/settings.js?v=20261113a"></script><!-- 共用設定頁（game.html、duel.html）；改了就換這個號碼，duel.html 同步 -->
+<script src="game/settings.js?v=20261113b"></script><!-- 共用設定頁（game.html、duel.html）；改了就換這個號碼，duel.html 同步 -->
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
@@ -799,10 +799,7 @@ function beep(last) {   // 倒數：5、4、3、2 短嗶，最後 1 秒高一點
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-function renderSound() {
-  document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', T(soundOn ? 'soundOff' : 'soundOn')); });
-}
-document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); bgmSync(); if (soundOn) stoneSound(); });
+function renderSound() { if (window.rsSet) window.rsSet.render(); }   // 喇叭鈕的圖示、aria 由 game/settings.js 的小框畫（兩條音量都 0 或總開關關著＝靜音圖示）；喇叭不再一按全關，改成點了跳出音樂／音效小框
 
 // ---------- 背景音樂（2026-11-12 起；2026-11-13 改多首輪播）：HTMLAudioElement、preload none ----------
 // 【改歌單】只改下面的 BGM_LISTS：鍵是場景（menu＝首頁／選單／開始／結算／設定，play＝解題畫面），值是曲名陣列（曲名＝game/music/ 底下不含 .mp3 的檔名）。
@@ -918,8 +915,11 @@ const rsSet = RushSettings.init({
   onVol: (k, v) => { vol[k] = v; if (k === 'sfx') { if (sfxMaster) sfxMaster.gain.value = vol.sfx / 70; } else bgmSync(); },
   onStone: (k) => { stoneKind = k; },
   previewStone: (k) => stoneSound(false, k),
-  getSound: () => soundOn,
+  getSound: () => soundOn, setSound: (on) => { soundOn = on; store.set('vcfgame.sound', on ? '1' : '0'); renderSound(); bgmSync(); },
+  unmuteOnVol: true,   // 舊玩家 vcfgame.sound='0'：拉任一條音量到 >0 就打開總開關；之後沒有任何介面再把它設成 '0'（要安靜就把兩條拉到 0）
+  soundBtn: '[data-sound]',   // 喇叭鈕＝音樂／音效快速調整小框（game/settings.js initPop）
 });
+window.rsSet = rsSet;
 $('openSet').onclick = () => show('sSet');
 
 

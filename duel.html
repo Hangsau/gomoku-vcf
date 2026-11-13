@@ -182,7 +182,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   <div class="topbar">
     <a href="game.html#pick" class="icob" aria-label="回挑戰" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
     <b style="font-size: 18px;" data-i18n="title">兩儀殿</b>
-    <div>
+    <div style="display:flex">
+      <button type="button" class="icob" data-sound aria-haspopup="dialog" aria-expanded="false"></button>
       <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
   </div>
@@ -201,6 +202,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
     <button type="button" class="icob" id="rInvite" aria-label="邀請" data-i18n-aria="invite" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></button>
+    <button type="button" class="icob" data-sound aria-haspopup="dialog" aria-expanded="false"></button>
     <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div class="pbar" id="pTop"></div>
@@ -325,7 +327,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），game.html 同步 -->
 <script src="game/skin.js?v=20261113a"></script>
-<script src="game/settings.js?v=20261113a"></script><!-- 共用設定頁（齒輪打開），game.html 同步 -->
+<script src="game/settings.js?v=20261113b"></script><!-- 共用設定頁（齒輪打開），game.html 同步 -->
 <script src="game/skin-picker.js?v=20261113b"></script><!-- 設定頁的「棋具」列打開的棋具頁 -->
 <script src="game/shop.js?v=20261113b"></script><!-- 棋具頁「＋」打開的商店 -->
 <script type="module">
@@ -600,7 +602,8 @@ const rsSet = window.rsSet = RushSettings.init({
   onVol: (k) => { if (k === 'sfx') { if (sfxMaster) sfxMaster.gain.value = volOf('sfx', 70) / 70; } else bgmSync(); },
   previewStone: (k) => stoneSound(false, k),
   getSound: () => soundOn, setSound: (on) => { soundOn = on; store.set('vcfgame.sound', on ? '1' : '0'); bgmSync(); },
-  unmuteOnVol: true,   // 以前用喇叭鈕關過聲音（vcfgame.sound='0'）的人，拉音量就等於打開
+  soundBtn: '[data-sound]',   // 喇叭鈕＝音樂／音效快速調整小框（game/settings.js initPop）；圖示、aria 由它畫
+  unmuteOnVol: true,   // 以前用喇叭鈕關過聲音（vcfgame.sound='0'）的人，拉任一條音量到 >0 就打開總開關；之後沒有任何介面再把它設成 '0'
 });
 document.querySelectorAll('[data-set-open]').forEach(b => b.onclick = () => { gearLast = b; rsSet.open(); });
 

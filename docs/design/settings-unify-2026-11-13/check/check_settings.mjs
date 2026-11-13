@@ -93,16 +93,16 @@ try {
   b = await L.launch();
 
   // ================= 1. 沒有舊鈕、有齒輪 =================
-  console.log('== 1. 兩儀殿大廳與房間：沒有 [data-sound]、#langBtn；各一顆齒輪 ≥44px');
+  console.log('== 1. 兩儀殿大廳與房間：頁內 [data-sound] 共 2 顆（大廳＋房間，施工單 2）、沒有 #langBtn；各一顆齒輪 ≥44px');
   {
     const c = await ctxOf({ nick: 'Alice' }); const p = await open(c, 'duel.html'); await connected(p);
     const lob = await p.evaluate(() => ({ snd: document.querySelectorAll('[data-sound]').length, lb: !!document.getElementById('langBtn'), lg: !!document.getElementById('langs'), gears: [...document.querySelectorAll('#sLobby [data-set-open]')].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }) }));
-    ok(lob.snd === 0 && !lob.lb && !lob.lg, '大廳沒有喇叭鈕、地球鈕、語言選單');
+    ok(lob.snd === 2 && !lob.lb && !lob.lg, `頁內喇叭鈕共 ${lob.snd} 顆（施工單 2：大廳一顆＋房間一顆，音樂／音效小框）、沒有地球鈕、語言選單`);
     ok(lob.gears.length === (NEG ? 2 : 1) && lob.gears[0][0] >= 44 && lob.gears[0][1] >= 44, `大廳一顆齒輪，觸控 ${lob.gears.map((g) => g.join('x')).join(',')}`);
     await wsSend(p, { t: 'create', time: '5+5', rule: 'free', color: 'black', priv: false });
     await waitFor(p, () => window.__duel.room && window.__duel.room.state === 'wait');
     const rm = await p.evaluate(() => ({ visible: !document.getElementById('sRoom').hidden, snd: document.querySelectorAll('[data-sound]').length, gears: [...document.querySelectorAll('#sRoom [data-set-open]')].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }) }));
-    ok(rm.visible && rm.snd === 0 && rm.gears.length === 1 && rm.gears[0][0] >= 44 && rm.gears[0][1] >= 44, `房間：沒有喇叭鈕、一顆齒輪 ${rm.gears.map((g) => g.join('x')).join(',')}`);
+    ok(rm.visible && rm.snd === 2 && rm.gears.length === 1 && rm.gears[0][0] >= 44 && rm.gears[0][1] >= 44, `房間：一顆喇叭鈕、一顆齒輪 ${rm.gears.map((g) => g.join('x')).join(',')}`);
     await p.screenshot({ path: SH + 'duel_room_zh_375x667.png' });
     errsAll.push(...errsOf(p)); await c.close();
   }
