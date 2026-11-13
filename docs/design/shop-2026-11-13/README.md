@@ -19,3 +19,8 @@
 
 - 2026-11-13 使用者選 **A**（「就照你推薦的方式做吧」），並要求**不標「之後會收費」，只標「限時免費」**。A 稿已拿掉那兩句（B、C 稿沒改，仍留著舊字）。
 - 施工單 `WORKORDER.md`，派 cc2；進度 `PROGRESS.md`、報告 `REPORT.md`。驗收、部署由主 session 做（先 schema.sql → deploy_worker → deploy_rush）。
+- 2026-11-13 上線（58905ce）：cc2 施工、主 session 驗收（`node docs/design/shop-2026-11-13/check/check_shop.mjs` 174 項全過）、套 `owned` 表、部署 Worker 與 Pages；線上 `/shop` 回 200。
+- 入口實際做法：首頁右上角金色購物袋 `#openShop`（`#skinEntry` 早已不在首頁）；棋具頁兩排最後各一格「＋」通往商店。沒領的商店商品不出現在棋具頁。
+- 還沒做／待確認：使用者手機實看；日韓文版面只有程式檢查、沒肉眼看過，譯詞（もらう／받기／期間限定 無料／한정 무료）未經母語者確認；後台「已領 N」沒開瀏覽器實測；舊的 `docs/design/skins2-2026-11-12/check/check_skin.mjs` 早就跑不起來（等不到 `#skinEntry`），可用的版本是 `check/check_skin_copy.mjs`。
+- 轉收費時要補：金流、登入綁定 vid、`settings.shop_prices` 設價（伺服器已會拒絕價格 > 0 的免費領取）、「領取」換「購買」。
+- 下一件（使用者 2026-11-13 提）：邀請連結在 LINE 等內建瀏覽器開啟的問題——邀請連結加 `openExternalBrowser=1`、偵測內建瀏覽器顯示「用瀏覽器開啟」、分享文字寫明房號。
