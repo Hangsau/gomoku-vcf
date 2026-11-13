@@ -196,3 +196,11 @@ cinematic Chinese ancient-style, cool moonlit blue and soft warm lantern gold pa
 - `兩儀橫\3_兩手.mp4` 換成無手版（盤上一黑一白兩顆子、藍光金光對撞、中間竄火）；舊檔留作 `3_兩手_舊_有手.mp4`。檔名不變，腳本沒改，重跑 `mv all` 即可。
 - 寫提示詞通則：棋具鏡頭一律寫 No hands, no people；要「落子」就拍棋子與光效，不拍手。
 - 多生了一張單顆黑子落盤的圖（沒轉影片），留在 Kling 作品區。Kling 餘額約 821 點。
+
+## 兩儀殿廣告貓咪版（2026-11-13 10:00）
+
+- 使用者改要「貓咪當主角」，只做直式廣告（MV 貓咪版取消）。成品 `docs/promo/成品_有配樂/兩儀殿_廣告_直式_貓.mp4`（1080×1920、22.3 秒）；人類版 `兩儀殿_廣告_直式.mp4` 保留。
+- 重剪：`python tools/promo/liangyi_build.py adcat all`；素材 `docs/promo/MV素材/兩儀貓/`（c1_對峙、c2_黑貓、c3_白貓雪盾、c4_並坐；第一格原圖在 `圖/`，裁成 9:16 的在 `圖/916/`）。
+- 做法：第一格用 codex 生圖（swim-coach 的 `tools/companion/codex-image.mjs` 的 `generatePhoto`，可附參考圖讓貓長相一致；prompt 寫明直式 1024x1536），裁 9:16 後用 Kling 格線頁右上的上傳鈕傳進專案，之後照舊「Use as references → Keyframes → 5s」。Kling 只花影片點數（4 段 300 點），餘額 521。
+- 規則：貓不碰棋子（同人手問題）；四段都一次過，沒有重抽。
+- 待使用者看片：黑貓撲出只拍到起跳前半秒；「先拿 3 分獲勝」字幕疊在實錄頂端標題列（人類版同樣）；音樂對點沒人聽過。

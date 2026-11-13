@@ -1,8 +1,9 @@
 """《兩儀》MV 橫式與「兩儀殿」直式廣告 剪接腳本（可重跑）
 用法：
-    python C:/claudehome/projects/VCF/tools/promo/liangyi_build.py <mv|ad> [build|check|all] [選項]
+    python C:/claudehome/projects/VCF/tools/promo/liangyi_build.py <mv|ad|adcat> [build|check|all] [選項]
     mv  ＝橫式 1920x1080、24fps、約 57 秒（歌曲 15.0–72.3）→ docs/promo/成品_有配樂/兩儀_MV_橫式.mp4
     ad  ＝直式 1080x1920、24fps、約 22 秒（副歌）          → docs/promo/成品_有配樂/兩儀殿_廣告_直式.mp4
+    adcat＝直式 1080x1920、24fps、同 ad 長度（貓咪版）       → docs/promo/成品_有配樂/兩儀殿_廣告_直式_貓.mp4（素材 MV素材/兩儀貓/c1~c4）
     不帶參數只印這段用法（避免誤覆蓋成品）。預設動作 build；check 產生縮圖總覽＋每個切點前後對照圖；all＝build＋check。
 選項：
     --assets DIR   AI 影片資料夾（預設 docs/promo/MV素材/兩儀橫 或 兩儀916）
@@ -39,13 +40,16 @@ TIMES = os.path.join(ROOT, '遊戲音樂_原檔', '兩儀_分軌', '時間點.js
 DUEL = os.path.join(ROOT, 'promo', '無聲原片', 'duel_line.mp4')
 DUEL_JSON = os.path.join(ROOT, 'promo', '無聲原片', 'duel_line_時間點.json')
 FINAL_DIR = os.path.join(ROOT, 'promo', '成品_有配樂')
-FINALS = {'mv': os.path.join(FINAL_DIR, '兩儀_MV_橫式.mp4'), 'ad': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式.mp4')}
+FINALS = {'mv': os.path.join(FINAL_DIR, '兩儀_MV_橫式.mp4'), 'ad': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式.mp4'),
+          'adcat': os.path.join(FINAL_DIR, '兩儀殿_廣告_直式_貓.mp4')}
 CHECK_DIR = os.path.join(ROOT, 'promo', '檢查截圖', '兩儀')
-AIDIR = {'mv': os.path.join(ASSET, '兩儀橫'), 'ad': os.path.join(ASSET, '兩儀916')}
+AIDIR = {'mv': os.path.join(ASSET, '兩儀橫'), 'ad': os.path.join(ASSET, '兩儀916'), 'adcat': os.path.join(ASSET, '兩儀貓')}
 FONT = r'C:\Windows\Fonts\kaiu.ttf'
 MV_FILES = ['1_對坐', '2_黑衣', '3_兩手', '5_白衣', '6_深淵', '7_劍', '8_雪盾', '8b_棋盤前破盾', '9_落子', '10_山河']
 AD_FILES = ['a1_對坐', 'a2_劍']
+ADCAT_FILES = ['c1_對峙', 'c2_黑貓', 'c3_白貓雪盾', 'c4_並坐']
 FPS = 24
+C3_A = 1.0      # c3 白貓雪盾取用起點（秒）；碎開約 2–2.7 秒，視抽格結果微調
 TH = ['-threads', '4']
 BG = '0x0F0F1B'
 
@@ -198,7 +202,7 @@ def render_duel(name, L, t_a, t_b, out, crop_h, freeze=0.0, cx_frac=0.5, fh=1040
     直式廣告：裁 1170x2080 鋪滿全螢幕。來源區段 [t_a,t_b] 以 (t_b-t_a)/(L-freeze) 的速度播放（>1 快轉），最後 freeze 秒定格。"""
     play = L - freeze
     f = (t_b - t_a) / play            # 來源秒 / 輸出秒
-    if MODE == 'ad':
+    if MODE in ('ad', 'adcat'):
         fw, fhh, x0, y0 = W, H, 0, 0
         vf_src = f'crop=1170:2080:0:0,scale={W}:{H}'
         base_png = None
@@ -215,7 +219,7 @@ def render_duel(name, L, t_a, t_b, out, crop_h, freeze=0.0, cx_frac=0.5, fh=1040
         base.save(base_png)
     fg = (f'[1:v]setpts=(PTS-STARTPTS)/{f:.6f},{vf_src},fps={FPS},tpad=stop_mode=clone:stop_duration={freeze + 0.5:.3f},'
           f'trim=duration={L:.4f},setpts=PTS-STARTPTS[fg]')
-    if MODE == 'ad':
+    if MODE in ('ad', 'adcat'):
         fc = fg.replace('[fg]', ',format=yuv420p[v]')
         cmd = [FFMPEG, '-v', 'error', '-y'] + TH + ['-ss', f'{t_a:.3f}', '-t', f'{(t_b - t_a) + 0.2:.3f}', '-i', DUEL, '-filter_complex',
                fc.replace('[1:v]', '[0:v]'), '-map', '[v]', '-t', f'{L:.4f}', '-c:v', 'libx264', '-crf', '14', '-preset', 'fast', out]
@@ -402,6 +406,65 @@ def plan_ad():
     return st
 
 
+# ---------------------------------------------------------------- 廣告（貓咪版）規劃
+def plan_adcat():
+    """c1 對峙 3.0 → c2 黑貓 2.0 → c3 白貓 2.0 → 實錄（比 ad 少 2 秒，沖四段不縮）→ c4 片尾 4.5"""
+    global SONG_START, SONG_LEN, SEGS, SUBS, AUDIO_FADE_IN, AUDIO_FADE_OUT
+    L = load_lines()
+    mk, _ = load_marks()
+    t0 = L[7]['start'] - 0.3
+    t_end = 72.3
+    SONG_START, SONG_LEN = t0, t_end - t0
+    AUDIO_FADE_IN, AUDIO_FADE_OUT = 0.3, 1.2
+    d_c1, d_c2, d_c3, d_end = 3.0, 2.0, 2.0, 4.5
+    foot = SONG_LEN - d_c1 - d_c2 - d_c3 - d_end
+    d1, d3, d4, d5 = 1.6, 1.3, 1.5, 2.8                    # 比 ad 各縮 1.0/0/0.5/0.5 秒，沖四段 d2 與 ad 相同
+    d2 = foot - d1 - d3 - d4 - d5
+    q1s, q1v, res = mk['q1_start'], mk['q1_solve'], mk['result']
+    segs = [
+        dict(name='c1_對峙', kind='ai', f='c1_對峙', dur=d_c1, win=(0.0, 3.1)),
+        dict(name='c2_黑貓撲出', kind='ai', f='c2_黑貓', dur=d_c2, win=(2.8, 5.0)),
+        dict(name='c3_白貓雪盾', kind='ai', f='c3_白貓雪盾', dur=d_c3, win=(C3_A, C3_A + 2.2)),
+        dict(name='實錄1_倒數', kind='duel', win=(mk['countdown_start'] + 0.3, mk['countdown_start'] + 0.3 + d1), dur=d1, freeze=0.0),
+        dict(name='實錄2_沖四', kind='duel', win=(q1s + 0.6, q1v - 0.1), dur=d2, freeze=0.0),
+        dict(name='實錄3_得分', kind='duel', win=(q1v - 0.1, q1v - 0.1 + d3), dur=d3, freeze=0.0),
+        dict(name='實錄4_快轉', kind='duel', win=(q1v + 1.5, mk['q4_solve'] - 3.3), dur=d4, freeze=0.0),
+        dict(name='實錄5_獲勝', kind='duel', win=(mk['q4_solve'] - 1.0, res + 2.0), dur=d5, freeze=0.0),
+        dict(name='c4_片尾並坐', kind='ai', f='c4_並坐', dur=d_end, win=(0.3, 4.9)),
+    ]
+    t = 0.0
+    for s in segs:
+        s['a'], s['b'] = t, t + s['dur']
+        t += s['dur']
+    SEGS = segs
+    st = starts_of(segs)
+    SUBS = []
+
+    def txt(png_name, text, size, y, ts, te, pad=False, sin=2, sout=6, fd=0.3):
+        layer, _ = bold_text_layer(size, text, W / 2, H * y, pad=pad, maxw=980, stroke_in=sin, stroke_out=sout)
+        pth = os.path.join(WORK, png_name)
+        layer.save(pth)
+        SUBS.append((pth, ts, te, fd))
+    # c1：字放在上方暗區
+    l1, _ = bold_text_layer(200, '兩儀殿', W / 2, H * 0.16, stroke_in=4, stroke_out=9)
+    l2, _ = bold_text_layer(96, '真人對戰', W / 2, H * 0.27, stroke_in=3, stroke_out=7, maxw=980)
+    p = os.path.join(WORK, 'cap_c1.png'); merge_layers(l1, l2).save(p)
+    SUBS.append((p, 0.2, d_c1))
+    txt('cap_c2.png', '同一題', 82, 0.86, st[1] + 0.1, st[2] + 0.1, pad=True, sin=2, sout=5)
+    txt('cap_c3.png', '誰先解開', 82, 0.86, st[2] + 0.1, st[3] + 0.1, pad=True, sin=2, sout=5)
+    txt('cap_1.png', '同時開始', 82, 0.86, st[3] + 0.2, st[4] + 0.1, pad=True, sin=2, sout=5)
+    txt('cap_2.png', '連續沖四', 82, 0.86, st[4] + 0.2, st[5] + 0.1, pad=True, sin=2, sout=5)
+    txt('cap_3.png', '先解開的得分', 82, 0.86, st[5] + 0.1, st[7], pad=True, sin=2, sout=5)
+    txt('cap_4.png', '先拿 3 分獲勝', 82, 0.07, st[7] + 0.1, st[8] + 0.2, pad=True, sin=2, sout=5)
+    r1, _ = bold_text_layer(200, '兩儀殿', W / 2, H * 0.13, stroke_in=4, stroke_out=9)
+    r2, _ = bold_text_layer(90, '免登入 馬上開戰', W / 2, H * 0.25, stroke_in=3, stroke_out=7, maxw=980)
+    r3, _ = bold_text_layer(76, 'rush.hangsau.app', W / 2, H * 0.33, stroke_in=2, stroke_out=6, maxw=980)
+    cp = os.path.join(WORK, 'endcard_adcat.png')
+    merge_layers(r1, r2, r3).save(cp)
+    SUBS.append((cp, st[8] + 0.1, st[8] + d_end))
+    return st
+
+
 # ---------------------------------------------------------------- build
 def pick_ai_window(seg, sd, state):
     """回傳 (win 或 None, 備註)。pos=mid/tail/head_avoid 為 5_白衣 的分段使用規則（句1後 取尾、句4 取不重疊的開頭）。"""
@@ -425,11 +488,11 @@ def pick_ai_window(seg, sd, state):
 def build():
     os.makedirs(WORK, exist_ok=True)
     os.makedirs(os.path.dirname(FINAL), exist_ok=True)
-    st = plan_mv() if MODE == 'mv' else plan_ad()
-    names = MV_FILES if MODE == 'mv' else AD_FILES
+    st = {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat}[MODE]()
+    names = {'mv': MV_FILES, 'ad': AD_FILES, 'adcat': ADCAT_FILES}[MODE]
     src = lambda f: os.path.join(VID, f + '.mp4')
     miss = [src(f) for f in names if not os.path.exists(src(f))]
-    if MODE == 'mv' and miss:
+    if MODE in ('mv', 'adcat') and miss:
         print('缺素材（等 AI 影片放進來再跑）：')
         for m in miss:
             print('  缺', m)
@@ -509,7 +572,7 @@ def check():
     import numpy as np
     os.makedirs(CHECK, exist_ok=True)
     if not SEGS:
-        (plan_mv if MODE == 'mv' else plan_ad)()
+        {'mv': plan_mv, 'ad': plan_ad, 'adcat': plan_adcat}[MODE]()
     st = starts_of(SEGS)
     dur = probe_dur(FINAL)
     wide = MODE == 'mv'
@@ -557,7 +620,7 @@ def make_fake(d):
 def main():
     global MODE, W, H, VID, WORK, FINAL, CHECK, XF
     a = sys.argv[1:]
-    if not a or a[0] not in ('mv', 'ad', 'fake'):
+    if not a or a[0] not in ('mv', 'ad', 'adcat', 'fake'):
         print(__doc__)
         return
     if a[0] == 'fake':
@@ -579,7 +642,7 @@ def main():
     XF = 0.3 if MODE == 'mv' else 0.2
     VID = opts.get('assets', AIDIR[MODE])
     FINAL = opts.get('out', FINALS[MODE])
-    CHECK = opts.get('check-dir', CHECK_DIR)
+    CHECK = opts.get('check-dir', os.path.join(ROOT, 'promo', '檢查截圖', '兩儀貓') if MODE == 'adcat' else CHECK_DIR)
     WORK = opts.get('work', os.path.join(tempfile.gettempdir(), 'liangyi_build_work', MODE))
     os.makedirs(WORK, exist_ok=True)
     if act in ('build', 'all'):
