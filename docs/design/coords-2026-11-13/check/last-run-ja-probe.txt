@@ -1,0 +1,16 @@
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+舊 ja 立刻 [39,141,242,242] 1.5s後 [39,141,242,242] {"tight":false,"kids":"rhead:56 pTop:52 status:29 boardWrap:242 pBot:52 facts:40 grow:7 rActs:82","status":"あなたの番"}
+新 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [39,141,242,242] 1.5s後 [39,141,242,242] {"tight":false,"kids":"rhead:56 pTop:52 status:29 boardWrap:242 pBot:52 facts:40 grow:7 rActs:82","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [39,141,242,242] 1.5s後 [39,141,242,242] {"tight":false,"kids":"rhead:56 pTop:52 status:29 boardWrap:242 pBot:52 facts:40 grow:7 rActs:82","status":"あなたの番"}
+舊 ja 立刻 [12,150,296,296] 1.5s後 [12,150,296,296] {"tight":true,"kids":"rhead:78 pTop:44 status:24 boardWrap:296 pBot:44 facts:12 grow:0 rActs:62","status":"あなたの番"}
+新 ja 立刻 [39,141,242,242] 1.5s後 [39,141,242,242] {"tight":false,"kids":"rhead:56 pTop:52 status:29 boardWrap:242 pBot:52 facts:40 grow:7 rActs:82","status":"あなたの番"}

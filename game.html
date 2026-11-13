@@ -589,8 +589,8 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
 </div>
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html 同步 -->
-<script src="game/skin.js?v=20261113a"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
-<script src="game/settings.js?v=20261113b"></script><!-- 共用設定頁（game.html、duel.html）；改了就換這個號碼，duel.html 同步 -->
+<script src="game/skin.js?v=20261113c"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
+<script src="game/settings.js?v=20261113c"></script><!-- 共用設定頁（game.html、duel.html）；改了就換這個號碼，duel.html 同步 -->
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
@@ -1172,9 +1172,11 @@ function setBoardPx(v) {
   cv.style.width = px + 'px'; cv.style.height = px + 'px';
   $('boardWrap').style.width = px + 'px'; $('boardWrap').style.height = px + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  pad = px * 0.045; cell = (px - 2 * pad) / (N - 1);
+  regeom();
   draw();
 }
+// 格距與邊留白由 game/skin.js 的 RushSkin.geom 算（棋盤座標開著時為了放字，格距縮成 96%；關著＝原本 4.5% 的算法）
+function regeom() { const G = RushSkin.geom(px, N); pad = G.pad; cell = G.cell; }
 const xy = (t) => [pad + COLS.indexOf(t[0]) * cell, pad + (N - parseInt(t.slice(1), 10)) * cell];
 function stone(t, black, alpha) {
   const [x, y] = xy(t);
@@ -1182,7 +1184,7 @@ function stone(t, black, alpha) {
 }
 function draw() {
   ctx.clearRect(0, 0, px, px);
-  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: N });
+  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: N, coords: RushSkin.coords() });
   const V = revView();
   if (!V && (!g || !g.p)) return;
   if (V) {   // 研究盤（象牙塔每題後、各模式覆盤共用）：題目＋目前這條線（我的下法或答案，可自由改），標手順
@@ -1215,7 +1217,7 @@ function draw() {
     ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, cell * 0.8, 0, Math.PI * 2); ctx.stroke();
   }
 }
-RushSkin.onChange(() => draw());   // 選單換樣式、棋子圖載入完：重畫
+RushSkin.onChange(() => { regeom(); draw(); });   // 選單換樣式、棋子圖載入完、座標開關：重算格距並重畫
 function cellAt(ev) {
   const r = cv.getBoundingClientRect();
   const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);

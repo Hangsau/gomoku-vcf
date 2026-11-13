@@ -337,8 +337,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 </div>
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），game.html 同步 -->
-<script src="game/skin.js?v=20261113a"></script>
-<script src="game/settings.js?v=20261113b"></script><!-- 共用設定頁（齒輪打開），game.html 同步 -->
+<script src="game/skin.js?v=20261113c"></script>
+<script src="game/settings.js?v=20261113c"></script><!-- 共用設定頁（齒輪打開），game.html 同步 -->
 <script src="game/skin-picker.js?v=20261113b"></script><!-- 設定頁的「棋具」列打開的棋具頁 -->
 <script src="game/shop.js?v=20261113b"></script><!-- 棋具頁「＋」打開的商店 -->
 <script type="module">
@@ -1203,7 +1203,7 @@ function stone(p, black, alpha) {
 }
 function draw() {
   ctx.clearRect(0, 0, px, px);
-  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: SIZE });
+  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: SIZE, coords: RushSkin.coords() });
   if (room && room.kind === 'vcf') return vcfDraw();
   if (room && room.state === 'study' && room.study) return studyDraw();
   if (REPLAY && room) return replayDraw();
@@ -1233,7 +1233,7 @@ function draw() {
     ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
   }
 }
-RushSkin.onChange(() => draw());   // 選單換樣式、棋子圖載入完：重畫
+RushSkin.onChange(() => { regeom(); draw(); });   // 選單換樣式、棋子圖載入完、座標開關：重算格距並重畫
 // 研棋：畫到目前這一手；實戰之後的研究手標數字（從實戰下一手接著數）
 const studyShown = () => room.study.seq.slice(0, room.study.cur);
 const studyNext = () => { const sh = studyShown(); return sh.length && sh.at(-1)[1] === BLACK ? WHITE : BLACK; };
@@ -1312,9 +1312,11 @@ function setBoardPx(v) {
   cv.style.width = px + 'px'; cv.style.height = px + 'px';
   $('boardWrap').style.width = px + 'px'; $('boardWrap').style.height = px + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  pad = px * 0.045; cell = (px - 2 * pad) / (SIZE - 1);
+  regeom();
   draw();
 }
+// 格距與邊留白由 game/skin.js 的 RushSkin.geom 算（棋盤座標開著時為了放字，格距縮成 96%；關著＝原本 4.5% 的算法）
+function regeom() { const G = RushSkin.geom(px, SIZE); pad = G.pad; cell = G.cell; }
 function layout() {   // 一屏放得下：先照寬度放，再看房間畫面其他東西佔多少高度，剩下的給棋盤（最小 240）
   document.documentElement.style.setProperty('--appH', window.innerHeight + 'px');
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
@@ -1749,7 +1751,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get watchFocus() { return watchFocus; }, get watchAuto() { return watchAuto; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, bgmVolume, volOf, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, cellAt, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get watchFocus() { return watchFocus; }, get watchAuto() { return watchAuto; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, bgmVolume, volOf, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {

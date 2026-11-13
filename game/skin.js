@@ -151,6 +151,39 @@
     st.setProperty('--sk-w-sh', cssSh(cur.white));
   }
 
+  // ---------- 棋盤座標（2026-11-13 使用者：統一顯示，設定頁開關，預設關；vcfgame.coords '1'／'0'）----------
+  // 直行 A–P（跳過 I）由左到右、橫列 1–15 由下到上；字母畫在下緣、數字畫在左緣，用盤邊的留白。
+  // 只有 game.html、duel.html 的 15×15 對局盤會傳 coords:true；教學盤、試煉場、商店／棋具預覽盤、分享卡不傳，畫法跟以前一樣。
+  // geom(px)：盤面邊長 → { pad, cell, coords }。關著＝原本的算法（pad = 4.5%）；開著＝格距縮成原本的 96%，把省下來的邊留給座標字。
+  // 字放在「邊上棋子（半徑 0.46 格）以外、盤邊以內」的那一圈，所以不會被棋子蓋住。兩頁共用這一份，pad／cell 一律由它算。
+  const K_COORDS = 'vcfgame.coords', COORD_COLS = 'ABCDEFGHJKLMNOP', PAD_RATIO = 0.045, COORD_KEEP = 0.96, STONE_R = 0.46;
+  let coordsOn = ls.get(K_COORDS) === '1';
+  function geom(px, n = 15, coords = coordsOn) {
+    const pad0 = px * PAD_RATIO, cell0 = (px - 2 * pad0) / (n - 1);
+    if (!coords || n !== 15) return { pad: pad0, cell: cell0, coords: false };
+    const cell = cell0 * COORD_KEEP, pad = (px - (n - 1) * cell) / 2;
+    return { pad, cell, coords: true };
+  }
+  // 畫座標字：x0,y0 盤左上、size 盤邊長。字心在「棋子外緣到盤邊」那一圈的正中間。
+  function drawCoords(ctx, x0, y0, o, bd) {
+    const n = 15, zone = o.pad - STONE_R * o.cell;   // 棋子外緣到盤邊的寬度
+    if (zone < 5) return;
+    const d = STONE_R * o.cell + zone / 2;            // 字心離最外圈線的距離
+    let f = Math.max(7, Math.min(11, (zone - 2.4) / 0.72));   // 字高限制：大寫高約 0.72 字級，上下各留 1.2px
+    const fam = `600 ${f}px 'Chakra Petch', sans-serif`;
+    ctx.save();
+    ctx.font = fam; ctx.fillStyle = bd.label; ctx.textBaseline = 'alphabetic';
+    const w2 = ctx.measureText('15').width, sx = w2 > zone - 2 ? Math.max(0.6, (zone - 2) / w2) : 1;   // 兩位數太寬就橫向壓窄
+    const left = x0 + o.pad - d, bottom = y0 + o.pad + (n - 1) * o.cell + d, cap = f * 0.36;
+    ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) {
+      const p = o.pad + i * o.cell;
+      ctx.fillText(COORD_COLS[i], x0 + p, bottom + cap);
+      ctx.save(); ctx.translate(left, y0 + o.pad + (n - 1 - i) * o.cell + cap); ctx.scale(sx, 1); ctx.fillText(String(i + 1), 0, 0); ctx.restore();
+    }
+    ctx.restore();
+  }
+
   const STAR15 = [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]];
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -176,6 +209,7 @@
       ctx.fillStyle = bd.star;
       for (const [r, c] of STAR15) { ctx.beginPath(); ctx.arc(x0 + o.pad + c * o.cell, y0 + o.pad + r * o.cell, o.starR || 3, 0, Math.PI * 2); ctx.fill(); }
     }
+    if (o.coords && n === 15) drawCoords(ctx, x0, y0, o, bd);   // 只有對局盤傳 coords；其他呼叫端沒這個欄位，畫法不變
   }
   // canvas 畫一顆子（圓心 x,y、半徑 r）；sd 可以傳別的樣式（棋具頁預覽用）
   function drawStone(ctx, x, y, r, black, alpha, ringW, sd) {
@@ -246,6 +280,9 @@
     // 預覽用：某個盤配某組子時，實際畫出來的黑白子（含自動描邊）
     preview: (boardId, stonesId) => { const bd = BOARDS.find((x) => x.id === boardId) || board, st = STONES.find((x) => x.id === stonesId) || stones; return { board: bd, black: side(bd, st.black, true), white: side(bd, st.white, false) }; },
     drawBoard, drawStone, svgBoard, svgStone,
+    geom, COORD_COLS, coords: () => coordsOn,
+    // 棋盤座標開關：存 vcfgame.coords，發 rushskin 事件讓所有頁面重算格距、重畫（設定頁、別的分頁都走這裡）
+    setCoords(on) { coordsOn = !!on; ls.set(K_COORDS, coordsOn ? '1' : '0'); fire(); },
     ink: (black) => (black ? cur.black.ink : cur.white.ink),
     name: (it, lang) => it.name[lang] || it.name.en,
     // 換了樣式（或圖載入完）就叫 fn 重畫；別的分頁換了這頁也跟著換
@@ -256,6 +293,7 @@
     if (e.key === K_STONES) { stones = pick(STONES, e.newValue); changed(); }
     if (e.key === K_OFF) { off = readOff(); repick(); changed(); }
     if (e.key === K_OWNED) { owned = readOwned(); repick(); changed(); }
+    if (e.key === K_COORDS) { coordsOn = e.newValue === '1'; fire(); }
   });
   compose();
   applyCss();

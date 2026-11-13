@@ -1,6 +1,6 @@
 // game/settings.js — 共用設定頁（2026-11-13 使用者：兩儀殿不要自己的聲音鈕、語言鈕，所有設定收在同一個設定頁）
 // game.html（首頁齒輪 → #sSet 畫面）與 duel.html（兩儀殿大廳／房間齒輪 → 頁面內蓋上的全屏設定頁）用同一份：項目、順序、樣式、四語文字都在這裡。
-// 內容：帳號卡（之後開放）、落子音效音量、音樂音量、落子聲、棋具、語言、給作者留言。
+// 內容：帳號卡（之後開放）、落子音效音量、音樂音量、落子聲、棋具、棋盤座標開關、語言、給作者留言。
 // 自帶樣式（全部限定在 .rsx 底下）與四語文字；自己讀寫 localStorage（vcfgame.vol.sfx／vcfgame.vol.bgm／vcfgame.sfx.stone／vcfgame.lang 經由宿主）。
 // 依賴：game/sound.js（RushSound：落子聲種類）、game/skin.js（RushSkin，選用：棋具列）、game/skin-picker.js（RushSkinPicker，選用）。
 // 用法：const set = RushSettings.init({ host, getLang, setLang, onBack, onVol, onStone, previewStone, getSound, setSound, unmuteOnVol, apiBase, openBtn });
@@ -15,10 +15,10 @@
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
   const I18N = {
-    zh: { popSfx: "音效", popBgm: "音樂", popAria: "聲音", setT: "設定", accT: "帳號", accSub: "登入後成績跟著你換裝置（之後開放）", setSnd: "聲音", setSfx: "落子音效", setBgm: "音樂", setMore: "外觀與其他", setSkin: "棋具", setLang: "語言", setStone: "落子聲", msgBtn: "給作者留言", msgT: "給作者留言", msgHint: "建議、遇到的問題、想要的功能都可以寫，只有作者看得到。", msgPh: "想說的話", msgContactPh: "聯絡方式（選填，想收到回覆再填，例如 IG 或 email）", msgSend: "送出", msgEmpty: "請先寫點什麼。", msgOk: "收到了，謝謝！", msgFail: "沒送出去，請稍後再試。", close: "關閉", done: "完成", muteNow: "目前靜音中", stoneT: "落子聲", home: "回入口", st_wood: "木頭", st_crisp: "清脆", st_deep: "沉穩", st_soft: "輕點", st_slate: "石板", st_jade: "玉石", st_drop: "水滴", st_bit: "電子", st_drum: "小鼓" },
-    en: { popSfx: "Sound FX", popBgm: "Music", popAria: "Sound", setT: "Settings", accT: "Account", accSub: "Sign in to keep your scores across devices (coming later)", setSnd: "Sound", setSfx: "Stone sound", setBgm: "Music", setMore: "Look & more", setSkin: "Board & stones", setLang: "Language", setStone: "Move sound", msgBtn: "Message the developer", msgT: "Message the developer", msgHint: "Suggestions, problems, feature ideas: only the developer can read this.", msgPh: "Your message", msgContactPh: "Contact (optional, only if you want a reply, e.g. Instagram or email)", msgSend: "Send", msgEmpty: "Please write something first.", msgOk: "Got it, thank you!", msgFail: "Couldn't send. Please try again later.", close: "Close", done: "Done", muteNow: "Sound is muted", stoneT: "Move sound", home: "Back", st_wood: "Wood", st_crisp: "Crisp", st_deep: "Deep", st_soft: "Soft", st_slate: "Slate", st_jade: "Jade", st_drop: "Drop", st_bit: "Bit", st_drum: "Drum" },
-    ja: { popSfx: "効果音", popBgm: "音楽", popAria: "サウンド", setT: "設定", accT: "アカウント", accSub: "ログインすると成績を端末間で引き継げます（近日対応）", setSnd: "サウンド", setSfx: "着手音", setBgm: "音楽", setMore: "外観ほか", setSkin: "碁盤と石", setLang: "言語", setStone: "着手音の種類", msgBtn: "作者にメッセージ", msgT: "作者にメッセージ", msgHint: "提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。", msgPh: "メッセージ", msgContactPh: "連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）", msgSend: "送信", msgEmpty: "まず何か書いてください。", msgOk: "受け取りました。ありがとうございます！", msgFail: "送信できませんでした。しばらくしてからもう一度お試しください。", close: "閉じる", done: "完了", muteNow: "現在ミュート中", stoneT: "着手音", home: "戻る", st_wood: "木", st_crisp: "澄", st_deep: "重", st_soft: "軽", st_slate: "石板", st_jade: "玉", st_drop: "水滴", st_bit: "電子", st_drum: "太鼓" },
-    ko: { popSfx: "효과음", popBgm: "음악", popAria: "소리", setT: "설정", accT: "계정", accSub: "로그인하면 기록이 기기를 넘어 이어져요 (추후 지원)", setSnd: "소리", setSfx: "착수음", setBgm: "음악", setMore: "외형 및 기타", setSkin: "판과 돌", setLang: "언어", setStone: "착수음 종류", msgBtn: "개발자에게 메시지", msgT: "개발자에게 메시지", msgHint: "제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.", msgPh: "메시지", msgContactPh: "연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)", msgSend: "보내기", msgEmpty: "먼저 내용을 적어 주세요.", msgOk: "잘 받았습니다. 감사합니다!", msgFail: "보내지 못했습니다. 잠시 후 다시 시도해 주세요.", close: "닫기", done: "완료", muteNow: "현재 음소거 중", stoneT: "착수음", home: "돌아가기", st_wood: "나무", st_crisp: "청명", st_deep: "묵직", st_soft: "가벼움", st_slate: "석판", st_jade: "옥", st_drop: "물방울", st_bit: "전자", st_drum: "북" },
+    zh: { popSfx: "音效", popBgm: "音樂", popAria: "聲音", setT: "設定", accT: "帳號", accSub: "登入後成績跟著你換裝置（之後開放）", setSnd: "聲音", setSfx: "落子音效", setBgm: "音樂", setMore: "外觀與其他", setSkin: "棋具", setCoords: "棋盤座標", setLang: "語言", setStone: "落子聲", msgBtn: "給作者留言", msgT: "給作者留言", msgHint: "建議、遇到的問題、想要的功能都可以寫，只有作者看得到。", msgPh: "想說的話", msgContactPh: "聯絡方式（選填，想收到回覆再填，例如 IG 或 email）", msgSend: "送出", msgEmpty: "請先寫點什麼。", msgOk: "收到了，謝謝！", msgFail: "沒送出去，請稍後再試。", close: "關閉", done: "完成", muteNow: "目前靜音中", stoneT: "落子聲", home: "回入口", st_wood: "木頭", st_crisp: "清脆", st_deep: "沉穩", st_soft: "輕點", st_slate: "石板", st_jade: "玉石", st_drop: "水滴", st_bit: "電子", st_drum: "小鼓" },
+    en: { popSfx: "Sound FX", popBgm: "Music", popAria: "Sound", setT: "Settings", accT: "Account", accSub: "Sign in to keep your scores across devices (coming later)", setSnd: "Sound", setSfx: "Stone sound", setBgm: "Music", setMore: "Look & more", setSkin: "Board & stones", setCoords: "Board coordinates", setLang: "Language", setStone: "Move sound", msgBtn: "Message the developer", msgT: "Message the developer", msgHint: "Suggestions, problems, feature ideas: only the developer can read this.", msgPh: "Your message", msgContactPh: "Contact (optional, only if you want a reply, e.g. Instagram or email)", msgSend: "Send", msgEmpty: "Please write something first.", msgOk: "Got it, thank you!", msgFail: "Couldn't send. Please try again later.", close: "Close", done: "Done", muteNow: "Sound is muted", stoneT: "Move sound", home: "Back", st_wood: "Wood", st_crisp: "Crisp", st_deep: "Deep", st_soft: "Soft", st_slate: "Slate", st_jade: "Jade", st_drop: "Drop", st_bit: "Bit", st_drum: "Drum" },
+    ja: { popSfx: "効果音", popBgm: "音楽", popAria: "サウンド", setT: "設定", accT: "アカウント", accSub: "ログインすると成績を端末間で引き継げます（近日対応）", setSnd: "サウンド", setSfx: "着手音", setBgm: "音楽", setMore: "外観ほか", setSkin: "碁盤と石", setCoords: "盤面の座標", setLang: "言語", setStone: "着手音の種類", msgBtn: "作者にメッセージ", msgT: "作者にメッセージ", msgHint: "提案・不具合・欲しい機能など何でもどうぞ。作者だけが読めます。", msgPh: "メッセージ", msgContactPh: "連絡先（任意。返信がほしい場合のみ。Instagram やメールなど）", msgSend: "送信", msgEmpty: "まず何か書いてください。", msgOk: "受け取りました。ありがとうございます！", msgFail: "送信できませんでした。しばらくしてからもう一度お試しください。", close: "閉じる", done: "完了", muteNow: "現在ミュート中", stoneT: "着手音", home: "戻る", st_wood: "木", st_crisp: "澄", st_deep: "重", st_soft: "軽", st_slate: "石板", st_jade: "玉", st_drop: "水滴", st_bit: "電子", st_drum: "太鼓" },
+    ko: { popSfx: "효과음", popBgm: "음악", popAria: "소리", setT: "설정", accT: "계정", accSub: "로그인하면 기록이 기기를 넘어 이어져요 (추후 지원)", setSnd: "소리", setSfx: "착수음", setBgm: "음악", setMore: "외형 및 기타", setSkin: "판과 돌", setCoords: "바둑판 좌표", setLang: "언어", setStone: "착수음 종류", msgBtn: "개발자에게 메시지", msgT: "개발자에게 메시지", msgHint: "제안, 문제, 원하는 기능 무엇이든 적어 주세요. 개발자만 볼 수 있습니다.", msgPh: "메시지", msgContactPh: "연락처 (선택, 답장을 원할 때만. 인스타그램이나 이메일 등)", msgSend: "보내기", msgEmpty: "먼저 내용을 적어 주세요.", msgOk: "잘 받았습니다. 감사합니다!", msgFail: "보내지 못했습니다. 잠시 후 다시 시도해 주세요.", close: "닫기", done: "완료", muteNow: "현재 음소거 중", stoneT: "착수음", home: "돌아가기", st_wood: "나무", st_crisp: "청명", st_deep: "묵직", st_soft: "가벼움", st_slate: "석판", st_jade: "옥", st_drop: "물방울", st_bit: "전자", st_drum: "북" },
   };
   const R = window.RushSound;
   const clampVol = (v, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : d; };
@@ -55,6 +55,15 @@
 .rsx .langRow[hidden]{display:none}
 .rsx .langRow button{min-height:44px;padding:0 4px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .rsx .langRow button[aria-pressed="true"]{border:2px solid var(--gold);color:var(--gold);font-weight:700}
+.rsx .swrow{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.rsx .swrow>.ico{width:22px;height:22px;margin:0 4px;flex:none}
+.rsx .swrow .nm{flex:1;min-width:0}
+.rsx .swrow[hidden]{display:none}
+.rsx .swrow .sw{position:relative;flex:none;width:46px;height:28px;margin-right:2px;border-radius:14px;background:var(--line2);transition:background .15s}
+.rsx .swrow .sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--text);transition:transform .15s}
+.rsx .swrow[aria-checked="true"] .sw{background:var(--gold)}
+.rsx .swrow[aria-checked="true"] .sw::after{transform:translateX(18px);background:var(--goldInk)}
+.rsx .swrow:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 .rsx .muted{color:var(--text2)}
 .rsx .stoneGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .rsx .stoneGrid button{min-height:52px;padding:0 4px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
@@ -76,6 +85,7 @@
 .rsPop .sep{height:1px;background:var(--line)}
 .rsSndBtn{color:var(--text)}
 .rsSndBtn[aria-expanded="true"]{background:var(--panel2);color:var(--gold)}
+@media (max-height:600px){.rsx .vrow,.rsx .lrow,.rsx .swrow{min-height:46px}.rsx .setBody{gap:8px}}   /* 320×568 這種矮螢幕：多了「棋盤座標」一列後仍一屏放得下（每列仍 ≥44px 觸控高度） */
 #rsOverlay{position:fixed;inset:0;z-index:30;background:var(--bg);color:var(--text);overflow:hidden;font-family:'Noto Sans TC',sans-serif}
 #rsOverlay:lang(ja){font-family:'Noto Sans JP','Noto Sans TC',sans-serif}
 #rsOverlay:lang(ko){font-family:'Noto Sans KR','Noto Sans TC',sans-serif;word-break:keep-all}
@@ -109,6 +119,8 @@
       <span>${T('setMore')}</span>
       <div class="card">
         <button type="button" class="lrow" id="setSkin"><span id="setSkinPair"></span><span class="nm">${T('setSkin')}</span><span class="val" id="setSkinVal"></span>${CHEV}</button>
+        <div class="sep" id="setCoordsSep"></div>
+        <button type="button" class="swrow" id="setCoords" role="switch" aria-checked="false">${ICO('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v18M3 8h18"/>')}<span class="nm">${T('setCoords')}</span><span class="sw" aria-hidden="true"></span></button>
         <div class="sep"></div>
         <button type="button" class="lrow" id="setLang" aria-expanded="false" aria-controls="setLangRow">${ICO('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>')}<span class="nm">${T('setLang')}</span><span class="val" id="setLangVal"></span>${CHEV}</button>
         <div class="langRow" id="setLangRow" role="group" aria-label="Language" hidden></div>
@@ -239,6 +251,8 @@
         q('setSkinVal').textContent = nm(S.boards, S.boardId()) + '・' + nm(S.stones, S.stonesId());
         const P = window.RushSkinPicker; q('setSkinPair').innerHTML = P ? P.pair() : '';
       }
+      q('setCoords').hidden = q('setCoordsSep').hidden = !S;   // 棋盤座標開關（game/skin.js 的 RushSkin.coords／setCoords，預設關；兩頁共用 vcfgame.coords）
+      if (S) q('setCoords').setAttribute('aria-checked', String(S.coords()));
       q('setStoneVal').textContent = T('st_' + k);
       q('stoneGrid').innerHTML = R.IDS.map((id) => `<button type="button" data-stone="${id}" aria-pressed="${id === k}">${T('st_' + id)}</button>`).join('');
       q('stoneGrid').querySelectorAll('[data-stone]').forEach((b) => b.onclick = () => {
@@ -264,6 +278,7 @@
       q('setLang').onclick = () => { langOpen = q('setLangRow').hidden; q('setLangRow').hidden = !langOpen; q('setLang').setAttribute('aria-expanded', String(langOpen)); };
       q('setStone').onclick = () => { q('stoneMute').hidden = !!o.getSound(); openModal('mStone'); };
       q('setSkin').onclick = () => { if (window.RushSkinPicker) window.RushSkinPicker.open(); };
+      q('setCoords').onclick = () => { const S = window.RushSkin; if (!S) return; S.setCoords(!S.coords()); q('setCoords').setAttribute('aria-checked', String(S.coords())); };
       q('volSfx').oninput = (e) => setVol('sfx', e.target.value, 70);
       q('volSfx').onchange = () => { if (o.getSound() && vols().sfx > 0 && o.previewStone) o.previewStone(); };   // 放開時播一聲試聽
       q('volBgm').oninput = (e) => setVol('bgm', e.target.value, 30);

@@ -1,0 +1,12 @@
+# PROGRESS
+- 階段0：讀完施工單、skin.js、settings.js、game.html／duel.html 棋盤段；方案＝共用 RushSkin.geom（算 pad／cell）＋ drawBoard 的 coords 選項＋ RushSkin.coords()／setCoords()（vcfgame.coords）。
+- 階段1：量測腳本（check/h.mjs、scenes.mjs、baseline.mjs）寫好；改動前整份原始碼複製到 %TEMP%/vcf-snap-coords 當快照，從快照跑基準 → check/baseline.json（背景執行中）。
+- 階段2：已改 game/skin.js（geom／drawCoords／coords／setCoords／storage 事件）、game.html、duel.html（regeom、coords:true、onChange 重算；__duel 多露 cellAt）、score.html（只換版號）、game/settings.js（棋盤座標開關列＋四語）；skin.js?v=20261113c、settings.js?v=20261113c。
+- 階段1完成：baseline.json 400 筆（game 6 情境×4 語×7 尺寸=168、duel 8 情境×4 語×7 尺寸=232）
+- 階段3：寫好 check/check_coords.mjs；QUICK 試跑找出：設定頁在 320×568 多一列後被擠出 → settings.js 加 @media (max-height:600px) 壓列高到 46px；像素檢查改用圓心取樣。
+- 階段3b：QUICK 全綠（198 PASS／0 FAIL）；接著跑完整矩陣 check_coords.mjs → last-run.txt。
+- 階段4：完整矩陣 392 點全過（last-run.txt：PASS 198／FAIL 0）；補拍深色／圖片盤截圖、跑負向測試。
+- 階段5：發現賽後回看情境被結算視窗蓋住、沒真的點到「看每題解法」／「退一手」→ 修 scenes.mjs，改動前基準（快照）的 duel 部分重跑後合併；check 全量重跑。
+- 階段5b：duel 基準重跑完成（408 筆，含賽後回看／自己擺確認旗標），開始最終全量檢查。
+- 階段6：舊版 ja 320×568 兩儀殿五子棋版面本身不穩（舊版 16 次取樣 242／296 兩態）→ check 對這種點改用同輪關著當參考並列出；最終 last-run.txt 201 PASS／0 FAIL。
+- 階段7完成：REPORT.md 已寫；check/ 內中間檔已清。
