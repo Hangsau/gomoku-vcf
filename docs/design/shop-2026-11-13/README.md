@@ -17,4 +17,5 @@
 
 ## 狀態
 
-等使用者挑版本（ui-taste：`vcf-rush-shop-2026-11-13`，pending）。尚未施工。
+- 2026-11-13 使用者選 **A**（「就照你推薦的方式做吧」），並要求**不標「之後會收費」，只標「限時免費」**。A 稿已拿掉那兩句（B、C 稿沒改，仍留著舊字）。
+- 施工單 `WORKORDER.md`，派 cc2；進度 `PROGRESS.md`、報告 `REPORT.md`。驗收、部署由主 session 做（先 schema.sql → deploy_worker → deploy_rush）。
