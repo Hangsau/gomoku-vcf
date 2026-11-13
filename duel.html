@@ -35,10 +35,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .icob { width: 48px; height: 48px; border: 0; border-radius: 14px; background: transparent; color: var(--text); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .icob[hidden] { display: none; }   /* 回看時藏起邀請鈕 */
 .ico { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.langs { position: absolute; right: 8px; top: calc(56px + env(safe-area-inset-top)); z-index: 5; background: var(--panel); border: 1px solid var(--line2); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-.langs[hidden] { display: none; }
-.langs button { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--text); font-size: 16px; text-align: left; }
-.langs button[aria-pressed="true"] { color: var(--gold); font-weight: 700; }
 .btn { height: 56px; border-radius: 18px; border: 0; font-size: 19px; font-weight: 900; }
 .btn.gold { background: var(--gold); color: var(--goldInk); }
 .btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--text); font-size: 16px; font-weight: 500; }
@@ -187,10 +183,8 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <a href="game.html#pick" class="icob" aria-label="回挑戰" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
     <b style="font-size: 18px;" data-i18n="title">兩儀殿</b>
     <div>
-      <button type="button" class="icob" data-sound aria-pressed="true"></button>
-      <button type="button" class="icob" id="langBtn" aria-label="Language" aria-haspopup="true" aria-expanded="false" aria-controls="langs"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
+      <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
-    <div class="langs" id="langs" role="group" aria-label="Language" hidden></div>
   </div>
   <div class="pad me">
     <label for="nick" class="muted" style="font-size: 15px; white-space: nowrap;" data-i18n="nick">暱稱</label>
@@ -207,7 +201,7 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
     <button type="button" class="icob" id="rInvite" aria-label="邀請" data-i18n-aria="invite" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></button>
-    <button type="button" class="icob" data-sound aria-pressed="true"></button>
+    <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div class="pbar" id="pTop"></div>
   <div class="status" id="status" role="status"></div>
@@ -331,6 +325,9 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），game.html 同步 -->
 <script src="game/skin.js?v=20261113a"></script>
+<script src="game/settings.js?v=20261113a"></script><!-- 共用設定頁（齒輪打開），game.html 同步 -->
+<script src="game/skin-picker.js?v=20261113b"></script><!-- 設定頁的「棋具」列打開的棋具頁 -->
+<script src="game/shop.js?v=20261113b"></script><!-- 棋具頁「＋」打開的商店 -->
 <script type="module">
 import { BLACK, WHITE, EMPTY, SIZE, FORBID_NONE, forbidType } from './game/duel/rules.js';
 import { RULE, PHASE, ACTION, OFFER_COUNT, SWAP2_ADD_CHOICE, END_REASON, replayMatch, actorOf, colorOf, canChooseYamaguchi, openingZoneRadius, placeError, stoneColorToPlace, ruleHasForbidden } from './game/duel/match.js';
@@ -467,17 +464,13 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
-  $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
-  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); });
-  renderSound(); renderCreate(); renderNet(); renderLobby(); renderRoom();
+  document.querySelectorAll('[data-set-open]').forEach(el => el.setAttribute('aria-label', RushSettings.title(lang)));
+  if (window.rsSet) window.rsSet.render();
+  renderCreate(); renderNet(); renderLobby(); renderRoom();
 }
-function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
-$('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
-document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
 
 // ---------- 聲音（照 game.html） ----------
-const SND_ON = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>`, SND_OFF = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
 let soundOn = store.get('vcfgame.sound') !== '0', actx = null;
 function audio() {
   if (!soundOn) return null;
@@ -489,7 +482,7 @@ function audio() {
   return actx;
 }
 addEventListener('pointerdown', () => { audio(); }, { capture: true, passive: true });
-// 音量與落子聲種類在 Rush 的設定頁調（同網域同一份 localStorage）；每次發聲時重讀
+// 音量與落子聲種類在共用設定頁 game/settings.js 調（齒輪；同網域同一份 localStorage）；每次發聲時重讀
 const clampVol = (v, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : d; };
 const volOf = (k, d) => clampVol(store.get('vcfgame.vol.' + k), d);
 let sfxMaster = null;
@@ -498,12 +491,12 @@ function sfxOut(a) {   // 落子聲、入座輕響、倒數嗶聲共用的 maste
   sfxMaster.gain.value = volOf('sfx', 70) / 70;
   return sfxMaster;
 }
-function stoneSound(soft) {
+function stoneSound(soft, kind) {
   const a = audio(); if (!a) return;
   const out = sfxOut(a), t = a.currentTime;
   try {
     const R = window.RushSound;
-    if (R && R.STONE_SND) { R.STONE_SND[R.stoneId(store.get('vcfgame.sfx.stone'))](a, out, t, soft ? 0.35 / 0.6 : 1); return; }
+    if (R && R.STONE_SND) { R.STONE_SND[R.stoneId(kind || store.get('vcfgame.sfx.stone'))](a, out, t, soft ? 0.35 / 0.6 : 1); return; }
   } catch {}
   const vol = soft ? 0.35 : 0.6;   // RushSound 沒載到：退回寫死的木頭聲
   const n = a.createBuffer(1, Math.floor(a.sampleRate * 0.06), a.sampleRate), d = n.getChannelData(0);
@@ -598,10 +591,18 @@ function bgmTouch() {   // 手機觸控的 pointerdown 不算使用者操作，A
 ['pointerdown', 'click', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, bgmTouch, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') bgmSync(); else { bgmPause(); bgmStop(); } });
 bgmSync();   // 進頁就預載第一首並試著播；被擋就安靜等第一次操作
-function renderSound() {
-  document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); });
-}
-document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); bgmSync(); if (soundOn) stoneSound(); });
+// ---------- 設定頁（2026-11-13：聲音鈕、語言鈕都收進共用設定頁 game/settings.js，跟 game.html 同一份） ----------
+window.RushLang = () => lang;   // skin-picker.js、shop.js 取語言用（這裡的 lang 是模組內變數）
+let gearLast = null;
+const rsSet = window.rsSet = RushSettings.init({
+  apiBase: 'https://vcf-game-api.psyhangsau.workers.dev', openBtn: () => gearLast,
+  getLang: () => lang, setLang: (l) => { lang = l; store.set('vcfgame.lang', lang); applyLang(); },
+  onVol: (k) => { if (k === 'sfx') { if (sfxMaster) sfxMaster.gain.value = volOf('sfx', 70) / 70; } else bgmSync(); },
+  previewStone: (k) => stoneSound(false, k),
+  getSound: () => soundOn, setSound: (on) => { soundOn = on; store.set('vcfgame.sound', on ? '1' : '0'); bgmSync(); },
+  unmuteOnVol: true,   // 以前用喇叭鈕關過聲音（vcfgame.sound='0'）的人，拉音量就等於打開
+});
+document.querySelectorAll('[data-set-open]').forEach(b => b.onclick = () => { gearLast = b; rsSet.open(); });
 
 // ---------- 身分、暱稱、設定 ----------
 let myId = store.get('vcfgame.duel.id');
@@ -1668,7 +1669,7 @@ function beep(last) {
   gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
   o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
 }
-if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, bgmVolume, volOf, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
 // 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
 let vLastTick = performance.now(), vLastCount = null;
 setInterval(() => {

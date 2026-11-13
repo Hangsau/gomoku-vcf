@@ -12,7 +12,7 @@
     ja: { shop: 'ショップ', free: '期間限定 無料', stones: '石', boards: '盤', tag: '無料', owned: '所持済み', using: '使用中', claim: 'もらう', use: '使う', close: '閉じる', back: '戻る', empty: '現在、並んでいる商品はありません' },
     ko: { shop: '상점', free: '한정 무료', stones: '돌', boards: '판', tag: '무료', owned: '보유 중', using: '사용 중', claim: '받기', use: '사용', close: '닫기', back: '뒤로', empty: '지금 진열된 상품이 없어요' },
   };
-  const L = () => (typeof lang !== 'undefined' && UI[lang]) ? lang : 'zh';
+  const L = () => { const l = typeof lang !== 'undefined' ? lang : (window.RushLang ? window.RushLang() : 'zh'); return UI[l] ? l : 'zh'; };   // game.html 的 lang 是全域；duel.html 的在模組裡，靠 window.RushLang()
   const U = (k) => UI[L()][k];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const IC_BAG = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';

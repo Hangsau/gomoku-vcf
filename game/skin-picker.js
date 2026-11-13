@@ -12,7 +12,7 @@
     ja: { entry: '碁盤と石', title: '碁盤と石', board: '盤', stones: '石', close: '閉じる', note: '選ぶとすぐ反映。問題・教室・対戦すべてに', locked: '未解放', shop: 'ショップ' },
     ko: { entry: '판과 돌', title: '판과 돌', board: '판', stones: '돌', close: '닫기', note: '고르면 바로 적용돼요. 문제·교실·대전 모두', locked: '잠김', shop: '상점' },
   };
-  const L = () => (typeof lang !== 'undefined' && UI[lang]) ? lang : 'zh';
+  const L = () => { const l = typeof lang !== 'undefined' ? lang : (window.RushLang ? window.RushLang() : 'zh'); return UI[l] ? l : 'zh'; };   // game.html 的 lang 是全域；duel.html 的在模組裡，靠 window.RushLang()
   const U = (k) => UI[L()][k];
   const IC_LOCK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 

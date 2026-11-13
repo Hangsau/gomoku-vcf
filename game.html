@@ -260,38 +260,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
   .trev .bt .btn { height: 48px !important; }
   #sPlay .info { padding-top: 4px; }
 }
-/* 設定頁（2026-11-12 使用者選設計稿 SetA：一頁清單） */
-#sSet .setBody { padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: clamp(8px, 1.8dvh, 12px); }
-#sSet .setTop { justify-content: flex-start; }
-#sSet .setTop b { font-size: 18px; }
-#sSet .acc { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px 14px; border: 1px solid var(--line2); border-radius: 16px; background: var(--panel); color: var(--text); text-align: left; cursor: default; }
-#sSet .acc .av { width: 40px; height: 40px; border-radius: 50%; background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-#sSet .acc .av .ico { width: 22px; height: 22px; color: var(--text2); }
-#sSet .acc .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-#sSet .acc .tx b { font-size: 16px; }
-#sSet .acc .tx span { font-size: 13px; color: var(--text2); line-height: 1.35; }
-#sSet .grp { display: flex; flex-direction: column; gap: 6px; }
-#sSet .grp > span { font-size: 13px; color: var(--text2); padding-left: 4px; }
-#sSet .card { border-radius: 16px; background: var(--panel); padding: 2px 14px; }
-#sSet .card .sep { height: 1px; background: var(--line); }
-#sSet .vrow { display: flex; align-items: center; gap: 10px; min-height: 52px; }
-#sSet .vrow label { display: flex; align-items: center; gap: 8px; width: 112px; flex: none; font-size: 15px; min-width: 0; white-space: nowrap; }
-#sSet .vrow label .ico { width: 20px; height: 20px; flex: none; }
-#sSet .vrow input[type=range] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--gold); }
-#sSet .vrow output { width: 28px; text-align: right; font-family: var(--num); font-size: 16px; color: var(--gold); flex: none; }
-#sSet .lrow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 0; border: 0; background: transparent; color: var(--text); font-size: 15px; text-align: left; }
-#sSet .lrow > .ico { width: 22px; height: 22px; margin: 0 4px; flex: none; }
-#sSet .lrow .nm { flex: 1; min-width: 0; }
-#sSet .lrow .val { font-size: 14px; color: var(--text2); min-width: 0; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#sSet .lrow .chev { width: 20px; height: 20px; flex: none; color: var(--text2); transition: transform .15s; }
-#sSet .lrow[aria-expanded="true"] .chev { transform: rotate(90deg); }
-#sSet .langRow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 0 10px; }
-#sSet .langRow[hidden] { display: none; }
-#sSet .langRow button { min-height: 44px; padding: 0 4px; border-radius: 10px; border: 1px solid var(--line2); background: transparent; color: var(--text); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#sSet .langRow button[aria-pressed="true"] { border: 2px solid var(--gold); color: var(--gold); font-weight: 700; }
-.stoneGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.stoneGrid button { min-height: 52px; padding: 0 4px; border-radius: 12px; border: 1px solid var(--line2); background: transparent; color: var(--text); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.stoneGrid button[aria-pressed="true"] { border: 2px solid var(--gold); color: var(--gold); font-weight: 700; }
+/* 設定頁的樣式在 game/settings.js（跟兩儀殿共用，2026-11-13） */
 @media (prefers-reduced-motion: reduce) { .bar > div, .plus, .pbar > div { transition: none; } }
 </style>
 </head>
@@ -338,40 +307,8 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
   </div>
 </section>
 
-<!-- 設定（2026-11-12 使用者選設計稿 SetA）：帳號（之後開放）、音量、棋具、語言、留言 -->
-<section id="sSet" class="screen" hidden>
-  <div class="topbar setTop">
-    <button type="button" class="icob" id="setBack" aria-label="回入口" data-i18n-aria="home"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <b data-i18n="setT">設定</b>
-  </div>
-  <div class="setBody">
-    <div class="acc" role="group" aria-disabled="true">
-      <span class="av"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 14.5-4 16 0"/></svg></span>
-      <span class="tx"><b data-i18n="accT">帳號</b><span data-i18n="accSub">登入後成績跟著你換裝置（之後開放）</span></span>
-    </div>
-    <div class="grp">
-      <span data-i18n="setSnd">聲音</span>
-      <div class="card">
-        <div class="vrow"><label for="volSfx"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="currentColor" stroke="none"/></svg><span data-i18n="setSfx">落子音效</span></label><input id="volSfx" type="range" min="0" max="100" step="1" value="70"><output id="volSfxN" for="volSfx">70</output></div>
-        <div class="sep"></div>
-        <div class="vrow"><label for="volBgm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><span data-i18n="setBgm">音樂</span></label><input id="volBgm" type="range" min="0" max="100" step="1" value="30"><output id="volBgmN" for="volBgm">30</output></div>
-        <div class="sep"></div>
-        <button type="button" class="lrow" id="setStone" aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h2.5l2-5 3 10 3-8 2 3H21"/></svg><span class="nm" data-i18n="setStone">落子聲</span><span class="val" id="setStoneVal"></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-    </div>
-    <div class="grp">
-      <span data-i18n="setMore">外觀與其他</span>
-      <div class="card">
-        <button type="button" class="lrow" id="setSkin"><span id="setSkinPair"></span><span class="nm" data-i18n="setSkin">棋具</span><span class="val" id="setSkinVal"></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <div class="sep"></div>
-        <button type="button" class="lrow" id="setLang" aria-expanded="false" aria-controls="setLangRow"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg><span class="nm" data-i18n="setLang">語言</span><span class="val" id="setLangVal"></span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <div class="langRow" id="setLangRow" role="group" aria-label="Language" hidden></div>
-        <div class="sep"></div>
-        <button type="button" class="lrow" id="openMsg"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><span class="nm" data-i18n="msgBtn">給作者留言</span><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- 設定（2026-11-12 使用者選設計稿 SetA；2026-11-13 內容搬到 game/settings.js，兩儀殿共用）：這裡只留空容器 -->
+<section id="sSet" class="screen" hidden></section>
 
 <!-- 競速選模式（2026-11-08 使用者：地獄模式、無限之塔都包在競速裡） -->
 <section id="sPick" class="screen" hidden>
@@ -620,23 +557,6 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
     <span class="muted" style="font-size:14px" data-i18n="ios3">之後從主畫面的圖示打開，就是全螢幕。</span>
   </div>
 </div>
-<div class="modal" id="mMsg" hidden role="dialog" aria-modal="true" aria-labelledby="mMsgT">
-  <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mMsgT" data-i18n="msgT">給作者留言</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="rform">
-      <span class="muted" data-i18n="msgHint">建議、遇到的問題、想要的功能都可以寫，只有作者看得到。</span>
-      <textarea id="msgText" maxlength="500" rows="5" placeholder="想說的話" data-i18n-ph="msgPh" aria-labelledby="mMsgT"></textarea>
-      <input id="msgContact" type="text" maxlength="100" autocomplete="off" placeholder="聯絡方式（選填）" data-i18n-ph="msgContactPh" aria-label="聯絡方式" data-i18n-aria="msgContactPh">
-      <div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn gold" id="msgSend" style="height:44px;flex:1;font-size:16px" data-i18n="msgSend">送出</button><span class="muted" id="msgStatus" role="status" style="font-size:13px"></span></div>
-    </div>
-  </div>
-</div>
-<div class="modal" id="mStone" hidden role="dialog" aria-modal="true" aria-labelledby="mStoneT">
-  <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mStoneT" data-i18n="stoneT">落子聲</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="stoneGrid" id="stoneGrid" role="group" aria-labelledby="mStoneT"></div>
-    <span class="muted" id="stoneMute" style="font-size:13px" hidden data-i18n="muteNow">目前靜音中</span>
-    <button type="button" class="btn gold" data-close style="height:48px;font-size:16px" data-i18n="done">完成</button>
-  </div>
-</div>
 <div class="modal" id="mReview" hidden role="dialog" aria-modal="true" aria-labelledby="mReviewT">
   <div class="box"><div class="grip"></div><div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mReviewT" data-i18n="reviewT">這局的題目</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="revList"></div></div>
 </div>
@@ -646,6 +566,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html 同步 -->
 <script src="game/skin.js?v=20261113a"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
+<script src="game/settings.js?v=20261113a"></script><!-- 共用設定頁（game.html、duel.html）；改了就換這個號碼，duel.html 同步 -->
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
@@ -989,40 +910,17 @@ for (const ev of ['pointerdown', 'click', 'keydown', 'touchend']) addEventListen
 document.addEventListener('visibilitychange', () => bgmSync());
 new MutationObserver(bgmSetTrack).observe($('sPlay'), { attributes: true, attributeFilter: ['hidden'] });
 
-// ---------- 設定頁 ----------
-function renderSet() {
-  if (!$('sSet')) return;
-  const sf = $('volSfx'), bg = $('volBgm');
-  if (sf) { sf.value = vol.sfx; $('volSfxN').textContent = vol.sfx; bg.value = vol.bgm; $('volBgmN').textContent = vol.bgm; }
-  const S = window.RushSkin;
-  if (S) {
-    const nm = (list, id) => { const it = list.find(x => x.id === id); return it ? S.name(it, lang) : ''; };
-    $('setSkinVal').textContent = nm(S.boards, S.boardId()) + '・' + nm(S.stones, S.stonesId());
-    const P = window.RushSkinPicker; $('setSkinPair').innerHTML = P ? P.pair() : '';
-  }
-  $('setStoneVal').textContent = T('st_' + stoneKind);
-  $('stoneGrid').innerHTML = STONE_IDS.map(k => `<button type="button" data-stone="${k}" aria-pressed="${k === stoneKind}">${T('st_' + k)}</button>`).join('');
-  $('stoneGrid').querySelectorAll('[data-stone]').forEach(b => b.onclick = () => {
-    stoneKind = b.dataset.stone; store.set('vcfgame.sfx.stone', stoneKind);
-    $('stoneGrid').querySelectorAll('[data-stone]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    $('setStoneVal').textContent = T('st_' + stoneKind);
-    stoneSound();
-  });
-  $('stoneMute').hidden = soundOn;
-  $('setLangVal').textContent = LANGS.find(l => l[0] === lang)[1];
-  $('setLangRow').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
-  $('setLangRow').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); applyLang(); renderStart(); });
-}
+// ---------- 設定頁（2026-11-13 起內容在 game/settings.js，跟兩儀殿共用；這裡只接線） ----------
+const rsSet = RushSettings.init({
+  host: $('sSet'), apiBase: API,
+  getLang: () => lang, setLang: (l) => { lang = l; store.set('vcfgame.lang', lang); applyLang(); renderStart(); },
+  onBack: () => show('sHome'),
+  onVol: (k, v) => { vol[k] = v; if (k === 'sfx') { if (sfxMaster) sfxMaster.gain.value = vol.sfx / 70; } else bgmSync(); },
+  onStone: (k) => { stoneKind = k; },
+  previewStone: (k) => stoneSound(false, k),
+  getSound: () => soundOn,
+});
 $('openSet').onclick = () => show('sSet');
-$('setBack').onclick = () => show('sHome');
-$('setLang').onclick = () => { const o = $('setLangRow').hidden; $('setLangRow').hidden = !o; $('setLang').setAttribute('aria-expanded', String(o)); };
-$('setStone').onclick = () => { $('stoneMute').hidden = soundOn; openModal('mStone'); };
-$('setSkin').onclick = () => { if (window.RushSkinPicker) window.RushSkinPicker.open(); };
-$('volSfx').oninput = (e) => { vol.sfx = clampVol(e.target.value, 70); $('volSfxN').textContent = vol.sfx; if (sfxMaster) sfxMaster.gain.value = vol.sfx / 70; store.set('vcfgame.vol.sfx', String(vol.sfx)); };
-$('volSfx').onchange = () => { if (soundOn && vol.sfx > 0) stoneSound(); };   // 放開時播一聲試聽
-$('volBgm').oninput = (e) => { vol.bgm = clampVol(e.target.value, 30); $('volBgmN').textContent = vol.bgm; store.set('vcfgame.vol.bgm', String(vol.bgm)); bgmSync(); };
-window.RushSkin && window.RushSkin.onChange(renderSet);
-renderSet();
 
 
 // ---------- 引擎（score-worker.js：vcf_move 下一手、電腦擋、判輸贏） ----------
@@ -1883,17 +1781,6 @@ $('instGo').onclick = async () => {
 };
 $('instNo').onclick = () => { instClosed = true; $('instBar').hidden = true; };
 renderInst();
-$('openMsg').onclick = () => { $('msgStatus').textContent = ''; $('msgSend').disabled = false; openModal('mMsg'); };
-$('msgSend').onclick = async () => {
-  const text = $('msgText').value.trim();
-  if (!text) { $('msgStatus').textContent = T('msgEmpty'); $('msgText').focus(); return; }
-  $('msgSend').disabled = true; $('msgStatus').textContent = '';
-  try {
-    const r = await fetch(API + '/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, contact: $('msgContact').value.trim(), nick: store.get('vcfgame.nick') || '', lang }) });
-    if (!r.ok) throw new Error(r.status);
-    $('msgText').value = ''; $('msgStatus').textContent = T('msgOk');
-  } catch { $('msgStatus').textContent = T('msgFail'); $('msgSend').disabled = false; }
-};
 function reportForm(row, x) {   // 回報這題有問題（2026-11-07）：選原因＋幾句話 → Worker /report；後台看得到、可停用
   if (row.nextElementSibling && row.nextElementSibling.classList.contains('rform')) { row.nextElementSibling.remove(); return; }
   const f = document.createElement('div'); f.className = 'rform';
