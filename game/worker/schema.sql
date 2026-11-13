@@ -81,3 +81,6 @@ CREATE INDEX IF NOT EXISTS learn_vid_day ON learn(vid, day);
 
 -- 全站設定（2026-11-12）：k='skins_off' → {"boards":[…],"stones":[…]}，後台關閉的棋盤與棋子
 CREATE TABLE IF NOT EXISTS settings(k TEXT PRIMARY KEY, v TEXT NOT NULL, t INTEGER NOT NULL);
+
+-- 商店擁有紀錄（2026-11-13）：vid 匿名編號、item 'b:<棋盤id>' 或 's:<棋子id>'、price 當時價格（免費期 0）、src 來源（'free' 免費領取／'grand' 上線前已在用）
+CREATE TABLE IF NOT EXISTS owned(vid TEXT NOT NULL, item TEXT NOT NULL, t INTEGER NOT NULL, price INTEGER NOT NULL DEFAULT 0, src TEXT NOT NULL DEFAULT 'free', PRIMARY KEY(vid, item));

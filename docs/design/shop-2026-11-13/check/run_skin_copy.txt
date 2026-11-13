@@ -1,0 +1,107 @@
+PASS zh 360x640 沒有東西超出視窗 []
+PASS zh 360x640 scrollHeight 640 <= clientHeight 640
+PASS zh 360x640 預覽 canvas 寬 270 >= 190
+PASS zh 360x640 棋盤格 15/15、棋子格 14/14
+PASS zh 360x640 格子高度最小 44 >= 40（寬 37.5，8 欄不變所以寬度 <40，原本就如此）
+PASS zh 360x640 沒有 console error 
+PASS zh 375x667 沒有東西超出視窗 []
+PASS zh 375x667 scrollHeight 667 <= clientHeight 667
+PASS zh 375x667 預覽 canvas 寬 295 >= 190
+PASS zh 375x667 棋盤格 15/15、棋子格 14/14
+PASS zh 375x667 格子高度最小 44 >= 40（寬 39.4，8 欄不變所以寬度 <40，原本就如此）
+PASS zh 375x667 沒有 console error 
+PASS en 360x640 沒有東西超出視窗 []
+PASS en 360x640 scrollHeight 640 <= clientHeight 640
+PASS en 360x640 預覽 canvas 寬 270 >= 190
+PASS en 360x640 棋盤格 15/15、棋子格 14/14
+PASS en 360x640 格子高度最小 44 >= 40（寬 37.5，8 欄不變所以寬度 <40，原本就如此）
+PASS en 360x640 沒有 console error 
+PASS en 375x667 沒有東西超出視窗 []
+PASS en 375x667 scrollHeight 667 <= clientHeight 667
+PASS en 375x667 預覽 canvas 寬 295 >= 190
+PASS en 375x667 棋盤格 15/15、棋子格 14/14
+PASS en 375x667 格子高度最小 44 >= 40（寬 39.4，8 欄不變所以寬度 <40，原本就如此）
+PASS en 375x667 沒有 console error 
+PASS ja 360x640 沒有東西超出視窗 []
+PASS ja 360x640 scrollHeight 640 <= clientHeight 640
+PASS ja 360x640 預覽 canvas 寬 268 >= 190
+PASS ja 360x640 棋盤格 15/15、棋子格 14/14
+PASS ja 360x640 格子高度最小 44 >= 40（寬 37.5，8 欄不變所以寬度 <40，原本就如此）
+PASS ja 360x640 沒有 console error 
+PASS ja 375x667 沒有東西超出視窗 []
+PASS ja 375x667 scrollHeight 667 <= clientHeight 667
+PASS ja 375x667 預覽 canvas 寬 293 >= 190
+PASS ja 375x667 棋盤格 15/15、棋子格 14/14
+PASS ja 375x667 格子高度最小 44 >= 40（寬 39.4，8 欄不變所以寬度 <40，原本就如此）
+PASS ja 375x667 沒有 console error 
+PASS ko 360x640 沒有東西超出視窗 []
+PASS ko 360x640 scrollHeight 640 <= clientHeight 640
+PASS ko 360x640 預覽 canvas 寬 270 >= 190
+PASS ko 360x640 棋盤格 15/15、棋子格 14/14
+PASS ko 360x640 格子高度最小 44 >= 40（寬 37.5，8 欄不變所以寬度 <40，原本就如此）
+PASS ko 360x640 沒有 console error 
+PASS ko 375x667 沒有東西超出視窗 []
+PASS ko 375x667 scrollHeight 667 <= clientHeight 667
+PASS ko 375x667 預覽 canvas 寬 295 >= 190
+PASS ko 375x667 棋盤格 15/15、棋子格 14/14
+PASS ko 375x667 格子高度最小 44 >= 40（寬 39.4，8 欄不變所以寬度 <40，原本就如此）
+PASS ko 375x667 沒有 console error 
+PASS 2a 500＋無清單：棋盤 8/8、棋子 7/7
+PASS 2a 14 個新的都不在
+PASS 2a setStones('poop') false、setBoard('grass') false 都回 false
+PASS 2a 沒有 console error 
+PASS 2b 棋盤 9/9、棋子 9/9
+PASS 2b 只有 on 的出現
+PASS 2b setStones('poop') true（要 true）、pets false（要 false）
+PASS 2c green 不見、grass 出現
+PASS 2c 選的都不開放時實際用 classic/flat
+PASS 2c localStorage 的選擇沒被改寫 green/bunny
+PASS classic、flat 永遠開放
+PASS 重新開放後自動回來 green/bunny
+PASS 2d 舊格式：green 關閉、棋盤 7/7（新的也都不在）
+PASS 2d 舊格式不報錯 
+PASS 2e 壞掉的 localStorage：8/8、7/7、error 0
+PASS 換 poop 成功
+PASS poop fig 組 ring 是 undefined
+PASS poop numHalo 有值
+PASS poop CSS 變數是 contain
+PASS 換 bunny 成功
+PASS bunny fig 組 ring 是 undefined
+PASS bunny numHalo 有值
+PASS bunny CSS 變數是 contain
+PASS 換 pets 成功
+PASS pets fig 組 ring 是 undefined
+PASS pets numHalo 有值
+PASS pets CSS 變數是 contain
+PASS 換 onigiri 成功
+PASS onigiri fig 組 ring 是 undefined
+PASS onigiri numHalo 有值
+PASS onigiri CSS 變數是 contain
+PASS 換 sky 成功
+PASS sky fig 組 ring 是 undefined
+PASS sky numHalo 有值
+PASS sky CSS 變數是 contain
+PASS 換 boo 成功
+PASS boo fig 組 ring 是 undefined
+PASS boo numHalo 有值
+PASS boo CSS 變數是 contain
+PASS 換 donut 成功
+PASS donut fig 組 ring 是 undefined
+PASS donut numHalo 有值
+PASS donut CSS 變數是 contain
+PASS 換 grass 成功
+PASS 換 starry 成功
+PASS 換 beach 成功
+PASS 換 chalk 成功
+PASS 換 ice 成功
+PASS 換 denim 成功
+PASS 換 pool 成功
+PASS 非 fig 組 numHalo 回 null
+PASS fillNum 存在
+PASS fillNum fig：stroke:5.6:#1B1A17:round|fill|stroke:5.6:#FFFFFF:round|fill
+PASS fillNum 非 fig 只 fill
+PASS 逐一換沒有 console error 
+SHOT combo_bunny_grass.png
+SHOT combo_sky_starry.png
+PASS 負向測試：.sgrid 4 欄會被抓到（bad=5 sh=675/ch=640 canvas=190）
+PASS 104／FAIL 0

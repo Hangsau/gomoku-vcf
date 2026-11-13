@@ -645,7 +645,7 @@ body.rv #twLeave2, body.rv #twEnd2, body.rv #twGoNext, body:not(.rv) .rvonly { d
 </div>
 
 <script src="game/sound.js?v=20261112a"></script><!-- 改了 game/sound.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html 同步 -->
-<script src="game/skin.js?v=20261112b"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
+<script src="game/skin.js?v=20261113a"></script><!-- 改了 game/skin.js 就換這個號碼（瀏覽器會快取 4 小時），duel.html、score.html 同步 -->
 <script>
 'use strict';
 // ---------- 規則常數（2026-11-07 使用者定：60 秒、答對 +20 秒、錯 3 題結束、起始段位 ±1 抽題；沒升段＝沒證明起始段位，降段不入榜） ----------
@@ -2338,6 +2338,7 @@ if (location.hash === '#pick') { history.replaceState(null, '', location.pathnam
 <!-- VCF 教學（2026-11-10）：一盤棋教學，見 docs/tutorial_implementation.md。版本號跟 BUILD（部署時換成 commit 短碼；GitHub Pages 開發版是 dev，每次都抓新的），改了才不會被快取擋住 -->
 <script>(() => { const s = document.createElement('script'); s.src = 'game/learn/learn.js?v=' + (BUILD === 'dev' ? Date.now() : BUILD); document.body.appendChild(s); })();</script>
 <script>(() => { const s = document.createElement('script'); s.src = 'game/skin-picker.js?v=' + (BUILD === 'dev' ? Date.now() : BUILD); document.body.appendChild(s); })();</script>   <!-- 棋具頁（棋盤、棋子分開配） -->
+<script>(() => { const s = document.createElement('script'); s.src = 'game/shop.js?v=' + (BUILD === 'dev' ? Date.now() : BUILD); document.body.appendChild(s); })();</script>   <!-- 棋具商店（限時免費領取）；要在 skin-picker.js 之後，棋具頁的「＋」才找得到它 -->
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 </body>
 </html>

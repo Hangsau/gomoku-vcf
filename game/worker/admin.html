@@ -630,9 +630,16 @@ load();
 // 清單從遊戲本身來（/game/skin.js 的 RushSkin.boards／stones）；關閉的 id 存在 Worker（POST /admin/skins），玩家的 skin.js 最慢 1 分鐘後看到
 const SK_FIXED = ['classic', 'flat'];
 let skOff = { boards: [], stones: [] }, skOn = { boards: [], stones: [] }, skLoaded = false, skMsg = '', skErr = false;
+let skClaims = null;   // 商店領取數（2026-11-13）：{ 'b:grass': 3, … }＋共幾人；讀不到就是 null，不顯示數字、不影響開關
 async function loadSkins() {
   try { const r = await api('/admin/skins'); skOff = r.off; skOn = r.on || { boards: [], stones: [] }; skLoaded = true; skMsg = ''; }
   catch (e) { skMsg = '讀不到開關狀態：' + e.message; skErr = true; }
+  if (tab === 'sk') render();
+  try {
+    const r = await api('/admin/shop'), m = {};
+    for (const x of r.items || []) m[x.item] = x.n;
+    skClaims = { m, people: Number(r.people) || 0 };
+  } catch { skClaims = null; }
   if (tab === 'sk') render();
 }
 // next＝{ off:{boards,stones}, on:{boards,stones} }
@@ -661,7 +668,7 @@ function renderSkins() {
       const fixed = SK_FIXED.includes(it.id), isOff = !fixed && (it.optIn ? !skOn[kind].includes(it.id) : skOff[kind].includes(it.id));
       const row = el('div', 'skr'), p = el('div', 'pv'); pv(p, it);
       const nm = el('div', 'nm'); const t = el('span', '', S.name(it, 'zh')); if (it.optIn) t.append(el('small', 'new', '新'));
-      nm.append(t, el('small', '', it.id));
+      nm.append(t, el('small', '', it.id + (skClaims && it.optIn ? ' ・已領 ' + (skClaims.m[(kind === 'boards' ? 'b:' : 's:') + it.id] || 0) : '')));
       row.append(p, nm);
       if (fixed) row.append(el('span', 'fx', '固定開放'));
       else {
@@ -690,7 +697,8 @@ function renderSkins() {
       p.append(d);
     });
   };
-  list.append(msg, q, sec('棋盤', 'boards', S.boards, bPv), sec('棋子', 'stones', S.stones, sPv));
+  const ppl = el('p', 'msg', skClaims ? '共 ' + skClaims.people + ' 人領過' : ''); ppl.style.padding = '0 0 8px'; if (!skClaims) ppl.hidden = true;
+  list.append(msg, ppl, q, sec('棋盤', 'boards', S.boards, bPv), sec('棋子', 'stones', S.stones, sPv));
   if (!skLoaded) msg.textContent = msg.textContent || '讀取開關狀態中…';
 }
 </script>

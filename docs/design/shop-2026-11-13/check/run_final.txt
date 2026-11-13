@@ -1,0 +1,175 @@
+PASS zh 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS zh 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS zh 360x640 商店頁沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS zh 360x640 四語文字有出來：入口 aria「商店」、標題「商店」、膠囊「限時免費」、格子「免費」
+PASS zh 360x640 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS zh 360x640 商店＋小框文字沒有禁字
+PASS zh 360x640 首頁／商店沒有 console error 
+PASS zh 360x640 棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS zh 360x640 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":37.5,"h":44,"svg":true}
+PASS zh 360x640 棋具頁預覽 270px >= 190
+PASS zh 360x640 棋具頁格子高度最小 44 >= 40
+PASS zh 360x640 棋具頁文字沒有禁字
+PASS zh 360x640 棋具頁沒有 console error 
+PASS zh 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS zh 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS zh 375x667 商店頁沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS zh 375x667 四語文字有出來：入口 aria「商店」、標題「商店」、膠囊「限時免費」、格子「免費」
+PASS zh 375x667 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS zh 375x667 商店＋小框文字沒有禁字
+PASS zh 375x667 首頁／商店沒有 console error 
+PASS zh 375x667 棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS zh 375x667 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":39.375,"h":44,"svg":true}
+PASS zh 375x667 棋具頁預覽 295px >= 190
+PASS zh 375x667 棋具頁格子高度最小 44 >= 40
+PASS zh 375x667 棋具頁文字沒有禁字
+PASS zh 375x667 棋具頁沒有 console error 
+PASS en 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS en 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS en 360x640 商店頁沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS en 360x640 四語文字有出來：入口 aria「Shop」、標題「Shop」、膠囊「Limited-time free」、格子「Free」
+PASS en 360x640 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS en 360x640 商店＋小框文字沒有禁字
+PASS en 360x640 首頁／商店沒有 console error 
+PASS en 360x640 棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS en 360x640 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":37.5,"h":44,"svg":true}
+PASS en 360x640 棋具頁預覽 270px >= 190
+PASS en 360x640 棋具頁格子高度最小 44 >= 40
+PASS en 360x640 棋具頁文字沒有禁字
+PASS en 360x640 棋具頁沒有 console error 
+PASS en 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS en 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS en 375x667 商店頁沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS en 375x667 四語文字有出來：入口 aria「Shop」、標題「Shop」、膠囊「Limited-time free」、格子「Free」
+PASS en 375x667 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS en 375x667 商店＋小框文字沒有禁字
+PASS en 375x667 首頁／商店沒有 console error 
+PASS en 375x667 棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS en 375x667 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":39.375,"h":44,"svg":true}
+PASS en 375x667 棋具頁預覽 295px >= 190
+PASS en 375x667 棋具頁格子高度最小 44 >= 40
+PASS en 375x667 棋具頁文字沒有禁字
+PASS en 375x667 棋具頁沒有 console error 
+PASS ja 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS ja 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ja 360x640 商店頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS ja 360x640 四語文字有出來：入口 aria「ショップ」、標題「ショップ」、膠囊「期間限定 無料」、格子「無料」
+PASS ja 360x640 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS ja 360x640 商店＋小框文字沒有禁字
+PASS ja 360x640 首頁／商店沒有 console error 
+PASS ja 360x640 棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ja 360x640 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":37.5,"h":44,"svg":true}
+PASS ja 360x640 棋具頁預覽 268px >= 190
+PASS ja 360x640 棋具頁格子高度最小 44 >= 40
+PASS ja 360x640 棋具頁文字沒有禁字
+PASS ja 360x640 棋具頁沒有 console error 
+PASS ja 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS ja 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ja 375x667 商店頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS ja 375x667 四語文字有出來：入口 aria「ショップ」、標題「ショップ」、膠囊「期間限定 無料」、格子「無料」
+PASS ja 375x667 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS ja 375x667 商店＋小框文字沒有禁字
+PASS ja 375x667 首頁／商店沒有 console error 
+PASS ja 375x667 棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ja 375x667 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":39.375,"h":44,"svg":true}
+PASS ja 375x667 棋具頁預覽 291px >= 190
+PASS ja 375x667 棋具頁格子高度最小 44 >= 40
+PASS ja 375x667 棋具頁文字沒有禁字
+PASS ja 375x667 棋具頁沒有 console error 
+PASS ko 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS ko 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ko 360x640 商店頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS ko 360x640 四語文字有出來：入口 aria「상점」、標題「상점」、膠囊「한정 무료」、格子「무료」
+PASS ko 360x640 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS ko 360x640 商店＋小框文字沒有禁字
+PASS ko 360x640 首頁／商店沒有 console error 
+PASS ko 360x640 棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ko 360x640 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":37.5,"h":44,"svg":true}
+PASS ko 360x640 棋具頁預覽 270px >= 190
+PASS ko 360x640 棋具頁格子高度最小 44 >= 40
+PASS ko 360x640 棋具頁文字沒有禁字
+PASS ko 360x640 棋具頁沒有 console error 
+PASS ko 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS ko 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ko 375x667 商店頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 商店格子＋返回鈕共 15（期望 15）、最小觸控 48 >= 44
+PASS ko 375x667 四語文字有出來：入口 aria「상점」、標題「상점」、膠囊「한정 무료」、格子「무료」
+PASS ko 375x667 小框沒有捲動／超出（框在視窗內 true、預覽 200px、最小觸控 48）
+PASS ko 375x667 商店＋小框文字沒有禁字
+PASS ko 375x667 首頁／商店沒有 console error 
+PASS ko 375x667 棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ko 375x667 「＋」真的看得到（opacity／visibility／尺寸）{"op":"1","vis":"visible","w":39.375,"h":44,"svg":true}
+PASS ko 375x667 棋具頁預覽 295px >= 190
+PASS ko 375x667 棋具頁格子高度最小 44 >= 40
+PASS ko 375x667 棋具頁文字沒有禁字
+PASS ko 375x667 棋具頁沒有 console error 
+PASS 全新玩家：商店 14 格（期望 14）
+PASS 全新玩家：每格都是「免費」免費
+PASS 兩區標題 棋子,棋盤
+PASS 未領取 setStones('poop') false、setBoard('grass') false 都回 false，仍是 classic/flat
+PASS 第一次載入存下空的擁有清單 []
+PASS 全新玩家：棋具頁看不到商店商品（棋盤 8/8、棋子 7/7）
+PASS 棋具頁兩排各有「＋」2
+PASS 按「＋」後棋具頁收起、商店打開
+PASS 全新玩家流程沒有 console error 
+PASS 小框（未領）：便便與霜淇淋／限時免費／領取
+PASS 領取後：小框膠囊「已擁有」、格子「已擁有」、RushSkin.owns true
+PASS 送出 POST /shop/claim {"vid":"ad3c29b0-2001-43b2-ac6b-bf425d6b3c2d","items":["s:poop"],"src":"free"}
+PASS claim 的 vid 就是 localStorage vcfgame.vid
+PASS 使用後：按鈕 disabled true、格子「使用中」外框 on true、RushSkin 用 poop、localStorage poop
+PASS 使用不會再送 claim（共 1 次）
+PASS 領棋盤 b:starry：claim {"vid":"ad3c29b0-2001-43b2-ac6b-bf425d6b3c2d","items":["b:starry"],"src":"free"}
+PASS localStorage 擁有清單 ["s:poop","b:starry"]
+PASS 點小框外面會關閉小框
+PASS 棋具頁出現領到的：棋子 8/8 含 poop、棋盤 9/9 含 starry，選中 poop/starry
+PASS 重新整理後仍使用 starry/poop、擁有 ["s:poop","b:starry"]
+PASS 重新整理後商店仍顯示 s:poop:使用中,b:starry:使用中
+PASS 領取流程沒有 console error 
+PASS 舊玩家：載入後仍是 grass/poop
+PASS 舊玩家：擁有清單 ["b:grass","s:poop"]
+PASS 舊玩家：送出 src:'grand' 的 claim {"vid":"2d4b2c15-d6ac-461f-95e4-8648c05974e3","items":["b:grass","s:poop"],"src":"grand"}
+PASS 舊玩家：商店兩格「使用中」s:poop,b:grass
+PASS 舊玩家沒有 console error 
+PASS 已有擁有清單的玩家不再遷移：實際用 flat、清單 []、沒送 grand
+PASS 載入時 GET /shop?vid=98f19ad9-34a0-442d-af2c-5bad9e65c779
+PASS 聯集：伺服器有、本機沒有的出現在本機 ["s:pets","b:grass","b:pool"]
+PASS 本機有、伺服器沒有的補送 {"vid":"98f19ad9-34a0-442d-af2c-5bad9e65c779","items":["s:pets"],"src":"free"}
+PASS 商店顯示 b:grass:已擁有,b:pool:已擁有,s:pets:已擁有,s:poop:免費
+PASS 同步沒有 console error 
+PASS /shop 連不上：商店照常 14 格、本機清單的 bunny「已擁有」
+PASS /shop 連不上：領取仍先寫本機 ["s:bunny","s:pets"]
+PASS /shop 連不上沒有 console error 
+PASS RushSkin.price 讀到 /shop 的 prices：boo/poop = 30/0
+PASS 被伺服器 refused：按鈕回到「領取」、本機清單 []
+PASS refused 沒有 console error 
+PASS 後台只開 2 件：商店 s:poop,b:grass
+PASS 只開 2 件版面正常（sh 667/667）
+PASS 後台全關：0 格、文字「目前沒有上架的商品」
+PASS en 連不上 /skins（optIn 全關）：空狀態「Nothing on the shelves right now」
+PASS en 空狀態沒有 console error 
+PASS ja 連不上 /skins（optIn 全關）：空狀態「現在、並んでいる商品はありません」
+PASS ja 空狀態沒有 console error 
+PASS ko 連不上 /skins（optIn 全關）：空狀態「지금 진열된 상품이 없어요」
+PASS ko 空狀態沒有 console error 
+PASS duel.html 載入後 vcfgame.vid 有效（96522565…）
+PASS duel.html 沒有 console error（已排除本機對戰 WebSocket 連不上）
+PASS score.html 載入後 vcfgame.vid 有效（4a0f2928…）
+PASS score.html 沒有 console error（已排除本機對戰 WebSocket 連不上）
+PASS game.html 載入後既有的 vcfgame.vid 沒被換掉
+PASS 負向測試：把格子改成 2 欄會被抓到（bad=5 sh=1158/ch=640）
+PASS 174／FAIL 0

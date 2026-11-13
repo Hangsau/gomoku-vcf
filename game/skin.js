@@ -7,9 +7,12 @@
 // 看得清楚的保證：黑子在暗盤上、白子在亮盤上對比不夠時，程式自動幫那顆子描邊（rim）。
 // 新加的棋盤、棋子一律加 `optIn: true`（預設關閉，後台打開才出現）。
 // 之後要做解鎖（使用者 2026-11-12）：項目加 lock（例如 { by: 'xiu', n: 300 }），isLocked() 看 vcfgame.skinUnlock 有沒有它。
+// 商店（2026-11-13）：有 optIn 的項目就是商店商品（isShop），要先「領取」才能用；擁有清單 vcfgame.owned（'b:<棋盤id>'／'s:<棋子id>'，因為棋盤棋子有同名 id）
+// 存在這台裝置，也記在伺服器（以匿名編號 vcfgame.vid；GET /shop、POST /shop/claim），兩邊取聯集；離線照本機清單運作。
 (() => {
-  const K_BOARD = 'vcfgame.board', K_STONES = 'vcfgame.stones', K_UNLOCK = 'vcfgame.skinUnlock', K_OFF = 'vcfgame.skinsOff';
-  const API_SKINS = 'https://vcf-game-api.psyhangsau.workers.dev/skins';
+  const K_BOARD = 'vcfgame.board', K_STONES = 'vcfgame.stones', K_UNLOCK = 'vcfgame.skinUnlock', K_OFF = 'vcfgame.skinsOff', K_OWNED = 'vcfgame.owned', K_VID = 'vcfgame.vid';
+  const API = 'https://vcf-game-api.psyhangsau.workers.dev';
+  const API_SKINS = API + '/skins';
   const EVT = 'rushskin';
   const N = (zh, en, ja, ko) => ({ zh, en, ja, ko });
 
@@ -76,7 +79,17 @@
     return im.complete && im.naturalWidth ? im : null;
   }
   const unlocked = () => { try { return JSON.parse(ls.get(K_UNLOCK) || '[]'); } catch { return []; } };
-  const isLocked = (it) => !!(it && it.lock) && !unlocked().includes(it.id);
+  // 商店商品＝有 optIn 的項目。擁有清單的元素 'b:id'／'s:id'：種類用「在哪個清單裡」判斷（跟 isOff 同一招），不在 14 個項目上各加欄位
+  const isShop = (it) => !!(it && it.optIn);
+  const itemKey = (it) => (it ? (BOARDS.includes(it) ? 'b:' : 's:') + it.id : '');
+  const OWNED_KEY = /^[bs]:[a-z0-9_-]{1,24}$/;
+  const readOwned = () => { try { const a = JSON.parse(ls.get(K_OWNED) || '[]'); return new Set(Array.isArray(a) ? a.filter((x) => typeof x === 'string' && OWNED_KEY.test(x)) : []); } catch { return new Set(); } };
+  let owned = readOwned();
+  const saveOwned = () => ls.set(K_OWNED, JSON.stringify([...owned]));
+  const owns = (it) => owned.has(itemKey(it));
+  let prices = {};   // 'b:id'／'s:id' → 價格；沒列＝0（現在都是免費）
+  const price = (it) => { const p = Number(prices[itemKey(it)]); return Number.isFinite(p) && p > 0 ? p : 0; };
+  const isLocked = (it) => (!!(it && it.lock) && !unlocked().includes(it.id)) || (isShop(it) && !owns(it));
   // 後台開關（vcfgame.skinsOff）：{"off":{"boards":[…],"stones":[…]},"on":{"boards":[…],"stones":[…]}}
   // 沒有 optIn 的項目：在 off 裡才關閉；有 optIn 的項目：在 on 裡才開放（沒清單、連不上伺服器＝關閉）。舊格式（最外層直接是 boards／stones）當成 off。
   const arr = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string') : []);
@@ -90,6 +103,7 @@
     return it.optIn ? !off.on[k].includes(it.id) : off.off[k].includes(it.id);
   };
   const pick = (list, id) => { const it = list.find((x) => x.id === id); return it && !isLocked(it) && !isOff(it) ? it : list[0]; };
+  const repick = () => { board = pick(BOARDS, ls.get(K_BOARD)); stones = pick(STONES, ls.get(K_STONES)); };
 
   // 對比（WCAG 相對亮度）：看子在盤上清不清楚
   function lum(hex) {
@@ -217,6 +231,7 @@
     get: () => cur,
     boardId: () => board.id, stonesId: () => stones.id,
     setBoard, setStones, isLocked, isOff,
+    isShop, owns, claim, price, vid,
     // 造型棋子上的手數字要加光暈才看得清楚：回光暈色，其他組回 null
     numHalo: (black) => { const s = black ? cur.black : cur.white; return s.fig ? (black ? '#1B1A17' : '#FFFFFF') : null; },
     // fillStyle、font、對齊由呼叫的地方先設好；有光暈就先描邊再填
@@ -239,10 +254,60 @@
   window.addEventListener('storage', (e) => {
     if (e.key === K_BOARD) { board = pick(BOARDS, e.newValue); changed(); }
     if (e.key === K_STONES) { stones = pick(STONES, e.newValue); changed(); }
-    if (e.key === K_OFF) { off = readOff(); board = pick(BOARDS, ls.get(K_BOARD)); stones = pick(STONES, ls.get(K_STONES)); changed(); }
+    if (e.key === K_OFF) { off = readOff(); repick(); changed(); }
+    if (e.key === K_OWNED) { owned = readOwned(); repick(); changed(); }
   });
   compose();
   applyCss();
+
+  // ---------- 商店：擁有清單與伺服器同步 ----------
+  // 匿名編號：跟象牙塔、教學共用 vcfgame.vid；沒有（或格式不對）就用 game.html 同一種方式產生並存起來
+  function vid() {
+    let v = ls.get(K_VID);
+    if (!v || !/^[0-9a-f-]{16,40}$/i.test(v)) {
+      v = window.crypto && crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+      ls.set(K_VID, v);
+    }
+    return v;
+  }
+  function postClaim(items, src) {
+    return fetch(API + '/shop/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vid: vid(), items, src }) }).then((r) => (r.ok ? r.json() : null));
+  }
+  const ownedChanged = () => { saveOwned(); repick(); changed(); };
+  // 領取：先寫本機＋發事件（畫面馬上變），再送伺服器；伺服器明說拒絕才拿掉並回 false，連不上就留著（之後同步補送）
+  async function claim(it) {
+    const k = itemKey(it);
+    if (!isShop(it) || !k) return false;
+    if (!owned.has(k)) { owned.add(k); ownedChanged(); }
+    try {
+      const j = await postClaim([k], 'free');
+      if (j && Array.isArray(j.refused) && j.refused.includes(k)) { owned.delete(k); ownedChanged(); return false; }
+    } catch {}
+    return true;
+  }
+  try {
+    // 第一次載入新版（本機沒有擁有清單）：玩家已經在用的商店商品直接算他的，不收回
+    if (ls.get(K_OWNED) === null) {
+      const had = [];
+      const b = BOARDS.find((x) => x.id === ls.get(K_BOARD)), st = STONES.find((x) => x.id === ls.get(K_STONES));
+      if (b && isShop(b)) had.push(itemKey(b));
+      if (st && isShop(st)) had.push(itemKey(st));
+      had.forEach((k) => owned.add(k));
+      saveOwned(); repick(); compose(); applyCss();
+      if (had.length) postClaim(had, 'grand').catch(() => {});
+    }
+    // 同步：伺服器的清單跟本機取聯集；本機有、伺服器沒有的補送；任何失敗都安靜略過
+    fetch(API + '/shop?vid=' + encodeURIComponent(vid())).then((r) => (r.ok ? r.json() : null)).then((j) => {
+      if (!j) return;
+      if (j.prices && typeof j.prices === 'object') prices = j.prices;
+      const srv = new Set(Array.isArray(j.owned) ? j.owned.filter((x) => typeof x === 'string' && OWNED_KEY.test(x)) : []);
+      const before = owned.size;
+      srv.forEach((k) => owned.add(k));
+      const missing = [...owned].filter((k) => !srv.has(k));
+      if (owned.size !== before) ownedChanged(); else fire();
+      if (missing.length) postClaim(missing.slice(0, 40), 'free').catch(() => {});
+    }).catch(() => {});
+  } catch {}
   // 後台開關：向 Worker 要最新的關閉清單，有變就存回、重新套用；失敗安靜略過（維持舊的那份）
   try {
     fetch(API_SKINS).then((r) => (r.ok ? r.json() : null)).then((j) => {

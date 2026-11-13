@@ -542,6 +542,42 @@ async function adminSetSkins(req, env) {
   await env.DB.prepare("INSERT INTO settings(k, v, t) VALUES ('skins_off', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, t = excluded.t").bind(JSON.stringify({ boards, stones, on }), Date.now()).run();
   return json({ ok: true, off: { boards, stones }, on });
 }
+// 棋具商店（2026-11-13）：擁有紀錄記在 owned 表（vid 匿名編號）。item 'b:<棋盤id>'／'s:<棋子id>'；價格讀 settings 表 k='shop_prices'（{"b:grass":0,…}），沒列的視為 0
+const SHOP_ITEM = /^[bs]:[a-z0-9_-]{1,24}$/;
+async function shopPrices(env) {
+  const row = await env.DB.prepare("SELECT v FROM settings WHERE k = 'shop_prices'").first();
+  try { const o = row ? JSON.parse(row.v) : null; return o && typeof o === "object" && !Array.isArray(o) ? o : {}; } catch { return {}; }
+}
+async function ownedOf(env, vid) {
+  const { results } = await env.DB.prepare("SELECT item FROM owned WHERE vid = ?1 ORDER BY t, item").bind(vid).all();
+  return results.map(r => r.item);
+}
+async function getShop(url, env) {
+  const vid = url.searchParams.get("vid");
+  if (!vidOk(vid)) return json({ error: "bad vid" }, 400);
+  return new Response(JSON.stringify({ owned: await ownedOf(env, vid), prices: await shopPrices(env) }), { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...cors } });
+}
+async function postShopClaim(req, env) {
+  let b;
+  try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  if (!b || !vidOk(b.vid)) return json({ error: "bad vid" }, 400);
+  if (!Array.isArray(b.items) || b.items.length < 1 || b.items.length > 40 || !b.items.every(x => typeof x === "string" && SHOP_ITEM.test(x))) return json({ error: "bad items" }, 400);
+  const src = b.src === undefined ? "free" : b.src;
+  if (src !== "free" && src !== "grand") return json({ error: "bad src" }, 400);
+  const prices = await shopPrices(env), now = Date.now(), refused = [], stmts = [];
+  for (const item of [...new Set(b.items)]) {
+    if (Number(prices[item]) > 0) { refused.push(item); continue; }
+    stmts.push(env.DB.prepare("INSERT OR IGNORE INTO owned(vid, item, t, price, src) VALUES (?1, ?2, ?3, 0, ?4)").bind(b.vid, item, now, src));
+  }
+  if (stmts.length) await env.DB.batch(stmts);
+  return json({ owned: await ownedOf(env, b.vid), refused });
+}
+async function adminShop(req, env) {
+  if (!(await isAdmin(req, env))) return json({ error: "forbidden" }, 403);
+  const { results } = await env.DB.prepare("SELECT item, COUNT(*) AS n FROM owned GROUP BY item ORDER BY n DESC, item").all();
+  const p = await env.DB.prepare("SELECT COUNT(DISTINCT vid) AS n FROM owned").first();
+  return json({ items: results, people: p ? p.n : 0 });
+}
 async function adminPage(req, env) {
   if (!(await accessOk(req, env))) return new Response("forbidden", { status: 403 });
   return new Response(ADMIN_HTML, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
@@ -587,6 +623,9 @@ export default {
       if (req.method === "GET" && url.pathname === "/skins") return await getSkins(env);
       if (req.method === "GET" && url.pathname === "/admin/skins") return await adminGetSkins(req, env);
       if (req.method === "POST" && url.pathname === "/admin/skins") return await adminSetSkins(req, env);
+      if (req.method === "GET" && url.pathname === "/shop") return await getShop(url, env);
+      if (req.method === "POST" && url.pathname === "/shop/claim") return await postShopClaim(req, env);
+      if (req.method === "GET" && url.pathname === "/admin/shop") return await adminShop(req, env);
       if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin/")) return await adminPage(req, env);
       const m = url.pathname.match(/^\/run\/(\d+)$/);
       if (req.method === "GET" && m) return await getRun(Number(m[1]), env);
