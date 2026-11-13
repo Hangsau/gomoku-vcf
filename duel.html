@@ -124,11 +124,15 @@ input.code-in { font-family: var(--num); font-size: 22px; letter-spacing: .15em;
 .status .vwho { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 700; }
 .status .vrest { white-space: nowrap; flex: 0 0 auto; }
 .status .vauto { flex: 0 0 auto; font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); }
-.icob.wauto { width: auto; min-width: 48px; padding: 0 10px; font-size: 14px; font-weight: 900; border: 2px solid var(--gold); color: var(--gold); border-radius: 14px; height: 44px; }
-#sRoom.tight .rhead .icob.wauto { height: 44px; }
+.status .vtxt { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }   /* 觀戰追焦的狀態行：文字在 .vtxt 裡逐秒重寫，「自動」鈕留在外面不被換掉 */
+.status .vautob { flex: 0 0 auto; position: relative; z-index: 1; font-size: 11px; font-weight: 900; line-height: normal; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--gold); background: var(--gold); color: var(--goldInk); }   /* 外觀大小同 .vauto 小標，狀態行高度前後一致；點擊範圍用 ::after 撐到 44px 以上（z-index 讓下緣那 12px 蓋過棋盤上緣；會用到這顆鈕的只有觀戰者，不能落子）*/
+.status .vautob[hidden] { display: none; }
+.status .vautob::after { content: ''; position: absolute; left: -10px; right: -10px; top: -13px; bottom: -13px; }
 .rhead { display: flex; align-items: center; gap: 8px; padding: calc(4px + env(safe-area-inset-top)) 8px 4px; }
 .rhead .ttl { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.rhead .ttl b { font-family: var(--num); font-size: 18px; }
+.rhead .ttl b { font-family: var(--num); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* 房名永遠單行：放不下先由 fitTitle() 縮字，還是不夠才省略 */
+@media (max-width: 374px) { .rhead { gap: 2px; padding-left: 4px; padding-right: 4px; } .rhead .icob { width: 44px; } }
+@media (max-width: 374px) { .status { padding-left: 8px; padding-right: 8px; } .status .vtxt { gap: 4px; } }   /* 狀態行也讓出邊距，「正在看：暱稱」才不會被省略到看不出是誰 */   /* 320／360 寬：頂列四個鈕＋房名，把空隙讓給房名 */
 .rhead .ttl span { font-size: 13px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .status { padding: 4px 16px; min-height: 28px; font-size: 15px; color: var(--text2); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .boardWrap { position: relative; align-self: center; touch-action: manipulation; margin: 4px 0; }
@@ -212,12 +216,11 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
     <button type="button" class="icob" id="rBack" aria-label="回大廳" data-i18n-aria="toLobby"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="ttl"><b id="rTitle"></b><span id="rSub"></span></div>
     <button type="button" class="icob" id="rInvite" aria-label="邀請" data-i18n-aria="invite" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M19 8v6M16 11h6"/></svg></button>
-    <button type="button" class="icob wauto" id="bWatchAuto" aria-label="自動追焦" data-i18n-aria="vAutoAria" data-i18n="vAuto" hidden></button>
     <button type="button" class="icob" data-sound aria-haspopup="dialog" aria-expanded="false"></button>
     <button type="button" class="icob" data-set-open aria-haspopup="dialog"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div class="pbar" id="pTop"></div>
-  <div class="status" id="status" role="status"></div>
+  <div class="status" id="status" role="status"><button type="button" class="vautob" id="bWatchAuto" aria-label="自動追焦" data-i18n-aria="vAutoAria" data-i18n="vAuto" hidden></button></div>
   <div class="boardWrap" id="boardWrap">
     <canvas id="board" aria-label="棋盤" data-i18n-aria="boardAria"></canvas>
     <div class="flash" id="flash" hidden></div>
@@ -1009,7 +1012,11 @@ function renderBar(el, seat) {
   const ck = clockOf(seat);
   el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < LOW_CLOCK_MS ? ' low' : ''}">${ck != null && room.state !== 'wait' && room.state !== 'study' ? mmss(ck) : ''}</span>`;
 }
-const setTitle = (t) => { $('rTitle').innerHTML = esc(REPLAY ? REPLAY.title() : t) + (room && room.priv ? LOCK_SVG : ''); };   // 私人房：房名旁一個小鎖
+const setTitle = (t) => { $('rTitle').innerHTML = esc(REPLAY ? REPLAY.title() : t) + (room && room.priv ? LOCK_SVG : ''); fitTitle(); };   // 私人房：房名旁一個小鎖
+function fitTitle() {   // 房名永遠單行：欄位放不下就一次縮 0.5px（最小 11px），再不夠才由 CSS 省略號；只看文字與欄寬，結果固定
+  const t = $('rTitle'); t.style.fontSize = '';
+  for (let sz = 18; t.scrollWidth > t.clientWidth + 0.5 && sz > 11;) { sz -= 0.5; t.style.fontSize = sz + 'px'; }
+}
 function renderRoom() {
   if ($('sRoom').hidden) return;
   $('rInvite').hidden = !room || !!REPLAY;
@@ -1321,6 +1328,7 @@ function layout() {   // 一屏放得下：先照寬度放，再看房間畫面�
   document.documentElement.style.setProperty('--appH', window.innerHeight + 'px');
   const w = Math.min(document.querySelector('.app').clientWidth, 520);
   if ($('sRoom').hidden) return setBoardPx(Math.max(240, w - 16));
+  fitTitle();
   const overBy = () => document.documentElement.scrollHeight - window.innerHeight;
   const fit = (min) => {
     setBoardPx(Math.max(min, w - 16));
@@ -1331,7 +1339,11 @@ function layout() {   // 一屏放得下：先照寬度放，再看房間畫面�
   };
   $('sRoom').classList.remove('tight');
   fit(240);
-  if (overBy() > 0) { $('sRoom').classList.add('tight'); fit(200); }   // 很矮的視窗：其他列縮緊（CSS .tight），棋盤下限放到 200
+  const loose = px, tooTall = overBy() > 0;
+  if (tooTall || window.innerWidth <= 374) {   // 很矮的視窗：其他列縮緊（CSS .tight），棋盤下限放到 200；窄手機（≤374 寬）則兩種都試、取棋盤大的（舊版 320 寬幾乎都是縮緊版，只是靠房名換行碰巧觸發）
+    $('sRoom').classList.add('tight'); fit(tooTall ? 200 : 240);
+    if (!tooTall && px <= loose) { $('sRoom').classList.remove('tight'); fit(240); }
+  }
 }
 addEventListener('resize', layout);
 // 保險：棋盤以外的列高度一變（字換行、字型晚到、按鈕列變化）或視窗高度變了卻沒收到 resize，就重算一次。
@@ -1467,7 +1479,15 @@ for (const id of ['pTop', 'pBot']) {
   el.addEventListener('click', (e) => { if (e.target.closest('button')) return; const s = el.dataset.seat; if (s !== undefined) watchManual(Number(s)); });
   el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && el.getAttribute('role') === 'button') { e.preventDefault(); const s = el.dataset.seat; if (s !== undefined) watchManual(Number(s)); } });
 }
-$('bWatchAuto').addEventListener('click', watchBackAuto);
+const autoBtn = $('bWatchAuto');   // 在 #status 裡；別處整個重寫狀態行會把它拿掉，所以先抓住這個節點
+autoBtn.addEventListener('click', watchBackAuto);
+function setVStatus(html) {   // 一線天／八仙渡的狀態行：文字進 .vtxt（變了才重寫），「自動」鈕是同一個節點、不被換掉（點到一半、鍵盤焦點都不丟）
+  const st = $('status');
+  let tx = st.firstElementChild;
+  if (autoBtn.parentNode !== st || !tx || tx === autoBtn || !tx.classList.contains('vtxt')) { st.textContent = ''; tx = document.createElement('span'); tx.className = 'vtxt'; st.append(tx, autoBtn); }
+  if (tx.__h !== html) { tx.innerHTML = html; tx.__h = html; }
+  autoBtn.hidden = !(vCanFlip() && !watchAuto);
+}
 const vIsCounting = (st) => st && st.i === 0 && srvNow() < st.at;   // 開局倒數（只有第 1 題前）
 const rvIsOn = () => RV && room && room.state === 'over' && room.vs && room.vs.review;   // 收到新局時畫面可能先重畫，舊的覆盤狀態不能用
 const vIsLive = (st) => st && (st.s === 'think' || st.s === 'armed') && srvNow() >= st.at;
@@ -1571,8 +1591,7 @@ function vcfRenderRoom() {
   $('rSub').textContent = [rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })].join('・');
   vcfBar($('pTop'), 1 - bs, true);
   vcfBar($('pBot'), bs, true);
-  $('status').innerHTML = vcfStatus();
-  $('bWatchAuto').hidden = !(vCanFlip() && !watchAuto);
+  setVStatus(vcfStatus());
   const st = room.state === 'play' ? vSt(bs) : null;
   const atk = st && st.puzzle && !vIsCounting(st) ? T(st.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB') : '';
   if (rvIsOn()) $('facts').innerHTML = rvFacts();
@@ -1770,7 +1789,7 @@ setInterval(() => {
     if (after !== before && after >= 1 && after <= 3) beep(after === 1);
     if (VR.left <= 0) { VR.left = 0; vOut('time'); return; }
   }
-  const sh = vcfStatus(); if ($('status').__h !== sh) { $('status').innerHTML = sh; $('status').__h = sh; }   // 沒變就不重寫，免得按鈕被換掉
+  setVStatus(vcfStatus());
   vcfBar($('pTop'), 1 - vView()); vcfBar($('pBot'), vView());
   const sk = $('aSkip'); if (sk) sk.disabled = !vCanSkip();
 }, VCF_TICK_MS);
