@@ -1,4 +1,4 @@
-// 棋具商店檢查（2026-11-13）：node docs/design/shop-2026-11-13/check/check_shop.mjs
+// 棋具商店檢查（2026-11-13，施工單 3：商店首頁＋棋具頁 D）：node docs/design/shop-2026-11-13/check/check_shop.mjs
 // 環境變數 NEG=1：故意把「商店有 14 格」的期望改成 13，驗證腳本會 FAIL（負向測試）。
 // Playwright 用 C:\claudehome\tools\node_modules 現成的；本機靜態伺服器開在這個 process 裡（結束就自己關，不碰別的行程）。
 // 線上請求全部攔截：/skins、/shop、/shop/claim 回假資料並記錄送出的請求，其他一律 abort，不碰線上。
@@ -80,6 +80,16 @@ async function openPicker(page) {
   await page.click('#openSet'); await page.waitForSelector('#sSet:not([hidden])');
   await page.click('#setSkin'); await page.waitForSelector('#skinPick:not([hidden]) canvas'); await page.waitForTimeout(300);
 }
+async function openStage(page, tab = 's') {
+  await openShop(page); await page.click('#shopPage .card'); await page.waitForSelector('#shopPage .top canvas');
+  if (tab === 'b') await page.click('#shopPage [data-tab="b"]');
+  await page.waitForTimeout(250);
+}
+const cells = (page) => page.evaluate(() => [...document.querySelectorAll('#shopPage .cell')].map((e) => ({ k: e.dataset.k, nm: e.querySelector('.nm').textContent, tg: e.querySelector('.tg').textContent, sel: e.classList.contains('sel'), on: e.classList.contains('on') })));
+const prev = (page) => page.evaluate(() => { const c = document.querySelector('#shopPage .top canvas'); return { board: c.dataset.board, stones: c.dataset.stones, w: c.getBoundingClientRect().width }; });
+const ctaOf = (page) => page.evaluate(() => { const b = document.querySelector('#shopPage .cta'); return b ? { t: b.textContent, dis: b.disabled, fit: b.scrollWidth <= b.clientWidth && b.scrollHeight <= b.clientHeight } : null; });
+// 預覽畫布像素：取盤面左上角一小塊（沒有子）的顏色，驗證真的畫了這個盤
+const px = (page) => page.evaluate(() => { const c = document.querySelector('#shopPage .top canvas'), x = c.getContext('2d'), w = c.width, d = x.getImageData(Math.round(w * 0.06), Math.round(w * 0.06), 4, 4).data; return [d[0], d[1], d[2]]; });
 const lsGet = (page, k) => page.evaluate((k) => localStorage.getItem(k), k);
 const lsOwned = async (page) => { try { return JSON.parse(await lsGet(page, 'vcfgame.owned')) || []; } catch { return null; } };
 
@@ -108,10 +118,10 @@ const homeLayout = (page) => page.evaluate(() => {
 const pageText = (page) => page.evaluate(() => document.body.innerText + ' ' + [...document.querySelectorAll('[aria-label],[title],[alt]')].map((e) => (e.getAttribute('aria-label') || '') + ' ' + (e.title || '') + ' ' + (e.getAttribute('alt') || '')).join(' '));
 const shotsOf = (name) => path.join(HERE, name);
 
-// ---- 1. 四語 × 兩尺寸：首頁、商店、小框、棋具頁（棋具頁用 14 件全擁有的最擠情況）----
+// ---- 1. 四語 × 兩尺寸：首頁、商店首頁、棋具頁兩個分頁（14 件全上架）、設定→棋具頁 ----
 for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [375, 667]]) {
   const tag = `${lang} ${w}x${h}`;
-  { // 首頁、商店、小框
+  { // 首頁、商店首頁、棋具頁
     const { ctx, page, errs } = await newPage(w, h, lang);
     await gotoHome(page);
     const H = await homeLayout(page);
@@ -120,39 +130,50 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
     const label = await page.getAttribute('#openShop', 'aria-label');
     if (lang === 'zh' && w === 375) await page.screenshot({ path: shotsOf('home_zh_375x667.png') });
     await page.click('#openShop'); await page.waitForSelector('#shopPage:not([hidden])'); await page.waitForTimeout(250);
-    const Sh = await layout(page, '#shopPage', '.cell,.back');
-    ok(Sh.bad.length === 0 && Sh.sh <= Sh.ch && Sh.docSh <= Sh.vh, `${tag} 商店頁沒有捲動／超出（sh ${Sh.sh}<=${Sh.ch}、bad ${JSON.stringify(Sh.bad)}）`);
-    ok(Sh.n === (NEG ? 13 : 14) + 1 && Sh.minTouch >= 44, `${tag} 商店格子＋返回鈕共 ${Sh.n}（期望 ${(NEG ? 13 : 14) + 1}）、最小觸控 ${Sh.minTouch} >= 44`);
-    const hd = await page.evaluate(() => ({ title: document.querySelector('#shopPage h1').textContent, pill: document.querySelector('#shopPage .pill').textContent, tag: document.querySelector('#shopPage .cell .tg').textContent }));
-    ok(label === hd.title && hd.title && hd.pill && hd.tag, `${tag} 四語文字有出來：入口 aria「${label}」、標題「${hd.title}」、膠囊「${hd.pill}」、格子「${hd.tag}」`);
-    if (lang === 'zh' && w === 375) await page.screenshot({ path: shotsOf('shop_zh_375x667.png') });
-    if (lang === 'en' && w === 360) await page.screenshot({ path: shotsOf('shop_en_360x640.png') });
-    await page.click('.cell[data-k="s:donut"]'); await page.waitForTimeout(250);
-    const D = await layout(page, '#shopPage .box', '.cta,.x');
-    const dlgIn = await page.evaluate(() => { const b = document.querySelector('#shopDlg .box').getBoundingClientRect(); return { ok: b.top >= 0 && b.bottom <= innerHeight && b.left >= 0 && b.right <= innerWidth, cv: document.querySelector('#shopDlg canvas').getBoundingClientRect().width }; });
-    ok(dlgIn.ok && D.bad.length === 0 && D.docSh <= D.vh && D.minTouch >= 44, `${tag} 小框沒有捲動／超出（框在視窗內 ${dlgIn.ok}、預覽 ${Math.round(dlgIn.cv)}px、最小觸控 ${D.minTouch}）`);
-    if (lang === 'en' && w === 360) await page.screenshot({ path: shotsOf('dialog_en_360x640.png') });
-    const txt = await pageText(page);
-    ok(!FORBID.test(txt), `${tag} 商店＋小框文字沒有禁字`);
+    const Sh = await layout(page, '#shopPage', '.card,.back');
+    const hd = await page.evaluate(() => ({ title: document.querySelector('#shopPage h1').textContent, cards: document.querySelectorAll('#shopPage .card').length, sub: document.querySelector('#shopPage .card .tx span')?.textContent, pill: document.querySelector('#shopPage .card em')?.textContent }));
+    ok(Sh.bad.length === 0 && Sh.sh <= Sh.ch && Sh.docSh <= Sh.vh, `${tag} 商店首頁沒有捲動／超出（sh ${Sh.sh}<=${Sh.ch}、bad ${JSON.stringify(Sh.bad)}）`);
+    ok(Sh.minTouch >= 44 && hd.cards === 1 && label === hd.title && hd.pill, `${tag} 商店首頁：入口 aria「${label}」＝標題「${hd.title}」、1 張卡、膠囊「${hd.pill}」、最小觸控 ${Sh.minTouch}`);
+    ok(/\b7\b.*\b7\b/.test(hd.sub), `${tag} 卡片數量「${hd.sub}」＝ 7／7`);
+    if (lang === 'zh' && w === 375) await page.screenshot({ path: shotsOf('store_home_zh_375x667.png') });
+    let txt = await pageText(page); ok(!FORBID.test(txt), `${tag} 商店首頁文字沒有禁字`);
+    await page.click('#shopPage .card'); await page.waitForSelector('#shopPage .top canvas'); await page.waitForTimeout(250);
+    for (const t of ['s', 'b']) {
+      await page.click(`#shopPage [data-tab="${t}"]`); await page.waitForTimeout(150);
+      const L = await layout(page, '#shopPage', '.cell,.back,.stabs button,.cta');
+      const cs = await cells(page), pv = await prev(page);
+      const cut = await page.evaluate(() => [...document.querySelectorAll('#shopPage .cell')].filter((e) => { const n = e.querySelector('.nm'), t = e.querySelector('.tg'), eb = e.getBoundingClientRect().bottom; return n.scrollWidth > n.clientWidth + 1 || t.scrollWidth > t.clientWidth + 1 || n.getBoundingClientRect().bottom > eb - 1 || t.getBoundingClientRect().bottom > eb + 0.5; }).map((e) => e.dataset.k));
+      ok(L.bad.length === 0 && L.sh <= L.ch && L.docSh <= L.vh, `${tag} 棋具頁[${t}] 沒有捲動／超出（sh ${L.sh}<=${L.ch}、bad ${JSON.stringify(L.bad)}）`);
+      ok(cs.length === (NEG ? 7 : 8) && L.minTouch >= 44, `${tag} 棋具頁[${t}] 格子 ${cs.length}/${NEG ? 7 : 8}、最小觸控 ${L.minTouch}`);
+      ok(cut.length === 0 && cs.every((c) => c.nm.length > 0), `${tag} 棋具頁[${t}] 每格有名稱、名稱和狀態字都沒被切（切到：${cut}）`);
+      ok(cs[0].k === (t === 's' ? 's:flat' : 'b:classic') && cs[0].tg.length > 0, `${tag} 棋具頁[${t}] 第一格是預設「${cs[0].k}／${cs[0].nm}／${cs[0].tg}」`);
+      ok(pv.w >= 140, `${tag} 棋具頁[${t}] 預覽盤 ${Math.round(pv.w)}px >= 140`);
+      const long = await page.evaluate(() => [...document.querySelectorAll('#shopPage .cell')].sort((a, b) => b.querySelector('.nm').textContent.length - a.querySelector('.nm').textContent.length)[0].dataset.k);
+      await page.click(`#shopPage .cell[data-k="${long}"]`); await page.waitForTimeout(150);
+      const L2 = await layout(page, '#shopPage', '.cell,.back,.stabs button,.cta'), cta = await ctaOf(page);
+      ok(L2.bad.length === 0 && L2.sh <= L2.ch && cta && cta.fit, `${tag} 棋具頁[${t}] 選最長名稱 ${long}：不捲動、按鈕「${cta && cta.t}」沒被切`);
+      txt = await pageText(page); ok(!FORBID.test(txt), `${tag} 棋具頁[${t}] 文字沒有禁字`);
+      if (lang === 'zh' && w === 375 && t === 'b') await page.screenshot({ path: shotsOf('stage_zh_375x667_boards.png') });
+      if (lang === 'en' && w === 360 && t === 's') await page.screenshot({ path: shotsOf('stage_en_360x640_stones.png') });
+      if (lang === 'ja' && w === 360 && t === 's') await page.screenshot({ path: shotsOf('stage_ja_360x640_stones.png') });
+      if (lang === 'ko' && w === 360 && t === 's') await page.screenshot({ path: shotsOf('stage_ko_360x640_stones.png') });
+    }
     ok(errs.length === 0, `${tag} 首頁／商店沒有 console error ${errs.slice(0, 2)}`);
     await ctx.close();
   }
-  { // 棋具頁（14 件全領＋全開）
+  { // 設定→棋具頁（14 件全領＋全開）
     const { ctx, page, errs } = await newPage(w, h, lang, { 'vcfgame.owned': JSON.stringify(ALL_KEYS) }, { owned: ALL_KEYS });
     await openPicker(page);
     const P = await layout(page, '#skinPick', '.sopt');
     const cnt = await page.evaluate(() => ({ nb: document.querySelectorAll('[data-b]').length, ns: document.querySelectorAll('[data-s]').length, plus: document.querySelectorAll('[data-shop]').length, cv: document.querySelector('#skinPick canvas').getBoundingClientRect().width }));
-    ok(P.bad.length === 0 && P.sh <= P.ch && P.docSh <= P.vh, `${tag} 棋具頁沒有捲動／超出（sh ${P.sh}<=${P.ch}、bad ${JSON.stringify(P.bad)}）`);
-    ok(cnt.nb === 15 && cnt.ns === 14 && cnt.plus === 2, `${tag} 棋具頁 棋盤 ${cnt.nb}/15、棋子 ${cnt.ns}/14、「＋」${cnt.plus}/2`);
-    const pv = await page.evaluate(() => [...document.querySelectorAll('#skinPick [data-shop]')].map((e) => { const b = e.getBoundingClientRect(), cs = getComputedStyle(e); return { op: cs.opacity, vis: cs.visibility, w: b.width, h: b.height, svg: !!e.querySelector('svg') }; }));
-    ok(pv.length === 2 && pv.every((x) => x.op === '1' && x.vis === 'visible' && x.w > 20 && x.h >= 40 && x.svg), `${tag} 「＋」真的看得到（opacity／visibility／尺寸）${JSON.stringify(pv[0])}`);   // 第一次漏了：game.html 有全域 .plus{opacity:0}，撞名＋DOM 數量還是對的
-    ok(cnt.cv >= 190, `${tag} 棋具頁預覽 ${Math.round(cnt.cv)}px >= 190`);
-    const hh = await page.evaluate(() => Math.min(...[...document.querySelectorAll('#skinPick .sopt')].map((e) => e.offsetHeight)));
-    ok(hh >= 40, `${tag} 棋具頁格子高度最小 ${hh} >= 40`);
-    if (lang === 'zh' && w === 375) await page.screenshot({ path: shotsOf('picker_zh_375x667.png') });
+    ok(P.bad.length === 0 && P.sh <= P.ch && P.docSh <= P.vh, `${tag} 設定棋具頁沒有捲動／超出（sh ${P.sh}<=${P.ch}、bad ${JSON.stringify(P.bad)}）`);
+    ok(cnt.nb === 15 && cnt.ns === 14 && cnt.plus === 2, `${tag} 設定棋具頁 棋盤 ${cnt.nb}/15、棋子 ${cnt.ns}/14、「＋」${cnt.plus}/2`);
+    const pv = await page.evaluate(() => [...document.querySelectorAll('#skinPick [data-shop]')].map((e) => { const b = e.getBoundingClientRect(), cs = getComputedStyle(e); return { op: cs.opacity, vis: cs.visibility, w: b.width, h: b.height, svg: !!e.querySelector('svg'), t: e.dataset.shop }; }));
+    ok(pv.length === 2 && pv.every((x) => x.op === '1' && x.vis === 'visible' && x.w > 20 && x.h >= 40 && x.svg) && pv.map((x) => x.t).join() === 'b,s', `${tag} 「＋」真的看得到且帶分頁 ${JSON.stringify(pv.map((x) => x.t))}`);
+    ok(cnt.cv >= 190, `${tag} 設定棋具頁預覽 ${Math.round(cnt.cv)}px >= 190`);
     const txt = await pageText(page);
-    ok(!FORBID.test(txt), `${tag} 棋具頁文字沒有禁字`);
-    ok(errs.length === 0, `${tag} 棋具頁沒有 console error ${errs.slice(0, 2)}`);
+    ok(!FORBID.test(txt), `${tag} 設定棋具頁文字沒有禁字`);
+    ok(errs.length === 0, `${tag} 設定棋具頁沒有 console error ${errs.slice(0, 2)}`);
     await ctx.close();
   }
 }
@@ -160,70 +181,109 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
 // ---- 2. 全新玩家 ----
 {
   const { ctx, page, errs } = await newPage(375, 667, 'zh');
-  await openShop(page);
-  const r = await page.evaluate(() => ({
-    cells: [...document.querySelectorAll('#shopPage .cell')].map((e) => e.dataset.k), tags: [...document.querySelectorAll('#shopPage .cell .tg')].map((e) => e.textContent),
-    secs: [...document.querySelectorAll('#shopPage .sec b')].map((e) => e.textContent),
-    sp: RushSkin.setStones('poop'), sg: RushSkin.setBoard('grass'), cur: RushSkin.get().board.id + '/' + RushSkin.get().stones.id, owned: localStorage.getItem('vcfgame.owned'),
-  }));
-  ok(r.cells.length === (NEG ? 13 : 14), `全新玩家：商店 ${r.cells.length} 格（期望 ${NEG ? 13 : 14}）`);
-  ok(r.tags.every((t) => t === '免費'), `全新玩家：每格都是「免費」${[...new Set(r.tags)]}`);
-  ok(r.secs.join(',') === '棋子,棋盤', `兩區標題 ${r.secs}`);
+  await openStage(page, 's');
+  const cs = await cells(page);
+  await page.click('#shopPage [data-tab="b"]'); await page.waitForTimeout(150);
+  const cb = await cells(page);
+  const r = await page.evaluate(() => ({ sp: RushSkin.setStones('poop'), sg: RushSkin.setBoard('grass'), cur: RushSkin.get().board.id + '/' + RushSkin.get().stones.id, owned: localStorage.getItem('vcfgame.owned') }));
+  ok(cs.length === (NEG ? 7 : 8) && cb.length === 8, `全新玩家：棋子分頁 ${cs.length} 格、棋盤分頁 ${cb.length} 格（各＝預設＋7）`);
+  ok(cs[0].tg === '使用中' && cs.slice(1).every((c) => c.tg === '免費') && cb[0].tg === '使用中' && cb.slice(1).every((c) => c.tg === '免費'), `全新玩家：預設格「使用中」、其餘都是「免費」${[...new Set(cs.slice(1).map((c) => c.tg))]}`);
   ok(r.sp === false && r.sg === false && r.cur === 'classic/flat', `未領取 setStones('poop') ${r.sp}、setBoard('grass') ${r.sg} 都回 false，仍是 ${r.cur}`);
   ok(r.owned === '[]', `第一次載入存下空的擁有清單 ${r.owned}`);
+  ok(cs[0].sel && cb[0].sel, '進頁時選中的是玩家正在用的（預設格，兩個分頁都是）');
+  await page.click('#shopPage .back'); await page.waitForTimeout(150);
+  ok(await page.evaluate(() => !!document.querySelector('#shopPage .card') && !document.getElementById('shopPage').hidden), '棋具頁返回 → 回商店首頁');
   await page.click('#shopPage .back'); await page.waitForSelector('#shopPage', { state: 'hidden' });
   await page.click('#openSet'); await page.click('#setSkin'); await page.waitForSelector('#skinPick:not([hidden]) canvas');
   const p = await page.evaluate(() => ({ b: [...document.querySelectorAll('[data-b]')].map((e) => e.dataset.b), s: [...document.querySelectorAll('[data-s]')].map((e) => e.dataset.s), plus: document.querySelectorAll('[data-shop]').length }));
-  ok(!NEW_B.some((x) => p.b.includes(x)) && !NEW_S.some((x) => p.s.includes(x)) && p.b.length === 8 && p.s.length === 7, `全新玩家：棋具頁看不到商店商品（棋盤 ${p.b.length}/8、棋子 ${p.s.length}/7）`);
-  ok(p.plus === 2, `棋具頁兩排各有「＋」${p.plus}`);
-  await page.click('#skinPick [data-shop]'); await page.waitForSelector('#shopPage:not([hidden])');
-  ok(await page.evaluate(() => document.getElementById('skinPick').hidden), '按「＋」後棋具頁收起、商店打開');
+  ok(!NEW_B.some((x) => p.b.includes(x)) && !NEW_S.some((x) => p.s.includes(x)) && p.b.length === 8 && p.s.length === 7, `全新玩家：設定棋具頁看不到商店商品（棋盤 ${p.b.length}/8、棋子 ${p.s.length}/7）`);
+  ok(p.plus === 2, `設定棋具頁兩排各有「＋」${p.plus}`);
   ok(errs.length === 0, `全新玩家流程沒有 console error ${errs.slice(0, 2)}`);
   await ctx.close();
 }
 
-// ---- 3. 領取 → 使用 → 棋具頁出現；重新整理仍在 ----
+// ---- 3. 混搭、預設格、按鈕只動目前分頁、領取→換上→使用中、設定棋具頁出現、重新整理 ----
 {
   const { ctx, page, errs, claims } = await newPage(375, 667, 'zh');
-  await openShop(page);
-  await page.click('.cell[data-k="s:poop"]'); await page.waitForTimeout(200);
-  const d0 = await page.evaluate(() => ({ h2: document.querySelector('#shopDlg h2').textContent, st: document.querySelector('#shopDlg .st').textContent, cta: document.querySelector('#shopDlg .cta').textContent }));
-  ok(d0.h2 === '便便與霜淇淋' && d0.st === '限時免費' && d0.cta === '領取', `小框（未領）：${d0.h2}／${d0.st}／${d0.cta}`);
-  await page.screenshot({ path: shotsOf('dialog_zh_375x667_free.png') });
-  await page.click('#shopDlg .cta'); await page.waitForFunction(() => document.querySelector('#shopDlg .cta')?.textContent === '使用'); await page.waitForTimeout(200);
-  const d1 = await page.evaluate(() => ({ st: document.querySelector('#shopDlg .st').textContent, tag: document.querySelector('.cell[data-k="s:poop"] .tg').textContent, own: RushSkin.owns(RushSkin.stones.find((x) => x.id === 'poop')) }));
-  ok(d1.st === '已擁有' && d1.tag === '已擁有' && d1.own, `領取後：小框膠囊「${d1.st}」、格子「${d1.tag}」、RushSkin.owns ${d1.own}`);
-  ok(claims.length === 1 && claims[0].items.length === 1 && claims[0].items[0] === 's:poop' && claims[0].src === 'free' && /^[0-9a-f-]{16,40}$/i.test(claims[0].vid), `送出 POST /shop/claim ${JSON.stringify(claims[0])}`);
-  const vid1 = await lsGet(page, 'vcfgame.vid');
-  ok(claims[0] && claims[0].vid === vid1, 'claim 的 vid 就是 localStorage vcfgame.vid');
-  await page.screenshot({ path: shotsOf('dialog_zh_375x667_owned.png') });
-  await page.click('#shopDlg .cta'); await page.waitForFunction(() => document.querySelector('#shopDlg .cta')?.textContent === '使用中'); await page.waitForTimeout(200);
-  const d2 = await page.evaluate(() => ({ dis: document.querySelector('#shopDlg .cta').disabled, tag: document.querySelector('.cell[data-k="s:poop"] .tg').textContent, on: document.querySelector('.cell[data-k="s:poop"]').classList.contains('on'), cur: RushSkin.get().stones.id, ls: localStorage.getItem('vcfgame.stones') }));
-  ok(d2.dis && d2.tag === '使用中' && d2.on && d2.cur === 'poop' && d2.ls === 'poop', `使用後：按鈕 disabled ${d2.dis}、格子「${d2.tag}」外框 on ${d2.on}、RushSkin 用 ${d2.cur}、localStorage ${d2.ls}`);
-  await page.screenshot({ path: shotsOf('dialog_zh_375x667_using.png') });
-  ok(claims.length === 1, `使用不會再送 claim（共 ${claims.length} 次）`);
-  // 領第二件：棋盤
-  await page.click('#shopDlg .x'); await page.click('.cell[data-k="b:starry"]'); await page.click('#shopDlg .cta'); await page.waitForFunction(() => document.querySelector('#shopDlg .cta')?.textContent === '使用');
-  await page.click('#shopDlg .cta'); await page.waitForFunction(() => document.querySelector('#shopDlg .cta')?.textContent === '使用中');
-  ok(claims.length === 2 && claims[1].items[0] === 'b:starry', `領棋盤 b:starry：claim ${JSON.stringify(claims[1])}`);
+  await openStage(page, 's');
+  const px0 = await px(page);
+  await page.click('#shopPage .cell[data-k="s:pets"]'); await page.waitForTimeout(150);
+  const a = { nm: await page.textContent('#shopPage .sinfo .nm'), chip: await page.textContent('#shopPage .sinfo .chip'), cta: await ctaOf(page), other: await page.textContent('#shopPage .sinfo .ot') };
+  ok(a.nm === '黑貓與白狗' && a.chip === '限時免費' && a.cta.t === '免費領取「黑貓與白狗」' && !a.cta.dis, `棋子分頁選黑貓與白狗：名稱「${a.nm}」膠囊「${a.chip}」按鈕「${a.cta.t}」`);
+  ok(a.other === '原木（預設）', `「搭配的棋盤」顯示「${a.other}」`);
+  await page.click('#shopPage [data-tab="b"]'); await page.waitForTimeout(150);
+  ok(await page.evaluate(() => document.querySelector('#shopPage .sinfo .k').textContent) === '棋盤花色', '切到棋盤分頁，標題變「棋盤花色」');
+  await page.click('#shopPage .cell[data-k="b:grass"]'); await page.waitForTimeout(150);
+  const b = { pv: await prev(page), other: await page.textContent('#shopPage .sinfo .ot'), px: await px(page) };
+  ok(b.pv.board === 'grass' && b.pv.stones === 'pets' && b.other === '黑貓與白狗', `混搭：預覽盤＝${b.pv.board}、子＝${b.pv.stones}（RushSkin.preview 參數）、搭配的棋子「${b.other}」`);
+  ok(Math.abs(b.px[0] - px0[0]) + Math.abs(b.px[1] - px0[1]) + Math.abs(b.px[2] - px0[2]) > 60, `混搭：預覽畫布像素確實換成草地盤 ${JSON.stringify(px0)} → ${JSON.stringify(b.px)}`);
+  const figs = await page.evaluate(() => { const c = document.querySelector('#shopPage .top canvas'), x = c.getContext('2d'), w = c.width, n = 7, pad = w * 0.1, cp = (w - 2 * pad) / (n - 1), d = x.getImageData(Math.round(pad + 3 * cp), Math.round(pad + 3 * cp), 1, 1).data; return [d[0], d[1], d[2]]; });
+  const ref = await page.evaluate(() => { const S = RushSkin, c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d'); const p = S.preview('grass', 'flat'); S.drawBoard(x, { size: 200, pad: 20, cell: 26.67, n: 7, round: 14, starR: 0 }, p.board); S.drawStone(x, 20 + 3 * 26.67, 20 + 3 * 26.67, 26.67 * 0.46, true, 1, 1.5, p.black); const d = x.getImageData(100, 100, 1, 1).data; return [d[0], d[1], d[2]]; });
+  ok(Math.abs(figs[0] - ref[0]) + Math.abs(figs[1] - ref[1]) + Math.abs(figs[2] - ref[2]) > 30, `混搭：預覽中央那顆子是造型子（像素 ${JSON.stringify(figs)} ≠ 平面黑子 ${JSON.stringify(ref)}）`);
+  await page.click('#shopPage [data-tab="s"]'); await page.waitForTimeout(150);
+  const c1 = await cells(page), pv1 = await prev(page);
+  ok(c1.find((c) => c.k === 's:pets').sel && !c1[0].sel && pv1.stones === 'pets' && pv1.board === 'grass', `切回棋子分頁：選擇還在（pets 選中、預覽 ${pv1.board}/${pv1.stones}）`);
+  await page.screenshot({ path: shotsOf('stage_zh_375x667_stones_mix.png') });
+  await page.click('#shopPage .cell[data-k="s:flat"]'); await page.waitForTimeout(150);
+  const d1 = await prev(page), dn = await page.textContent('#shopPage .sinfo .nm'), dchip = await page.textContent('#shopPage .sinfo .chip'), dcta = await ctaOf(page);
+  ok(d1.stones === 'flat' && d1.board === 'grass' && dn === '平面' && dchip === '預設・內建' && dcta.t === '使用中' && dcta.dis, `選預設格：預覽 ${d1.board}/${d1.stones}（棋盤那邊不變）、「${dn}／${dchip}」、按鈕「${dcta.t}」不可按`);
+  await page.click('#shopPage [data-tab="b"]'); await page.click('#shopPage .cell[data-k="b:classic"]'); await page.waitForTimeout(150);
+  const d2 = await prev(page);
+  ok(d2.board === 'classic' && d2.stones === 'flat', `棋盤預設格：預覽回原木＋平面 ${d2.board}/${d2.stones}`);
+  await page.click('#shopPage [data-tab="s"]'); await page.click('#shopPage .cell[data-k="s:pets"]'); await page.click('#shopPage [data-tab="b"]'); await page.click('#shopPage .cell[data-k="b:grass"]');
+  await page.click('#shopPage [data-tab="s"]'); await page.waitForTimeout(100);
+  await page.click('#shopPage .cta'); await page.waitForFunction(() => /^換上/.test(document.querySelector('#shopPage .cta')?.textContent)); await page.waitForTimeout(200);
+  const g1 = { own: await lsOwned(page), cta: await ctaOf(page), tg: await page.textContent('#shopPage .cell[data-k="s:pets"] .tg'), chip: await page.textContent('#shopPage .sinfo .chip') };
+  ok(claims.length === 1 && claims[0].items.length === 1 && claims[0].items[0] === 's:pets' && claims[0].src === 'free' && /^[0-9a-f-]{16,40}$/i.test(claims[0].vid), `在棋子分頁領取：只送 ${JSON.stringify(claims[0])}`);
+  ok(JSON.stringify(g1.own) === '["s:pets"]' && g1.cta.t === '換上「黑貓與白狗」' && g1.tg === '已擁有' && g1.chip === '已擁有', `領取後：本機擁有 ${JSON.stringify(g1.own)}、按鈕「${g1.cta.t}」、格子「${g1.tg}」、膠囊「${g1.chip}」`);
+  ok(await page.evaluate(() => RushSkin.get().stones.id + '/' + RushSkin.get().board.id) === 'flat/classic', '領取只是領取：還沒換上（仍是 flat/classic）');
+  await page.click('#shopPage [data-tab="b"]'); await page.waitForTimeout(100);
+  const bs = await ctaOf(page), bt = await page.textContent('#shopPage .cell[data-k="b:grass"] .tg');
+  ok(bs.t === '免費領取「草地」' && bt === '免費' && claims.length === 1, `棋盤那邊狀態不變：按鈕「${bs.t}」、格子「${bt}」；claims 仍 ${claims.length} 次`);
+  await page.click('#shopPage [data-tab="s"]'); await page.click('#shopPage .cta'); await page.waitForFunction(() => document.querySelector('#shopPage .cta')?.textContent === '使用中'); await page.waitForTimeout(200);
+  const u = await page.evaluate(() => ({ dis: document.querySelector('#shopPage .cta').disabled, on: document.querySelector('#shopPage .cell[data-k="s:pets"]').classList.contains('on'), tg: document.querySelector('#shopPage .cell[data-k="s:pets"] .tg').textContent, cur: RushSkin.get().stones.id, ls: localStorage.getItem('vcfgame.stones'), flatTg: document.querySelector('#shopPage .cell[data-k="s:flat"] .tg').textContent }));
+  ok(u.dis && u.on && u.tg === '使用中' && u.cur === 'pets' && u.ls === 'pets' && u.flatTg === '預設' && claims.length === 1, `換上 → 使用中：按鈕不可按、格子「${u.tg}」、RushSkin ${u.cur}、localStorage ${u.ls}、預設格改回「${u.flatTg}」、沒多送 claim`);
+  await page.click('#shopPage [data-tab="b"]'); await page.click('#shopPage .cta'); await page.waitForFunction(() => /^換上/.test(document.querySelector('#shopPage .cta')?.textContent));
+  await page.click('#shopPage .cta'); await page.waitForFunction(() => document.querySelector('#shopPage .cta')?.textContent === '使用中');
+  ok(claims.length === 2 && claims[1].items[0] === 'b:grass', `領棋盤 b:grass：claim ${JSON.stringify(claims[1])}`);
   const lsO = await lsOwned(page);
-  ok(lsO && lsO.includes('s:poop') && lsO.includes('b:starry') && lsO.length === 2, `localStorage 擁有清單 ${JSON.stringify(lsO)}`);
-  // 點框外關閉
-  await page.mouse.click(5, 5); await page.waitForTimeout(150);
-  ok(await page.evaluate(() => document.getElementById('shopDlg').hidden), '點小框外面會關閉小框');
-  // 棋具頁出現
-  await page.click('#shopPage .back'); await page.waitForSelector('#shopPage', { state: 'hidden' });
+  ok(lsO && lsO.length === 2 && lsO.includes('s:pets') && lsO.includes('b:grass'), `localStorage 擁有清單 ${JSON.stringify(lsO)}`);
+  await page.click('#shopPage .back'); await page.click('#shopPage .back'); await page.waitForSelector('#shopPage', { state: 'hidden' });
   await page.click('#openSet'); await page.click('#setSkin'); await page.waitForSelector('#skinPick:not([hidden]) canvas');
   const p = await page.evaluate(() => ({ b: [...document.querySelectorAll('[data-b]')].map((e) => e.dataset.b), s: [...document.querySelectorAll('[data-s]')].map((e) => e.dataset.s), pressedS: document.querySelector('[data-s][aria-pressed="true"]').dataset.s, pressedB: document.querySelector('[data-b][aria-pressed="true"]').dataset.b }));
-  ok(p.s.includes('poop') && p.b.includes('starry') && p.s.length === 8 && p.b.length === 9 && p.pressedS === 'poop' && p.pressedB === 'starry', `棋具頁出現領到的：棋子 ${p.s.length}/8 含 poop、棋盤 ${p.b.length}/9 含 starry，選中 ${p.pressedS}/${p.pressedB}`);
-  // 重新整理
+  ok(p.s.includes('pets') && p.b.includes('grass') && p.s.length === 8 && p.b.length === 9 && p.pressedS === 'pets' && p.pressedB === 'grass', `設定棋具頁出現領到的：棋子 ${p.s.length}/8 含 pets、棋盤 ${p.b.length}/9 含 grass，選中 ${p.pressedS}/${p.pressedB}`);
   await page.reload({ waitUntil: 'load' }); await page.waitForFunction(() => window.RushSkin && window.RushShop); await page.waitForTimeout(600);
   const re = await page.evaluate(() => ({ cur: RushSkin.get().board.id + '/' + RushSkin.get().stones.id, owned: JSON.parse(localStorage.getItem('vcfgame.owned')) }));
-  ok(re.cur === 'starry/poop' && re.owned.length === 2, `重新整理後仍使用 ${re.cur}、擁有 ${JSON.stringify(re.owned)}`);
-  await page.click('#openShop'); await page.waitForSelector('#shopPage:not([hidden])');
-  const re2 = await page.evaluate(() => [...document.querySelectorAll('#shopPage .cell')].filter((e) => e.querySelector('.tg').textContent !== '免費').map((e) => e.dataset.k + ':' + e.querySelector('.tg').textContent));
-  ok(re2.length === 2 && re2.includes('s:poop:使用中') && re2.includes('b:starry:使用中'), `重新整理後商店仍顯示 ${re2}`);
+  ok(re.cur === 'grass/pets' && re.owned.length === 2, `重新整理後仍使用 ${re.cur}、擁有 ${JSON.stringify(re.owned)}`);
+  await openStage(page, 's');
+  const re2 = await cells(page), pv2 = await prev(page);
+  ok(re2.filter((c) => c.tg !== '免費' && c.tg !== '預設').map((c) => c.k + ':' + c.tg).join() === 's:pets:使用中' && pv2.board === 'grass' && pv2.stones === 'pets', `重新整理後棋具頁：進頁預覽＝正在用的 ${pv2.board}/${pv2.stones}、使用中那格 pets`);
   ok(errs.length === 0, `領取流程沒有 console error ${errs.slice(0, 2)}`);
+  await ctx.close();
+}
+
+// ---- 3b. 從棋具頁「＋」進來；玩家正在用非商店的棋盤 ----
+{
+  const { ctx, page, errs } = await newPage(375, 667, 'zh', { 'vcfgame.board': 'night' });
+  await openPicker(page);
+  ok(await page.evaluate(() => RushSkin.boardId()) === 'night', '玩家用「夜墨」盤（night）');
+  await page.click('#skinPick [data-shop="b"]'); await page.waitForSelector('#shopPage:not([hidden])'); await page.waitForTimeout(250);
+  const a = await page.evaluate(() => ({ picker: document.getElementById('skinPick').hidden, stage: !!document.querySelector('#shopPage .top canvas'), tab: document.querySelector('#shopPage [data-tab][aria-pressed="true"]').dataset.tab, title: document.querySelector('#shopPage h1').textContent }));
+  ok(a.picker && a.stage && a.tab === 'b' && a.title === '棋具', `棋盤那排的＋：直接進棋具頁、停在棋盤分頁（${JSON.stringify(a)}）`);
+  const cs = await cells(page), pv = await prev(page), cta = await ctaOf(page), nm = await page.textContent('#shopPage .sinfo .nm');
+  ok(pv.board === 'night' && cs.every((c) => !c.sel) && nm.length > 0 && cta.dis, `夜墨：預覽 ${pv.board}、沒有格子被選中、名稱「${nm}」、按鈕「${cta.t}」不可按`);
+  await page.screenshot({ path: shotsOf('stage_zh_375x667_night.png') });
+  await page.click('#shopPage [data-tab="s"]'); await page.waitForTimeout(150);
+  const cs2 = await cells(page);
+  ok(cs2[0].sel, '棋子分頁：玩家用的是預設平面，第一格選中');
+  await page.click('#shopPage .back'); await page.waitForTimeout(250);
+  const r = await page.evaluate(() => ({ shopHidden: document.getElementById('shopPage').hidden, picker: !document.getElementById('skinPick').hidden, cv: !!document.querySelector('#skinPick canvas') }));
+  ok(r.shopHidden && r.picker && r.cv, `返回回到原本的棋具頁（設定）${JSON.stringify(r)}`);
+  await page.click('#skinPick [data-shop="s"]'); await page.waitForSelector('#shopPage:not([hidden])'); await page.waitForTimeout(200);
+  ok(await page.evaluate(() => document.querySelector('#shopPage [data-tab][aria-pressed="true"]').dataset.tab) === 's', '棋子那排的＋：停在棋子造型分頁');
+  await page.goBack(); await page.waitForTimeout(250);
+  ok(await page.evaluate(() => document.getElementById('shopPage').hidden), '瀏覽器返回鍵會關掉商店');
+  ok(errs.length === 0, `＋進來／夜墨沒有 console error ${errs.slice(0, 2)}`);
   await ctx.close();
 }
 
@@ -236,10 +296,9 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
   ok(r.owned.includes('s:poop') && r.owned.includes('b:grass') && r.owned.length === 2, `舊玩家：擁有清單 ${JSON.stringify(r.owned)}`);
   const g = claims.find((c) => c.src === 'grand');
   ok(g && g.items.length === 2 && g.items.includes('s:poop') && g.items.includes('b:grass'), `舊玩家：送出 src:'grand' 的 claim ${JSON.stringify(g)}`);
-  await page.click('#openShop'); await page.waitForSelector('#shopPage:not([hidden])');
-  const t = await page.evaluate(() => [...document.querySelectorAll('#shopPage .cell')].filter((e) => e.querySelector('.tg').textContent === '使用中').map((e) => e.dataset.k));
-  ok(t.length === 2, `舊玩家：商店兩格「使用中」${t}`);
-  // 已經有 owned 鍵的玩家不再走遷移（即使 stones 是商店商品但沒領）
+  await openStage(page, 's');
+  const t = await cells(page), pv = await prev(page);
+  ok(t.filter((c) => c.on).map((c) => c.k).join() === 's:poop' && t.find((c) => c.k === 's:poop').sel && pv.board === 'grass' && pv.stones === 'poop', `舊玩家：進棋具頁選中並使用中 poop、預覽 ${pv.board}/${pv.stones}`);
   ok(errs.length === 0, `舊玩家沒有 console error ${errs.slice(0, 2)}`);
   await ctx.close();
   const b = await newPage(375, 667, 'zh', { 'vcfgame.stones': 'poop', 'vcfgame.owned': '[]' });
@@ -258,18 +317,20 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
   ok(o && o.includes('b:grass') && o.includes('b:pool') && o.includes('s:pets') && o.length === 3, `聯集：伺服器有、本機沒有的出現在本機 ${JSON.stringify(o)}`);
   const f = claims.find((c) => c.items.includes('s:pets'));
   ok(f && f.items.length === 1 && f.src === 'free', `本機有、伺服器沒有的補送 ${JSON.stringify(f)}`);
-  await page.click('#openShop'); await page.waitForSelector('#shopPage:not([hidden])');
-  const tg = await page.evaluate(() => ['b:grass', 'b:pool', 's:pets', 's:poop'].map((k) => k + ':' + document.querySelector(`.cell[data-k="${k}"] .tg`).textContent));
-  ok(tg.join('|') === 'b:grass:已擁有|b:pool:已擁有|s:pets:已擁有|s:poop:免費', `商店顯示 ${tg}`);
+  await openStage(page, 's');
+  const s1 = (await cells(page)).filter((c) => ['s:pets', 's:poop'].includes(c.k)).map((c) => c.k + ':' + c.tg).sort();
+  await page.click('#shopPage [data-tab="b"]');
+  const s2 = (await cells(page)).filter((c) => ['b:grass', 'b:pool'].includes(c.k)).map((c) => c.k + ':' + c.tg);
+  ok(s1.join('|') === 's:pets:已擁有|s:poop:免費' && s2.join('|') === 'b:grass:已擁有|b:pool:已擁有', `商店顯示 ${s1}｜${s2}`);
   ok(errs.length === 0, `同步沒有 console error ${errs.slice(0, 2)}`);
   await ctx.close();
 }
 {   // /shop 連不上
   const { ctx, page, errs } = await newPage(375, 667, 'zh', { 'vcfgame.owned': JSON.stringify(['s:bunny']) }, { owned: null });
-  await openShop(page);
-  const r = await page.evaluate(() => ({ n: document.querySelectorAll('#shopPage .cell').length, tag: document.querySelector('.cell[data-k="s:bunny"] .tg').textContent }));
-  ok(r.n === 14 && r.tag === '已擁有', `/shop 連不上：商店照常 ${r.n} 格、本機清單的 bunny「${r.tag}」`);
-  await page.click('.cell[data-k="s:pets"]'); await page.click('#shopDlg .cta'); await page.waitForFunction(() => document.querySelector('#shopDlg .cta')?.textContent === '使用');
+  await openStage(page, 's');
+  const cs = await cells(page);
+  ok(cs.length === 8 && cs.find((c) => c.k === 's:bunny').tg === '已擁有', `/shop 連不上：商店照常 ${cs.length} 格、本機清單的 bunny「${cs.find((c) => c.k === 's:bunny').tg}」`);
+  await page.click('#shopPage .cell[data-k="s:pets"]'); await page.click('#shopPage .cta'); await page.waitForFunction(() => /^換上/.test(document.querySelector('#shopPage .cta')?.textContent));
   const lo = await lsOwned(page);
   ok(lo.includes('s:pets'), `/shop 連不上：領取仍先寫本機 ${JSON.stringify(lo)}`);
   ok(errs.length === 0, `/shop 連不上沒有 console error ${errs.slice(0, 2)}`);
@@ -277,12 +338,12 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
 }
 {   // 價格 > 0 → 伺服器拒絕 → 本機拿掉
   const { ctx, page, errs, claims } = await newPage(375, 667, 'zh', {}, { prices: { 's:boo': 30 } });
-  await openShop(page);
+  await openStage(page, 's');
   const pr = await page.evaluate(() => RushSkin.price(RushSkin.stones.find((x) => x.id === 'boo')) + '/' + RushSkin.price(RushSkin.stones.find((x) => x.id === 'poop')));
   ok(pr === '30/0', `RushSkin.price 讀到 /shop 的 prices：boo/poop = ${pr}`);
-  await page.click('.cell[data-k="s:boo"]'); await page.click('#shopDlg .cta'); await page.waitForTimeout(500);
-  const r = await page.evaluate(() => ({ cta: document.querySelector('#shopDlg .cta').textContent, own: localStorage.getItem('vcfgame.owned') }));
-  ok(claims.length === 1 && r.cta === '領取' && !r.own.includes('s:boo'), `被伺服器 refused：按鈕回到「${r.cta}」、本機清單 ${r.own}`);
+  await page.click('#shopPage .cell[data-k="s:boo"]'); await page.click('#shopPage .cta'); await page.waitForTimeout(500);
+  const r = await page.evaluate(() => ({ cta: document.querySelector('#shopPage .cta').textContent, own: localStorage.getItem('vcfgame.owned') }));
+  ok(claims.length === 1 && /^免費領取/.test(r.cta) && !r.own.includes('s:boo'), `被伺服器 refused：按鈕回到「${r.cta}」、本機清單 ${r.own}`);
   ok(errs.length === 0, `refused 沒有 console error ${errs.slice(0, 2)}`);
   await ctx.close();
 }
@@ -291,23 +352,26 @@ for (const lang of ['zh', 'en', 'ja', 'ko']) for (const [w, h] of [[360, 640], [
 {
   const { ctx, page } = await newPage(375, 667, 'zh', {}, { skins: { off: EMPTY, on: { boards: ['grass'], stones: ['poop'] } } });
   await openShop(page);
-  const r = await page.evaluate(() => ({ cells: [...document.querySelectorAll('#shopPage .cell')].map((e) => e.dataset.k), secs: [...document.querySelectorAll('#shopPage .sec b')].map((e) => e.textContent) }));
-  ok(r.cells.length === 2 && r.cells.includes('s:poop') && r.cells.includes('b:grass'), `後台只開 2 件：商店 ${r.cells}`);
+  const sub = await page.textContent('#shopPage .card .tx span');
+  ok(sub === '棋子造型 1 組・棋盤花色 1 張', `後台只開 2 件：卡片「${sub}」`);
+  await page.click('#shopPage .card'); await page.waitForSelector('#shopPage .top canvas');
+  const a = await cells(page); await page.click('#shopPage [data-tab="b"]'); const b = await cells(page);
+  ok(a.length === 2 && b.length === 2 && a[1].k === 's:poop' && b[1].k === 'b:grass', `後台只開 2 件：各分頁＝預設＋1（${a.map((c) => c.k)}｜${b.map((c) => c.k)}）`);
   const H = await layout(page, '#shopPage', '.cell');
   ok(H.sh <= H.ch && H.bad.length === 0, `只開 2 件版面正常（sh ${H.sh}/${H.ch}）`);
   await ctx.close();
 }
 {
-  const { ctx, page, errs } = await newPage(375, 667, 'zh', {}, { skins: NONE_ON });
+  const { ctx, page } = await newPage(375, 667, 'zh', {}, { skins: NONE_ON });
   await openShop(page);
-  const r = await page.evaluate(() => ({ cells: document.querySelectorAll('#shopPage .cell').length, empty: document.querySelector('#shopPage .empty')?.textContent }));
-  ok(r.cells === 0 && r.empty === '目前沒有上架的商品', `後台全關：${r.cells} 格、文字「${r.empty}」`);
+  const r = await page.evaluate(() => ({ cards: document.querySelectorAll('#shopPage .card').length, empty: document.querySelector('#shopPage .empty')?.textContent }));
+  ok(r.cards === 0 && r.empty === '目前沒有上架的商品', `後台全關：${r.cards} 張卡、文字「${r.empty}」`);
   await ctx.close();
   for (const lang of ['en', 'ja', 'ko']) {
     const x = await newPage(360, 640, lang, {}, { skins: '500' });
     await openShop(x.page);
-    const e = await x.page.evaluate(() => document.querySelector('#shopPage .empty')?.textContent);
-    ok(!!e && !FORBID.test(e), `${lang} 連不上 /skins（optIn 全關）：空狀態「${e}」`);
+    const e = await x.page.evaluate(() => ({ t: document.querySelector('#shopPage .empty')?.textContent, c: document.querySelectorAll('#shopPage .card').length }));
+    ok(!!e.t && e.c === 0 && !FORBID.test(e.t), `${lang} 連不上 /skins（optIn 全關）：空狀態「${e.t}」、${e.c} 張卡`);
     ok(x.errs.length === 0, `${lang} 空狀態沒有 console error ${x.errs.slice(0, 2)}`);
     await x.ctx.close();
   }
@@ -334,9 +398,9 @@ for (const f of ['duel.html', 'score.html']) {
 // ---- 8. 負向測試：這支腳本抓得到版面壞掉 ----
 {
   const { ctx, page } = await newPage(360, 640, 'zh');
-  await openShop(page);
-  await page.addStyleTag({ content: '#shopPage .grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important} #shopPage{--ch:120px !important}' });
-  await page.evaluate(() => document.querySelector('#shopPage').classList.add('x')); await page.waitForTimeout(200);
+  await openStage(page, 's');
+  await page.addStyleTag({ content: '#shopPage .grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important} #shopPage .cell{height:160px !important}' });
+  await page.waitForTimeout(200);
   const L = await layout(page, '#shopPage', '.cell');
   ok(L.bad.length > 0 || L.sh > L.ch, `負向測試：把格子改成 2 欄會被抓到（bad=${L.bad.length} sh=${L.sh}/ch=${L.ch}）`);
   await ctx.close();

@@ -100,16 +100,16 @@
   const swOf = (b) => (b.img ? `url('${b.img}') center/cover no-repeat, ` : '') + b.color;
   const IC_PLUS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   const shown = (it) => !S.isOff(it) && !(S.isShop(it) && !S.owns(it));   // 後台關閉的、沒領取的商店商品都不列
-  const plusBtn = () => (window.RushShop ? `<button type="button" class="sopt shopPlus" data-shop aria-label="${esc(U('shop'))}" title="${esc(U('shop'))}">${IC_PLUS}</button>` : '');
+  const plusBtn = (tab) => (window.RushShop ? `<button type="button" class="sopt shopPlus" data-shop="${tab}" aria-label="${esc(U('shop'))}" title="${esc(U('shop'))}">${IC_PLUS}</button>` : '');
   function render() {
     const lg = L(), bId = S.boardId(), sId = S.stonesId();
     const bName = S.name(S.boards.find((x) => x.id === bId), lg), sName = S.name(S.stones.find((x) => x.id === sId), lg);
     const lock = (it) => (S.isLocked(it) ? `<span class="lk" title="${esc(U('locked'))}">${IC_LOCK}</span>` : '');
-    const boards = S.boards.filter(shown).map((b) => `<button type="button" class="sopt" data-b="${b.id}" aria-pressed="${b.id === bId}" aria-label="${esc(S.name(b, lg))}"${S.isLocked(b) ? ' disabled' : ''}><span class="sw" style="background:${b.img ? '' : b.color};background-image:linear-gradient(${b.line} 1px,transparent 1px),linear-gradient(90deg,${b.line} 1px,transparent 1px)${b.img ? `,url('${b.img}'),linear-gradient(${b.color},${b.color})` : ''};background-size:10px 10px,10px 10px${b.img ? ',cover,auto' : ''};background-position:4px 4px,4px 4px${b.img ? ',center,0 0' : ''};background-repeat:repeat,repeat${b.img ? ',no-repeat,no-repeat' : ''}"></span>${lock(b)}</button>`).join('') + plusBtn();
+    const boards = S.boards.filter(shown).map((b) => `<button type="button" class="sopt" data-b="${b.id}" aria-pressed="${b.id === bId}" aria-label="${esc(S.name(b, lg))}"${S.isLocked(b) ? ' disabled' : ''}><span class="sw" style="background:${b.img ? '' : b.color};background-image:linear-gradient(${b.line} 1px,transparent 1px),linear-gradient(90deg,${b.line} 1px,transparent 1px)${b.img ? `,url('${b.img}'),linear-gradient(${b.color},${b.color})` : ''};background-size:10px 10px,10px 10px${b.img ? ',cover,auto' : ''};background-position:4px 4px,4px 4px${b.img ? ',center,0 0' : ''};background-repeat:repeat,repeat${b.img ? ',no-repeat,no-repeat' : ''}"></span>${lock(b)}</button>`).join('') + plusBtn('b');
     const stones = S.stones.filter(shown).map((s) => {
       const p = S.preview('night', s.id);   // 按鈕底是深色，用深色盤算描邊，黑子才看得到
       return `<button type="button" class="sopt st" data-s="${s.id}" aria-pressed="${s.id === sId}" aria-label="${esc(S.name(s, lg))}"${S.isLocked(s) ? ' disabled' : ''}><span class="dot${s.fig ? ' fig' : ''}" style="left:calc(50% - 15px);top:6px;background:${bgOf(p.black)};box-shadow:${shOf(p.black)}"></span><span class="dot${s.fig ? ' fig' : ''}" style="left:calc(50% - 3px);top:16px;background:${bgOf(p.white)};box-shadow:${shOf(p.white)}"></span>${lock(s)}</button>`;
-    }).join('') + plusBtn();
+    }).join('') + plusBtn('s');
     root.innerHTML = `<div class="sbar"><button type="button" class="icob" data-x aria-label="${esc(U('close'))}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><b>${esc(U('title'))}</b></div>
 <canvas aria-hidden="true"></canvas>
 <div class="srow"><div class="shd"><b>${esc(U('board'))}</b><span>${esc(bName)}</span></div><div class="sgrid">${boards}</div></div>
@@ -118,10 +118,11 @@
     root.querySelector('[data-x]').onclick = () => close();
     root.querySelectorAll('[data-b]').forEach((el) => { el.onclick = () => { S.setBoard(el.dataset.b); render(); }; });
     root.querySelectorAll('[data-s]').forEach((el) => { el.onclick = () => { S.setStones(el.dataset.s); render(); }; });
-    root.querySelectorAll('[data-shop]').forEach((el) => { el.onclick = () => { root.hidden = true; root.innerHTML = ''; window.RushShop.open(); }; });   // 歷史那一格由商店接手（它會 replaceState）
+    root.querySelectorAll('[data-shop]').forEach((el) => { el.onclick = () => { root.hidden = true; root.innerHTML = ''; window.RushShop.open({ stage: true, tab: el.dataset.shop, from: 'picker' }); }; });   // 歷史那一格由商店接手（它會 replaceState）
     drawPreview(root.querySelector('canvas'));
   }
-  function open() { root.hidden = false; history.pushState({ skin: 1 }, ''); render(); root.querySelector('[data-x]').focus(); }
+  function open(reuse) { root.hidden = false; if (reuse !== true) history.pushState({ skin: 1 }, ''); render();   // reuse：從商店返回，歷史那一格還在，不再多推一格
+    root.querySelector('[data-x]').focus(); }
   function close() {
     root.hidden = true; root.innerHTML = ''; const back = document.getElementById('setSkin'); if (back) back.focus();
     if (history.state && history.state.skin) history.back();

@@ -1,0 +1,287 @@
+PASS zh 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS zh 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS zh 360x640 商店首頁沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 商店首頁：入口 aria「商店」＝標題「商店」、1 張卡、膠囊「限時免費」、最小觸控 48
+PASS zh 360x640 卡片數量「棋子造型 7 組・棋盤花色 7 張」＝ 7／7
+PASS zh 360x640 商店首頁文字沒有禁字
+PASS zh 360x640 棋具頁[s] 沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 棋具頁[s] 格子 8/8、最小觸控 44
+PASS zh 360x640 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS zh 360x640 棋具頁[s] 第一格是預設「s:flat／平面／使用中」
+PASS zh 360x640 棋具頁[s] 預覽盤 168px >= 140
+PASS zh 360x640 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「免費領取「便便與霜淇淋」」沒被切
+PASS zh 360x640 棋具頁[s] 文字沒有禁字
+PASS zh 360x640 棋具頁[b] 沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 棋具頁[b] 格子 8/8、最小觸控 44
+PASS zh 360x640 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS zh 360x640 棋具頁[b] 第一格是預設「b:classic／原木／使用中」
+PASS zh 360x640 棋具頁[b] 預覽盤 168px >= 140
+PASS zh 360x640 棋具頁[b] 選最長名稱 b:denim：不捲動、按鈕「免費領取「牛仔布」」沒被切
+PASS zh 360x640 棋具頁[b] 文字沒有禁字
+PASS zh 360x640 首頁／商店沒有 console error 
+PASS zh 360x640 設定棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS zh 360x640 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS zh 360x640 「＋」真的看得到且帶分頁 ["b","s"]
+PASS zh 360x640 設定棋具頁預覽 270px >= 190
+PASS zh 360x640 設定棋具頁文字沒有禁字
+PASS zh 360x640 設定棋具頁沒有 console error 
+PASS zh 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS zh 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS zh 375x667 商店首頁沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 商店首頁：入口 aria「商店」＝標題「商店」、1 張卡、膠囊「限時免費」、最小觸控 48
+PASS zh 375x667 卡片數量「棋子造型 7 組・棋盤花色 7 張」＝ 7／7
+PASS zh 375x667 商店首頁文字沒有禁字
+PASS zh 375x667 棋具頁[s] 沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 棋具頁[s] 格子 8/8、最小觸控 44
+PASS zh 375x667 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS zh 375x667 棋具頁[s] 第一格是預設「s:flat／平面／使用中」
+PASS zh 375x667 棋具頁[s] 預覽盤 168px >= 140
+PASS zh 375x667 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「免費領取「便便與霜淇淋」」沒被切
+PASS zh 375x667 棋具頁[s] 文字沒有禁字
+PASS zh 375x667 棋具頁[b] 沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 棋具頁[b] 格子 8/8、最小觸控 44
+PASS zh 375x667 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS zh 375x667 棋具頁[b] 第一格是預設「b:classic／原木／使用中」
+PASS zh 375x667 棋具頁[b] 預覽盤 168px >= 140
+PASS zh 375x667 棋具頁[b] 選最長名稱 b:denim：不捲動、按鈕「免費領取「牛仔布」」沒被切
+PASS zh 375x667 棋具頁[b] 文字沒有禁字
+PASS zh 375x667 首頁／商店沒有 console error 
+PASS zh 375x667 設定棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS zh 375x667 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS zh 375x667 「＋」真的看得到且帶分頁 ["b","s"]
+PASS zh 375x667 設定棋具頁預覽 295px >= 190
+PASS zh 375x667 設定棋具頁文字沒有禁字
+PASS zh 375x667 設定棋具頁沒有 console error 
+PASS en 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS en 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS en 360x640 商店首頁沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 商店首頁：入口 aria「Shop」＝標題「Shop」、1 張卡、膠囊「Free for now」、最小觸控 48
+PASS en 360x640 卡片數量「7 stone sets · 7 boards」＝ 7／7
+PASS en 360x640 商店首頁文字沒有禁字
+PASS en 360x640 棋具頁[s] 沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 棋具頁[s] 格子 8/8、最小觸控 44
+PASS en 360x640 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS en 360x640 棋具頁[s] 第一格是預設「s:flat／Flat／In use」
+PASS en 360x640 棋具頁[s] 預覽盤 168px >= 140
+PASS en 360x640 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「Claim free "Poop & Soft Serve"」沒被切
+PASS en 360x640 棋具頁[s] 文字沒有禁字
+PASS en 360x640 棋具頁[b] 沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 棋具頁[b] 格子 8/8、最小觸控 44
+PASS en 360x640 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS en 360x640 棋具頁[b] 第一格是預設「b:classic／Wood／In use」
+PASS en 360x640 棋具頁[b] 預覽盤 168px >= 140
+PASS en 360x640 棋具頁[b] 選最長名稱 b:chalk：不捲動、按鈕「Claim free "Chalkboard"」沒被切
+PASS en 360x640 棋具頁[b] 文字沒有禁字
+PASS en 360x640 首頁／商店沒有 console error 
+PASS en 360x640 設定棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS en 360x640 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS en 360x640 「＋」真的看得到且帶分頁 ["b","s"]
+PASS en 360x640 設定棋具頁預覽 270px >= 190
+PASS en 360x640 設定棋具頁文字沒有禁字
+PASS en 360x640 設定棋具頁沒有 console error 
+PASS en 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS en 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS en 375x667 商店首頁沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 商店首頁：入口 aria「Shop」＝標題「Shop」、1 張卡、膠囊「Free for now」、最小觸控 48
+PASS en 375x667 卡片數量「7 stone sets · 7 boards」＝ 7／7
+PASS en 375x667 商店首頁文字沒有禁字
+PASS en 375x667 棋具頁[s] 沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 棋具頁[s] 格子 8/8、最小觸控 44
+PASS en 375x667 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS en 375x667 棋具頁[s] 第一格是預設「s:flat／Flat／In use」
+PASS en 375x667 棋具頁[s] 預覽盤 168px >= 140
+PASS en 375x667 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「Claim free "Poop & Soft Serve"」沒被切
+PASS en 375x667 棋具頁[s] 文字沒有禁字
+PASS en 375x667 棋具頁[b] 沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 棋具頁[b] 格子 8/8、最小觸控 44
+PASS en 375x667 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS en 375x667 棋具頁[b] 第一格是預設「b:classic／Wood／In use」
+PASS en 375x667 棋具頁[b] 預覽盤 168px >= 140
+PASS en 375x667 棋具頁[b] 選最長名稱 b:chalk：不捲動、按鈕「Claim free "Chalkboard"」沒被切
+PASS en 375x667 棋具頁[b] 文字沒有禁字
+PASS en 375x667 首頁／商店沒有 console error 
+PASS en 375x667 設定棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS en 375x667 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS en 375x667 「＋」真的看得到且帶分頁 ["b","s"]
+PASS en 375x667 設定棋具頁預覽 295px >= 190
+PASS en 375x667 設定棋具頁文字沒有禁字
+PASS en 375x667 設定棋具頁沒有 console error 
+PASS ja 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS ja 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ja 360x640 商店首頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 商店首頁：入口 aria「ショップ」＝標題「ショップ」、1 張卡、膠囊「期間限定 無料」、最小觸控 48
+PASS ja 360x640 卡片數量「石 7 種・盤 7 種」＝ 7／7
+PASS ja 360x640 商店首頁文字沒有禁字
+PASS ja 360x640 棋具頁[s] 沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 棋具頁[s] 格子 8/8、最小觸控 44
+PASS ja 360x640 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ja 360x640 棋具頁[s] 第一格是預設「s:flat／フラット／使用中」
+PASS ja 360x640 棋具頁[s] 預覽盤 168px >= 140
+PASS ja 360x640 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「「うんちとソフトクリーム」を無料でもらう」沒被切
+PASS ja 360x640 棋具頁[s] 文字沒有禁字
+PASS ja 360x640 棋具頁[b] 沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 棋具頁[b] 格子 8/8、最小觸控 44
+PASS ja 360x640 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ja 360x640 棋具頁[b] 第一格是預設「b:classic／木目／使用中」
+PASS ja 360x640 棋具頁[b] 預覽盤 168px >= 140
+PASS ja 360x640 棋具頁[b] 選最長名稱 b:ice：不捲動、按鈕「「氷の湖」を無料でもらう」沒被切
+PASS ja 360x640 棋具頁[b] 文字沒有禁字
+PASS ja 360x640 首頁／商店沒有 console error 
+PASS ja 360x640 設定棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ja 360x640 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ja 360x640 「＋」真的看得到且帶分頁 ["b","s"]
+PASS ja 360x640 設定棋具頁預覽 268px >= 190
+PASS ja 360x640 設定棋具頁文字沒有禁字
+PASS ja 360x640 設定棋具頁沒有 console error 
+PASS ja 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS ja 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ja 375x667 商店首頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 商店首頁：入口 aria「ショップ」＝標題「ショップ」、1 張卡、膠囊「期間限定 無料」、最小觸控 48
+PASS ja 375x667 卡片數量「石 7 種・盤 7 種」＝ 7／7
+PASS ja 375x667 商店首頁文字沒有禁字
+PASS ja 375x667 棋具頁[s] 沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 棋具頁[s] 格子 8/8、最小觸控 44
+PASS ja 375x667 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ja 375x667 棋具頁[s] 第一格是預設「s:flat／フラット／使用中」
+PASS ja 375x667 棋具頁[s] 預覽盤 168px >= 140
+PASS ja 375x667 棋具頁[s] 選最長名稱 s:poop：不捲動、按鈕「「うんちとソフトクリーム」を無料でもらう」沒被切
+PASS ja 375x667 棋具頁[s] 文字沒有禁字
+PASS ja 375x667 棋具頁[b] 沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 棋具頁[b] 格子 8/8、最小觸控 44
+PASS ja 375x667 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ja 375x667 棋具頁[b] 第一格是預設「b:classic／木目／使用中」
+PASS ja 375x667 棋具頁[b] 預覽盤 168px >= 140
+PASS ja 375x667 棋具頁[b] 選最長名稱 b:ice：不捲動、按鈕「「氷の湖」を無料でもらう」沒被切
+PASS ja 375x667 棋具頁[b] 文字沒有禁字
+PASS ja 375x667 首頁／商店沒有 console error 
+PASS ja 375x667 設定棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ja 375x667 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ja 375x667 「＋」真的看得到且帶分頁 ["b","s"]
+PASS ja 375x667 設定棋具頁預覽 291px >= 190
+PASS ja 375x667 設定棋具頁文字沒有禁字
+PASS ja 375x667 設定棋具頁沒有 console error 
+PASS ko 360x640 首頁沒有捲動／超出（docSh 640<=640、bad []）
+PASS ko 360x640 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ko 360x640 商店首頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 商店首頁：入口 aria「상점」＝標題「상점」、1 張卡、膠囊「한정 무료」、最小觸控 48
+PASS ko 360x640 卡片數量「돌 7종 · 판 7종」＝ 7／7
+PASS ko 360x640 商店首頁文字沒有禁字
+PASS ko 360x640 棋具頁[s] 沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 棋具頁[s] 格子 8/8、最小觸控 44
+PASS ko 360x640 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ko 360x640 棋具頁[s] 第一格是預設「s:flat／평면／사용 중」
+PASS ko 360x640 棋具頁[s] 預覽盤 168px >= 140
+PASS ko 360x640 棋具頁[s] 選最長名稱 s:pets：不捲動、按鈕「"검은 고양이와 흰 강아지" 무료 받기」沒被切
+PASS ko 360x640 棋具頁[s] 文字沒有禁字
+PASS ko 360x640 棋具頁[b] 沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 棋具頁[b] 格子 8/8、最小觸控 44
+PASS ko 360x640 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ko 360x640 棋具頁[b] 第一格是預設「b:classic／원목／사용 중」
+PASS ko 360x640 棋具頁[b] 預覽盤 168px >= 140
+PASS ko 360x640 棋具頁[b] 選最長名稱 b:ice：不捲動、按鈕「"얼음 호수" 무료 받기」沒被切
+PASS ko 360x640 棋具頁[b] 文字沒有禁字
+PASS ko 360x640 首頁／商店沒有 console error 
+PASS ko 360x640 設定棋具頁沒有捲動／超出（sh 640<=640、bad []）
+PASS ko 360x640 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ko 360x640 「＋」真的看得到且帶分頁 ["b","s"]
+PASS ko 360x640 設定棋具頁預覽 270px >= 190
+PASS ko 360x640 設定棋具頁文字沒有禁字
+PASS ko 360x640 設定棋具頁沒有 console error 
+PASS ko 375x667 首頁沒有捲動／超出（docSh 667<=667、bad []）
+PASS ko 375x667 首頁上排鈕（含商店 #openShop）最小觸控 48 >= 44、共 6 顆
+PASS ko 375x667 商店首頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 商店首頁：入口 aria「상점」＝標題「상점」、1 張卡、膠囊「한정 무료」、最小觸控 48
+PASS ko 375x667 卡片數量「돌 7종 · 판 7종」＝ 7／7
+PASS ko 375x667 商店首頁文字沒有禁字
+PASS ko 375x667 棋具頁[s] 沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 棋具頁[s] 格子 8/8、最小觸控 44
+PASS ko 375x667 棋具頁[s] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ko 375x667 棋具頁[s] 第一格是預設「s:flat／평면／사용 중」
+PASS ko 375x667 棋具頁[s] 預覽盤 168px >= 140
+PASS ko 375x667 棋具頁[s] 選最長名稱 s:pets：不捲動、按鈕「"검은 고양이와 흰 강아지" 무료 받기」沒被切
+PASS ko 375x667 棋具頁[s] 文字沒有禁字
+PASS ko 375x667 棋具頁[b] 沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 棋具頁[b] 格子 8/8、最小觸控 44
+PASS ko 375x667 棋具頁[b] 每格有名稱、名稱和狀態字都沒被切（切到：）
+PASS ko 375x667 棋具頁[b] 第一格是預設「b:classic／원목／사용 중」
+PASS ko 375x667 棋具頁[b] 預覽盤 168px >= 140
+PASS ko 375x667 棋具頁[b] 選最長名稱 b:ice：不捲動、按鈕「"얼음 호수" 무료 받기」沒被切
+PASS ko 375x667 棋具頁[b] 文字沒有禁字
+PASS ko 375x667 首頁／商店沒有 console error 
+PASS ko 375x667 設定棋具頁沒有捲動／超出（sh 667<=667、bad []）
+PASS ko 375x667 設定棋具頁 棋盤 15/15、棋子 14/14、「＋」2/2
+PASS ko 375x667 「＋」真的看得到且帶分頁 ["b","s"]
+PASS ko 375x667 設定棋具頁預覽 295px >= 190
+PASS ko 375x667 設定棋具頁文字沒有禁字
+PASS ko 375x667 設定棋具頁沒有 console error 
+PASS 全新玩家：棋子分頁 8 格、棋盤分頁 8 格（各＝預設＋7）
+PASS 全新玩家：預設格「使用中」、其餘都是「免費」免費
+PASS 未領取 setStones('poop') false、setBoard('grass') false 都回 false，仍是 classic/flat
+PASS 第一次載入存下空的擁有清單 []
+PASS 進頁時選中的是玩家正在用的（預設格，兩個分頁都是）
+PASS 棋具頁返回 → 回商店首頁
+PASS 全新玩家：設定棋具頁看不到商店商品（棋盤 8/8、棋子 7/7）
+PASS 設定棋具頁兩排各有「＋」2
+PASS 全新玩家流程沒有 console error 
+PASS 棋子分頁選黑貓與白狗：名稱「黑貓與白狗」膠囊「限時免費」按鈕「免費領取「黑貓與白狗」」
+PASS 「搭配的棋盤」顯示「原木（預設）」
+PASS 切到棋盤分頁，標題變「棋盤花色」
+PASS 混搭：預覽盤＝grass、子＝pets（RushSkin.preview 參數）、搭配的棋子「黑貓與白狗」
+PASS 混搭：預覽畫布像素確實換成草地盤 [233,201,139] → [97,142,20]
+PASS 混搭：預覽中央那顆子是造型子（像素 [33,35,45] ≠ 平面黑子 [27,26,23]）
+PASS 切回棋子分頁：選擇還在（pets 選中、預覽 grass/pets）
+PASS 選預設格：預覽 grass/flat（棋盤那邊不變）、「平面／預設・內建」、按鈕「使用中」不可按
+PASS 棋盤預設格：預覽回原木＋平面 classic/flat
+PASS 在棋子分頁領取：只送 {"vid":"8b4c3288-bfa9-4dde-a240-a92dac96617a","items":["s:pets"],"src":"free"}
+PASS 領取後：本機擁有 ["s:pets"]、按鈕「換上「黑貓與白狗」」、格子「已擁有」、膠囊「已擁有」
+PASS 領取只是領取：還沒換上（仍是 flat/classic）
+PASS 棋盤那邊狀態不變：按鈕「免費領取「草地」」、格子「免費」；claims 仍 1 次
+PASS 換上 → 使用中：按鈕不可按、格子「使用中」、RushSkin pets、localStorage pets、預設格改回「預設」、沒多送 claim
+PASS 領棋盤 b:grass：claim {"vid":"8b4c3288-bfa9-4dde-a240-a92dac96617a","items":["b:grass"],"src":"free"}
+PASS localStorage 擁有清單 ["s:pets","b:grass"]
+PASS 設定棋具頁出現領到的：棋子 8/8 含 pets、棋盤 9/9 含 grass，選中 pets/grass
+PASS 重新整理後仍使用 grass/pets、擁有 ["s:pets","b:grass"]
+PASS 重新整理後棋具頁：進頁預覽＝正在用的 grass/pets、使用中那格 pets
+PASS 領取流程沒有 console error 
+PASS 玩家用「夜墨」盤（night）
+PASS 棋盤那排的＋：直接進棋具頁、停在棋盤分頁（{"picker":true,"stage":true,"tab":"b","title":"棋具"}）
+PASS 夜墨：預覽 night、沒有格子被選中、名稱「夜墨」、按鈕「使用中」不可按
+PASS 棋子分頁：玩家用的是預設平面，第一格選中
+PASS 返回回到原本的棋具頁（設定）{"shopHidden":true,"picker":true,"cv":true}
+PASS 棋子那排的＋：停在棋子造型分頁
+PASS 瀏覽器返回鍵會關掉商店
+PASS ＋進來／夜墨沒有 console error 
+PASS 舊玩家：載入後仍是 grass/poop
+PASS 舊玩家：擁有清單 ["b:grass","s:poop"]
+PASS 舊玩家：送出 src:'grand' 的 claim {"vid":"abb86d57-0df7-49ea-934f-0a2e7f0337ce","items":["b:grass","s:poop"],"src":"grand"}
+PASS 舊玩家：進棋具頁選中並使用中 poop、預覽 grass/poop
+PASS 舊玩家沒有 console error 
+PASS 已有擁有清單的玩家不再遷移：實際用 flat、清單 []、沒送 grand
+PASS 載入時 GET /shop?vid=b4358c65-6db8-4f4f-9304-547dca754ce5
+PASS 聯集：伺服器有、本機沒有的出現在本機 ["s:pets","b:grass","b:pool"]
+PASS 本機有、伺服器沒有的補送 {"vid":"b4358c65-6db8-4f4f-9304-547dca754ce5","items":["s:pets"],"src":"free"}
+PASS 商店顯示 s:pets:已擁有,s:poop:免費｜b:grass:已擁有,b:pool:已擁有
+PASS 同步沒有 console error 
+PASS /shop 連不上：商店照常 8 格、本機清單的 bunny「已擁有」
+PASS /shop 連不上：領取仍先寫本機 ["s:bunny","s:pets"]
+PASS /shop 連不上沒有 console error 
+PASS RushSkin.price 讀到 /shop 的 prices：boo/poop = 30/0
+PASS 被伺服器 refused：按鈕回到「免費領取「炸彈與幽靈」」、本機清單 []
+PASS refused 沒有 console error 
+PASS 後台只開 2 件：卡片「棋子造型 1 組・棋盤花色 1 張」
+PASS 後台只開 2 件：各分頁＝預設＋1（s:flat,s:poop｜b:classic,b:grass）
+PASS 只開 2 件版面正常（sh 667/667）
+PASS 後台全關：0 張卡、文字「目前沒有上架的商品」
+PASS en 連不上 /skins（optIn 全關）：空狀態「Nothing on the shelves right now」、0 張卡
+PASS en 空狀態沒有 console error 
+PASS ja 連不上 /skins（optIn 全關）：空狀態「現在、並んでいる商品はありません」、0 張卡
+PASS ja 空狀態沒有 console error 
+PASS ko 連不上 /skins（optIn 全關）：空狀態「지금 진열된 상품이 없어요」、0 張卡
+PASS ko 空狀態沒有 console error 
+PASS duel.html 載入後 vcfgame.vid 有效（6c59fed6…）
+PASS duel.html 沒有 console error（已排除本機對戰 WebSocket 連不上）
+PASS score.html 載入後 vcfgame.vid 有效（a4eaa79b…）
+PASS score.html 沒有 console error（已排除本機對戰 WebSocket 連不上）
+PASS game.html 載入後既有的 vcfgame.vid 沒被換掉
+PASS 負向測試：把格子改成 2 欄會被抓到（bad=5 sh=1036/ch=640）
+PASS 286／FAIL 0
