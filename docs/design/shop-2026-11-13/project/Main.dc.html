@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>商店：貨架格</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&amp;family=Chakra+Petch:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3CC6B4}a:hover{color:#6FDCCD}
+</style>
+</helmet>
+<div style="position: relative; width: 375px; height: 667px; box-sizing: border-box; background: #0F121A; color: #EDEFF5; font-family: 'Noto Sans TC', sans-serif; display: flex; flex-direction: column; padding: 10px 16px 14px; gap: 10px; overflow: hidden;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" aria-label="回首頁" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #161A24; color: #EDEFF5; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 900; flex-grow: 1;">商店</h1>
+    <span style="font-size: 13px; font-weight: 700; color: #1A1300; background: #F2B544; border-radius: 999px; padding: 5px 12px;">限時免費</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: baseline; gap: 8px;"><b style="font-size: 15px;">棋子</b><span style="font-size: 12px; color: #B6BCCB;">7 組</span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+      <sc-for list="{{stones}}" as="o" hint-placeholder-count="7">
+        <button type="button" onClick="{{o.pick}}" aria-label="{{o.name}}" style="{{o.btn}}">
+          <span style="position: relative; display: block; width: 62px; height: 52px;">
+            <img src="{{o.b}}" alt="" style="position: absolute; left: 0; top: 0; width: 40px; height: 40px;">
+            <img src="{{o.w}}" alt="" style="position: absolute; left: 22px; top: 12px; width: 40px; height: 40px;">
+          </span>
+          <span style="{{o.tagStyle}}">{{o.tag}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: baseline; gap: 8px;"><b style="font-size: 15px;">棋盤</b><span style="font-size: 12px; color: #B6BCCB;">7 張</span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+      <sc-for list="{{boards}}" as="o" hint-placeholder-count="7">
+        <button type="button" onClick="{{o.pick}}" aria-label="{{o.name}}" style="{{o.btn}}">
+          <span style="position: relative; display: block; width: 52px; height: 52px; border-radius: 8px; overflow: hidden;">
+            <img src="{{o.img}}" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover;">
+            <span style="{{o.grid}}"></span>
+          </span>
+          <span style="{{o.tagStyle}}">{{o.tag}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1;"></div>
+  <p style="margin: 0; font-size: 12px; color: #B6BCCB; text-align: center;">現在領，之後收費也不用再付</p>
+
+  <sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; top: 0; width: 375px; height: 667px; background: rgba(6, 8, 13, 0.78); display: flex; align-items: center; justify-content: center;">
+      <div style="position: relative; width: 300px; box-sizing: border-box; background: #161A24; border: 1px solid #2E3546; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <button type="button" onClick="{{close}}" aria-label="關閉" style="position: absolute; right: 6px; top: 6px; width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #B6BCCB; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12 M18 6L6 18"/></svg>
+        </button>
+        <b style="font-size: 18px; font-weight: 900; margin-top: 4px;">{{sel.name}}</b>
+        <div style="{{sc.outer}}">
+          <sc-if value="{{sc.hasImg}}" hint-placeholder-val="{{ false }}"><img src="{{sc.img}}" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover;"></sc-if>
+          <div style="{{sc.grid}}"></div>
+          <sc-for list="{{sc.figs}}" as="s" hint-placeholder-count="0"><img src="{{s.src}}" alt="" style="{{s.style}}"></sc-for>
+          <sc-for list="{{sc.dots}}" as="s" hint-placeholder-count="0"><div style="{{s.style}}"></div></sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="{{price.style}}">{{price.label}}</span>
+          <span style="font-size: 12px; color: #B6BCCB;">{{price.sub}}</span>
+        </div>
+        <button type="button" onClick="{{cta.act}}" style="{{cta.style}}">{{cta.label}}</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":667}}'>
+const U = '/_blob/';
+const ST = [
+  ['poop', '便便與霜淇淋', '133cfe8abd3a097310470994927a6f0b', '20327859441fc71713da97b7d82f6997'],
+  ['bunny', '蘿蔔與兔子', 'be31f88b0eb9c95101999c70cc895fef', '6a4ad79866e171584e5111403ac1da9b'],
+  ['pets', '黑貓與白狗', '60e9ed8751071fba0c3bfa89205049bc', '58fb4324817a3922a9932018c5d51df3'],
+  ['onigiri', '飯糰', 'acf38e69d9ff27e1869cedc71c988b09', 'a2df6736df8d6438d44d7bf25da15ad5'],
+  ['sky', '月亮與太陽', 'c18b799887567849280ecc07c86327ff', 'd1f00184210ee3ce488f4375c9f44218'],
+  ['boo', '炸彈與幽靈', '9548d4f1ad3f6e9a5a03c4c58760474f', 'a32e1995cd359001e1f950ba6aa07184'],
+  ['donut', '甜甜圈', '980ef2a5b39e1e29c740460a2ac2f3bb', '023117a447c6726f6723b910689a462f']
+].map(([id, name, b, w]) => ({ id, kind: 's', name, b: U + b, w: U + w }));
+const BD = [
+  ['grass', '草地', '8eba0c38aecf73ef36db5eea4339d5bc', '#1F4A17'],
+  ['starry', '星空', '9df3be01cd1db27ea46b295a9ef020e1', '#5E6A9A'],
+  ['beach', '沙灘', 'df2661f463b704d0b58ed4bdac1343c3', '#8A6E3E'],
+  ['chalk', '黑板', 'cc732e270f789469d8ccd6f6e8b6fba4', '#B9CDBF'],
+  ['ice', '冰湖', 'a6e8f2f7a986a46785ec4c315be5be5b', '#3F6A86'],
+  ['denim', '牛仔布', 'b728d3e0d154610f9b12931da6c8fe32', '#B8C9E6'],
+  ['pool', '泳池', '9527b53d938d70f419fca581b98731d2', '#0E5F73']
+].map(([id, name, img, line]) => ({ id, kind: 'b', name, img: U + img, line }));
+const PRE = [[1, 1, 'b'], [2, 2, 'w'], [3, 3, 'b'], [2, 3, 'b'], [4, 2, 'w'], [3, 1, 'w'], [1, 3, 'b'], [4, 4, 'w'], [5, 3, 'b'], [3, 5, 'w']];
+function scene(size, stone, board) {
+  const n = 7, pad = size * 0.1, cell = (size - 2 * pad) / (n - 1), r = cell * 0.46, fr = r * 1.12;
+  const line = board ? board.line : '#5B4524';
+  const at = (x, y, rr) => `position:absolute;left:${pad + x * cell - rr}px;top:${pad + y * cell - rr}px;width:${2 * rr}px;height:${2 * rr}px;`;
+  return {
+    outer: `position:relative;flex:none;width:${size}px;height:${size}px;border-radius:12px;overflow:hidden;background:#E9C98B`,
+    hasImg: !!board, img: board ? board.img : '',
+    grid: `position:absolute;left:${pad}px;top:${pad}px;width:${(n - 1) * cell + 1}px;height:${(n - 1) * cell + 1}px;background-image:linear-gradient(${line} 1px, transparent 1px),linear-gradient(90deg, ${line} 1px, transparent 1px);background-size:${cell}px ${cell}px`,
+    figs: stone ? PRE.map(([x, y, c]) => ({ src: c === 'b' ? stone.b : stone.w, style: at(x, y, fr) })) : [],
+    dots: stone ? [] : PRE.map(([x, y, c]) => ({ style: at(x, y, r) + `border-radius:50%;background:${c === 'b' ? '#1B1A17' : '#FBFAF6'};box-shadow:${c === 'b' ? '0 0 0 1px rgba(255,255,255,.35)' : 'inset 0 0 0 1.5px #1B1A17'}` }))
+  };
+}
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { owned: { bunny: true }, using: { s: 'bunny', b: null }, sel: null }; }
+  renderVals() {
+    const { owned, using, sel } = this.state;
+    const cell = (o) => {
+      const has = !!owned[o.id], on = using[o.kind] === o.id;
+      return {
+        ...o,
+        pick: () => this.setState({ sel: o.id }),
+        btn: `width:100%;height:84px;padding:6px 0 0;border-radius:14px;cursor:pointer;background:#161A24;border:2px solid ${on ? '#3CC6B4' : '#252B3A'};display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit`,
+        tag: on ? '使用中' : has ? '已擁有' : '免費',
+        tagStyle: `font-size:12px;font-weight:700;color:${has ? '#3CC6B4' : '#F2B544'}`,
+        grid: `position:absolute;left:5px;top:5px;width:43px;height:43px;background-image:linear-gradient(${o.line} 1px, transparent 1px),linear-gradient(90deg, ${o.line} 1px, transparent 1px);background-size:14px 14px`
+      };
+    };
+    const it = [...ST, ...BD].find((x) => x.id === sel);
+    const has = it && !!owned[it.id], on = it && using[it.kind] === it.id;
+    const base = 'width:100%;height:48px;border:0;border-radius:14px;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;';
+    return {
+      stones: ST.map(cell), boards: BD.map(cell),
+      open: !!it, sel: it || { name: '' },
+      close: () => this.setState({ sel: null }),
+      sc: it ? scene(200, it.kind === 's' ? it : null, it.kind === 'b' ? it : null) : scene(200, null, null),
+      price: has
+        ? { label: '已擁有', style: 'font-size:13px;font-weight:700;color:#06231F;background:#3CC6B4;border-radius:999px;padding:4px 10px', sub: '永久保留' }
+        : { label: '限時免費', style: 'font-size:13px;font-weight:700;color:#1A1300;background:#F2B544;border-radius:999px;padding:4px 10px', sub: '之後會收費，領了永久保留' },
+      cta: !it ? { label: '', style: base, act: () => {} }
+        : on ? { label: '使用中', style: base + 'background:#1F3B39;color:#3CC6B4;cursor:default', act: () => {} }
+        : has ? { label: '使用', style: base + 'background:#3CC6B4;color:#06231F', act: () => this.setState({ using: { ...using, [it.kind]: it.id } }) }
+        : { label: '領取', style: base + 'background:#F2B544;color:#1A1300', act: () => this.setState({ owned: { ...owned, [it.id]: true } }) }
+    };
+  }
+}
+</script>
+</body>
+</html>

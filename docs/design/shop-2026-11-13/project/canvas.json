@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-13T08:00:00+08:00" },
+  "title": "Gomoku Rush 棋具商店",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 375, "h": 667, "title": "A 貨架格（點了跳小框）", "is_interactive": true },
+    "Try.dc.html": { "x": 455, "y": 0, "w": 375, "h": 667, "title": "B 試用台（先擺上盤再領）", "is_interactive": true },
+    "Showcase.dc.html": { "x": 910, "y": 0, "w": 375, "h": 667, "title": "C 櫥窗（一次看一件）", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Try.dc.html", "Showcase.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -300, "text": "棋具商店：三種逛法（商品與規則三版相同）", "kind": "title1", "maxW": 1285 },
+    "n1": { "x": 1365, "y": 0, "w": 320, "text": "三版都可以點：按「播放」後點商品、按領取、按使用。\n\n共同規則：14 件新棋具（7 組棋子＋7 張棋盤）現在標「限時免費」，按「領取」才能用；領過永久保留。之後收費時，「限時免費」換成價格、「領取」換成「購買」，畫面不用重做。\n\n稿上假設「蘿蔔與兔子」已經領過，用來看已擁有的樣子。\n\n入口：首頁的「棋具」旁邊多一顆「商店」；棋具頁最後一格放「＋ 去商店」。後台關掉的商品不會出現。\n\n尺寸 375×667，一屏不捲動。", "fill": "orange" }
+  },
+  "designSystems": []
+}
