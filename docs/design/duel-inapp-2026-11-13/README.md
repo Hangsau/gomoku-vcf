@@ -27,3 +27,10 @@ cc2 照 `WORKORDER.md` 做了「偵測到內建瀏覽器就跳面板：用瀏覽
 ## 沒驗證的
 
 真實的 LINE／Facebook／Instagram App 都沒測過，以上行為是依平台文件與 UA 假裝測試。上線後要請使用者用 LINE 實點一次。
+
+## 2026-11-13 後續
+
+- 使用者實測：iPhone 上 LINE 點新邀請連結會跳到 Safari（參數有效），但不會開進主畫面的安裝版——「很爛，去想個方式做吧」。
+- 查證（2026-11）：iOS 沒有讓連結開進主畫面網頁 App 的機制，iOS 27 也沒有新增；Safari 與安裝版儲存分開。要連結開進 App 只有上架 App Store。
+- 使用者：沒有錢註冊 Apple 開發者帳號 → **不上架**。
+- 免費的方向（主 session 定）：① 遊戲內「邀請最近的對手」＋系統通知（通知點了會開安裝版）；先做最小通知測試給使用者用 iPhone 驗證，施工單 `docs/design/push-test-2026-11-13/WORKORDER.md`。② Google 登入讓 Safari 與安裝版是同一份資料（計畫 `docs/design/accounts-2026-11-13/PLAN.md`，只做 Google、不做信箱驗證碼、不管舊暱稱紀錄）。
