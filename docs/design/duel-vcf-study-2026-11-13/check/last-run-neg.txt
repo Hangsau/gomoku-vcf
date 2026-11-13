@@ -1,0 +1,64 @@
+== 1. 開局：先打一盤五子棋（回看對照用），再打 VCF
+  PASS 賽後先跳結算視窗（mEnd）
+  PASS VCF 打完，A 按「看每題解法」進賽後逐題回看
+== 2. 賽後逐題回看（A 的房間畫面）
+  PASS 工具列在同一列：prev,next,sol,0,1,undo,reset
+  PASS 一開始看正解、沒有自己擺的
+  PASS 回到這題開頭 → 自己擺的線是空的（只剩題目）
+  PASS 回到開頭 → 畫面跟正解不同（正解的手順數字消失）
+  [debug] tap G8 {"x":167.73999999999998,"y":293} board vp 375x667
+  FAIL 點空點 G8 → 多一顆子（["G8"]）
+  [debug] lum t1 after tap {"s":25,"e":191}
+  PASS 第一手顏色＝攻方（黑先）：畫面 b
+  PASS 標手順數字 1
+  PASS 再點 → 對方顏色：畫面 w
+  PASS 手順數字 1、2
+  PASS 第三手又是攻方顏色
+  PASS 點已有子的點（自己擺的、題目黑、題目白）→ 沒有變化
+  PASS 退一手 → 少一顆子（2 手）
+  PASS 退一手後手順數字只剩 1、2
+  PASS 回到這題開頭 → 回到題目原樣（跟一開始按回到開頭時像素相同）
+  PASS 按正解 → 自己擺的消失、回到正解原樣（像素相同）
+  PASS 從正解局面接下去：正解 7 手＋1，前段相同
+  PASS 手順數字連續
+  PASS 切回正解 → 自己擺的消失
+  PASS 沒擺過時按退一手 → 從正解退一手
+  PASS 看我的手順時也能自己擺
+  PASS 切到對手的手順 → 自己擺的消失
+  PASS 第 1 題擺了一手
+  PASS 換到下一題 → 自己擺的消失
+  PASS 換回第 1 題也是乾淨的
+  PASS 自己擺（點棋盤、退一手、回開頭、切換）全程沒有送出 WebSocket 訊息（11 → 11）
+  PASS zh 375×667 賽後畫面：不捲動、按鈕都在畫面內、回看按鈕 ≥44px（{"sh":667,"ih":667,"sw":375,"iw":375,"bad":[],"small":[]}）
+== 3. 首頁今日棋局 → 回看（#replay=）
+  PASS A 本機有 2 筆今日棋局（gomoku,vcf）
+  PASS 回看畫面也有自己擺的按鈕：prev,next,sol,0,1,undo,reset
+  PASS 回看：點兩下 → 接在正解後面擺了 2 手（共 9）
+  PASS 回看：兩手顏色不同（輪流）
+  PASS 回看：退一手
+  PASS 回看：回到這題開頭
+  PASS 回看：切回正解 → 原樣
+  PASS 回看：換題 → 清掉
+  PASS 回看自己擺沒有 WebSocket 訊息（0 → 0）
+== 4. 五子棋回看
+  PASS 五子棋回看按鈕仍是 4 個 rp：first,prev,next,last
+  PASS 五子棋回看點棋盤沒有反應
+== 5. 四語 × 375×667、360×640
+  PASS zh 375×667：不捲動、按鈕在畫面內、≥44px（sh 667/667、sw 375/375、bad []、small []）；分頁 [{"t":"正解","cut":false,"w":52},{"t":"Alice","cut":false,"w":54},{"t":"Bob","cut":false,"w":54}]
+  PASS zh 375×667：擺了 3 手
+  PASS zh 360×640：不捲動、按鈕在畫面內、≥44px（sh 640/640、sw 360/360、bad []、small []）；分頁 [{"t":"正解","cut":false,"w":47},{"t":"Alice","cut":false,"w":49},{"t":"Bob","cut":false,"w":49}]
+  PASS zh 360×640：擺了 3 手
+  PASS en 375×667：不捲動、按鈕在畫面內、≥44px（sh 667/667、sw 375/375、bad []、small []）；分頁 [{"t":"Answer","cut":false,"w":52},{"t":"Alice","cut":false,"w":54},{"t":"Bob","cut":false,"w":54}]
+  PASS en 375×667：擺了 3 手
+  PASS en 360×640：不捲動、按鈕在畫面內、≥44px（sh 640/640、sw 360/360、bad []、small []）；分頁 [{"t":"Answer","cut":false,"w":47},{"t":"Alice","cut":false,"w":49},{"t":"Bob","cut":false,"w":49}]
+  PASS en 360×640：擺了 3 手
+  PASS ja 375×667：不捲動、按鈕在畫面內、≥44px（sh 667/667、sw 375/375、bad []、small []）；分頁 [{"t":"正解手順","cut":false,"w":52},{"t":"Alice","cut":false,"w":54},{"t":"Bob","cut":false,"w":54}]
+  PASS ja 375×667：擺了 3 手
+  PASS ja 360×640：不捲動、按鈕在畫面內、≥44px（sh 640/640、sw 360/360、bad []、small []）；分頁 [{"t":"正解手順","cut":false,"w":47},{"t":"Alice","cut":false,"w":49},{"t":"Bob","cut":false,"w":49}]
+  PASS ja 360×640：擺了 3 手
+  PASS ko 375×667：不捲動、按鈕在畫面內、≥44px（sh 667/667、sw 375/375、bad []、small []）；分頁 [{"t":"정답","cut":false,"w":52},{"t":"Alice","cut":false,"w":54},{"t":"Bob","cut":false,"w":54}]
+  PASS ko 375×667：擺了 3 手
+  PASS ko 360×640：不捲動、按鈕在畫面內、≥44px（sh 640/640、sw 360/360、bad []、small []）；分頁 [{"t":"정답","cut":false,"w":47},{"t":"Alice","cut":false,"w":49},{"t":"Bob","cut":false,"w":49}]
+  PASS ko 360×640：擺了 3 手
+  PASS 全程沒有 pageerror／console error（0）
+PASS 55／FAIL 1

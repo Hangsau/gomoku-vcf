@@ -1,0 +1,1374 @@
+
+import { BLACK, WHITE, EMPTY, SIZE, FORBID_NONE, forbidType } from './game/duel/rules.js';
+import { RULE, PHASE, ACTION, OFFER_COUNT, SWAP2_ADD_CHOICE, END_REASON, replayMatch, actorOf, colorOf, canChooseYamaguchi, openingZoneRadius, placeError, stoneColorToPlace, ruleHasForbidden } from './game/duel/match.js';
+const PLACE_PHASES = [PHASE.PLAY, PHASE.OPENING_PLACE, PHASE.SWAP2_PLACE, PHASE.SWAP2_ADD];
+const SWAP_RULES = [RULE.TARA, RULE.TARA10, RULE.SWAP2];   // 開局才決定誰黑誰白
+
+const WS_LOCAL = 'ws://127.0.0.1:8787/ws';
+const WS_PROD = 'wss://rush-duel.psyhangsau.workers.dev/ws';   // 2026-11-11 上線（npx wrangler@4.158.0 deploy -c game/duel-server/wrangler.toml）
+const WS_URL = ['127.0.0.1', 'localhost'].includes(location.hostname) ? WS_LOCAL : WS_PROD;
+
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- 文字（四種語言，跟 Rush 共用 vcfgame.lang） ----------
+const I18N = {
+  zh: {
+    title: '兩儀殿', home: '回挑戰', toLobby: '回大廳', close: '關閉', nick: '暱稱', nickPh: '別人看到的名字', boardAria: '棋盤',
+    netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…', replT: '已在別的畫面開啟', replSub: '這個畫面先暫停', replUse: '改用這裡', netRepl: '已在別的畫面開啟', netWait: '連線中，請稍候',
+    create: '開房', createGo: '開房，等人入座',
+    privL: '誰能進', pubOpt: '公開', privOpt: '私人', pubNote: '列在大廳，誰都能入座', privNote: '大廳看得到但上鎖，要邀請碼才進得來', privTag: '私人',
+    invite: '邀請', inviteT: '邀請朋友', inviteCode: '邀請碼', shareLink: '分享連結', copyLink: '複製連結', copied: '已複製', inviteNote: '朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。', shareText: '來兩儀殿跟我對戰', inviteCodeLine: '邀請碼：{c}', abT: '用瀏覽器開啟', abNote: '這裡是 App 內建的瀏覽器，你的暱稱和紀錄不會跟著過來。', abOpen: '用瀏覽器開啟', abStay: '先在這裡玩', abIos: '點右上角 ⋯ → 用瀏覽器開啟',
+    joinCode: '輸入邀請碼', joinPh: '6 碼邀請碼', joinGo: '進房', joinPrivNote: '這是私人房，要邀請碼才能進', nocode: '找不到這間房，可能已經關了', slow: '試太多次了，等一下再試', goneT: '這間房已經關了', goneNew: '開一間新的',
+    timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
+    tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
+    emptyHall: '還沒有人開房', emptyHall2: '開一間，等人進來', room: '房間', waiting: '等待中', playing: '對局中', emptySeat: '空位',
+    watchers: '{n} 人觀戰', moveN: '第 {n} 手', you: '你', offline: '斷線中', sit: '入座', black: '黑棋', white: '白棋',
+    stWaitOther: '等對手入座…', stView: '看看房間，想下就按「入座」', stTurnYou: '輪到你', stTurnOther: '等對手下…', stWatch: '觀戰中', stTurnColor: '輪到{c}',
+    stOver: '這盤下完了', tap2Hint: '同一格再點一下就下', leaveRoom: '離開房間', resign: '認輸', back: '回大廳',
+    forbidden: '這裡是黑棋禁手', forbiddenSub: '三三、四四、長連都不能下', occupied: '這裡已經有棋子',
+    win: '你贏了', lose: '你輸了', draw: '和棋', colorWin: '{c}勝',
+    whyFive: '連成五', whyTrap: '黑棋被抓禁（非擋不可的點是禁手）', whyResign: '{c}認輸', whyLeft: '{c}離開了', whyTime: '{c}時間到', whyFull: '棋盤下滿了',
+    again: '再來一局', againWait: '等對方按「再來一局」…', againOther: '對方想再來一局（會交換黑白）', look: '看棋盤',
+    resignQ: '確定認輸？', leaveQ: '對局中離開算認輸，確定？', gone: '這個房間已經關了', taken: '這個位子剛被坐走了', full: '房間太多了，等一下再開',
+    closed: '房間已關閉', started: '對手入座，開始！',
+    idleT: "還在嗎？", idleSub: "{s} 秒內沒回應會自動離開座位", idleStay: "我還在", idleLeave: "離開", idleOut: "太久沒回應，已離開座位", waited: "等了 {m} 分", whyIdle: "{c}太久沒回應",
+    studyReq: "申請研棋", studyCancel: "取消申請", studyWait: "已申請研棋，等對方回覆…", studyAsk: "{name} 申請研棋（這盤不計勝負）", studyYes: "同意", studyNo: "拒絕", studyDeclined: "對方拒絕研棋", studyCool: "剛被拒絕，等一下才能再申請", studyOn: "研棋中", studyStatus: "研棋中・第 {n}／{m} 手・兩人都可以下", studyWatch: "觀戰中・研棋第 {n}／{m} 手", sPrev: "◀ 上一手", sNext: "下一手 ▶", sReal: "回到實戰", sEnd: "結束研棋", review: "研棋", studyOverTitle: "研棋", studyOverWhy: "研棋結束・這盤不計勝負", studyStarted: "開始研棋",
+    kindL: "類型", kGomoku: "五子棋", kVcf: "VCF 明鏡台", vRankL: "題目段位", vThinkL: "每題思考時間", vT60: "1 分鐘", vT180: "3 分鐘", vT300: "5 分鐘", vTargetL: "先解開幾題獲勝", vP3: "3 題", vP5: "5 題", vNote: "兩人做同一串題目、同樣順序，各自往下做，先解開指定題數的贏・下錯、時間到或放棄就換下一題・想的時候不扣時間，第一手落下後只剩 5 秒、每手 +1 秒・題目都在 20 手內", vThinkShort: "每題 {t}", vTargetShort: "搶 {p}", vThink: "思考中", vArmed: "落子中・第 {n} 手", vOutS: "出局", vSolvedS: "解開！", vReady: "準備…", vStThink: "想好再落子・剩 {t}", vStArmed: "落子中・剩 {s} 秒", vStOut: "{why}・下一題…", vStWatch: "觀戰中・第 {n} 題・剩 {t}", vPuzzleN: "第 {n} 題", vAtkB: "黑先", vAtkW: "白先", vWhy_five: "對方連五", vWhy_forbid: "被禁手", vWhy_nofour: "沒四了", vWhy_time: "時間到", vWhy_bad: "這手不行", notfour: "這手不是四", noMiss: "不算錯，再想想", vEndScore: "解開 {a} : {b}", vNoBank: "題庫讀不到，這局取消", ranks: ["見習生", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "傳說"], vP10: "10 題", vSkip: "放棄這題", vWhy_skip: "放棄", vSolvedNext: "解開！下一題…", vSolvedR: "解開", rvBtn: "看每題解法", rvPrev: "上一題", rvNext: "下一題", rvSol: "正解", rvMine: "我的", rvK: "第 {k}／{n} 題", rvNone: "沒做到", rvNoSol: "找不到解法", rvUndo: "退一手", rvReset: "回到這題開頭", rvFree: "自己擺", rvOpp: "對手", vModeL: "玩法", vm_line: "一線天", vm_eight: "八仙渡", vmn_line: "同一題・先解開的得分", vmn_eight: "各解各的・先解開 {p} 題的贏", vNoteC: "想的時候不扣時間，第一手落下後只剩 5 秒、每手 +1 秒・題目都在 20 手內", vRoundWin: "{name} 解開！+1", vRoundNone: "沒人解開・這是正解", vNext: "下一題準備中…", vWhy_late: "慢了一步", vStOutWait: "{why}・等這題結果…",
+    ruleL: "規則", r_free: "普規", r_renju: "連珠", r_tara: "塔拉", r_tara10: "塔拉山口", r_swap2: "Swap2", n_free: "無禁手・五連以上都算贏・黑先", n_renju: "黑先・黑棋不能下三三、四四、長連（點到只提醒）", n_tara: "第一手天元，前五手由內往外擴（3×3→9×9），每手後可換手；之後照連珠", n_tara10: "同塔拉；第四手後可轉山口：黑提 10 個第五手候選，白挑一個", n_swap2: "先手擺二黑一白，後手選執黑、執白，或再加一黑一白讓對方選色；無禁手，長連不算贏", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "第 {n} 手下好了，要換手嗎？（你現在執{c}）", bKeep: "不換，執{c}", bSwap: "換手，改執{c}", bYama: "轉山口", pZone: "下第 {n} 手（{c}），要在中央 {w}×{w} 內", pOffer: "點棋盤選 {k} 個第五手候選（形狀一樣的不能同時選）", bOffer: "送出候選 {n}/{k}", bClear: "清除", pPick: "從黑方的候選裡挑一個當第五手", pS2Place: "放第 {n} 顆（{c}）", pS2Choice: "要執黑、執白，還是再加一黑一白？", bTakeB: "執黑", bTakeW: "執白", bAdd: "再加一黑一白", pS2Color: "選你要執的顏色", waitDecide: "等對手決定…", watchPhase: "觀戰中・等{name}", swapped: "換手了：你現在執{c}", zoneErr: "這手要下在中央 {w}×{w} 內", symmetric: "候選裡有形狀一樣的，換一個", notoffer: "要從黑方的候選裡挑", pCenter: "第 1 手（黑棋）下在天元", centerErr: "第 1 手要下在天元", rpWin: "勝", rpN: "第 {n}／{m} 手", rpFirst: "第一手", rpLast: "最後一手", rpPrevA: "上一手", rpNextA: "下一手",
+  },
+  en: {
+    title: 'Yin-Yang Hall', home: 'Challenge', toLobby: 'Lobby', close: 'Close', nick: 'Name', nickPh: 'Name others will see', boardAria: 'Board',
+    netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…', replT: 'Opened on another screen', replSub: 'This screen is paused', replUse: 'Use this screen', netRepl: 'Opened on another screen', netWait: 'Connecting, please wait',
+    create: 'Open a room', createGo: 'Open room and wait',
+    privL: 'Who can join', pubOpt: 'Public', privOpt: 'Private', pubNote: 'Listed in the lobby; anyone can sit', privNote: 'Shown locked in the lobby; invite code needed', privTag: 'Private',
+    invite: 'Invite', inviteT: 'Invite a friend', inviteCode: 'Invite code', shareLink: 'Share link', copyLink: 'Copy link', copied: 'Copied', inviteNote: 'Friends tap the link, or press “Enter code” in the lobby, to land in this room. No install, no sign-up.', shareText: 'Play me in the Yin-Yang Hall', inviteCodeLine: 'Invite code: {c}', abT: 'Open in your browser', abNote: 'This is an in-app browser. Your nickname and records won\'t carry over.', abOpen: 'Open in browser', abStay: 'Play here for now', abIos: 'Tap ⋯ at the top right → Open in browser',
+    joinCode: 'Enter code', joinPh: '6-character code', joinGo: 'Join', joinPrivNote: 'This room is private — you need the invite code', nocode: 'Room not found — it may have closed', slow: 'Too many tries, wait a moment', goneT: 'This room has closed', goneNew: 'Open a new one',
+    timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
+    tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
+    emptyHall: 'No rooms yet', emptyHall2: 'Open one and wait for someone', room: 'Room', waiting: 'Waiting', playing: 'Playing', emptySeat: 'Empty',
+    watchers: '{n} watching', moveN: 'Move {n}', you: 'You', offline: 'Offline', sit: 'Sit', black: 'Black', white: 'White',
+    stWaitOther: 'Waiting for an opponent…', stView: 'Look around — tap “Sit” to play', stTurnYou: 'Your move', stTurnOther: 'Opponent’s move…', stWatch: 'Watching', stTurnColor: '{c} to move',
+    stOver: 'Game over', tap2Hint: 'Tap the same point again to place', leaveRoom: 'Leave room', resign: 'Resign', back: 'Lobby',
+    forbidden: 'Forbidden point for Black', forbiddenSub: '3-3, 4-4 and overlines aren’t allowed', occupied: 'That point is taken',
+    win: 'You win', lose: 'You lose', draw: 'Draw', colorWin: '{c} wins',
+    whyFive: 'Five in a row', whyTrap: 'Black was forced onto a forbidden point', whyResign: '{c} resigned', whyLeft: '{c} left', whyTime: '{c} ran out of time', whyFull: 'The board is full',
+    again: 'Play again', againWait: 'Waiting for the other player…', againOther: 'Your opponent wants a rematch (colors swap)', look: 'View board',
+    resignQ: 'Resign this game?', leaveQ: 'Leaving now counts as resigning. Leave?', gone: 'That room is closed', taken: 'Someone just took that seat', full: 'Too many rooms, try again soon',
+    closed: 'Room closed', started: 'Opponent seated — game on!',
+    idleT: "Still there?", idleSub: "You’ll leave your seat in {s} s if there’s no reply", idleStay: "I’m here", idleLeave: "Leave", idleOut: "No reply for too long — you left your seat", waited: "waiting {m} min", whyIdle: "{c} didn’t respond",
+    studyReq: "Request study", studyCancel: "Cancel request", studyWait: "Study requested — waiting for a reply…", studyAsk: "{name} wants to study together (this game won’t count)", studyYes: "Accept", studyNo: "Decline", studyDeclined: "Your opponent declined", studyCool: "Declined — wait a bit before asking again", studyOn: "Studying", studyStatus: "Studying · move {n} of {m} · both can play", studyWatch: "Watching · study move {n} of {m}", sPrev: "◀ Back", sNext: "Forward ▶", sReal: "Back to game", sEnd: "End study", review: "Study", studyOverTitle: "Study", studyOverWhy: "Study ended · this game doesn’t count", studyStarted: "Study started",
+    kindL: "Mode", kGomoku: "Gomoku", kVcf: "VCF Mirror", vRankL: "Puzzle rank", vThinkL: "Thinking time per puzzle", vT60: "1 min", vT180: "3 min", vT300: "5 min", vTargetL: "Puzzles to win", vP3: "3", vP5: "5", vNote: "Same puzzles in the same order; each player goes at their own pace, first to solve the target number wins · A wrong move, time-out or skip takes you to the next puzzle · Thinking is free; once you play your first move you have 5 s, +1 s per move · All puzzles are 20 moves or fewer", vThinkShort: "{t} per puzzle", vTargetShort: "first to {p}", vThink: "Thinking", vArmed: "Playing · move {n}", vOutS: "Out", vSolvedS: "Solved!", vReady: "Get ready…", vStThink: "Read it, then play · {t} left", vStArmed: "Playing · {s} s left", vStOut: "{why} · next puzzle…", vStWatch: "Watching · puzzle {n} · {t} left", vPuzzleN: "Puzzle {n}", vAtkB: "Black to play", vAtkW: "White to play", vWhy_five: "Opponent made five", vWhy_forbid: "Forced onto a forbidden point", vWhy_nofour: "No fours left", vWhy_time: "Time’s up", vWhy_bad: "That move fails", notfour: "That move is not a four", noMiss: "Doesn’t count as a miss", vEndScore: "Solved {a} : {b}", vNoBank: "Couldn’t load puzzles; game cancelled", ranks: ["Apprentice", "1 dan", "2 dan", "3 dan", "4 dan", "5 dan", "6 dan", "7 dan", "8 dan", "9 dan", "Legend"], vP10: "10", vSkip: "Skip", vWhy_skip: "Skipped", vSolvedNext: "Solved! Next puzzle…", vSolvedR: "Solved", rvBtn: "Review the puzzles", rvPrev: "Prev", rvNext: "Next", rvSol: "Answer", rvMine: "Mine", rvK: "Puzzle {k}/{n}", rvNone: "Not reached", rvNoSol: "No solution found", rvUndo: "Undo one move", rvReset: "Back to the start of this puzzle", rvFree: "Your line", rvOpp: "Theirs", vModeL: "Play style", vm_line: "Sky Gap", vm_eight: "Eight Immortals", vmn_line: "Same puzzle · first to solve scores", vmn_eight: "Own pace · first to solve {p} wins", vNoteC: "Thinking is free; once you play your first move you have 5 s, +1 s per move · All puzzles are 20 moves or fewer", vRoundWin: "{name} solved it! +1", vRoundNone: "Nobody solved it · here’s the answer", vNext: "Next puzzle coming…", vWhy_late: "Too slow", vStOutWait: "{why} · waiting for the result…",
+    ruleL: "Rules", r_free: "Freestyle", r_renju: "Renju", r_tara: "Taraguchi", r_tara10: "Taraguchi-10", r_swap2: "Swap2", n_free: "No forbidden moves · five or more wins · Black first", n_renju: "Black first · Black can’t play 3-3, 4-4 or overlines (you’ll be warned)", n_tara: "1st stone on the center; the first five expand from 3×3 to 9×9 with a swap option after each; then Renju", n_tara10: "Like Taraguchi; after move 4 Black may go Yamaguchi: offer 10 fifth moves, White picks one", n_swap2: "First player places 2 black + 1 white; second takes Black, White, or adds one of each and lets the first choose. No forbidden moves; overlines don’t win", sideFirst: "First (opens)", sideSecond: "Second", pSwap: "Move {n} is down — swap colors? (you hold {c})", bKeep: "Keep {c}", bSwap: "Swap to {c}", bYama: "Yamaguchi", pZone: "Place move {n} ({c}) inside the central {w}×{w}", pOffer: "Tap {k} candidate fifth moves (no two of the same shape)", bOffer: "Send {n}/{k}", bClear: "Clear", pPick: "Pick one of Black’s candidates as move 5", pS2Place: "Place stone {n} ({c})", pS2Choice: "Take Black, take White, or add one of each?", bTakeB: "Take Black", bTakeW: "Take White", bAdd: "Add one of each", pS2Color: "Choose your color", waitDecide: "Waiting for your opponent to decide…", watchPhase: "Watching · waiting for {name}", swapped: "Colors swapped: you now play {c}", zoneErr: "This move must be inside the central {w}×{w}", symmetric: "Two candidates have the same shape — pick another", notoffer: "Pick one of Black’s candidates", pCenter: "Place move 1 (Black) on the center point", centerErr: "Move 1 must go on the center point", rpWin: "W", rpN: "Move {n}/{m}", rpFirst: "First move", rpLast: "Last move", rpPrevA: "Previous move", rpNextA: "Next move",
+  },
+  ja: {
+    title: '両儀殿', home: 'チャレンジへ', toLobby: 'ロビー', close: '閉じる', nick: '名前', nickPh: '相手に見える名前', boardAria: '盤面',
+    netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…', replT: '別の画面で開いています', replSub: 'この画面は一時停止中です', replUse: 'この画面で続ける', netRepl: '別の画面で開いています', netWait: '接続中です。お待ちください',
+    create: '部屋を作る', createGo: '部屋を作って待つ',
+    privL: '参加できる人', pubOpt: '公開', privOpt: '非公開', pubNote: 'ロビーに表示・誰でも着席できます', privNote: 'ロビーに鍵つきで表示・招待コードが必要', privTag: '非公開',
+    invite: '招待', inviteT: '友だちを招待', inviteCode: '招待コード', shareLink: 'リンクを共有', copyLink: 'リンクをコピー', copied: 'コピーしました', inviteNote: '友だちがリンクを開くか、ロビーの「招待コード」から入ると、この部屋に入れます。インストールも登録も不要です。', shareText: '兩儀殿で対戦しよう', inviteCodeLine: '招待コード：{c}', abT: 'ブラウザで開く', abNote: 'アプリ内ブラウザです。ニックネームや記録は引き継がれません。', abOpen: 'ブラウザで開く', abStay: 'ここで遊ぶ', abIos: '右上の ⋯ →「ブラウザで開く」',
+    joinCode: '招待コード', joinPh: '6文字のコード', joinGo: '入室', joinPrivNote: '非公開の部屋です。招待コードが必要です', nocode: '部屋が見つかりません。閉じた可能性があります', slow: '試行が多すぎます。少し待ってください', goneT: 'この部屋は閉じました', goneNew: '新しく作る',
+    timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
+    tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
+    emptyHall: 'まだ部屋がありません', emptyHall2: '部屋を作って相手を待ちましょう', room: '部屋', waiting: '待機中', playing: '対局中', emptySeat: '空席',
+    watchers: '{n} 人観戦', moveN: '{n} 手目', you: 'あなた', offline: '切断中', sit: '着席', black: '黒', white: '白',
+    stWaitOther: '相手の着席を待っています…', stView: '部屋を見て、打つなら「着席」', stTurnYou: 'あなたの番', stTurnOther: '相手の番…', stWatch: '観戦中', stTurnColor: '{c}の番',
+    stOver: '対局終了', tap2Hint: '同じ場所をもう一度タップで打つ', leaveRoom: '部屋を出る', resign: '投了', back: 'ロビー',
+    forbidden: 'ここは黒の禁手です', forbiddenSub: '三三・四四・長連は打てません', occupied: 'すでに石があります',
+    win: 'あなたの勝ち', lose: 'あなたの負け', draw: '引き分け', colorWin: '{c}の勝ち',
+    whyFive: '五連', whyTrap: '黒が禁手に追い込まれた', whyResign: '{c}が投了', whyLeft: '{c}が退出', whyTime: '{c}の時間切れ', whyFull: '盤が埋まりました',
+    again: 'もう一局', againWait: '相手を待っています…', againOther: '相手がもう一局を希望（白黒交代）', look: '盤面を見る',
+    resignQ: '投了しますか？', leaveQ: '対局中に出ると投了になります。出ますか？', gone: 'その部屋は閉じられました', taken: 'その席は埋まりました', full: '部屋が多すぎます。少し待ってください',
+    closed: '部屋が閉じられました', started: '相手が着席、対局開始！',
+    idleT: "まだいますか？", idleSub: "{s} 秒以内に返事がないと自動で退席します", idleStay: "います", idleLeave: "退出", idleOut: "応答がなかったので退席しました", waited: "{m} 分待機", whyIdle: "{c}の応答なし",
+    studyReq: "検討を申し込む", studyCancel: "申し込みを取り消す", studyWait: "検討を申し込みました。返事待ち…", studyAsk: "{name} が検討を申し込みました（この対局は勝敗なし）", studyYes: "承諾", studyNo: "断る", studyDeclined: "相手が断りました", studyCool: "断られたばかりです。少し待ってから", studyOn: "検討中", studyStatus: "検討中・{n}／{m}手・どちらも打てる", studyWatch: "観戦中・検討 {n}／{m}手", sPrev: "◀ 一手戻る", sNext: "一手進む ▶", sReal: "実戦に戻る", sEnd: "検討終了", review: "検討", studyOverTitle: "検討", studyOverWhy: "検討終了・この対局は勝敗なし", studyStarted: "検討開始",
+    kindL: "モード", kGomoku: "五目並べ", kVcf: "VCF 明鏡台", vRankL: "問題の段位", vThinkL: "1問の考慮時間", vT60: "1分", vT180: "3分", vT300: "5分", vTargetL: "先に解く問題数", vP3: "3問", vP5: "5問", vNote: "同じ問題を同じ順番で、それぞれのペースで解き進め、先に目標数を解いた方の勝ち・失敗・時間切れ・パスで次の問題へ・考える間は減らず、初手を打つと残り5秒、1手ごとに+1秒・問題はすべて20手以内", vThinkShort: "1問 {t}", vTargetShort: "{p}問先取", vThink: "考慮中", vArmed: "着手中・{n}手目", vOutS: "脱落", vSolvedS: "正解！", vReady: "準備…", vStThink: "読んでから打つ・残り {t}", vStArmed: "着手中・残り {s} 秒", vStOut: "{why}・次の問題へ…", vStWatch: "観戦中・第{n}問・残り {t}", vPuzzleN: "第{n}問", vAtkB: "黒先", vAtkW: "白先", vWhy_five: "相手が五連", vWhy_forbid: "禁手に追い込まれた", vWhy_nofour: "四がなくなった", vWhy_time: "時間切れ", vWhy_bad: "その手は失敗", notfour: "この手は四ではありません", noMiss: "ミスにはなりません", vEndScore: "正解 {a} : {b}", vNoBank: "問題を読み込めず中止", ranks: ["見習い", "初段", "二段", "三段", "四段", "五段", "六段", "七段", "八段", "九段", "伝説"], vP10: "10問", vSkip: "パス", vWhy_skip: "パス", vSolvedNext: "正解！次の問題へ…", vSolvedR: "正解", rvBtn: "各問の解答を見る", rvPrev: "前の問題", rvNext: "次の問題", rvSol: "正解手順", rvMine: "自分", rvK: "第{k}／{n}問", rvNone: "未到達", rvNoSol: "解が見つかりません", rvUndo: "一手戻す", rvReset: "この問題の最初に戻る", rvFree: "自分で打つ", rvOpp: "相手", vModeL: "ルール", vm_line: "一線天", vm_eight: "八仙渡", vmn_line: "同じ問題・先に解いた方が得点", vmn_eight: "それぞれ解く・先に{p}問解いた方の勝ち", vNoteC: "考える間は減らず、初手を打つと残り5秒、1手ごとに+1秒・問題はすべて20手以内", vRoundWin: "{name} 正解！+1", vRoundNone: "誰も解けず・正解はこちら", vNext: "次の問題を準備中…", vWhy_late: "一歩遅れ", vStOutWait: "{why}・結果待ち…",
+    ruleL: "ルール", r_free: "自由ルール", r_renju: "連珠", r_tara: "タラグチ", r_tara10: "タラグチ10", r_swap2: "Swap2", n_free: "禁手なし・五連以上で勝ち・黒先", n_renju: "黒先・黒は三三・四四・長連が打てません（打つと警告）", n_tara: "1手目は天元。5手目まで中央3×3から9×9へ広がり、毎手後に交代を選べる。その後は連珠", n_tara10: "タラグチと同じ。4手目の後に山口へ：黒が5手目候補を10個出し、白が1つ選ぶ", n_swap2: "先手が黒2白1を置き、後手が黒・白を選ぶか、黒白1つずつ追加して相手に選ばせる。禁手なし、長連は勝ちにならない", sideFirst: "先手（開局）", sideSecond: "後手", pSwap: "{n}手目が置かれました。交代しますか？（今は{c}）", bKeep: "交代しない（{c}）", bSwap: "交代して{c}", bYama: "山口へ", pZone: "{n}手目（{c}）を中央 {w}×{w} 内に", pOffer: "5手目の候補を{k}個タップ（同じ形は不可）", bOffer: "候補を送る {n}/{k}", bClear: "クリア", pPick: "黒の候補から5手目を1つ選ぶ", pS2Place: "{n}個目（{c}）を置く", pS2Choice: "黒を持つ、白を持つ、または黒白1つずつ追加？", bTakeB: "黒を持つ", bTakeW: "白を持つ", bAdd: "黒白を1つずつ追加", pS2Color: "自分の色を選ぶ", waitDecide: "相手の判断を待っています…", watchPhase: "観戦中・{name}の番", swapped: "交代：あなたは{c}になりました", zoneErr: "この手は中央 {w}×{w} 内に", symmetric: "同じ形の候補があります。別の点を", notoffer: "黒の候補から選んでください", pCenter: "1手目（黒）を天元に", centerErr: "1手目は天元に打ってください", rpWin: "勝", rpN: "{n}／{m}手目", rpFirst: "最初", rpLast: "最後", rpPrevA: "前の手", rpNextA: "次の手",
+  },
+  ko: {
+    title: '음양전', home: '도전으로', toLobby: '로비', close: '닫기', nick: '닉네임', nickPh: '상대에게 보일 이름', boardAria: '바둑판',
+    netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…', replT: '다른 화면에서 열려 있습니다', replSub: '이 화면은 일시 정지되었습니다', replUse: '이 화면에서 계속', netRepl: '다른 화면에서 열려 있습니다', netWait: '연결 중입니다. 잠시만요',
+    create: '방 만들기', createGo: '방 만들고 기다리기',
+    privL: '입장', pubOpt: '공개', privOpt: '비공개', pubNote: '로비에 표시 · 누구나 앉을 수 있음', privNote: '로비에 잠금 표시 · 초대 코드 필요', privTag: '비공개',
+    invite: '초대', inviteT: '친구 초대', inviteCode: '초대 코드', shareLink: '링크 공유', copyLink: '링크 복사', copied: '복사했습니다', inviteNote: '친구가 링크를 누르거나 로비에서 「초대 코드」를 입력하면 이 방으로 들어옵니다. 설치도 가입도 필요 없습니다.', shareText: '양의전에서 대결하자', inviteCodeLine: '초대 코드: {c}', abT: '브라우저로 열기', abNote: '앱 내장 브라우저입니다. 닉네임과 기록이 이어지지 않습니다.', abOpen: '브라우저로 열기', abStay: '여기서 먼저 하기', abIos: '오른쪽 위 ⋯ → 브라우저로 열기',
+    joinCode: '초대 코드', joinPh: '6자리 코드', joinGo: '입장', joinPrivNote: '비공개 방입니다. 초대 코드가 필요합니다', nocode: '방을 찾을 수 없습니다. 닫혔을 수 있습니다', slow: '시도가 너무 많습니다. 잠시 후 다시', goneT: '이 방은 닫혔습니다', goneNew: '새로 만들기',
+    timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
+    tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
+    emptyHall: '아직 방이 없습니다', emptyHall2: '방을 만들고 상대를 기다려 보세요', room: '방', waiting: '대기 중', playing: '대국 중', emptySeat: '빈자리',
+    watchers: '{n}명 관전', moveN: '{n}수째', you: '나', offline: '연결 끊김', sit: '착석', black: '흑', white: '백',
+    stWaitOther: '상대가 앉기를 기다리는 중…', stView: '방을 둘러보고, 두려면 「착석」', stTurnYou: '내 차례', stTurnOther: '상대 차례…', stWatch: '관전 중', stTurnColor: '{c} 차례',
+    stOver: '대국 종료', tap2Hint: '같은 자리를 한 번 더 탭하면 착수', leaveRoom: '방 나가기', resign: '기권', back: '로비',
+    forbidden: '흑의 금수 자리입니다', forbiddenSub: '삼삼·사사·장목은 둘 수 없음', occupied: '이미 돌이 있습니다',
+    win: '승리', lose: '패배', draw: '무승부', colorWin: '{c} 승',
+    whyFive: '5목 완성', whyTrap: '흑이 금수에 몰림', whyResign: '{c} 기권', whyLeft: '{c} 퇴장', whyTime: '{c} 시간 초과', whyFull: '판이 가득 찼습니다',
+    again: '한 판 더', againWait: '상대를 기다리는 중…', againOther: '상대가 한 판 더 원함(흑백 교대)', look: '판 보기',
+    resignQ: '기권할까요?', leaveQ: '대국 중에 나가면 기권입니다. 나갈까요?', gone: '그 방은 닫혔습니다', taken: '방금 다른 사람이 앉았습니다', full: '방이 너무 많습니다. 잠시 후 다시',
+    closed: '방이 닫혔습니다', started: '상대 착석, 대국 시작!',
+    idleT: "아직 계신가요?", idleSub: "{s}초 안에 답이 없으면 자동으로 자리에서 나갑니다", idleStay: "있어요", idleLeave: "나가기", idleOut: "응답이 없어 자리에서 나갔습니다", waited: "{m}분 대기", whyIdle: "{c} 응답 없음",
+    studyReq: "복기 신청", studyCancel: "신청 취소", studyWait: "복기를 신청했습니다. 답을 기다리는 중…", studyAsk: "{name}님이 복기를 신청했습니다(이 대국은 승패 없음)", studyYes: "수락", studyNo: "거절", studyDeclined: "상대가 거절했습니다", studyCool: "방금 거절됐습니다. 잠시 후 다시", studyOn: "복기 중", studyStatus: "복기 중 · {n}/{m}수 · 둘 다 둘 수 있음", studyWatch: "관전 중 · 복기 {n}/{m}수", sPrev: "◀ 이전", sNext: "다음 ▶", sReal: "실전으로", sEnd: "복기 끝내기", review: "복기", studyOverTitle: "복기", studyOverWhy: "복기 종료 · 이 대국은 승패 없음", studyStarted: "복기 시작",
+    kindL: "모드", kGomoku: "오목", kVcf: "VCF 명경대", vRankL: "문제 단", vThinkL: "문제당 생각 시간", vT60: "1분", vT180: "3분", vT300: "5분", vTargetL: "먼저 풀 문제 수", vP3: "3문제", vP5: "5문제", vNote: "같은 문제를 같은 순서로 각자 풀어 나가고, 목표 개수를 먼저 푼 쪽이 승리 · 실패·시간 초과·패스하면 다음 문제로 · 생각하는 동안은 줄지 않고, 첫 수를 두면 5초, 수마다 +1초 · 모두 20수 이내 문제", vThinkShort: "문제당 {t}", vTargetShort: "{p}문제 선승", vThink: "생각 중", vArmed: "착수 중 · {n}수째", vOutS: "탈락", vSolvedS: "정답!", vReady: "준비…", vStThink: "읽고 두기 · {t} 남음", vStArmed: "착수 중 · {s}초 남음", vStOut: "{why} · 다음 문제…", vStWatch: "관전 중 · {n}번 문제 · {t} 남음", vPuzzleN: "{n}번 문제", vAtkB: "흑 선", vAtkW: "백 선", vWhy_five: "상대가 5목 완성", vWhy_forbid: "금수에 몰림", vWhy_nofour: "4가 더 없음", vWhy_time: "시간 초과", vWhy_bad: "그 수는 실패", notfour: "이 수는 4가 아닙니다", noMiss: "실수로 치지 않음", vEndScore: "정답 {a} : {b}", vNoBank: "문제를 불러오지 못해 취소", ranks: ["견습생", "초단", "2단", "3단", "4단", "5단", "6단", "7단", "8단", "9단", "전설"], vP10: "10문제", vSkip: "패스", vWhy_skip: "패스", vSolvedNext: "정답! 다음 문제…", vSolvedR: "정답", rvBtn: "문제별 정답 보기", rvPrev: "이전 문제", rvNext: "다음 문제", rvSol: "정답", rvMine: "나", rvK: "{k}/{n}번 문제", rvNone: "도달 못 함", rvNoSol: "해답을 찾지 못함", rvUndo: "한 수 무르기", rvReset: "이 문제 처음으로", rvFree: "직접 두기", rvOpp: "상대", vModeL: "방식", vm_line: "일선천", vm_eight: "팔선도", vmn_line: "같은 문제 · 먼저 푼 쪽이 득점", vmn_eight: "각자 풀기 · {p}문제 먼저 푼 쪽 승리", vNoteC: "생각하는 동안은 줄지 않고, 첫 수를 두면 5초, 수마다 +1초 · 모두 20수 이내 문제", vRoundWin: "{name} 정답! +1", vRoundNone: "아무도 못 풂 · 정답", vNext: "다음 문제 준비 중…", vWhy_late: "한발 늦음", vStOutWait: "{why} · 결과 대기 중…",
+    ruleL: "규칙", r_free: "자유룰", r_renju: "렌주", r_tara: "타라구치", r_tara10: "타라구치-10", r_swap2: "Swap2", n_free: "금수 없음 · 5목 이상이면 승 · 흑 선", n_renju: "흑 선 · 흑은 삼삼·사사·장목 금지(두면 경고)", n_tara: "첫 수는 천원, 다섯 수까지 3×3에서 9×9로 넓어지며 매 수 뒤 교대 가능. 이후 렌주", n_tara10: "타라구치와 같음. 4수 뒤 야마구치 가능: 흑이 5수 후보 10개 제시, 백이 하나 선택", n_swap2: "선수가 흑2 백1을 놓고, 후수가 흑·백을 고르거나 흑백 하나씩 더 놓고 상대에게 선택권. 금수 없음, 장목은 승리 아님", sideFirst: "선수(개국)", sideSecond: "후수", pSwap: "{n}수째를 두었습니다. 교대할까요? (지금 {c})", bKeep: "교대 안 함({c})", bSwap: "교대하여 {c}", bYama: "야마구치", pZone: "{n}수째({c})를 중앙 {w}×{w} 안에", pOffer: "5수째 후보 {k}개를 탭(같은 모양 불가)", bOffer: "후보 보내기 {n}/{k}", bClear: "지우기", pPick: "흑의 후보 중 하나를 5수째로", pS2Place: "{n}번째 돌({c}) 놓기", pS2Choice: "흑, 백, 아니면 흑백 하나씩 추가?", bTakeB: "흑 잡기", bTakeW: "백 잡기", bAdd: "흑백 하나씩 추가", pS2Color: "내 색을 고르세요", waitDecide: "상대의 결정을 기다리는 중…", watchPhase: "관전 중 · {name} 차례", swapped: "교대: 이제 {c}입니다", zoneErr: "이 수는 중앙 {w}×{w} 안에", symmetric: "같은 모양의 후보가 있습니다. 다른 점을", notoffer: "흑의 후보 중에서 고르세요", pCenter: "1수째(흑)를 천원에", centerErr: "1수째는 천원에 두어야 합니다", rpWin: "승", rpN: "{n}／{m}수", rpFirst: "처음", rpLast: "마지막", rpPrevA: "이전 수", rpNextA: "다음 수",
+  },
+};
+const LANGS = [['zh', '中文', 'zh-Hant'], ['en', 'English', 'en'], ['ja', '日本語', 'ja'], ['ko', '한국어', 'ko']];
+function pickLang() {
+  const q = new URLSearchParams(location.search).get('lang');   // 邀請連結帶的語言（第一次來的人用；已選過語言的人照自己的，同 game.html）
+  const saved = store.get('vcfgame.lang');
+  if (!saved && q && I18N[q]) return q;
+  if (saved && I18N[saved]) return saved;
+  const nav = (navigator.languages || [navigator.language || 'zh']).join(',').toLowerCase();
+  for (const l of nav.split(',')) { const k = l.slice(0, 2); if (I18N[k]) return k; }
+  return 'zh';
+}
+let lang = pickLang();
+const T = (k, v) => String(I18N[lang][k] ?? I18N.zh[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v && v[n] != null ? v[n] : ''));
+const colorWord = (c) => T(c === BLACK ? 'black' : 'white');
+const rankName = (k) => (I18N[lang].ranks || I18N.zh.ranks)[k];
+const thinkName = (sec) => T('vT' + sec);
+const TIME_OPTS = ['none', '5+5', '10+10', 'custom'];   // 2026-11-11 使用者：5+5、10+10、自訂
+const timeLabel = (t) => { if (!t || t === 'none') return T('tNone'); const [m, s] = String(t).split('+'); return T('tMS', { m, s }); };
+function applyLang() {
+  document.documentElement.lang = LANGS.find(l => l[0] === lang)[2];
+  document.title = 'Gomoku Rush — ' + T('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', T(el.dataset.i18nAria)); });
+  $('langs').innerHTML = LANGS.map(([k, n, h]) => `<button type="button" lang="${h}" data-lang="${k}" aria-pressed="${k === lang}">${n}</button>`).join('');
+  $('langs').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set('vcfgame.lang', lang); langMenu(false); applyLang(); });
+  renderSound(); renderCreate(); renderNet(); renderLobby(); renderRoom();
+}
+function langMenu(open) { $('langs').hidden = !open; $('langBtn').setAttribute('aria-expanded', String(open)); }
+$('langBtn').onclick = (e) => { e.stopPropagation(); langMenu($('langs').hidden); };
+document.addEventListener('click', (e) => { if (!$('langs').hidden && !$('langs').contains(e.target)) langMenu(false); });
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+
+// ---------- 聲音（照 game.html） ----------
+const SND_ON = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>`, SND_OFF = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
+let soundOn = store.get('vcfgame.sound') !== '0', actx = null;
+function audio() {
+  if (!soundOn) return null;
+  try {
+    if (actx && actx.state === 'closed') actx = null;
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state !== 'running') actx.resume().catch(() => {});
+  } catch { actx = null; }
+  return actx;
+}
+addEventListener('pointerdown', () => { audio(); }, { capture: true, passive: true });
+// 音量與落子聲種類在 Rush 的設定頁調（同網域同一份 localStorage）；每次發聲時重讀
+const clampVol = (v, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : d; };
+const volOf = (k, d) => clampVol(store.get('vcfgame.vol.' + k), d);
+let sfxMaster = null;
+function sfxOut(a) {   // 落子聲、入座輕響、倒數嗶聲共用的 master GainNode，gain = 音效音量 / 70
+  if (!sfxMaster || sfxMaster.context !== a) { sfxMaster = a.createGain(); sfxMaster.connect(a.destination); }
+  sfxMaster.gain.value = volOf('sfx', 70) / 70;
+  return sfxMaster;
+}
+function stoneSound(soft) {
+  const a = audio(); if (!a) return;
+  const out = sfxOut(a), t = a.currentTime;
+  try {
+    const R = window.RushSound;
+    if (R && R.STONE_SND) { R.STONE_SND[R.stoneId(store.get('vcfgame.sfx.stone'))](a, out, t, soft ? 0.35 / 0.6 : 1); return; }
+  } catch {}
+  const vol = soft ? 0.35 : 0.6;   // RushSound 沒載到：退回寫死的木頭聲
+  const n = a.createBuffer(1, Math.floor(a.sampleRate * 0.06), a.sampleRate), d = n.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  const src = a.createBufferSource(); src.buffer = n;
+  const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 1.4;
+  const g1 = a.createGain(); g1.gain.setValueAtTime(vol, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  src.connect(bp).connect(g1).connect(out); src.start(t);
+  const o = a.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(160, t + 0.08);
+  const g2 = a.createGain(); g2.gain.setValueAtTime(vol * 0.7, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+  o.connect(g2).connect(out); o.start(t); o.stop(t + 0.1);
+}
+function chime() {   // 有人入座：兩聲輕響
+  const a = audio(); if (!a) return;
+  [660, 990].forEach((f, i) => {
+    const t = a.currentTime + i * 0.12, o = a.createOscillator(), gn = a.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.25, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + 0.3);
+  });
+}
+// ---------- 背景音樂：兩首輪播，進頁就預載、進頁就試著播（瀏覽器不准就等第一次操作）----------
+// 【改歌單】只改下面的 BGM_LIST：曲名＝game/music/ 底下不含 .mp3 的檔名；每次載入頁面固定從第一首開始，播到曲尾（1.5 秒淡出）換下一首從頭淡入，輪完回第一首。
+// 每首一個 HTMLAudioElement；第一首 preload auto（進頁就載），其餘 preload none、輪到才建立才載。經 GainNode 控音量（建不起來退回 el.volume）。
+// 頁面第一次出聲淡入 0.4 秒，換曲／循環邊緣 1.5 秒；靜音／音樂 0／切到背景就 pause；載不到的歌標壞檔跳下一首（不重試），整份都壞就安靜。
+// AudioContext 不是 running（被瀏覽器擋）或 play() 被拒時不出聲、不報錯，等 pointerdown／click／keydown／touchend 或 statechange 再試。
+const BGM_LIST = ['duel', 'battle', 'theme'];
+const BGM_MAX = 0.8, BGM_EDGE = 1.5, BGM_FIRST_EDGE = 0.4;
+const bgm = {}, bgmBad = {};
+let bgmIdx = 0, bgmTimer = null, bgmBlocked = false;
+function bgmVolume() { return volOf('bgm', 30); }
+function bgmWanted() { return soundOn && bgmVolume() > 0 && document.visibilityState === 'visible'; }
+function bgmCur() {   // 目前這首（跳過壞檔）；全壞回傳 null
+  for (let k = 0; k < BGM_LIST.length; k++) {
+    const i = (bgmIdx + k) % BGM_LIST.length;
+    if (!bgmBad[BGM_LIST[i]]) { bgmIdx = i; return BGM_LIST[i]; }
+  }
+  return null;
+}
+function bgmSetVol(t, x) { if (t.gain) t.gain.gain.value = x; else t.el.volume = x; }
+function bgmGet(n) {
+  if (!bgm[n]) {
+    const el = new Audio(); el.preload = n === BGM_LIST[0] ? 'auto' : 'none'; el.loop = false; el.volume = 0; el.src = 'game/music/' + n + '.mp3';
+    const t = bgm[n] = { el, gain: null, inEdge: n === BGM_LIST[0] ? BGM_FIRST_EDGE : BGM_EDGE };
+    el.addEventListener('error', () => { bgmBad[n] = true; bgmSync(); });
+    try {
+      const a = audio();
+      if (a) {
+        const g = a.createGain(); g.gain.value = 0; a.createMediaElementSource(el).connect(g).connect(a.destination); t.gain = g; el.volume = 1;
+        if (!a.__bgmL) { a.__bgmL = 1; a.addEventListener('statechange', () => bgmSync()); }
+      }
+    } catch { t.gain = null; }
+  }
+  return bgm[n];
+}
+function bgmStop() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
+function bgmPause() { for (const n in bgm) { bgmSetVol(bgm[n], 0); if (!bgm[n].el.paused) bgm[n].el.pause(); } }
+function bgmReady(t) { return !t.gain || (actx && actx.state === 'running'); }
+function bgmStep() {
+  if (!bgmWanted()) { bgmPause(); bgmStop(); return; }
+  const n = bgmCur(); if (!n) { bgmPause(); bgmStop(); return; }
+  const t = bgmGet(n), el = t.el;
+  for (const o in bgm) if (o !== n) { bgmSetVol(bgm[o], 0); if (!bgm[o].el.paused) bgm[o].el.pause(); }
+  if (!bgmReady(t) || (bgmBlocked && el.paused)) { bgmStop(); return; }   // 還不准出聲：不假裝在播，等操作／statechange
+  let lf = 0; const d = el.duration;
+  if (Number.isFinite(d) && d > 0) {
+    const rem = d - el.currentTime;
+    if (el.ended || rem <= 0.05) {   // 曲尾：換下一首（輪完回第一首）從頭，邊緣淡入 1.5 秒
+      let nx = n;
+      for (let k = 1; k <= BGM_LIST.length; k++) { const i = (bgmIdx + k) % BGM_LIST.length; if (!bgmBad[BGM_LIST[i]]) { bgmIdx = i; nx = BGM_LIST[i]; break; } }
+      t.inEdge = BGM_EDGE; bgmSetVol(t, 0);
+      try { el.currentTime = 0; } catch {}
+      if (nx !== n) { el.pause(); const t2 = bgmGet(nx); t2.inEdge = BGM_EDGE; try { t2.el.currentTime = 0; } catch {} }
+      return;
+    }
+    lf = Math.max(0, Math.min(1, rem / BGM_EDGE, el.currentTime / t.inEdge));
+  }
+  if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(e => { if (e && e.name === 'NotAllowedError') { bgmBlocked = true; bgmStop(); } }); }
+  bgmSetVol(t, Math.max(0, Math.min(1, (bgmVolume() / 100) * BGM_MAX * lf)));
+}
+function bgmSync() {
+  if (!bgmWanted()) { bgmPause(); bgmStop(); return; }
+  const n = bgmCur(); if (!n) { bgmPause(); bgmStop(); return; }
+  bgmGet(n); audio();
+  if (!bgmTimer) bgmTimer = setInterval(bgmStep, 80);
+  bgmStep();
+}
+function bgmTouch() {   // 手機觸控的 pointerdown 不算使用者操作，AudioContext 要在 touchend／click 這裡再 resume；resume 完由 statechange 接手
+  bgmBlocked = false;
+  if (bgmWanted()) { const a = audio(); if (a && a.state !== 'running') { try { a.resume().then(() => bgmSync(), () => {}); } catch {} } bgmSync(); }
+}
+['pointerdown', 'click', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, bgmTouch, { capture: true, passive: true }));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') bgmSync(); else { bgmPause(); bgmStop(); } });
+bgmSync();   // 進頁就預載第一首並試著播；被擋就安靜等第一次操作
+function renderSound() {
+  document.querySelectorAll('[data-sound]').forEach(b => { b.innerHTML = soundOn ? SND_ON : SND_OFF; b.setAttribute('aria-pressed', String(soundOn)); b.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); });
+}
+document.querySelectorAll('[data-sound]').forEach(b => b.onclick = (e) => { e.stopPropagation(); soundOn = !soundOn; store.set('vcfgame.sound', soundOn ? '1' : '0'); renderSound(); bgmSync(); if (soundOn) stoneSound(); });
+
+// ---------- 身分、暱稱、設定 ----------
+let myId = store.get('vcfgame.duel.id');
+if (!/^[A-Za-z0-9_-]{8,40}$/.test(myId || '')) { myId = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 20); store.set('vcfgame.duel.id', myId); }
+const defaultNick = () => (lang === 'zh' ? '棋手' : lang === 'ja' ? '棋士' : lang === 'ko' ? '기사' : 'Player') + myId.slice(0, 3).toUpperCase();
+let nick = store.get('vcfgame.nick') || defaultNick();
+$('nick').value = nick;
+$('nick').addEventListener('change', () => {
+  nick = $('nick').value.trim().slice(0, 12) || defaultNick();
+  $('nick').value = nick; store.set('vcfgame.nick', nick);
+  send({ t: 'nick', nick });
+});
+const pick = (k, list, d) => { const v = store.get('vcfgame.duel.' + k); return list.includes(v) ? v : d; };
+const cfg = {
+  time: pick('time', TIME_OPTS, '10+10'),
+  cmin: store.get('vcfgame.duel.cmin') || '15',
+  cinc: store.get('vcfgame.duel.cinc') || '5',
+  rule: pick('rule', Object.values(RULE), RULE.RENJU),
+  kind: pick('kind', ['gomoku', 'vcf'], 'gomoku'),
+  priv: pick('priv', ['0', '1'], '0'),   // 誰能進：0 公開／1 私人（使用者 2026-11-12）
+  vrank: pick('vrank', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], '3'),
+  vmode: pick('vmode', ['line', 'eight'], 'eight'),   // 使用者 2026-11-12：兩種玩法並存，預設八仙渡
+  think: pick('think', ['60', '180', '300'], '180'),   // 使用者 2026-11-11：預設一題 3 分鐘
+  target: pick('target', ['3', '5', '10'], '5'),   // 使用者 2026-11-11：搶五
+  side: pick('side', ['b', 'w', 'r'], 'r'),
+  tap: pick('tap', ['1', '2'], matchMedia('(pointer: coarse)').matches ? '2' : '1'),
+};
+function chips(id, key, opts) {
+  $(id).innerHTML = opts.map(([v, label]) => `<button type="button" data-v="${v}" aria-pressed="${cfg[key] === v}">${esc(label)}</button>`).join('');
+  $(id).querySelectorAll('button').forEach(b => b.onclick = () => { cfg[key] = b.dataset.v; store.set('vcfgame.duel.' + key, cfg[key]); renderCreate(); });
+}
+function renderCreate() {
+  chips('cKind', 'kind', [['vcf', T('kVcf')], ['gomoku', T('kGomoku')]]);   // 2026-11-11 使用者：VCF 放五子棋左邊
+  chips('cPriv', 'priv', [['0', T('pubOpt')], ['1', T('privOpt')]]);
+  $('privNote').textContent = T(cfg.priv === '1' ? 'privNote' : 'pubNote');
+  $('gOpts').hidden = cfg.kind !== 'gomoku'; $('vOpts').hidden = cfg.kind !== 'vcf';
+  $('vRkName').textContent = rankName(+cfg.vrank);
+  $('vRkDown').disabled = +cfg.vrank <= 1; $('vRkUp').disabled = +cfg.vrank >= 10;
+  chips('cVmode', 'vmode', [['line', T('vm_line')], ['eight', T('vm_eight')]]);
+  $('vNote').textContent = T('vmn_' + cfg.vmode, { p: cfg.target }) + '・' + T('vNoteC');
+  chips('cThink', 'think', [['60', T('vT60')], ['180', T('vT180')], ['300', T('vT300')]]);
+  chips('cTarget', 'target', [['3', T('vP3')], ['5', T('vP5')], ['10', T('vP10')]]);
+  chips('cTime', 'time', TIME_OPTS.map(k => [k, k === 'custom' ? T('tCustom') : k === 'none' ? T('tNone') : T('tMSc', { m: k.split('+')[0], s: k.split('+')[1] })]));   // 按鈕用短寫法，四個才排得下
+  $('cTimeX').hidden = cfg.time !== 'custom';
+  chips('cRule', 'rule', Object.values(RULE).map(r => [r, T('r_' + r)]));
+  $('ruleNote').textContent = T('n_' + cfg.rule);
+  const sw = SWAP_RULES.includes(cfg.rule);
+  chips('cSide', 'side', [['b', T(sw ? 'sideFirst' : 'sideB')], ['w', T(sw ? 'sideSecond' : 'sideW')], ['r', T('sideR')]]);
+  chips('cTap', 'tap', [['1', T('tap1')], ['2', T('tap2')]]);
+}
+function openModal(id) { $(id).hidden = false; const c = $(id).querySelector('[data-close]'); if (c) c.focus(); }
+document.querySelectorAll('.modal [data-close]').forEach(b => b.onclick = () => { b.closest('.modal').hidden = true; });
+$('openCreate').onclick = () => openModal('mCreate');
+$('doCreate').onclick = () => {
+  $('mCreate').hidden = true; justCreated = true;
+  if (cfg.kind === 'vcf') send({ t: 'create', kind: 'vcf', rank: +cfg.vrank, think: +cfg.think, target: +cfg.target, vmode: cfg.vmode, priv: cfg.priv === '1' });
+  else {
+    let time = cfg.time;
+    if (time === 'custom') {
+      const m = Number($('cMin').value), s = Number($('cInc').value || 0);
+      if (!Number.isInteger(m) || m < 1 || m > 180 || !Number.isInteger(s) || s < 0 || s > 60) { $('mCreate').hidden = false; toast(T('cErr')); return; }
+      cfg.cmin = String(m); cfg.cinc = String(s); store.set('vcfgame.duel.cmin', cfg.cmin); store.set('vcfgame.duel.cinc', cfg.cinc);
+      time = `${m}+${s}`;
+    }
+    send({ t: 'create', time, rule: cfg.rule, color: cfg.side, priv: cfg.priv === '1' });
+  }
+};
+const stepRank = (d) => { cfg.vrank = String(Math.min(10, Math.max(1, +cfg.vrank + d))); store.set('vcfgame.duel.vrank', cfg.vrank); renderCreate(); };
+$('cMin').value = cfg.cmin; $('cInc').value = cfg.cinc;
+$('vRkDown').onclick = () => stepRank(-1); $('vRkUp').onclick = () => stepRank(1);
+
+// ---------- 邀請碼、公開／私人房（2026-11-12） ----------
+// 每間房有 6 碼邀請碼（公開私人用法一樣）；私人房在大廳看得到但上鎖，要碼才進得去（伺服器擋）。
+const LOCK_SVG = '<svg class="lk" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+let justCreated = false;          // 剛開房：第一次收到房間資料時，私人房自動打開邀請面板
+let joinFrom = null, joinCode = '';   // 等 join 的結果：'panel' 輸入面板／'url' 網址帶碼／'re' 斷線重連
+let urlCode = (new URLSearchParams(location.search).get('r') || '').trim();
+const urlCode0 = urlCode;   // 原始邀請碼：r 之後會被 replaceState 拿掉，內建瀏覽器提示要用它組「用瀏覽器開啟」的網址
+try { const u = new URL(location.href); if (u.searchParams.has('openExternalBrowser') && !urlCode) { u.searchParams.delete('openExternalBrowser'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch {}   // 沒有 r 時也拿掉（有 r 時等 hello 一起拿）
+const passed = new Set(), codes = {};   // passed：這條連線進得去的私人房號；codes：房號→邀請碼（重連時用碼再進一次）
+const normCode = (c) => String(c || '').replace(/\s+/g, '').toUpperCase().slice(0, 6);
+const inviteUrl = () => location.origin + location.pathname + '?r=' + room.code + '&lang=' + lang + '&openExternalBrowser=1';   // openExternalBrowser：LINE 看到就改用預設瀏覽器開，其他軟體忽略
+function openInvite() { if (!room || !room.code) return; $('invCode').textContent = room.code; openModal('mInvite'); }
+// 邀請訊息帶棋局設定，朋友一看就知道是什麼局（2026-11-12）
+function inviteDesc() {
+  const v = room.vcf;
+  return (room.kind === 'vcf' && v
+    ? [T('kVcf'), T('vm_' + vmodeOf(room)), rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })]
+    : [T('kGomoku'), T('r_' + room.rule), timeLabel(room.time)]).filter(Boolean).join('・');
+}
+const inviteText = () => T('shareText') + '\n' + inviteDesc() + '\n' + T('inviteCodeLine', { c: room.code });
+async function copyInvite(text) { try { await navigator.clipboard.writeText(text); toast(T('copied')); } catch { prompt(T('copyLink'), text.split('\n').pop()); } }
+$('rInvite').onclick = openInvite;
+$('invShare').onclick = async () => {
+  if (!room) return;
+  const url = inviteUrl();
+  if (navigator.share) { try { await navigator.share({ title: T('title'), text: inviteText(), url }); } catch {} return; }
+  copyInvite(inviteText() + '\n' + url);
+};
+$('invCopy').onclick = () => { if (room) copyInvite(inviteText() + '\n' + inviteUrl()); };
+function openJoin(priv) { $('joinPriv').hidden = !priv; $('joinErr').textContent = ''; $('joinCode').value = ''; openModal('mJoin'); $('joinCode').focus(); }
+$('openJoin').onclick = () => openJoin(false);
+$('joinCode').addEventListener('input', () => { const v = normCode($('joinCode').value); if ($('joinCode').value !== v) $('joinCode').value = v; $('joinErr').textContent = ''; });
+function doJoin() { const c = normCode($('joinCode').value); if (!c) return; joinFrom = 'panel'; joinCode = c; send({ t: 'join', code: c }); }
+$('joinGo').onclick = doJoin;
+$('joinCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
+$('goneBack').onclick = () => { $('mGone').hidden = true; };
+$('goneNew').onclick = () => { $('mGone').hidden = true; openModal('mCreate'); };
+function onJoinErr(code) {   // nocode：找不到碼或私人房沒碼；slow：猜太多次
+  const from = joinFrom; joinFrom = null;
+  if (from === 'panel') $('joinErr').textContent = T(code);
+  else if (from === 'url') { if (code === 'nocode') openModal('mGone'); else toast(T('slow')); }
+  else if (from === 're') { toast(T('gone')); toLobby(false); }
+  else if (code === 'nocode') { if (viewing) toLobby(false); openJoin(true); }   // 直接點私人房／入座被擋：改問邀請碼
+  else toast(T('slow'));
+}
+
+
+// ---------- 內建瀏覽器提示（2026-11-13） ----------
+function inAppBrowser() {
+  const ua = navigator.userAgent || '';
+  if (/\bLine\//i.test(ua)) return 'line';
+  if (/Instagram/i.test(ua)) return 'ig';
+  if (/FBAN|FBAV|FB_IAB|FBIOS|Messenger/i.test(ua)) return 'fb';
+  if (/MicroMessenger/i.test(ua)) return 'wechat';
+  if (/KAKAOTALK/i.test(ua)) return 'kakao';
+  return null;
+}
+const isAndroid = () => /Android/i.test(navigator.userAgent || '');
+const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+function externalUrl(extra) {   // 帶著原始邀請碼與語言的目前頁網址
+  const u = new URL(location.origin + location.pathname);
+  if (urlCode0) u.searchParams.set('r', urlCode0);
+  u.searchParams.set('lang', lang);
+  if (extra) u.searchParams.set(extra, '1');
+  return u.href;
+}
+function showInApp() {
+  const kind = inAppBrowser();
+  if (!kind) return;
+  try { if (sessionStorage.getItem('vcfgame.duel.inapp')) return; } catch {}
+  const ios = isIOS(), line = kind === 'line';
+  const canOpen = isAndroid() || line;
+  $('abOpen').hidden = !canOpen;
+  $('abIos').hidden = canOpen;
+  $('abCopy').hidden = canOpen;
+  const done = () => { try { sessionStorage.setItem('vcfgame.duel.inapp', '1'); } catch {} $('mInApp').hidden = true; };
+  $('abOpen').onclick = () => {
+    if (line) { location.href = externalUrl('openExternalBrowser'); return; }
+    const u = new URL(externalUrl());
+    location.href = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u.href) + ';end';
+  };
+  $('abCopy').onclick = async () => { const t = externalUrl(); try { await navigator.clipboard.writeText(t); toast(T('copied')); } catch { prompt(T('copyLink'), t); } };
+  $('abStay').onclick = done;
+  $('mInApp').querySelector('[data-close]').addEventListener('click', done);
+  openModal('mInApp');
+}
+
+// ---------- 連線 ----------
+const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
+let ws = null, online = false, failCount = 0, retryT = 0, replaced = false;
+let watchSeat = 0;   // 觀戰者現在看哪個座位的題目和手順（VCF 明鏡台）
+let lobby = [], onlineN = 0, room = null, roomAt = 0, viewing = null, srvOff = 0;   // srvOff：伺服器時間－本機時間   // viewing：我正在看的房號
+function connect() {
+  clearTimeout(retryT);
+  let sock;
+  try { sock = ws = new WebSocket(`${WS_URL}?v=2&id=${encodeURIComponent(myId)}&nick=${encodeURIComponent(nick)}`); } catch { return retry(); }
+  ws.onopen = () => {
+    if (ws !== sock) return;
+    online = true; failCount = 0; replaced = false; $('mReplaced').hidden = true; renderNet(); passed.clear();   // 新連線：私人房的通行紀錄在伺服器那邊也是新的
+    if (!viewing) return;
+    if (codes[viewing]) { joinFrom = 're'; joinCode = codes[viewing]; send({ t: 'join', code: codes[viewing] }); }   // 用碼再進一次（私人房靠這個接回去）
+    else send({ t: 'view', room: viewing });
+  };
+  ws.onmessage = (ev) => { if (ws !== sock) return; let m; try { m = JSON.parse(ev.data); } catch { return; } onMsg(m); };
+  ws.onclose = (ev) => {
+    if (ws !== sock) return;
+    online = false;
+    if (ev && ev.code === 4000) { replaced = true; clearTimeout(retryT); $('mReplaced').hidden = false; renderNet(); return; }   // 被同一玩家的另一個畫面取代：不重連，免得互踢
+    failCount++; renderNet(); retry();
+  };
+}
+function retry() { clearTimeout(retryT); retryT = setTimeout(connect, Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** Math.min(failCount, RETRY_MAX_POW))); }
+const isUp = () => !!ws && ws.readyState === 1;
+function send(m) { if (!isUp()) return false; ws.send(JSON.stringify(m)); return true; }
+$('replUse').onclick = () => { replaced = false; $('mReplaced').hidden = true; connect(); };
+function takeOver() { if (document.visibilityState === 'visible' && (!ws || ws.readyState > 1)) { replaced = false; $('mReplaced').hidden = true; connect(); } }
+addEventListener('pageshow', takeOver);
+setInterval(() => send({ t: 'ping' }), PING_MS);
+document.addEventListener('visibilitychange', takeOver);
+
+function onMsg(m) {
+  if (m.t === 'lobby') { lobby = m.rooms; onlineN = m.online || 0; if (m.now) srvOff = m.now - Date.now(); renderLobby(); renderNet(); }
+  else if (m.t === 'hello') {   // 網址帶 ?r=碼：連上就自動進房，並把 r 從網址拿掉（重新整理不會重複進）
+    if (urlCode) {
+      const c = urlCode; urlCode = '';
+      try { const u = new URL(location.href); u.searchParams.delete('r'); u.searchParams.delete('openExternalBrowser'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch {}
+      joinFrom = 'url'; joinCode = normCode(c); send({ t: 'join', code: c });
+    }
+  }
+  else if (m.t === 'room') onRoom(m.room, m.now);
+  else if (m.t === 'idleAsk') idleAsk(m.ms);
+  else if (m.t === 'idleClear') idleHide();
+  else if (m.t === 'note' && m.code === 'idleOut') { idleHide(); toast(T('idleOut')); toLobby(false); }
+  else if (m.t === 'note' && m.code === 'oppIdle') flash(T('whyIdle', { c: m.nick || '' }), T('win'), 'info', 3000);
+  else if (m.t === 'note' && m.code === 'declined') flash(T('studyDeclined'), '', 'warn', 1500);
+  else if (m.t === 'closed') { if (viewing === m.room) { toast(T('closed')); toLobby(false); } }
+  else if (m.t === 'err') {
+    if (m.code === 'forbidden') flash(T('forbidden'), T('forbiddenSub'), 'warn');
+    else if (m.code === 'occupied') flash(T('occupied'), '', 'warn', 800);
+    else if (m.code === 'zone') flash(zoneMsg(), '', 'warn');
+    else if (m.code === 'symmetric' || m.code === 'badoffer') flash(T('symmetric'), '', 'warn');
+    else if (m.code === 'notoffer') flash(T('notoffer'), '', 'warn');
+    else if (m.code === 'gone') { toast(T('gone')); toLobby(false); }
+    else if (m.code === 'taken') toast(T('taken'));
+    else if (m.code === 'full') toast(T('full'));
+    else if (m.code === 'cool') toast(T('studyCool'));
+    else if (m.code === 'nocode' || m.code === 'slow') onJoinErr(m.code);
+  }
+}
+function renderNet() {
+  $('net').querySelector('i').className = 'dot ' + (online ? 'teal' : 'off');
+  $('net').querySelector('span').textContent = online ? T('netOn', { n: Math.max(1, onlineN) }) : replaced ? T('netRepl') : T(failCount > 2 ? 'netFail' : 'netOff');
+}
+
+// ---------- 大廳 ----------
+// 大廳的一張房間卡（五子棋、搶答共用外框）
+// 等人的房間：等了幾分鐘（1 分鐘內不顯示）
+const waitedLabel = (r) => { if (r.state !== 'wait' || !r.waitSince) return ''; const m = Math.floor((Date.now() + srvOff - r.waitSince) / 60000); return m >= 1 ? T('waited', { m }) : ''; };
+const roomCard = (r, wait, extra, seatsHtml) => `<button type="button" class="roomc ${wait ? 'wait' : 'play'}${r.priv && !passed.has(r.id) ? ' priv' : ''}" data-room="${esc(r.id)}">
+      <span class="hd"><span>${esc(T('room'))}</span><b>${esc(r.id)}</b>${r.priv ? `<span class="pv">${LOCK_SVG}${esc(T('privTag'))}</span>` : ''}
+        <span class="tag"><i class="dot ${wait ? '' : 'teal'}"></i>${esc(T(wait ? 'waiting' : r.state === 'study' ? 'studyOn' : 'playing'))}</span></span>
+      <span class="ex">${esc(extra)}</span>
+      <span class="seats">${seatsHtml}</span></button>`;
+// ---- 今日棋局（2026-11-13 使用者）：每一局結束把整局存在這台裝置，首頁 game.html 的「今日棋局」列出；點兩儀殿那筆會以 duel.html#replay=<id> 進來回看 ----
+// localStorage 'vcfgame.today'：陣列（新的在後），每筆一局。這一頁寫兩儀殿的 { at, src: 'duel', id, gk, sum, rec }，
+// game.html 寫單人的 { at, src: 'solo', mode, detail, ... }；讀寫函式兩頁各一份（沒有共用 JS 檔），key 與格式要一致，改一邊要同步另一邊（game.html 的 todayRead／todayWrite）。
+// rec 的形狀＝伺服器 rec 訊息的那筆（kind、names、win、note、mine、cols、match＋result 或 vcf＋score＋review…），所以回看程式（enterReplay）直接吃。
+const TODAY_KEY = 'vcfgame.today', TODAY_MAX = 300;   // 300 筆上限只為了不讓 localStorage 爆掉（一局 VCF 紀錄可達數十 KB，約 5 MB 上限）；清單另外只顯示當地今天 0 點之後的
+function todayRead() { try { const a = JSON.parse(localStorage.getItem(TODAY_KEY)); return Array.isArray(a) ? a.filter(x => x && typeof x === 'object') : []; } catch { return []; } }
+function todayWrite(a) {   // 寫入失敗（滿了）就丟掉最舊的四分之一再試
+  a = a.slice(-TODAY_MAX);
+  for (;;) {
+    try { localStorage.setItem(TODAY_KEY, JSON.stringify(a)); return true; } catch { if (a.length <= 1) return false; a = a.slice(Math.ceil(a.length / 4)); }
+  }
+}
+const recTime = (at) => { const d = new Date(at); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+let REPLAY = null;   // 回看中（房間畫面用本機組出來的唯讀 room，不送任何房間訊息）
+const todaySeen = new Set();   // 這個畫面已經處理過的局（房間廣播一直來，不要每次都讀 localStorage）
+function recordToday(r) {   // 我坐在座位上、這一局結束：寫一筆（觀戰不寫）。同一局（房號＋第幾局＋開始時間）只寫一次，重連、重畫、重新整理都不重複
+  const me = mySeat0(r);
+  if (me < 0 || r.state !== 'over') return;
+  const gk = [r.id, r.games, r.kind === 'vcf' ? (r.vs && r.vs.startAt) || '' : (r.match && r.match.startedAt) || ''].join(':');
+  if (todaySeen.has(gk)) return;
+  let rec, win, n;
+  if (r.kind === 'vcf') {
+    const vs = r.vs;
+    if (!vs || !vs.result || vs.result.note === 'nobank' || !vs.review || !vs.review.list.length) return;   // 跟伺服器一樣：題庫讀不到、一題都沒抽出來不存
+    win = vs.result.winner; n = vs.score[me] + ' : ' + vs.score[1 - me];
+    rec = { kind: 'vcf', vmode: r.vcf.vmode, rank: r.vcf.rank, score: vs.score.slice(), win, note: vs.result.note, vcf: r.vcf, review: vs.review, startedAt: vs.startAt || null };
+  } else {
+    if (!match || !match.moves.length || r.endNote === 'study') return;   // 0 手、對局中研棋（沒有勝負）不存
+    let result = match.result;
+    if (!result) {   // 時間到的結果不在動作紀錄裡：時鐘歸零的那一位判負
+      const lose = r.clock ? r.clock.findIndex(v => v <= 0) : -1;
+      if (lose < 0) return;
+      result = { winnerSeat: 1 - lose, winnerColor: colorOf(match, 1 - lose), reason: END_REASON.TIMEOUT };
+    }
+    win = result.winnerSeat; n = match.moves.length;
+    rec = { kind: 'gomoku', rule: r.rule, time: r.time, n, win, note: r.endNote || null, cols: [colorOf(match, 0), colorOf(match, 1)],
+      match: { config: match.config, log: match.log, startedAt: match.startedAt }, result, startedAt: match.startedAt };
+  }
+  todaySeen.add(gk);
+  const all = todayRead();
+  if (all.some(x => x.gk === gk)) return;
+  const at = Date.now(), id = 'd' + at.toString(36) + Math.random().toString(36).slice(2, 6);
+  Object.assign(rec, { id, at, priv: r.priv === true, names: r.seats.map(s => (s ? s.nick : '?')), mine: me });
+  all.push({ at, src: 'duel', id, gk, sum: { kind: rec.kind, opp: (r.seats[1 - me] || {}).nick || '?', res: win == null ? 'd' : win === me ? 'w' : 'l', n, rule: rec.rule || null, vmode: rec.vmode || null }, rec });
+  todayWrite(all);
+}
+function renderLobby() {
+  if (!lobby.length) {
+    $('list').innerHTML = `<div class="empty-hall"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5"/><circle cx="16" cy="15" r="4.5"/></svg><b style="font-size:18px">${esc(T('emptyHall'))}</b><span class="muted" style="font-size:15px">${esc(T('emptyHall2'))}</span></div>`;
+    return;
+  }
+  $('list').innerHTML = lobby.map(r => {
+    const wait = r.state !== 'play' && r.state !== 'study';
+    if (r.kind === 'vcf') return vcfCard(r, wait);
+    const qs = SWAP_RULES.includes(r.rule);
+    const seat = (s, c) => (c = qs ? 'q' : c, s) ? `<span class="seat"><i class="st ${c}"></i><span class="nm">${esc(s.nick)}</span>${s.online ? '' : '<i class="dot off"></i>'}</span>`
+      : `<span class="seat empty"><i class="st ${c}" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
+    const extra = [T('r_' + r.rule), timeLabel(r.time), waitedLabel(r), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.moves ? T('moveN', { n: r.moves }) : ''].filter(Boolean).join('・');
+    return roomCard(r, wait, extra, seat(r.seats[0], 'b') + seat(r.seats[1], 'w'));
+  }).join('');
+  $('list').querySelectorAll('[data-room]').forEach(b => b.onclick = () => {
+    const r = lobby.find(x => x.id === b.dataset.room);
+    if (r && r.priv && !passed.has(r.id)) openJoin(true);   // 私人房：不送 view，問邀請碼
+    else enterRoom(b.dataset.room);
+  });
+}
+let leftRoom = null;   // 剛離開的房號：離開那一刻還在路上的舊房間更新不要把人拉回去
+function enterRoom(id) { watchSeat = 0; leftRoom = null; layoutSig = ''; viewing = id; room = null; match = null; show('sRoom'); renderRoom(); send({ t: 'view', room: id }); }
+function toLobby(tell = true) {
+  if (tell) send({ t: 'leave' });
+  leftRoom = viewing;
+  viewing = null; room = null; match = null; ghost = null; layoutSig = ''; watchSeat = 0;
+  $('mEnd').hidden = true;
+  show('sLobby');
+}
+function show(id) { for (const s of ['sLobby', 'sRoom']) $(s).hidden = s !== id; layout(); }
+
+// ---------- 房間 ----------
+let sel = [];   // 山口：我點選的候選（送出前只在自己畫面）
+let match = null, ghost = null, flashT = 0, endShownFor = null, layoutSig = '';
+const mySeat = () => room ? room.seats.findIndex(s => s && s.id === myId) : -1;
+const mySeat0 = (r) => r.seats.findIndex(s => s && s.id === myId);
+function onRoom(r, serverNow) {
+  if (REPLAY) return;   // 回看中：大廳／房間廣播不能把畫面拉走
+  if (r.priv) passed.add(r.id);
+  if (r.code) codes[r.id] = r.code;
+  if (joinFrom && r.code === joinCode) {   // 邀請碼進房成功：進房間畫面，關掉輸入面板
+    const from = joinFrom; joinFrom = null; leftRoom = null;
+    $('mJoin').hidden = true; $('mGone').hidden = true;
+    if (from !== 're' || $('sRoom').hidden) { layoutSig = ''; show('sRoom'); }
+  }
+  if (justCreated && mySeat0(r) >= 0) {   // 剛開的房：私人房對手座位還空著就自動打開邀請面板一次
+    justCreated = false;
+    if (r.priv && r.state === 'wait' && r.seats.some((s) => !s)) setTimeout(() => { if (room && room.id === r.id && room.state === 'wait') openInvite(); }, 0);
+  }
+  if (r.id === leftRoom && viewing !== r.id) return;
+  const prev = room, prevMoves = match ? match.moves.length : 0, prevMatch = match;
+  room = r; roomAt = Date.now();
+  viewing = r.id;
+  if (!$('sRoom').hidden || mySeat() >= 0) show('sRoom');   // 自己開的房、或重連回原本的座位：直接進房
+  srvOff = (serverNow || Date.now()) - Date.now();
+  match = r.match ? replayMatch(r.match.config, r.match.log, r.match.startedAt) : null;
+  if (match && match.moves.length > prevMoves && prev && prev.id === r.id) stoneSound(match.moves.at(-1).seat !== mySeat());
+  if (prev && prev.id === r.id && prev.state === 'wait' && r.state === 'play' && mySeat() >= 0) { chime(); flash(T('started'), '', 'info', 1200); }
+  if (r.state !== 'play') ghost = null;
+  if (!match || match.phase !== PHASE.OFFER) sel = [];
+  const me = mySeat();
+  if (me >= 0 && prevMatch && match && prev && prev.id === r.id && r.state === 'play' && prev.state === 'play' && prevMatch.log.length && colorOf(prevMatch, me) !== colorOf(match, me)) flash(T('swapped', { c: colorWord(colorOf(match, me)) }), '', 'info', 1500);
+  if (r.kind === 'vcf') vcfOnRoom();
+  if (r.study && prev && prev.id === r.id && prev.study && r.study.cur > prev.study.cur) stoneSound();   // 研棋下子／前進
+  if (prev && prev.id === r.id && prev.state !== 'study' && r.state === 'study') { ghost = null; $('mEnd').hidden = true; flash(T('studyStarted'), '', 'info', 1200); }
+  if (r.req && me >= 0 && r.req.seat !== me && !(prev && prev.req)) chime();   // 對方申請研棋
+  const sig = r.state + (me >= 0) + !!r.watchers + phaseKind();   // 版面會變（按鈕、觀戰人數那行）才重算棋盤大小
+  renderRoom();
+  if (sig !== layoutSig) { layoutSig = sig; layout(); }
+  if (r.state === 'over' && mySeat() >= 0 && endShownFor !== r.id + ':' + r.games) { endShownFor = r.id + ':' + r.games; setTimeout(() => { if (room && room.state === 'over') $('mEnd').hidden = false; }, r.kind === 'vcf' ? 1500 : match?.result?.line ? 700 : 300); }
+  if (r.state !== 'over') $('mEnd').hidden = true;
+  if (r.state === 'over') { renderEnd(); try { recordToday(r); } catch {} }
+}
+// 畫面下方是我；我沒坐的話，下方黑、上方白
+const bottomSeat = () => (mySeat() >= 0 ? mySeat() : 0);
+function seatColor(seat) { return match ? colorOf(match, seat) : room && SWAP_RULES.includes(room.rule) ? null : (seat === 0 ? BLACK : WHITE); }
+function clockOf(seat) {
+  if (!room || !room.clock) return null;
+  let ms = room.clock[seat];
+  if (match && room.state === 'play' && actorOf(match) === seat) ms -= Date.now() - roomAt;
+  return Math.max(0, ms);
+}
+const LOW_CLOCK_MS = 30000, CLOCK_TICK_MS = 250, VCF_TICK_MS = 100;   // 剩 30 秒變紅；五子棋時鐘、搶答計時多久重畫一次
+const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+// 空座位：沒入座的人在等人時看得到「入座」（五子棋、搶答共用）
+function emptySeatBar(el, seat, stoneHtml) {
+  el.className = 'pbar empty';
+  const canSit = room && room.state !== 'play' && mySeat() < 0;
+  el.innerHTML = `${stoneHtml}<span class="nm" style="color:var(--text2);font-weight:500">${esc(T('emptySeat'))}</span>${canSit ? `<button type="button" class="sit" data-sit="${seat}">${esc(T('sit'))}</button>` : ''}`;
+  const b = el.querySelector('[data-sit]'); if (b) b.onclick = () => { audio(); send({ t: 'sit', room: room.id, seat }); };
+}
+function renderBar(el, seat) {
+  const s = room && room.seats[seat], c = seatColor(seat);
+  const stone = `<i class="st ${c === null ? 'q' : c === BLACK ? 'b' : 'w'}"></i>`;
+  if (!s) return emptySeatBar(el, seat, stone);
+  const act = match && room.state === 'play' ? actorOf(match) : null;
+  el.className = 'pbar' + (act === seat ? ' on' : '');
+  const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
+  const tag = REPLAY ? replayTag(seat) : !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
+  const ck = clockOf(seat);
+  el.innerHTML = `${stone}<span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}</span><span class="ck${ck != null && ck < LOW_CLOCK_MS ? ' low' : ''}">${ck != null && room.state !== 'wait' && room.state !== 'study' ? mmss(ck) : ''}</span>`;
+}
+const setTitle = (t) => { $('rTitle').innerHTML = esc(REPLAY ? REPLAY.title() : t) + (room && room.priv ? LOCK_SVG : ''); };   // 私人房：房名旁一個小鎖
+function renderRoom() {
+  if ($('sRoom').hidden) return;
+  $('rInvite').hidden = !room || !!REPLAY;
+  if (!room) { $('rTitle').textContent = T('room') + ' ' + (viewing || ''); $('rSub').textContent = ''; $('pTop').innerHTML = ''; $('pBot').innerHTML = ''; $('rActs').innerHTML = ''; draw(); return; }
+  if (room.kind === 'vcf') return vcfRenderRoom();
+  if (REPLAY) return renderReplay();
+  const me = mySeat(), bs = bottomSeat();
+  setTitle(T('room') + ' ' + room.id);
+  $('rSub').textContent = [T('r_' + room.rule), timeLabel(room.time), T(room.state === 'play' ? 'playing' : room.state === 'wait' ? 'waiting' : room.state === 'study' ? 'studyOn' : 'stOver')].join('・');
+  renderBar($('pTop'), 1 - bs);
+  renderBar($('pBot'), bs);
+  // 狀態列
+  let st = '';
+  if (room.state === 'wait') st = me >= 0 ? `<i class="dot"></i>${esc(T('stWaitOther'))}` : esc(T('stView'));
+  else if (room.state === 'play' && room.req && me >= 0) st = room.req.seat === me ? esc(T('studyWait')) : `<b style="color:var(--gold)">${esc(T('studyAsk', { name: room.seats[room.req.seat]?.nick || '' }))}</b>`;
+  else if (room.state === 'play') st = esc(phaseText());
+  else if (room.state === 'study') st = esc(T(me >= 0 ? (ghost != null ? 'tap2Hint' : 'studyStatus') : 'studyWatch', { n: room.study.cur, m: room.study.seq.length }));
+  else st = esc(endLine());
+  $('status').innerHTML = st;
+  $('facts').innerHTML = [T('n_' + room.rule), room.watchers ? T('watchers', { n: room.watchers }) : ''].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  // 底部按鈕
+  renderActs(me);
+  renderPhase();
+  draw();
+}
+// 狀態列：輪到誰、開局要做什麼
+const zoneMsg = () => (match && openingZoneRadius(match) ? T('zoneErr', { w: openingZoneRadius(match) * 2 + 1 }) : T('centerErr'));
+function phaseText() {
+  const act = actorOf(match), me = mySeat(), ph = match.phase;
+  if (me < 0) return T('stWatch') + '・' + (ph === PHASE.PLAY ? T('stTurnColor', { c: colorWord(colorOf(match, act)) }) : T('watchPhase', { name: room.seats[act]?.nick || '' }));
+  if (act !== me) return T(PLACE_PHASES.includes(ph) ? 'stTurnOther' : 'waitDecide');
+  if (ghost != null) return T('tap2Hint');
+  const n = match.moves.length + 1, c = colorWord(stoneColorToPlace(match));
+  switch (ph) {
+    case PHASE.SWAP_CHOICE: return T('pSwap', { n: match.moves.length, c: colorWord(colorOf(match, me)) });
+    case PHASE.OPENING_PLACE: return match.moves.length ? T('pZone', { n, c, w: openingZoneRadius(match) * 2 + 1 }) : T('pCenter');
+    case PHASE.OFFER: return T('pOffer', { k: OFFER_COUNT });
+    case PHASE.OFFER_PICK: return T('pPick');
+    case PHASE.SWAP2_PLACE: case PHASE.SWAP2_ADD: return T('pS2Place', { n, c });
+    case PHASE.SWAP2_CHOICE: return T('pS2Choice');
+    case PHASE.SWAP2_COLOR: return T('pS2Color');
+    default: return T('stTurnYou');
+  }
+}
+// 開局要按按鈕的階段（換手、轉山口、送候選、Swap2 選擇）：按鈕放在棋盤下面
+const DECIDE = [PHASE.SWAP_CHOICE, PHASE.SWAP2_CHOICE, PHASE.SWAP2_COLOR, PHASE.OFFER];
+const myDecision = () => room && room.state === 'play' && match && actorOf(match) === mySeat() && DECIDE.includes(match.phase) ? match.phase : '';
+// 棋盤下面那排按鈕現在是哪一種：開局決定／對方申請研棋要回覆／研棋工具列／沒有
+const phaseKind = () => {
+  if (!room || room.kind !== 'gomoku' || mySeat() < 0) return '';
+  if (room.state === 'study') return 'study';
+  if (room.state === 'play' && room.req && room.req.seat !== mySeat()) return 'ask';
+  return myDecision();
+};
+const btn = (id, label, gold) => `<button type="button" class="btn ${gold ? 'gold' : 'ghost'}" data-a="${id}">${esc(label)}</button>`;
+function renderStudyBar(el, kind) {
+  if (kind === 'ask') {
+    el.innerHTML = btn('no', T('studyNo')) + btn('yes', T('studyYes'), true);   // 申請的那句放在狀態列（小手機才放得下）
+  } else {
+    const st = room.study;
+    el.innerHTML = btn('prev', T('sPrev')) + btn('next', T('sNext')) + btn('real', T('sReal'));
+    el.querySelector('[data-a=prev]').disabled = st.cur <= 0;
+    el.querySelector('[data-a=next]').disabled = st.cur >= st.seq.length;
+  }
+  el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    const k = b.dataset.a;
+    if (k === 'yes' || k === 'no') send({ t: 'studyAns', ok: k === 'yes' });
+    else send({ t: 'snav', to: k });
+  });
+}
+function renderPhase() {
+  const kind = phaseKind(), el = $('phaseActs');
+  el.hidden = !kind;
+  if (!kind) { el.innerHTML = ''; return; }
+  if (kind === 'study' || kind === 'ask') return renderStudyBar(el, kind);
+  const ph = kind;
+  const opp = (c) => (c === BLACK ? WHITE : BLACK);
+  let h = '';
+  if (ph === PHASE.SWAP_CHOICE) {
+    const held = colorOf(match, mySeat());
+    h = btn('keep', T('bKeep', { c: colorWord(held) }), true) + btn('swap', T('bSwap', { c: colorWord(opp(held)) })) + (canChooseYamaguchi(match) ? btn('yama', T('bYama')) : '');
+  } else if (ph === PHASE.SWAP2_CHOICE) h = btn('tb', T('bTakeB'), true) + btn('tw', T('bTakeW'), true) + btn('add', T('bAdd'));
+  else if (ph === PHASE.SWAP2_COLOR) h = btn('cb', T('bTakeB'), true) + btn('cw', T('bTakeW'), true);
+  else if (ph === PHASE.OFFER) h = btn('clear', T('bClear')) + btn('offer', T('bOffer', { n: sel.length, k: OFFER_COUNT }), true);
+  el.innerHTML = h;
+  const A = {
+    keep: { type: ACTION.SWAP, swap: false }, swap: { type: ACTION.SWAP, swap: true }, yama: { type: ACTION.YAMAGUCHI },
+    tb: { type: ACTION.SWAP2_CHOICE, choice: BLACK }, tw: { type: ACTION.SWAP2_CHOICE, choice: WHITE }, add: { type: ACTION.SWAP2_CHOICE, choice: SWAP2_ADD_CHOICE },
+    cb: { type: ACTION.COLOR, color: BLACK }, cw: { type: ACTION.COLOR, color: WHITE },
+  };
+  el.querySelectorAll('[data-a]').forEach(b => {
+    const k = b.dataset.a;
+    if (k === 'offer') b.disabled = sel.length !== OFFER_COUNT;
+    b.onclick = () => {
+      if (k === 'clear') { sel = []; renderRoom(); return; }
+      if (k === 'offer') { send({ t: 'act', action: { type: ACTION.OFFER, points: sel } }); return; }
+      send({ t: 'act', action: A[k] });
+    };
+  });
+}
+// 底部按鈕：認輸（對局中）、再來一局（下完）、離開／回大廳（五子棋、搶答共用）
+function renderActs(me) {
+  const acts = [];
+  if (me >= 0 && room.state === 'play' && room.kind === 'vcf' && !isLine()) acts.push(`<button type="button" class="btn gold" id="aSkip" style="flex:1.3"${vCanSkip() ? '' : ' disabled'}>${esc(T('vSkip'))}</button>`);   // VCF 競速：看不出來就跳下一題
+  if (me >= 0 && room.state === 'play') acts.push(`<button type="button" class="btn ghost" id="aResign" style="flex:1">${esc(T('resign'))}</button>`);
+  if (me >= 0 && room.state === 'play' && room.canStudy && !(room.req && room.req.seat !== me)) {
+    const mine = room.req && room.req.seat === me;
+    acts.push(`<button type="button" class="btn ghost" id="aStudy" style="flex:1.2;font-size:15px">${esc(T(mine ? 'studyCancel' : 'studyReq'))}</button>`);
+  }
+  if (me >= 0 && room.state === 'study') acts.push(`<button type="button" class="btn gold" id="aStudyEnd" style="flex:1.4">${esc(T('sEnd'))}</button>`);
+  if (me >= 0 && room.state === 'over') acts.push(`<button type="button" class="btn gold" id="aAgain" style="flex:1.4">${esc(T('again'))}</button>`);
+  // 離開只留左上角的返回鍵（#rBack）：放底部太容易誤觸（2026-11-12）
+  $('rActs').innerHTML = acts.join('');
+  if ($('aResign')) $('aResign').onclick = () => { if (confirm(T('resignQ'))) send({ t: 'resign' }); };
+  if ($('aAgain')) $('aAgain').onclick = () => send({ t: 'again' });
+  if ($('aSkip')) $('aSkip').onclick = () => { if (vCanSkip()) vOut('skip'); };
+  if ($('aStudy')) $('aStudy').onclick = () => send({ t: room.req && room.req.seat === me ? 'studyCancel' : 'studyReq' });
+  if ($('aStudyEnd')) $('aStudyEnd').onclick = () => send({ t: 'studyEnd' });
+}
+function leaveRoom() {
+  if (REPLAY) return exitReplay();
+  if (room && room.state === 'play' && mySeat() >= 0 && !confirm(T('leaveQ'))) return;
+  toLobby(true);
+}
+$('rBack').onclick = leaveRoom;
+function endLine() {
+  const r = match && match.result;
+  if (!r) return room.endNote === 'study' ? T('studyOverWhy') : T('stOver');
+  const loserSeat = r.winnerSeat === null ? null : 1 - r.winnerSeat;
+  const lc = loserSeat === null ? '' : (room.seats[loserSeat]?.nick || colorWord(colorOf(match, loserSeat)));
+  const why = r.reason === END_REASON.FIVE ? T('whyFive') : r.reason === END_REASON.FORBIDDEN ? T('whyTrap')
+    : r.reason === END_REASON.RESIGN ? T(room.endNote === 'disconnect' ? 'whyLeft' : room.endNote === 'idle' ? 'whyIdle' : 'whyResign', { c: lc })
+    : r.reason === END_REASON.TIMEOUT ? T('whyTime', { c: lc }) : T('whyFull');
+  return (r.winnerSeat === null ? T('draw') : T('colorWin', { c: colorWord(r.winnerColor) })) + '・' + why;
+}
+function renderEnd() {
+  if (room.kind === 'vcf') return vcfRenderEnd();
+  const r = match && match.result, me = mySeat();
+  if (me < 0 || (!r && room.endNote !== 'study')) return;
+  $('bReview').hidden = !match;
+  $('bLook').textContent = T('look');
+  let title, cls = '';
+  if (!r) { title = T('studyOverTitle'); cls = 'even'; }   // 對局中研棋後結束：不計勝負
+  else if (r.winnerSeat === null) { title = T('draw'); cls = 'even'; }
+  else if (r.winnerSeat === me) title = T('win');
+  else { title = T('lose'); cls = 'lose'; }
+  $('endTitle').textContent = title;
+  $('stamp').className = 'stamp ' + cls;
+  $('endWhy').textContent = r ? endLine().split('・').slice(1).join('・') : T('studyOverWhy');
+  const other = room.seats[1 - me];
+  const iWant = room.again.includes(myId), theyWant = other && room.again.includes(other.id);
+  $('endAgain').textContent = !other ? '' : iWant ? T('againWait') : theyWant ? T('againOther') : '';
+  $('bAgain').disabled = !other || iWant;
+}
+$('bAgain').onclick = () => send({ t: 'again' });
+$('bEndLobby').onclick = () => toLobby(true);
+$('bLook').onclick = () => { $('mEnd').hidden = true; };
+$('bReview').onclick = () => { $('mEnd').hidden = true; send({ t: 'review' }); };
+
+// 閒置：伺服器問「還在嗎？」→ 倒數；按「我還在」送 here，按離開就回大廳
+let idleT = 0, idleEnd = 0;
+function idleAsk(ms) {
+  idleEnd = Date.now() + ms;
+  $('mIdle').hidden = false; $('bIdleStay').focus();
+  chime(); try { navigator.vibrate && navigator.vibrate(200); } catch {}
+  const tick = () => {
+    const s = Math.max(0, Math.ceil((idleEnd - Date.now()) / 1000));
+    $('idleSec').textContent = s; $('idleSub').textContent = T('idleSub', { s });
+    if (!$('mIdle').hidden && s > 0) idleT = setTimeout(tick, 250);
+  };
+  clearTimeout(idleT); tick();
+}
+function idleHide() { clearTimeout(idleT); $('mIdle').hidden = true; }
+$('bIdleStay').onclick = () => { idleHide(); send({ t: 'here' }); };
+$('bIdleLeave').onclick = () => { idleHide(); toLobby(true); };
+setInterval(() => { if (!$('sLobby').hidden && lobby.some(r => r.state === 'wait')) renderLobby(); }, 30000);   // 大廳「等了幾分」隨時間更新
+function flash(title, sub, cls, ms = 1100) {
+  $('flash').className = 'flash ' + cls;
+  $('flash').innerHTML = `<span>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
+  $('flash').hidden = false;
+  clearTimeout(flashT); flashT = setTimeout(() => { $('flash').hidden = true; }, ms);
+}
+
+// ---------- 棋盤（畫法、顏色照 game.html） ----------
+const cv = $('board'), ctx = cv.getContext('2d');
+let px = 390, cell = 24, pad = 14;
+const xyOf = (p) => [pad + (p % SIZE) * cell, pad + Math.floor(p / SIZE) * cell];
+function stone(p, black, alpha) {
+  const [x, y] = xyOf(p);
+  RushSkin.drawStone(ctx, x, y, cell * 0.46, black, alpha);   // 樣式在 game/skin.js（跟 Rush 同一份）
+}
+function draw() {
+  ctx.clearRect(0, 0, px, px);
+  RushSkin.drawBoard(ctx, { size: px, pad, cell, n: SIZE });
+  if (room && room.kind === 'vcf') return vcfDraw();
+  if (room && room.state === 'study' && room.study) return studyDraw();
+  if (REPLAY && room) return replayDraw();
+  if (!match) return;
+  for (const m of match.moves) stone(m.p, m.color === BLACK);
+  const last = match.moves.at(-1);
+  if (last) { const [x, y] = xyOf(last.p); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  const line = match.result?.line;
+  if (line) { ctx.lineWidth = 3; ctx.strokeStyle = '#F2B544'; for (const p of line) { const [x, y] = xyOf(p); ctx.beginPath(); ctx.arc(x, y, cell * 0.52, 0, Math.PI * 2); ctx.stroke(); } }
+  const fp = match.result?.point;   // 黑棋被抓禁的點：紅叉
+  if (fp != null) { const [x, y] = xyOf(fp), k = cell * 0.3; ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B'; ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke(); }
+  const zr = openingZoneRadius(match);
+  if (zr != null && !match.result) {   // 塔拉：這手能下的範圍
+    const [x0, y0] = xyOf((7 - zr) * SIZE + (7 - zr)), side = zr * 2 * cell, m = cell * 0.5;
+    ctx.fillStyle = 'rgba(60,198,180,.16)'; ctx.fillRect(x0 - m, y0 - m, side + 2 * m, side + 2 * m);
+    ctx.lineWidth = 2; ctx.strokeStyle = '#3CC6B4'; ctx.strokeRect(x0 - m, y0 - m, side + 2 * m, side + 2 * m);
+  }
+  const offers = match.phase === PHASE.OFFER ? sel : match.phase === PHASE.OFFER_PICK ? match.offers : [];
+  for (const p of offers) {   // 山口候選：半透明黑子＋青綠圈
+    stone(p, true, 0.35);
+    const [x, y] = xyOf(p); ctx.lineWidth = 2; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.5, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (ghost != null && room && room.state === 'play') {
+    stone(ghost, (match.phase === PHASE.OFFER_PICK ? BLACK : stoneColorToPlace(match)) === BLACK, 0.55);
+    const [x, y] = xyOf(ghost); ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+RushSkin.onChange(() => draw());   // 選單換樣式、棋子圖載入完：重畫
+// 研棋：畫到目前這一手；實戰之後的研究手標數字（從實戰下一手接著數）
+const studyShown = () => room.study.seq.slice(0, room.study.cur);
+const studyNext = () => { const sh = studyShown(); return sh.length && sh.at(-1)[1] === BLACK ? WHITE : BLACK; };
+function studyDraw() {
+  const st = room.study, shown = studyShown();
+  shown.forEach(([p, color], k) => {
+    stone(p, color === BLACK);
+    if (k >= st.realN) {
+      const [x, y] = xyOf(p);
+      ctx.fillStyle = color === BLACK ? '#F2B544' : RushSkin.ink(false);
+      ctx.font = `700 ${Math.round(cell * 0.46)}px 'Chakra Petch', sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      RushSkin.fillNum(ctx, String(k + 1), x, y + 1, color === BLACK);
+    }
+  });
+  const last = shown.at(-1);
+  if (last && shown.length <= st.realN) { const [x, y] = xyOf(last[0]); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  if (ghost != null) {
+    stone(ghost, studyNext() === BLACK, 0.55);
+    const [x, y] = xyOf(ghost); ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+// ---- 今日棋局回看（2026-11-13）：取本機存的那一局（vcfgame.today 的 rec），在本機組一個唯讀 room 給房間畫面用；不送 view／sit／leave ----
+const replayTag = (seat) => (REPLAY.rec.win === seat ? `<small style="color:var(--gold);font-weight:700">${esc(T('rpWin'))}</small>` : '') + (REPLAY.rec.mine === seat ? `<small>${esc(T('you'))}</small>` : '');
+function enterReplay(rec) {
+  const seats = [0, 1].map((i) => ({ id: 'rec-' + i, nick: rec.names[i] || '?', online: true }));   // id 故意不等於 myId：回看者一律當觀戰
+  const r = { id: 'rec', code: null, priv: !!rec.priv, kind: rec.kind, vcf: rec.vcf || null, time: rec.time || null, rule: rec.rule || null, state: 'over', games: rec.id, endNote: rec.note || null, seats, watchers: 0, again: [], canStudy: false, req: null, study: null, clock: null, match: null, vs: null };
+  let mt = null;
+  if (rec.kind === 'vcf') {
+    r.vs = { score: rec.score || [0, 0], result: { winner: rec.win, note: rec.note }, phase: 'play', rv: null, startAt: 0, p: [{}, {}], review: rec.review };
+  } else {
+    try { mt = replayMatch(rec.match.config, rec.match.log, rec.match.startedAt); } catch { toast(T('gone')); return; }
+    if (!mt.result && rec.result) mt.result = rec.result;   // 時間到的結果不在動作紀錄裡，用伺服器存的
+  }
+  const kindName = () => (rec.kind === 'vcf' ? T('vm_' + (rec.vmode || 'eight')) : T('r_' + rec.rule));
+  REPLAY = { rec, cur: mt ? mt.moves.length : 0, title: () => recTime(rec.at) + ' ' + kindName() };
+  room = r; match = mt; viewing = null; ghost = null; layoutSig = ''; watchSeat = 0; RV = null; VR = null;
+  if (rec.kind === 'vcf') vcfOnRoom();
+  show('sRoom'); renderRoom(); layout();
+}
+function exitReplay() { location.replace('game.html'); }   // 回看只從首頁「今日棋局」進來（#replay=<id>），返回＝回首頁；用 replace，瀏覽器返回鍵不會落在空白的回看頁
+function renderReplay() {
+  setTitle('');
+  const n = match.moves.length;
+  $('rSub').textContent = [T('r_' + room.rule), timeLabel(room.time), T('stOver')].join('・');
+  renderBar($('pTop'), 1); renderBar($('pBot'), 0);
+  $('status').textContent = endLine();
+  $('facts').innerHTML = `<span>${esc(T('rpN', { n: REPLAY.cur, m: n }))}</span>`;
+  const el = $('phaseActs'), c = REPLAY.cur;
+  const b = (a, ch, lab, off) => `<button type="button" class="btn ghost" data-rp="${a}" aria-label="${esc(T(lab))}" style="flex: 1 1 0; min-width: 0; padding: 0"${off ? ' disabled' : ''}>${ch}</button>`;
+  el.hidden = false;
+  el.innerHTML = b('first', '|◀', 'rpFirst', c <= 0) + b('prev', '◀', 'rpPrevA', c <= 0) + b('next', '▶', 'rpNextA', c >= n) + b('last', '▶|', 'rpLast', c >= n);
+  el.querySelectorAll('[data-rp]').forEach(x => x.onclick = () => {
+    const a = x.dataset.rp;
+    REPLAY.cur = a === 'first' ? 0 : a === 'last' ? n : a === 'prev' ? Math.max(0, REPLAY.cur - 1) : Math.min(n, REPLAY.cur + 1);
+    renderReplay();
+  });
+  $('rActs').innerHTML = '';
+  draw();
+}
+function replayDraw() {
+  const mv = match.moves, c = REPLAY.cur;
+  for (let k = 0; k < c; k++) stone(mv[k].p, mv[k].color === BLACK);
+  if (c > 0) { const [x, y] = xyOf(mv[c - 1].p); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  if (c < mv.length) return;   // 終局才畫連線、被抓禁的紅叉
+  const line = match.result?.line;
+  if (line) { ctx.lineWidth = 3; ctx.strokeStyle = '#F2B544'; for (const p of line) { const [x, y] = xyOf(p); ctx.beginPath(); ctx.arc(x, y, cell * 0.52, 0, Math.PI * 2); ctx.stroke(); } }
+  const fp = match.result?.point;
+  if (fp != null) { const [x, y] = xyOf(fp), k = cell * 0.3; ctx.lineWidth = 3; ctx.strokeStyle = '#FF7A6B'; ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke(); }
+}
+function setBoardPx(v) {
+  px = v;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(px * dpr); cv.height = Math.round(px * dpr);
+  cv.style.width = px + 'px'; cv.style.height = px + 'px';
+  $('boardWrap').style.width = px + 'px'; $('boardWrap').style.height = px + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pad = px * 0.045; cell = (px - 2 * pad) / (SIZE - 1);
+  draw();
+}
+function layout() {   // 一屏放得下：先照寬度放，再看房間畫面其他東西佔多少高度，剩下的給棋盤（最小 240）
+  document.documentElement.style.setProperty('--appH', window.innerHeight + 'px');
+  const w = Math.min(document.querySelector('.app').clientWidth, 520);
+  if ($('sRoom').hidden) return setBoardPx(Math.max(240, w - 16));
+  const overBy = () => document.documentElement.scrollHeight - window.innerHeight;
+  const fit = (min) => {
+    setBoardPx(Math.max(min, w - 16));
+    const used = [...$('sRoom').children].filter(el => el !== $('boardWrap') && !el.classList.contains('grow')).reduce((s, el) => s + el.getBoundingClientRect().height, 0);
+    setBoardPx(Math.max(min, Math.min(w - 16, window.innerHeight - used - 16)));
+    const over = overBy();   // 還是超出（字換行等）：超出多少縮多少
+    if (over > 0) setBoardPx(Math.max(min, px - over));
+  };
+  $('sRoom').classList.remove('tight');
+  fit(240);
+  if (overBy() > 0) { $('sRoom').classList.add('tight'); fit(200); }   // 很矮的視窗：其他列縮緊（CSS .tight），棋盤下限放到 200
+}
+addEventListener('resize', layout);
+// 保險：棋盤以外的列高度一變（字換行、字型晚到、按鈕列變化）或視窗高度變了卻沒收到 resize，就重算一次。
+// 不會無限迴圈：棋盤（boardWrap）跟吃剩餘空間的 .grow 不觀察，layout() 只改棋盤大小與 .tight；同樣的視窗與內容算出來的結果固定，第二次量到的高度不變就不再觸發。
+let layoutQ = 0;
+function layoutSoon() { if (!layoutQ) layoutQ = requestAnimationFrame(() => { layoutQ = 0; layout(); }); }
+if (window.ResizeObserver) { const ro = new ResizeObserver(layoutSoon); ro.observe($('sRoom')); for (const el of $('sRoom').children) if (el !== $('boardWrap') && !el.classList.contains('grow')) ro.observe(el); }
+if (window.visualViewport) window.visualViewport.addEventListener('resize', layoutSoon);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutSoon);
+function cellAt(ev) {
+  const r = cv.getBoundingClientRect();
+  const c = Math.round((ev.clientX - r.left - pad) / cell), row = Math.round((ev.clientY - r.top - pad) / cell);
+  if (c < 0 || c >= SIZE || row < 0 || row >= SIZE) return null;
+  return row * SIZE + c;
+}
+cv.addEventListener('click', (ev) => {
+  if (!room) return;
+  if (room.state === 'over' && mySeat() >= 0 && $('mEnd').hidden && room.kind !== 'vcf') { $('mEnd').hidden = false; return; }   // VCF 結束後棋盤是逐題看解法，點了不跳視窗
+  if (room.kind === 'vcf') return vcfClick(ev);
+  if (room.state === 'study') {   // 研棋：兩人都能下，不管禁手、黑白輪流
+    if (mySeat() < 0 || !room.study) return;
+    const p = cellAt(ev);
+    if (p === null) return;
+    if (studyShown().some(([q]) => q === p)) { flash(T('occupied'), '', 'warn', 800); return; }
+    if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
+    if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
+    ghost = null; send({ t: 'smove', p }); return;
+  }
+  if (room.state !== 'play' || !match || actorOf(match) !== mySeat()) return;
+  const p = cellAt(ev);
+  if (p === null) return;
+  const ph = match.phase;
+  if (ph === PHASE.OFFER) {   // 山口：點選／取消候選，湊滿 10 個再按送出
+    if (match.cells[p] !== EMPTY) return;
+    sel = sel.includes(p) ? sel.filter(q => q !== p) : sel.length < OFFER_COUNT ? [...sel, p] : sel;
+    renderRoom(); return;
+  }
+  if (ph === PHASE.OFFER_PICK) {
+    if (!match.offers.includes(p)) { flash(T('notoffer'), '', 'warn'); return; }
+    if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
+    if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
+    ghost = null; send({ t: 'act', action: { type: ACTION.PICK, p } }); return;
+  }
+  if (!PLACE_PHASES.includes(ph)) return;   // 換手、選色要按下面的按鈕
+  if (match.cells[p] !== EMPTY) { flash(T('occupied'), '', 'warn', 800); return; }
+  if (placeError(match, p)) { flash(zoneMsg(), '', 'warn'); return; }
+  // Rush 的規則：自己點到禁手只提醒，棋子不落、不判輸（伺服器也會擋）；只有連珠、塔拉系列有禁手
+  if (ph === PHASE.PLAY && ruleHasForbidden(match.rule) && colorOf(match, mySeat()) === BLACK && forbidType(match.cells, p) !== FORBID_NONE) { ghost = null; renderRoom(); flash(T('forbidden'), T('forbiddenSub'), 'warn'); return; }
+  if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }
+  if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
+  ghost = null;
+  send({ t: 'move', p });
+});
+// 時鐘每 250ms 重畫（只動兩條玩家列，不重畫棋盤）
+setInterval(() => { if (room && room.state === 'play' && room.clock && !$('sRoom').hidden) { renderBar($('pTop'), 1 - bottomSeat()); renderBar($('pBot'), bottomSeat()); } }, CLOCK_TICK_MS);
+addEventListener('beforeunload', (e) => { if (room && room.state === 'play' && mySeat() >= 0) { e.preventDefault(); e.returnValue = ''; } });
+
+// ================= VCF 明鏡台（2026-11-12 起兩種玩法並存，room.vcf.vmode） =================
+// 八仙渡 eight：兩人做同一串題目、同樣順序，各自往下做，先解開 N 題的贏。下錯、時間到、放棄＝這題失敗，直接下一題。
+// 一線天 line：兩人同一題，先解開得 1 分，兩人一起換題（停幾秒公開解法）；下錯／時間到＝這題出局只能等，沒有放棄鈕。
+// 兩種玩法共用同一套題目、計時、落子判定、賽後逐題看解法；差別只在伺服器何時換題（vs.p[座位].i 一線天兩人相同）和少數畫面字樣（isLine()）。
+// 想的時候不扣落子時間；第一手落下後 5 秒、每手 +1 秒（照 Rush 單人明鏡台）。玩家比賽中看不到對手手順；觀戰者看得到（伺服器只把 seq 送給不在座位上的人），點上方玩家列換看另一位（2026-11-13）。結束後逐題看正解和兩人手順。
+// 解題判定用 Rush 的引擎（score-worker.js 的 vcf_move：電腦擋、判對方連五／被禁手／沒四了），跟 game.html 同一套。
+const COLS = 'ABCDEFGHJKLMNOP';
+const MJ_START = 5, MJ_STEP = 1;   // 照 Rush 單人明鏡台（使用者 2026-11-11：對戰參考單人）
+const PIPS_MAX = 5;                // 搶 10 題用數字，不畫圓點（太寬）
+const tToP = (t) => (SIZE - parseInt(t.slice(1), 10)) * SIZE + COLS.indexOf(t[0]);
+const pToT = (p) => COLS[p % SIZE] + (SIZE - Math.floor(p / SIZE));
+const srvNow = () => Date.now() + srvOff;
+const vmodeOf = (r) => (r && r.vcf && r.vcf.vmode) || 'eight';   // 舊房間沒這欄就是八仙渡
+const isLine = () => vmodeOf(room) === 'line';
+let vEngine = null, vReq = 0;
+const vPending = new Map();
+function engineCall(msg) {
+  if (!vEngine) {
+    vEngine = new Worker('score-worker.js?v=20261112a');   // 跟 game.html 的 ENGINE_V 一樣，共用瀏覽器快取
+    vEngine.onmessage = (e) => { const f = vPending.get(e.data.id); if (f) { vPending.delete(e.data.id); f(e.data); } };
+  }
+  return new Promise((resolve) => { const id = ++vReq; vPending.set(id, resolve); vEngine.postMessage({ id, ...msg }); });
+}
+const vMove = (black, white, move, attackerWhite) => engineCall({ black, white, attackerWhite, move });
+const vSolve = (black, white, attackerWhite) => engineCall({ black, white, attackerWhite, scale: 1, anyCount: 1 });
+
+let VR = null;   // 我這一題的狀態（觀戰時是下方那位的題目）
+let RV = null;   // 比賽結束後逐題看解法：{ key, k 第幾題, who 'sol' 或座位, sol 每題正解 }
+function vPuzzle(x) { return { black: x[0].split(' ').filter(Boolean), white: x[1].split(' ').filter(Boolean), L: x[2], score: x[3], atkWhite: x[4] === 'w', id: x[5] }; }
+const vSt = (seat) => (room && room.vs && room.vs.p ? room.vs.p[seat] : null);
+const vView = () => (mySeat() >= 0 ? mySeat() : watchSeat);   // 觀戰者預設看座位 0，點上方玩家列換邊
+const vCanFlip = () => !!room && room.kind === 'vcf' && room.state === 'play' && mySeat() < 0 && !$('sRoom').hidden;
+$('pTop').addEventListener('click', (e) => {
+  if (!vCanFlip() || e.target.closest('button')) return;
+  watchSeat = 1 - watchSeat; vcfOnRoom(); renderRoom();   // 八仙渡兩人題號可能不同，先換成這位的題目
+});
+const vIsCounting = (st) => st && st.i === 0 && srvNow() < st.at;   // 開局倒數（只有第 1 題前）
+const rvIsOn = () => RV && room && room.state === 'over' && room.vs && room.vs.review;   // 收到新局時畫面可能先重畫，舊的覆盤狀態不能用
+const vIsLive = (st) => st && (st.s === 'think' || st.s === 'armed') && srvNow() >= st.at;
+function vcfOnRoom() {
+  const vs = room.vs;
+  if (!vs || !vs.p) { VR = null; RV = null; return; }
+  if (room.state === 'over' && vs.review) {
+    const key = room.id + ':' + room.games;
+    if (!RV || RV.key !== key) RV = { key, k: 0, who: 'sol', sol: new Map(), free: null };
+    VR = null;
+    return;
+  }
+  RV = null;
+  const st = vSt(vView());
+  if (!st || !st.puzzle) { VR = null; return; }
+  if (!VR || VR.i !== st.i || VR.room !== room.id || VR.games !== room.games) {   // 新的一題
+    const p = vPuzzle(st.puzzle);
+    VR = { room: room.id, games: room.games, i: st.i, p, black: [...p.black], white: [...p.white], seq: [], moves: [], lastDef: null, armed: false, left: MJ_START, hold: false, done: false, out: null, reveal: null, endSeen: false };
+    ghost = null;
+  }
+  if (mySeat() >= 0 && st.s === 'out' && !VR.out && !VR.done) {   // 伺服器判的（思考時間到；一線天：對手先解開＝慢了一步）
+    VR.out = st.why; VR.hold = true; ghost = null;
+    flash(T('vWhy_' + st.why), '', 'bad', 1200);
+  }
+  if (vs.phase === 'reveal' && vs.rv && !VR.endSeen) vRoundEnd(vs.rv);
+}
+function vRoundEnd(rv) {   // 一線天：這題結束，公開解法（有人解開就用他的手順，沒人解開用引擎算）
+  VR.endSeen = true; VR.hold = true; ghost = null;
+  if (rv.winner !== null) {
+    flash(T('vRoundWin', { name: room.seats[rv.winner]?.nick || '' }), '', rv.winner === mySeat() ? 'info' : 'warn', 1800);
+    if (rv.winner === mySeat()) chime();
+    VR.reveal = rv.seq || [];
+  } else {
+    flash(T('vRoundNone'), '', 'warn', 1800);
+    const p = VR.p, want = VR;
+    vSolve(p.black.join(' '), p.white.join(' '), p.atkWhite).then((r) => {
+      const sol = r && r.result && r.result.solution ? String(r.result.solution).replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : [];
+      if (VR === want) { VR.reveal = sol; draw(); }
+    }).catch(() => {});
+  }
+}
+function vStatusOf(st) {
+  if (!st) return '';
+  if (st.s === 'armed') return `<span class="vst armed">${esc(T('vArmed', { n: st.moves + 1 }))}</span>`;
+  if (st.s === 'out') return `<span class="vst out">${esc(T('vOutS'))}</span>`;
+  if (st.s === 'solved') return `<span class="vst solved">${esc(T('vSolvedS'))}</span>`;
+  return `<span class="vst">${esc(T('vThink'))}</span>`;
+}
+const pips = (n, of) => (of > PIPS_MAX ? `<b class="vsc">${n}/${of}</b>`
+  : `<span class="pips" aria-label="${n}/${of}">${Array.from({ length: of }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`);
+function vcfCard(r, wait) {
+  const seat = (s) => s ? `<span class="seat"><i class="st p"></i><span class="nm">${esc(s.nick)}</span>${s.online ? '' : '<i class="dot off"></i>'}</span>`
+    : `<span class="seat empty"><i class="st p" style="opacity:.35"></i><span class="nm">${esc(T('emptySeat'))}</span></span>`;
+  const v = r.vcf || {};
+  const extra = [T('kVcf') + '・' + T('vm_' + vmodeOf(r)), rankName(v.rank), waitedLabel(r), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target }), r.watchers ? T('watchers', { n: r.watchers }) : '', !wait && r.score ? r.score.join(' : ') : ''].filter(Boolean).join('・');
+  return roomCard(r, wait, extra, seat(r.seats[0]) + seat(r.seats[1]));
+}
+function vcfBar(el, seat) {
+  const s = room.seats[seat], v = room.vcf;
+  if (!s) return emptySeatBar(el, seat, '<i class="st p"></i>');
+  const st = room.state === 'play' ? vSt(seat) : null, live = st && !vIsCounting(st) ? st : null;
+  el.className = 'pbar' + (live && live.s === 'armed' ? ' on' : '');
+  const tag = REPLAY ? replayTag(seat) : !s.online ? `<small>${esc(T('offline'))}</small>` : s.id === myId ? `<small>${esc(T('you'))}</small>` : '';
+  const waitingDot = room.state === 'wait' ? '<i class="dot"></i>' : '';
+  const num = live && seat !== mySeat() && !isLine() ? `<span class="vst">${esc(T('vPuzzleN', { n: live.i + 1 }))}</span>` : '';   // 對手做到第幾題
+  const score = room.vs ? room.vs.score[seat] : 0;
+  const flip = el.id === 'pTop' && vCanFlip() ? '<span class="vst" aria-hidden="true">⇅</span>' : '';   // 觀戰者：點這條換看另一位
+  el.style.cursor = flip ? 'pointer' : '';
+  el.innerHTML = `<i class="st p"></i><span class="nm">${waitingDot}<span style="overflow:hidden;text-overflow:ellipsis">${esc(s.nick)}</span>${tag}${num}${vStatusOf(live)}${flip}</span>${pips(score, v.target)}`;
+}
+function vcfStatus() {
+  const me = mySeat();
+  if (room.state === 'wait') return me >= 0 ? `<i class="dot"></i>${esc(T('stWaitOther'))}` : esc(T('stView'));
+  if (room.state === 'over') { const sc = room.vs ? room.vs.score : [0, 0], [first, second] = rvOrder(); return esc(T('vEndScore', { a: sc[first], b: sc[second] })); }   // 自己的分數在前
+  const st = vSt(vView());
+  if (!st || !st.puzzle || vIsCounting(st)) return esc(T('vReady'));
+  const n = T('vPuzzleN', { n: st.i + 1 }) + '・', thinkLeft = mmss(st.deadline - srvNow());
+  if (me < 0) return esc(T('vStWatch', { n: st.i + 1, t: thinkLeft }));
+  if (isLine() && room.vs.phase === 'reveal') return esc(n + T('vNext'));
+  if (VR && VR.out) return esc(n + T(isLine() ? 'vStOutWait' : 'vStOut', { why: T('vWhy_' + VR.out) }));
+  if (VR && VR.done) return esc(n + T(isLine() ? 'vSolvedS' : 'vSolvedNext'));
+  if (ghost != null) return esc(T('tap2Hint'));
+  if (VR && VR.armed) return esc(n + T('vStArmed', { s: Math.max(0, Math.ceil(VR.left)) }));
+  return esc(n + T('vStThink', { t: thinkLeft }));
+}
+function vcfRenderRoom() {
+  const me = mySeat(), bs = vView(), v = room.vcf;
+  setTitle(T('vm_' + vmodeOf(room)) + ' ' + room.id);
+  $('rSub').textContent = [rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })].join('・');
+  vcfBar($('pTop'), 1 - bs);
+  vcfBar($('pBot'), bs);
+  $('status').innerHTML = vcfStatus();
+  const st = room.state === 'play' ? vSt(bs) : null;
+  const atk = st && st.puzzle && !vIsCounting(st) ? T(st.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB') : '';
+  if (rvIsOn()) $('facts').innerHTML = rvFacts();
+  else $('facts').innerHTML = [atk, room.watchers ? T('watchers', { n: room.watchers }) : ''].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  rvBar();
+  renderActs(me);
+  draw();
+}
+// ---- 比賽結束：逐題看正解和兩人手順 ----
+function rvResult(seat, k) {
+  const e = room.vs.review.logs[seat][k];
+  if (!e) return T('rvNone');
+  return e.r === 'solved' ? T('vSolvedR') : T('vWhy_' + e.why);
+}
+const rvOrder = () => (mySeat() === 1 ? [1, 0] : [0, 1]);   // 座位順序：我的放前面
+function rvWho(seat) {   // 玩家看到「我的／對手」，觀戰的人看到暱稱
+  const me = mySeat();
+  if (me < 0) return room.seats[seat]?.nick || '?';
+  return T(seat === me ? 'rvMine' : 'rvOpp');
+}
+function rvFacts() {
+  const rv = room.vs.review, k = RV.k;
+  const parts = [T('rvK', { k: k + 1, n: rv.list.length }), ...rvOrder().map((seat) => `${rvWho(seat)}：${rvResult(seat, k)}`)];
+  if (RV.free) parts.push(T('rvFree') + ' ' + RV.free.length);
+  else if (RV.who === 'sol' && RV.sol.get(k) === null) parts.push(T('rvNoSol'));
+  return parts.map(x => `<span>${esc(x)}</span>`).join('');
+}
+function rvBar() {   // 一行：◀ ▶ ＋ 正解／我的／對手（小手機也不能捲動）
+  const el = $('phaseActs');
+  if (!rvIsOn()) { el.hidden = true; el.innerHTML = ''; return; }
+  const n = room.vs.review.list.length;
+  const arrow = (id, ch, lab, off) => `<button type="button" class="btn ghost rva" data-rv="${id}" aria-label="${esc(T(lab))}"${off ? ' disabled' : ''}>${ch}</button>`;
+  const tab = (id, label) => `<button type="button" class="btn ${String(RV.who) === id ? 'gold' : 'ghost'} rvt" data-rv="${id}">${esc(label)}</button>`;
+  el.hidden = false;
+  const shown = rvShown(), none = !shown.length;
+  const ico = (id, lab, off, d) => `<button type="button" class="btn ghost rva" data-rv="${id}" aria-label="${esc(T(lab))}" title="${esc(T(lab))}"${off ? ' disabled' : ''}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg></button>`;
+  el.innerHTML = arrow('prev', '◀', 'rvPrev', RV.k <= 0) + arrow('next', '▶', 'rvNext', RV.k >= n - 1)
+    + tab('sol', T('rvSol')) + rvOrder().map((seat) => tab(String(seat), rvWho(seat))).join('')
+    + ico('undo', 'rvUndo', none, '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>')
+    + ico('reset', 'rvReset', none, '<path d="M5 5v14"/><path d="M19 6 9 12l10 6z"/>');
+  el.querySelectorAll('[data-rv]').forEach(b => b.onclick = () => {
+    const a = b.dataset.rv;
+    if (a === 'undo') RV.free = shown.slice(0, -1);   // 自己擺：沒擺過就從目前顯示的手順退一手開始
+    else if (a === 'reset') RV.free = [];
+    else { RV.free = null; if (a === 'prev') RV.k = Math.max(0, RV.k - 1);
+    else if (a === 'next') RV.k = Math.min(n - 1, RV.k + 1);
+    else RV.who = a === 'sol' ? 'sol' : Number(a); }
+    renderRoom();
+  });
+}
+// 覆盤自己擺（2026-11-13 使用者）：RV.free ＝ 自己擺的完整手順（null＝沒擺，顯示正解／玩家手順）；只在本機畫面，不送伺服器；規則跟 game.html 研究盤一樣：只擋已有子的點，不管禁手、不問引擎
+// 換題、按正解／玩家分頁就清掉。
+const rvShown = () => RV.free || (RV.who === 'sol' ? rvSolution(RV.k) : room.vs.review.logs[RV.who][RV.k]?.seq) || [];
+function rvTap(ev) {
+  const p = cellAt(ev), x = room.vs.review.list[RV.k];
+  if (p === null || !x) return;
+  const t = pToT(p), pz = vPuzzle(x), base = rvShown();
+  if (pz.black.includes(t) || pz.white.includes(t) || base.includes(t)) return;
+  RV.free = base.concat(t);
+  stoneSound(RV.free.length % 2 === 0);
+  renderRoom();
+}
+function rvSolution(k) {   // 有人解開就用他的手順；都沒解開就用引擎算一次
+  if (RV.sol.has(k)) return RV.sol.get(k);
+  for (const L of room.vs.review.logs) if (L[k] && L[k].r === 'solved' && L[k].seq.length) { RV.sol.set(k, L[k].seq); return L[k].seq; }
+  RV.sol.set(k, undefined);   // 計算中
+  const p = vPuzzle(room.vs.review.list[k]), want = RV;
+  vSolve(p.black.join(' '), p.white.join(' '), p.atkWhite).then((r) => {
+    const sol = r && r.result && r.result.solution ? String(r.result.solution).replace(/\(.*\)/, '').trim().split(/\s+/).filter(Boolean) : [];
+    if (RV === want) { RV.sol.set(k, sol.length ? sol : null); renderRoom(); }
+  }).catch(() => { if (RV === want) { RV.sol.set(k, null); renderRoom(); } });
+  return undefined;
+}
+function vcfRenderEnd() {
+  const me = mySeat(), res = room.vs && room.vs.result;
+  if (!res || me < 0) return;
+  let title, cls = '';
+  if (res.winner === null) { title = T('draw'); cls = 'even'; }
+  else if (res.winner === me) title = T('win');
+  else { title = T('lose'); cls = 'lose'; }
+  $('endTitle').textContent = title;
+  $('stamp').className = 'stamp ' + cls;
+  const sc = room.vs.score, loser = res.winner === null ? '' : room.seats[1 - res.winner]?.nick || '';
+  $('endWhy').textContent = res.note === 'nobank' ? T('vNoBank') : res.note === 'resign' ? T('whyResign', { c: loser }) : res.note === 'disconnect' ? T('whyLeft', { c: loser }) : res.note === 'idle' ? T('whyIdle', { c: loser }) : T('vEndScore', { a: sc[me], b: sc[1 - me] });
+  const other = room.seats[1 - me];
+  const iWant = room.again.includes(myId), theyWant = other && room.again.includes(other.id);
+  $('endAgain').textContent = !other ? '' : iWant ? T('againWait') : theyWant ? T('againOther').replace(/[（(].*[）)]/, '') : '';
+  $('bAgain').disabled = !other || iWant;
+  $('bReview').hidden = true;
+  $('bLook').textContent = T(room.vs.review && room.vs.review.list.length ? 'rvBtn' : 'look');
+}
+function numbered(seq, atkWhite) {   // 解法手順：攻方、守方交替，標數字（跟 Rush 研究盤一樣）
+  seq.forEach((t, k) => {
+    const p = tToP(t), blk = (k % 2 === 0) !== atkWhite, [x, y] = xyOf(p);
+    stone(p, blk);
+    ctx.fillStyle = blk ? '#F2B544' : RushSkin.ink(false);
+    ctx.font = `700 ${Math.round(cell * 0.48)}px 'Chakra Petch', sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    RushSkin.fillNum(ctx, String(k + 1), x, y + 1, blk);
+  });
+}
+function vcfDraw() {
+  if (room.state === 'wait') return;
+  if (rvIsOn()) {
+    const rv = room.vs.review, x = rv.list[RV.k];
+    if (!x) return;
+    const p = vPuzzle(x);
+    for (const t of p.black) stone(tToP(t), true);
+    for (const t of p.white) stone(tToP(t), false);
+    const seq = RV.free || (RV.who === 'sol' ? rvSolution(RV.k) : rv.logs[RV.who][RV.k]?.seq);
+    if (seq) numbered(seq, p.atkWhite);
+    return;
+  }
+  const st = vSt(vView());
+  if (!VR || !st || vIsCounting(st)) return;   // 倒數中不給看題目，兩人同時看到
+  const p = VR.p, mine = mySeat() >= 0;
+  if (VR.endSeen && room.vs.phase === 'reveal') {   // 一線天：這題結束，公開解法
+    for (const t of p.black) stone(tToP(t), true);
+    for (const t of p.white) stone(tToP(t), false);
+    if (VR.reveal) numbered(VR.reveal, p.atkWhite);
+    return;
+  }
+  for (const t of mine ? VR.black : p.black) stone(tToP(t), true);
+  for (const t of mine ? VR.white : p.white) stone(tToP(t), false);
+  if (!mine) { const sq = st.seq; if (sq && sq.length) numbered(sq, p.atkWhite); }   // 觀戰：畫出這位玩家目前的手順（舊伺服器不送 seq 就只有題目）
+  if (mine && VR.lastDef) { const [x, y] = xyOf(tToP(VR.lastDef)); ctx.fillStyle = '#FF7A6B'; ctx.beginPath(); ctx.arc(x, y, cell * 0.12, 0, Math.PI * 2); ctx.fill(); }
+  if (ghost != null) {
+    stone(ghost, !p.atkWhite, 0.55);
+    const [x, y] = xyOf(ghost); ctx.lineWidth = 3; ctx.strokeStyle = '#3CC6B4';
+    ctx.beginPath(); ctx.arc(x, y, cell * 0.7, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+function vOut(why) {
+  if (!VR || VR.out || VR.done) return;
+  VR.out = why; VR.hold = true; ghost = null;
+  send({ t: why === 'skip' ? 'vskip' : 'vout', n: VR.i, why, seq: VR.seq });
+  flash(T('vWhy_' + why), '', 'bad', 1200);
+  renderRoom();
+}
+const vCanSkip = () => room && room.kind === 'vcf' && !isLine() && room.state === 'play' && mySeat() >= 0 && VR && !VR.out && !VR.done && vIsLive(vSt(mySeat()));
+async function vcfClick(ev) {
+  if (rvIsOn()) return rvTap(ev);
+  const st = vSt(mySeat());
+  if (room.state !== 'play' || mySeat() < 0 || !vIsLive(st) || !VR || VR.i !== st.i || VR.hold || VR.done || VR.out) return;
+  const p = cellAt(ev);
+  if (p === null) return;
+  if (!isUp()) { flash(T('netWait'), '', 'warn', 900); return; }   // 沒連線：在動到 VR 之前擋掉
+  const t = pToT(p);
+  if (VR.black.includes(t) || VR.white.includes(t)) return;
+  if (cfg.tap === '2' && ghost !== p) { ghost = p; renderRoom(); return; }
+  ghost = null;
+  const round = VR, puz = round.p, atk = puz.atkWhite ? round.white : round.black, def = puz.atkWhite ? round.black : round.white;
+  round.hold = true;
+  const res = (await vMove(round.black.join(' '), round.white.join(' '), t, puz.atkWhite)).result || { r: 'illegal' };
+  if (VR !== round || round.out || round.done) return;   // 等引擎時這題已經結束
+  if (res.r === 'illegal') { round.hold = false; return; }
+  if (res.r === 'forbidden' || res.r === 'notfour') { round.hold = false; flash(T(res.r), T('noMiss'), 'warn', 900); renderRoom(); return; }
+  if (res.r === 'forcedForbidden') return vOut('forbid');
+  atk.push(t); round.seq.push(t); round.moves.push(t); stoneSound();
+  if (res.r === 'win') { round.done = true; send({ t: 'vdone', n: round.i, seq: round.seq }); chime(); flash(T('vSolvedS'), '', 'info', 1000); renderRoom(); return; }
+  if (res.r === 'defFive') { def.push(res.at); round.seq.push(res.at); round.lastDef = res.at; renderRoom(); return vOut('five'); }
+  if (res.r === 'block') {
+    def.push(res.def); round.seq.push(res.def); round.lastDef = res.def; setTimeout(() => stoneSound(true), 160);
+    if (res.nofour) { renderRoom(); return vOut(res.forcedForbidden ? 'forbid' : 'nofour'); }
+    if (!round.armed) { round.armed = true; round.left = MJ_START; } else round.left += MJ_STEP;   // 明鏡台：第一手開錶，之後每手 +1 秒
+    send({ t: 'vprog', n: round.i, moves: round.moves.length, armed: true, seq: round.seq });
+    round.hold = false; renderRoom();
+    return;
+  }
+  vOut('bad');
+}
+function beep(last) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime, o = a.createOscillator(), gn = a.createGain();
+  o.type = 'sine'; o.frequency.value = last ? 1320 : 880;
+  gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.35, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 0.35 : 0.12));
+  o.connect(gn).connect(sfxOut(a)); o.start(t); o.stop(t + (last ? 0.4 : 0.15));
+}
+if (WS_URL === WS_LOCAL) window.__duel = { vSolve, vOut, mySeat, vIsLive, xyOf, tToP, cv, get VR() { return VR; }, get watchSeat() { return watchSeat; }, get RV() { return RV; }, get room() { return room; }, get REPLAY() { return REPLAY; }, get match() { return match; }, todayRead, todayWrite, audio, stoneSound, chime, beep, sfxOut, get bgmEl() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.el : null; }, get bgmGain() { const t = bgm[BGM_LIST[bgmIdx]]; return t ? t.gain : null; }, get bgmTracks() { return bgm; }, get bgmBad() { return bgmBad; }, get bgmIdx() { return bgmIdx; }, get soundOn() { return soundOn; }, get actx() { return actx; } };   // 只有本機：給自動測試取正解
+// 每 100ms：明鏡台落子計時、開局倒數、思考剩餘時間
+let vLastTick = performance.now(), vLastCount = null;
+setInterval(() => {
+  const now = performance.now(), dt = (now - vLastTick) / 1000; vLastTick = now;
+  if (!room || room.kind !== 'vcf' || $('sRoom').hidden || room.state !== 'play') return;
+  const st = vSt(vView());
+  if (!st || !st.puzzle) return;
+  if (vIsCounting(st)) {   // 開局倒數 3、2、1
+    const k = Math.ceil((st.at - srvNow()) / 1000);
+    if (k !== vLastCount) { vLastCount = k; flash(String(k), T(st.puzzle[4] === 'w' ? 'vAtkW' : 'vAtkB'), 'info', 950); if (k <= 3) beep(false); }
+  } else if (vLastCount !== null) { vLastCount = null; beep(true); renderRoom(); layout(); }   // 倒數結束：整個重畫（題目、黑先／白先那行多出來，棋盤跟著重算大小，小手機才不會多捲 3px）
+  if (VR && VR.armed && !VR.done && !VR.out && !VR.hold && vIsLive(st)) {
+    const before = Math.ceil(VR.left);
+    VR.left -= dt;
+    const after = Math.ceil(VR.left);
+    if (after !== before && after >= 1 && after <= 3) beep(after === 1);
+    if (VR.left <= 0) { VR.left = 0; vOut('time'); return; }
+  }
+  $('status').innerHTML = vcfStatus();
+  vcfBar($('pTop'), 1 - vView()); vcfBar($('pBot'), vView());
+  const sk = $('aSkip'); if (sk) sk.disabled = !vCanSkip();
+}, VCF_TICK_MS);
+
+applyLang();
+layout();
+connect();
+// showInApp();   // 2026-11-13 先關掉：面板要改成「已安裝過→複製邀請碼／第一次玩→直接進」，等使用者確認（見 docs/design/duel-inapp-2026-11-13/README.md）   // 內建瀏覽器才會出現；只是蓋一層面板，不影響上面 connect 之後照常送 join
+// game.html 首頁「今日棋局」點兩儀殿那筆：duel.html#replay=<id>。不用等連線、不送房間訊息；hash 進頁就清掉（重新整理回大廳）。找不到那筆就照常顯示大廳
+{
+  const m = /^#replay=([\w-]+)$/.exec(location.hash);
+  if (m) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch {}
+    const e = todayRead().find(x => x.src === 'duel' && x.id === m[1] && x.rec);
+    if (e) { try { enterReplay(e.rec); } catch {} }
+  }
+}

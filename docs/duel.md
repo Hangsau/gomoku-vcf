@@ -110,6 +110,7 @@ npx wrangler@4.158.0 dev -c game/duel-server/wrangler.toml --ip 127.0.0.1 --port
 **兩儀殿回看**：進頁網址有 `#replay=<id>` 時，從 `vcfgame.today` 找那筆，直接進回看畫面（重用 `#sRoom`，`enterReplay` 在本機組一個唯讀 `room`，座位 id 故意不等於自己，一律當觀戰；不需要等連線、不送 `view`／`sit`／`leave`）。進頁就用 `replaceState` 清掉 hash（重新整理會回大廳）；找不到那筆就照常顯示大廳。回看畫面的返回鍵 `location.replace('game.html')`（回首頁）；瀏覽器返回鍵本來就回上一頁的 `game.html`。`REPLAY` 不為空時 `onRoom` 直接略過，大廳／房間廣播和斷線重連都不會把畫面拉走。
 - 五子棋：棋盤＋「|◀ ◀ ▶ ▶|」，顯示第 n／共 m 手，預設停在最後一手；最後一手標記、連五連線、抓禁紅叉沿用實戰畫法（連線與紅叉只在最後一手畫）。
 - VCF：直接走既有賽後逐題回看（`RV`：◀ ▶ 換題、正解／兩位暱稱的手順）。
+- VCF 回看可以**自己擺**（2026-11-13）：點空點落子、攻守照手順奇偶輪流、單點就下、只擋已有子的點（不判禁手，同 `game.html` 研究盤）；工具列多「退一手」「回到這題開頭」。換題或切回正解／玩家分頁就清掉。只在自己的畫面，不送伺服器。賽後逐題回看與 `#replay=` 回看共用（`RV.free`、`rvTap`）。測試 `docs/design/duel-vcf-study-2026-11-13/check/check_study.mjs`。
 
 **測試**：`docs/design/today-home-2026-11-13/check/run.mjs`（首頁、單人各模式、兩儀殿兩人對局、回看、容量、版面；自己起停 http.server 8793／8791 與 wrangler dev 8789）。伺服器存檔與 `recs`／`rec` 訊息本身的測試仍在 `docs/design/duel-records-2026-11-13/check/run.mjs`。
 

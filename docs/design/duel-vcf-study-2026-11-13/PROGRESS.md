@@ -1,0 +1,5 @@
+- 階段1：duel.html 已改（i18n 四語、rvShown/rvTap、工具列 undo/reset、vcfClick 轉 rvTap、CSS），node --check exit=0
+- 階段2：開始寫 check/check_study.mjs
+- 階段3：check_study.mjs 跑通大半（45 PASS／11 FAIL，其中是量測方式與 360 寬分頁 <44px），調整中
+- 階段4：正向測試全過（見 last-run.txt），接著負向測試、截圖檢視、REPORT
+- 階段5：REPORT.md 寫完（56 項過、負向測試 FAIL 如預期、截圖已看）。完成。
