@@ -619,6 +619,8 @@ const MJ_START = 5, MJ_STEP = 1, MJ_BONUS = 0.1, MJ_GROW = 1.15;
 // 無相界（2026-11-13 使用者）：不計時；第一手落下全盤畫成進攻方的顏色，這題結束才翻回真實黑白。
 // 子數階（上限含）WX_TIERS、各階得分加成 WX_MULT（試玩後會調，集中在這裡）；階梯 k：奇數步升子數階、偶數步升段位，答對 +1、答錯 −1。
 const WX_TIERS = [12, 18, 24, 32, 44, Infinity], WX_MULT = [1, 1.2, 1.4, 1.6, 1.8, 2], WX_KMAX = 19;
+// 連勝加速（2026-11-13 使用者：同一區段一直連勝太冗長）：連對第 1、2 題升 1 格，第 3、4 題升 2 格，第 5 題起升 3 格；答錯連勝歸零。無相界（升 k）與明鏡台無限（MJ_GROW 的次方）共用。
+const streakStep = (n) => n >= 5 ? 3 : n >= 3 ? 2 : 1;
 const wxStep = (k) => ({ tier: Math.min(WX_TIERS.length - 1, (k + 1) >> 1), dan: Math.min(10, (k >> 1) + 1) });   // tier 0 起算；dan＝段位 1（初段）～10（傳說）
 const EYE_SEC = 8, EYE_OK_MS = 450, EYE_FB_MS = 900;   // 火眼金睛：一題秒數、答對停多久、答錯／時間到標出正解停多久
 const WARN_MS = 800;
@@ -1232,7 +1234,7 @@ let g = null;
 function newGame(nick) {
   const prac = mode === 'prac';
   const mj = mode === 'mj', wx = mode === 'wx', st = wx || (mj && mjInf) ? 1 : startRank;   // 明鏡台無限一律從初段開始
-  return { nick, prac, b4: mode === 'b4', ey: mode === 'ey', eySol: '', wx, wxBlind: false, wxK: 0, wxWait: false, wxLast: false, mj, mjInf: mj && mjInf, armed: false, think: 0, thinkAll: 0, quit: false,
+  return { nick, prac, b4: mode === 'b4', ey: mode === 'ey', eySol: '', wx, wxBlind: false, wxK: 0, run: 0, wxWait: false, wxLast: false, mj, mjInf: mj && mjInf, armed: false, think: 0, thinkAll: 0, quit: false,
     limit: prac ? pMin : 0, start: st, cur: st, total: 0, left: prac ? (pMin ? pMin * 60 : Infinity) : mj ? MJ_START : mode === 'ey' ? EYE_SEC : START_SEC, elapsed: 0, wrong: 0, solved: 0,
     own: 0, helpedN: 0, added: 0, addedSec: 0,
     ab: START_AB[st], used: new Set(), log: [], p: null, black: [], white: [], ghost: null, lastDef: null, psec: 0, hold: true, over: false, lastT: 0 };
@@ -1573,7 +1575,7 @@ const wxEntry = (p, ok, extra) => ({ b: p.black.join(' '), w: p.white.join(' '),
 async function wxSolved(p, sec, how) {
   const pts = Math.round(p.score * WX_MULT[p.wxTier] * 10) / 10;
   g.log.push(wxEntry(p, true, { how, pts }));
-  g.total += pts; g.solved++; g.cur = Math.max(g.cur, p.wxDan); g.wxK = Math.min(WX_KMAX, g.wxK + 1);
+  g.total += pts; g.solved++; g.cur = Math.max(g.cur, p.wxDan); g.run++; g.wxK = Math.min(WX_KMAX, g.wxK + streakStep(g.run));
   plusFx('+' + Math.round(pts));
   wxResolve(true, T('wxOk', { p: Math.round(pts) }));
 }
@@ -1582,14 +1584,14 @@ async function wxWrong(wk, wa) {
   g.wrong++;
   const x = wxEntry(p, false, { wk, wa: wa || '', pts: 0 });
   g.log.push(x);
-  g.wxK = Math.max(0, g.wxK - 1);
+  g.run = 0; g.wxK = Math.max(0, g.wxK - 1);
   wxResolve(false, whyText(x));
 }
 // 明鏡台解開：得分＝題目分＋題目分×10%×剩餘整秒數；無限之後抽更難的題（×MJ_GROW）
 async function mjSolved(p, sec, how) {
   const lf = Math.floor(g.left), pts = Math.round(p.score * (1 + MJ_BONUS * lf));
   g.total += pts; g.solved++;
-  if (g.mjInf) { g.ab *= MJ_GROW; g.cur = rankOf(g.ab); }
+  if (g.mjInf) { g.run++; g.ab *= MJ_GROW ** streakStep(g.run); g.cur = rankOf(g.ab); }
   g.log.push({ b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: 0, ok: 1, sec: +sec.toFixed(1), how, m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, pts, ...mjFields() });
   renderHud();
   await flash(T('mjOk', { p: pts }) + '<small>' + T('mjOkS', { s: lf }) + '</small>', 'good', FEED_MS);
@@ -1615,7 +1617,7 @@ function updateAbility(ok) {   // 回傳能力分變化（整數）；ok＝true 
 async function wrong(wk, wa) {   // wk＝原因代碼（why_*），wa＝要擋的點
   if (g.wx) return wxWrong(wk, wa);
   const p = g.p;
-  g.wrong++; g.b4Dir = -1;   // 無限之塔：下一題抽簡單一點
+  g.wrong++; g.b4Dir = -1; g.run = 0;   // 無限之塔：下一題抽簡單一點；連勝歸零（明鏡台連勝加速用）
   const d = updateAbility(false);
   const x = { b: p.black.join(' '), w: p.white.join(' '), a: p.atkWhite ? 'w' : 'b', id: p.id, r: p.rank, L: p.L, s: p.score, e: d, ok: 0, sec: +g.psec.toFixed(1), wk, wa: wa || '', m: g.moves.join(' '), q: g.seq.join(' '), wf: g.wf, wn: g.wn, ...pracFields(), ...mjFields() };
   g.log.push(x);
