@@ -257,6 +257,18 @@ canvas#board { display: block; touch-action: manipulation; -webkit-user-select: 
   </div>
 </div>
 
+<!-- 內建瀏覽器提示（2026-11-13）：LINE 等 App 內建瀏覽器的資料跟安裝版分開，請朋友改用瀏覽器開 -->
+<div class="modal" id="mInApp" hidden role="dialog" aria-modal="true" aria-labelledby="mInAppT">
+  <div class="box" style="align-items: stretch;">
+    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="mInAppT" data-i18n="abT">用瀏覽器開啟</h2><button type="button" class="icob" data-close aria-label="關閉" data-i18n-aria="close"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <span class="muted" style="font-size: 14px; line-height: 1.45;" data-i18n="abNote">這裡是 App 內建的瀏覽器，你的暱稱和紀錄不會跟著過來。</span>
+    <span id="abIos" hidden style="font-size: 14px; line-height: 1.45; color: var(--gold);" data-i18n="abIos"></span>
+    <button type="button" class="btn gold" id="abOpen" style="font-size: 17px;" data-i18n="abOpen">用瀏覽器開啟</button>
+    <button type="button" class="btn ghost" id="abCopy" style="font-size: 17px; font-weight: 700;" data-i18n="copyLink">複製連結</button>
+    <button type="button" class="btn ghost" id="abStay" style="font-size: 16px;" data-i18n="abStay">先在這裡玩</button>
+  </div>
+</div>
+
 <!-- 輸入邀請碼（大廳；點私人房也開這個） -->
 <div class="modal" id="mJoin" hidden role="dialog" aria-modal="true" aria-labelledby="mJoinT">
   <div class="box" style="align-items: stretch;">
@@ -337,7 +349,7 @@ const I18N = {
     netOn: '已連線・{n} 人在線上', netOff: '連線中…', netFail: '連不上伺服器，重試中…', replT: '已在別的畫面開啟', replSub: '這個畫面先暫停', replUse: '改用這裡', netRepl: '已在別的畫面開啟', netWait: '連線中，請稍候',
     create: '開房', createGo: '開房，等人入座',
     privL: '誰能進', pubOpt: '公開', privOpt: '私人', pubNote: '列在大廳，誰都能入座', privNote: '大廳看得到但上鎖，要邀請碼才進得來', privTag: '私人',
-    invite: '邀請', inviteT: '邀請朋友', inviteCode: '邀請碼', shareLink: '分享連結', copyLink: '複製連結', copied: '已複製', inviteNote: '朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。', shareText: '來兩儀殿跟我對戰',
+    invite: '邀請', inviteT: '邀請朋友', inviteCode: '邀請碼', shareLink: '分享連結', copyLink: '複製連結', copied: '已複製', inviteNote: '朋友點連結，或在大廳按「輸入邀請碼」，就會進到這間房。不用安裝、不用註冊。', shareText: '來兩儀殿跟我對戰', inviteCodeLine: '邀請碼：{c}', abT: '用瀏覽器開啟', abNote: '這裡是 App 內建的瀏覽器，你的暱稱和紀錄不會跟著過來。', abOpen: '用瀏覽器開啟', abStay: '先在這裡玩', abIos: '點右上角 ⋯ → 用瀏覽器開啟',
     joinCode: '輸入邀請碼', joinPh: '6 碼邀請碼', joinGo: '進房', joinPrivNote: '這是私人房，要邀請碼才能進', nocode: '找不到這間房，可能已經關了', slow: '試太多次了，等一下再試', goneT: '這間房已經關了', goneNew: '開一間新的',
     timeL: '時間', tNone: '不計時', tMS: '{m} 分＋{s} 秒', tMSc: '{m}分+{s}秒', tCustom: '自訂', cMin: '分鐘', cInc: '每手加秒', cErr: '分鐘要 1～180、每手加秒要 0～60', sideL: '我拿', sideB: '黑（先）', sideW: '白（後）', sideR: '隨機',
     tapL: '落子方式', tap1: '點一下就下', tap2: '點兩下才下',
@@ -361,7 +373,7 @@ const I18N = {
     netOn: 'Connected · {n} online', netOff: 'Connecting…', netFail: 'Can’t reach the server, retrying…', replT: 'Opened on another screen', replSub: 'This screen is paused', replUse: 'Use this screen', netRepl: 'Opened on another screen', netWait: 'Connecting, please wait',
     create: 'Open a room', createGo: 'Open room and wait',
     privL: 'Who can join', pubOpt: 'Public', privOpt: 'Private', pubNote: 'Listed in the lobby; anyone can sit', privNote: 'Shown locked in the lobby; invite code needed', privTag: 'Private',
-    invite: 'Invite', inviteT: 'Invite a friend', inviteCode: 'Invite code', shareLink: 'Share link', copyLink: 'Copy link', copied: 'Copied', inviteNote: 'Friends tap the link, or press “Enter code” in the lobby, to land in this room. No install, no sign-up.', shareText: 'Play me in the Yin-Yang Hall',
+    invite: 'Invite', inviteT: 'Invite a friend', inviteCode: 'Invite code', shareLink: 'Share link', copyLink: 'Copy link', copied: 'Copied', inviteNote: 'Friends tap the link, or press “Enter code” in the lobby, to land in this room. No install, no sign-up.', shareText: 'Play me in the Yin-Yang Hall', inviteCodeLine: 'Invite code: {c}', abT: 'Open in your browser', abNote: 'This is an in-app browser. Your nickname and records won\'t carry over.', abOpen: 'Open in browser', abStay: 'Play here for now', abIos: 'Tap ⋯ at the top right → Open in browser',
     joinCode: 'Enter code', joinPh: '6-character code', joinGo: 'Join', joinPrivNote: 'This room is private — you need the invite code', nocode: 'Room not found — it may have closed', slow: 'Too many tries, wait a moment', goneT: 'This room has closed', goneNew: 'Open a new one',
     timeL: 'Time', tNone: 'No clock', tMS: '{m} min + {s} s', tMSc: '{m}m+{s}s', tCustom: 'Custom', cMin: 'minutes', cInc: 's per move', cErr: 'Minutes 1–180, seconds per move 0–60', sideL: 'I play', sideB: 'Black (1st)', sideW: 'White (2nd)', sideR: 'Random',
     tapL: 'Placing', tap1: 'Tap once', tap2: 'Tap twice',
@@ -385,7 +397,7 @@ const I18N = {
     netOn: '接続中・{n} 人がオンライン', netOff: '接続しています…', netFail: 'サーバーにつながりません。再試行中…', replT: '別の画面で開いています', replSub: 'この画面は一時停止中です', replUse: 'この画面で続ける', netRepl: '別の画面で開いています', netWait: '接続中です。お待ちください',
     create: '部屋を作る', createGo: '部屋を作って待つ',
     privL: '参加できる人', pubOpt: '公開', privOpt: '非公開', pubNote: 'ロビーに表示・誰でも着席できます', privNote: 'ロビーに鍵つきで表示・招待コードが必要', privTag: '非公開',
-    invite: '招待', inviteT: '友だちを招待', inviteCode: '招待コード', shareLink: 'リンクを共有', copyLink: 'リンクをコピー', copied: 'コピーしました', inviteNote: '友だちがリンクを開くか、ロビーの「招待コード」から入ると、この部屋に入れます。インストールも登録も不要です。', shareText: '兩儀殿で対戦しよう',
+    invite: '招待', inviteT: '友だちを招待', inviteCode: '招待コード', shareLink: 'リンクを共有', copyLink: 'リンクをコピー', copied: 'コピーしました', inviteNote: '友だちがリンクを開くか、ロビーの「招待コード」から入ると、この部屋に入れます。インストールも登録も不要です。', shareText: '兩儀殿で対戦しよう', inviteCodeLine: '招待コード：{c}', abT: 'ブラウザで開く', abNote: 'アプリ内ブラウザです。ニックネームや記録は引き継がれません。', abOpen: 'ブラウザで開く', abStay: 'ここで遊ぶ', abIos: '右上の ⋯ →「ブラウザで開く」',
     joinCode: '招待コード', joinPh: '6文字のコード', joinGo: '入室', joinPrivNote: '非公開の部屋です。招待コードが必要です', nocode: '部屋が見つかりません。閉じた可能性があります', slow: '試行が多すぎます。少し待ってください', goneT: 'この部屋は閉じました', goneNew: '新しく作る',
     timeL: '持ち時間', tNone: 'なし', tMS: '{m}分＋{s}秒', tMSc: '{m}分+{s}秒', tCustom: 'カスタム', cMin: '分', cInc: '1手ごとの加算秒', cErr: '分は1～180、加算秒は0～60', sideL: '自分の色', sideB: '黒（先手）', sideW: '白（後手）', sideR: 'ランダム',
     tapL: '打ち方', tap1: '1回タップ', tap2: '2回タップ',
@@ -409,7 +421,7 @@ const I18N = {
     netOn: '연결됨 · {n}명 접속 중', netOff: '연결 중…', netFail: '서버에 연결할 수 없어 다시 시도 중…', replT: '다른 화면에서 열려 있습니다', replSub: '이 화면은 일시 정지되었습니다', replUse: '이 화면에서 계속', netRepl: '다른 화면에서 열려 있습니다', netWait: '연결 중입니다. 잠시만요',
     create: '방 만들기', createGo: '방 만들고 기다리기',
     privL: '입장', pubOpt: '공개', privOpt: '비공개', pubNote: '로비에 표시 · 누구나 앉을 수 있음', privNote: '로비에 잠금 표시 · 초대 코드 필요', privTag: '비공개',
-    invite: '초대', inviteT: '친구 초대', inviteCode: '초대 코드', shareLink: '링크 공유', copyLink: '링크 복사', copied: '복사했습니다', inviteNote: '친구가 링크를 누르거나 로비에서 「초대 코드」를 입력하면 이 방으로 들어옵니다. 설치도 가입도 필요 없습니다.', shareText: '양의전에서 대결하자',
+    invite: '초대', inviteT: '친구 초대', inviteCode: '초대 코드', shareLink: '링크 공유', copyLink: '링크 복사', copied: '복사했습니다', inviteNote: '친구가 링크를 누르거나 로비에서 「초대 코드」를 입력하면 이 방으로 들어옵니다. 설치도 가입도 필요 없습니다.', shareText: '양의전에서 대결하자', inviteCodeLine: '초대 코드: {c}', abT: '브라우저로 열기', abNote: '앱 내장 브라우저입니다. 닉네임과 기록이 이어지지 않습니다.', abOpen: '브라우저로 열기', abStay: '여기서 먼저 하기', abIos: '오른쪽 위 ⋯ → 브라우저로 열기',
     joinCode: '초대 코드', joinPh: '6자리 코드', joinGo: '입장', joinPrivNote: '비공개 방입니다. 초대 코드가 필요합니다', nocode: '방을 찾을 수 없습니다. 닫혔을 수 있습니다', slow: '시도가 너무 많습니다. 잠시 후 다시', goneT: '이 방은 닫혔습니다', goneNew: '새로 만들기',
     timeL: '시간', tNone: '시간 없음', tMS: '{m}분 + {s}초', tMSc: '{m}분+{s}초', tCustom: '직접 설정', cMin: '분', cInc: '수마다 추가 초', cErr: '분은 1～180, 추가 초는 0～60', sideL: '내 돌', sideB: '흑(선)', sideW: '백(후)', sideR: '무작위',
     tapL: '착수 방식', tap1: '한 번 탭', tap2: '두 번 탭',
@@ -664,9 +676,11 @@ const LOCK_SVG = '<svg class="lk" viewBox="0 0 24 24" aria-hidden="true"><rect x
 let justCreated = false;          // 剛開房：第一次收到房間資料時，私人房自動打開邀請面板
 let joinFrom = null, joinCode = '';   // 等 join 的結果：'panel' 輸入面板／'url' 網址帶碼／'re' 斷線重連
 let urlCode = (new URLSearchParams(location.search).get('r') || '').trim();
+const urlCode0 = urlCode;   // 原始邀請碼：r 之後會被 replaceState 拿掉，內建瀏覽器提示要用它組「用瀏覽器開啟」的網址
+try { const u = new URL(location.href); if (u.searchParams.has('openExternalBrowser') && !urlCode) { u.searchParams.delete('openExternalBrowser'); history.replaceState(null, '', u.pathname + u.search + u.hash); } } catch {}   // 沒有 r 時也拿掉（有 r 時等 hello 一起拿）
 const passed = new Set(), codes = {};   // passed：這條連線進得去的私人房號；codes：房號→邀請碼（重連時用碼再進一次）
 const normCode = (c) => String(c || '').replace(/\s+/g, '').toUpperCase().slice(0, 6);
-const inviteUrl = () => location.origin + location.pathname + '?r=' + room.code + '&lang=' + lang;
+const inviteUrl = () => location.origin + location.pathname + '?r=' + room.code + '&lang=' + lang + '&openExternalBrowser=1';   // openExternalBrowser：LINE 看到就改用預設瀏覽器開，其他軟體忽略
 function openInvite() { if (!room || !room.code) return; $('invCode').textContent = room.code; openModal('mInvite'); }
 // 邀請訊息帶棋局設定，朋友一看就知道是什麼局（2026-11-12）
 function inviteDesc() {
@@ -675,7 +689,7 @@ function inviteDesc() {
     ? [T('kVcf'), T('vm_' + vmodeOf(room)), rankName(v.rank), T('vThinkShort', { t: thinkName(v.think) }), T('vTargetShort', { p: v.target })]
     : [T('kGomoku'), T('r_' + room.rule), timeLabel(room.time)]).filter(Boolean).join('・');
 }
-const inviteText = () => T('shareText') + '\n' + inviteDesc();
+const inviteText = () => T('shareText') + '\n' + inviteDesc() + '\n' + T('inviteCodeLine', { c: room.code });
 async function copyInvite(text) { try { await navigator.clipboard.writeText(text); toast(T('copied')); } catch { prompt(T('copyLink'), text.split('\n').pop()); } }
 $('rInvite').onclick = openInvite;
 $('invShare').onclick = async () => {
@@ -702,6 +716,46 @@ function onJoinErr(code) {   // nocode：找不到碼或私人房沒碼；slow�
   else toast(T('slow'));
 }
 
+
+// ---------- 內建瀏覽器提示（2026-11-13） ----------
+function inAppBrowser() {
+  const ua = navigator.userAgent || '';
+  if (/\bLine\//i.test(ua)) return 'line';
+  if (/Instagram/i.test(ua)) return 'ig';
+  if (/FBAN|FBAV|FB_IAB|FBIOS|Messenger/i.test(ua)) return 'fb';
+  if (/MicroMessenger/i.test(ua)) return 'wechat';
+  if (/KAKAOTALK/i.test(ua)) return 'kakao';
+  return null;
+}
+const isAndroid = () => /Android/i.test(navigator.userAgent || '');
+const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+function externalUrl(extra) {   // 帶著原始邀請碼與語言的目前頁網址
+  const u = new URL(location.origin + location.pathname);
+  if (urlCode0) u.searchParams.set('r', urlCode0);
+  u.searchParams.set('lang', lang);
+  if (extra) u.searchParams.set(extra, '1');
+  return u.href;
+}
+function showInApp() {
+  const kind = inAppBrowser();
+  if (!kind) return;
+  try { if (sessionStorage.getItem('vcfgame.duel.inapp')) return; } catch {}
+  const ios = isIOS(), line = kind === 'line';
+  const canOpen = isAndroid() || line;
+  $('abOpen').hidden = !canOpen;
+  $('abIos').hidden = canOpen;
+  $('abCopy').hidden = canOpen;
+  const done = () => { try { sessionStorage.setItem('vcfgame.duel.inapp', '1'); } catch {} $('mInApp').hidden = true; };
+  $('abOpen').onclick = () => {
+    if (line) { location.href = externalUrl('openExternalBrowser'); return; }
+    const u = new URL(externalUrl());
+    location.href = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u.href) + ';end';
+  };
+  $('abCopy').onclick = async () => { const t = externalUrl(); try { await navigator.clipboard.writeText(t); toast(T('copied')); } catch { prompt(T('copyLink'), t); } };
+  $('abStay').onclick = done;
+  $('mInApp').querySelector('[data-close]').addEventListener('click', done);
+  openModal('mInApp');
+}
 
 // ---------- 連線 ----------
 const PING_MS = 25000, RETRY_BASE_MS = 800, RETRY_MAX_MS = 8000, RETRY_MAX_POW = 4;   // 保持連線、斷線重連（每次加倍，最多 8 秒）
@@ -741,7 +795,7 @@ function onMsg(m) {
   else if (m.t === 'hello') {   // 網址帶 ?r=碼：連上就自動進房，並把 r 從網址拿掉（重新整理不會重複進）
     if (urlCode) {
       const c = urlCode; urlCode = '';
-      try { const u = new URL(location.href); u.searchParams.delete('r'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch {}
+      try { const u = new URL(location.href); u.searchParams.delete('r'); u.searchParams.delete('openExternalBrowser'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch {}
       joinFrom = 'url'; joinCode = normCode(c); send({ t: 'join', code: c });
     }
   }
@@ -1618,6 +1672,7 @@ setInterval(() => {
 applyLang();
 layout();
 connect();
+// showInApp();   // 2026-11-13 先關掉：面板要改成「已安裝過→複製邀請碼／第一次玩→直接進」，等使用者確認（見 docs/design/duel-inapp-2026-11-13/README.md）   // 內建瀏覽器才會出現；只是蓋一層面板，不影響上面 connect 之後照常送 join
 // game.html 首頁「今日棋局」點兩儀殿那筆：duel.html#replay=<id>。不用等連線、不送房間訊息；hash 進頁就清掉（重新整理回大廳）。找不到那筆就照常顯示大廳
 {
   const m = /^#replay=([\w-]+)$/.exec(location.hash);

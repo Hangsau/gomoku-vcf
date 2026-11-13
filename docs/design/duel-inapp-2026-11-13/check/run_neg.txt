@@ -1,0 +1,83 @@
+== 1. 一般瀏覽器沒有面板
+  FAIL Android Chrome：面板（NEG：故意期望有）
+  PASS 桌機 Chrome：面板不出現
+  PASS iOS Safari：面板不出現
+== 2. 內建瀏覽器面板（四語）
+  PASS zh LINE Android：面板出現、文字與按鈕組合正確（open=用瀏覽器開啟 ios=null copy=null stay=先在這裡玩）
+  PASS zh LINE iOS：面板出現、文字與按鈕組合正確（open=用瀏覽器開啟 ios=null copy=null stay=先在這裡玩）
+  PASS zh Facebook Android：面板出現、文字與按鈕組合正確（open=用瀏覽器開啟 ios=null copy=null stay=先在這裡玩）
+  PASS zh Instagram iOS：面板出現、文字與按鈕組合正確（open=null ios=點右上角 ⋯ → 用瀏覽器開啟 copy=複製連結 stay=先在這裡玩）
+  PASS zh WeChat iOS：面板出現、文字與按鈕組合正確（open=null ios=點右上角 ⋯ → 用瀏覽器開啟 copy=複製連結 stay=先在這裡玩）
+  PASS zh KakaoTalk Android：面板出現、文字與按鈕組合正確（open=用瀏覽器開啟 ios=null copy=null stay=先在這裡玩）
+  PASS en LINE Android：面板出現、文字與按鈕組合正確（open=Open in browser ios=null copy=null stay=Play here for now）
+  PASS en LINE iOS：面板出現、文字與按鈕組合正確（open=Open in browser ios=null copy=null stay=Play here for now）
+  PASS en Facebook Android：面板出現、文字與按鈕組合正確（open=Open in browser ios=null copy=null stay=Play here for now）
+  PASS en Instagram iOS：面板出現、文字與按鈕組合正確（open=null ios=Tap ⋯ at the top right → Open in browser copy=Copy link stay=Play here for now）
+  PASS en WeChat iOS：面板出現、文字與按鈕組合正確（open=null ios=Tap ⋯ at the top right → Open in browser copy=Copy link stay=Play here for now）
+  PASS en KakaoTalk Android：面板出現、文字與按鈕組合正確（open=Open in browser ios=null copy=null stay=Play here for now）
+  PASS ja LINE Android：面板出現、文字與按鈕組合正確（open=ブラウザで開く ios=null copy=null stay=ここで遊ぶ）
+  PASS ja LINE iOS：面板出現、文字與按鈕組合正確（open=ブラウザで開く ios=null copy=null stay=ここで遊ぶ）
+  PASS ja Facebook Android：面板出現、文字與按鈕組合正確（open=ブラウザで開く ios=null copy=null stay=ここで遊ぶ）
+  PASS ja Instagram iOS：面板出現、文字與按鈕組合正確（open=null ios=右上の ⋯ →「ブラウザで開く」 copy=リンクをコピー stay=ここで遊ぶ）
+  PASS ja WeChat iOS：面板出現、文字與按鈕組合正確（open=null ios=右上の ⋯ →「ブラウザで開く」 copy=リンクをコピー stay=ここで遊ぶ）
+  PASS ja KakaoTalk Android：面板出現、文字與按鈕組合正確（open=ブラウザで開く ios=null copy=null stay=ここで遊ぶ）
+  PASS ko LINE Android：面板出現、文字與按鈕組合正確（open=브라우저로 열기 ios=null copy=null stay=여기서 먼저 하기）
+  PASS ko LINE iOS：面板出現、文字與按鈕組合正確（open=브라우저로 열기 ios=null copy=null stay=여기서 먼저 하기）
+  PASS ko Facebook Android：面板出現、文字與按鈕組合正確（open=브라우저로 열기 ios=null copy=null stay=여기서 먼저 하기）
+  PASS ko Instagram iOS：面板出現、文字與按鈕組合正確（open=null ios=오른쪽 위 ⋯ → 브라우저로 열기 copy=링크 복사 stay=여기서 먼저 하기）
+  PASS ko WeChat iOS：面板出現、文字與按鈕組合正確（open=null ios=오른쪽 위 ⋯ → 브라우저로 열기 copy=링크 복사 stay=여기서 먼저 하기）
+  PASS ko KakaoTalk Android：面板出現、文字與按鈕組合正確（open=브라우저로 열기 ios=null copy=null stay=여기서 먼저 하기）
+== 3. 不捲動、面板完整在畫面內
+  PASS 375×667 zh LINE Android：sh 667/667 sw 375/375 面板 top 449 bottom 667
+  PASS 375×667 zh Instagram iOS：sh 667/667 sw 375/375 面板 top 426 bottom 667
+  PASS 375×667 en LINE Android：sh 667/667 sw 375/375 面板 top 449 bottom 667
+  PASS 375×667 en Instagram iOS：sh 667/667 sw 375/375 面板 top 426 bottom 667
+  PASS 375×667 ja LINE Android：sh 667/667 sw 375/375 面板 top 449 bottom 667
+  PASS 375×667 ja Instagram iOS：sh 667/667 sw 375/375 面板 top 426 bottom 667
+  PASS 375×667 ko LINE Android：sh 667/667 sw 375/375 面板 top 449 bottom 667
+  PASS 375×667 ko Instagram iOS：sh 667/667 sw 375/375 面板 top 426 bottom 667
+  PASS 360×640 zh LINE Android：sh 640/640 sw 360/360 面板 top 422 bottom 640
+  PASS 360×640 zh Instagram iOS：sh 640/640 sw 360/360 面板 top 399 bottom 640
+  PASS 360×640 en LINE Android：sh 640/640 sw 360/360 面板 top 422 bottom 640
+  PASS 360×640 en Instagram iOS：sh 640/640 sw 360/360 面板 top 399 bottom 640
+  PASS 360×640 ja LINE Android：sh 640/640 sw 360/360 面板 top 422 bottom 640
+  PASS 360×640 ja Instagram iOS：sh 640/640 sw 360/360 面板 top 399 bottom 640
+  PASS 360×640 ko LINE Android：sh 640/640 sw 360/360 面板 top 422 bottom 640
+  PASS 360×640 ko Instagram iOS：sh 640/640 sw 360/360 面板 top 399 bottom 640
+== 4. 邀請連結與分享文字（A 開房）
+  PASS A 開房，邀請碼 SY4VG3
+  PASS zh 複製的內容含「邀請碼：SY4VG3」與 openExternalBrowser=1
+  PASS zh 邀請碼那行在網址之前
+  例（zh）："來兩儀殿跟我對戰\n五子棋・普規・不計時\n邀請碼：SY4VG3\nhttp://127.0.0.1:8793/duel.html?r=SY4VG3&lang=zh&openExternalBrowser=1"
+  PASS en 複製的內容含「Invite code: SY4VG3」與 openExternalBrowser=1
+  PASS en 邀請碼那行在網址之前
+  PASS ja 複製的內容含「招待コード：SY4VG3」與 openExternalBrowser=1
+  PASS ja 邀請碼那行在網址之前
+  PASS ko 複製的內容含「초대 코드: SY4VG3」與 openExternalBrowser=1
+  PASS ko 邀請碼那行在網址之前
+  PASS inviteNote 仍有「不用安裝、不用註冊」
+== 5. 一般瀏覽器帶 ?r=…&openExternalBrowser=1&lang=en 進頁
+  PASS 自動進房；網址只剩「?lang=en」
+  PASS 一般瀏覽器沒有面板
+  PASS B 入座，開局
+  PASS 只帶 openExternalBrowser（沒有 r）也被拿掉：「?lang=en」
+  PASS 既有流程：各下一手（log 2）
+== 6. 內建瀏覽器帶 ?r= 進頁，按「先在這裡玩」
+  PASS 面板出現（LINE Android）
+  PASS 面板還開著時，join 已經照常完成（人在房裡）
+  PASS 按「先在這裡玩」面板關掉
+  PASS 人在房間裡
+  PASS 能入座，開局
+  PASS 關掉面板後重新整理：同一分頁不再出現
+== 7. 主按鈕導向
+  PASS 進頁後網址的 r 已被 replaceState 拿掉
+  intent 目標：intent://127.0.0.1:8793/duel.html?r=RRAEHB&lang=en#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=http%3A%2F%2F127.0.0.1%3A8793%2Fduel.html%3Fr%3DRRAEHB%26lang%3Den;end
+  PASS Facebook Android：intent:// 開頭、package=com.android.chrome、帶 browser_fallback_url、r 正確
+  PASS browser_fallback_url 解碼＝原網址（帶 r、lang）
+  LINE 目標：http://127.0.0.1:8793/duel.html?r=UWTTCD&lang=ja&openExternalBrowser=1
+  PASS LINE Android：目標網址含 openExternalBrowser=1、r、lang
+  PASS iOS Instagram「複製連結」複製含 r 的完整網址：http://127.0.0.1:8793/duel.html?r=BYHRM3&lang=zh
+== 8. 公開房一般流程（大廳入座、各下一手）
+  PASS 開房→大廳入座→各下一手
+  PASS 全程沒有 pageerror／console error []
+PASS 70／FAIL 1
