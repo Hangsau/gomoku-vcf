@@ -178,9 +178,11 @@ body.prac #sStart .big60 { color: var(--teal); }
   #sStart .bigIco { width: 64px; height: 64px; }
   #sStart .big60 { font-size: 72px; }
 }
+@media (max-height: 660px) { body.wxp #sStart .bigIco { display: none; } }   /* 無相界練功多了切換鈕和子數階，矮螢幕藏圖示 */
 @media (max-height: 600px) { body.mj #sStart .bigIco { display: none; } }   /* 明鏡台說明多一行，小手機藏圖示才放得下 */
 .chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .chips button { height: 48px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel); color: var(--text); font-size: 16px; }
+#wxTiers button { padding: 0; white-space: nowrap; font-size: 15px; }   /* 子數階只放數字範圍，不換行 */
 .chips button[aria-pressed="true"] { border: 2px solid var(--teal); background: var(--tealBg); font-weight: 700; }
 .prow { padding: 0 8px 6px 16px; display: flex; flex-direction: column; gap: 4px; }
 .prow .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text2); }
@@ -1808,7 +1810,7 @@ function endMirror(why) {
 // 無相界結算：分數＝解開題目的（題目分×子數階加成）加總，同分答對題數多的在前；送 Worker /wuxiang
 function endWx(why) {
   const top = g.log.filter(x => x.ok).reduce((m, x) => Math.max(m, x.dn), 0);
-  lastRun = { mode: 'wx', pr: g.wxP ? 1 : 0, nick: g.nick, lang, total: Math.round(g.total * 10) / 10, solved: g.solved, wrong: g.wrong, top,
+  lastRun = { mode: 'wx', ...(g.wxP ? { pr: 1 } : {}), nick: g.nick, lang, total: Math.round(g.total * 10) / 10, solved: g.solved, wrong: g.wrong, top,
     seconds: Math.round(g.elapsed * 10) / 10, quit: g.quit ? 1 : 0, detail: g.log };
   $('endWhy').textContent = why;
   const big = Math.round(g.total);
